@@ -74,8 +74,8 @@ int main() {
         printf("\n\n(%s***%s) %sSusplantacion ARP iniciada%s\n",
         color(5), color_reset, color(1), color_reset);
 
-        printf("Use [Q] para terminar ataque\n");
-        while (getchar() != ('q' & 'Q'));
+        printf("Use [q/Q] para terminar ataque\n");
+        while (getchar() != ('q' or 'Q'));
 
         send_arp(router_mac, router_ip, target_mac, target_ip, iface);
         send_arp(target_mac, target_ip, router_mac, router_ip, iface);
