@@ -1,7 +1,7 @@
 # ARP-Spoofer-C
 Codigo escrito en C para automatisar el proceso de ARP Spoofing
 
-#cloning
+# cloning
 ```bash
 git clone https://github.com/ismael3440/arp-spoofer-c
 cd arp-spoofer-c/
