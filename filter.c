@@ -249,7 +249,7 @@ void filter(uint8_t * local_mac, uint8_t * router_mac, int protos[], int lengeth
                 exit(EXIT_FAILURE);
         }
         while (1) {
-                char buffer[65535];
+                char buffer[1024];
                 if (recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &addrlen) < 0) {
                         char text_error[100];
                         sprintf(text_error, "[%sError al recivir paquete%s]: ",
