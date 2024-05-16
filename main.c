@@ -79,7 +79,7 @@ int main() {
 
         send_arp(router_mac, router_ip, target_mac, target_ip, iface);
         send_arp(target_mac, target_ip, router_mac, router_ip, iface);
-        printf("\n(%s***%s) %sAtaque tarminado%s",
+        printf("\n(%s***%s) %sAtaque tarminado%s\n",
         color(5), color_reset, color(2), color_reset);
         exit(EXIT_SUCCESS);
 }
