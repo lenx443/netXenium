@@ -110,14 +110,14 @@ uint32_t get_local_ip(char * iface) {
         int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al crear socket%s]: ",
+                sprintf(text_error, "[%sError al crear socket%s]",
                 color(2), color_reset);
                 perror(text_error);
                 exit(EXIT_FAILURE);
         }
         if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError en el ioctl%s]: ",
+                sprintf(text_error, "[%sError en el ioctl%s]",
                 color(2), color_reset);
                 perror(text_error);
                 close(sockfd);
@@ -134,14 +134,14 @@ uint8_t * get_local_mac(char * iface) {
         int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al crear socket%s]: ",
+                sprintf(text_error, "[%sError al crear socket%s]",
                 color(2), color_reset);
                 perror(text_error);
                 exit(EXIT_FAILURE);
         }
         if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
                 char text_error[100];
-                printf(text_error, "[%sError en el ioctl%s]: ",
+                printf(text_error, "[%sError en el ioctl%s]",
                 color(2), color_reset);
                 perror(text_error);
                 close(sockfd);
@@ -180,14 +180,14 @@ uint8_t * get_mac(uint8_t * source_mac, uint32_t source_ip, uint32_t dest_ip, ch
         int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
         if (sockfd < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al crear el socket raw%s]: ",
+                sprintf(text_error, "[%sError al crear el socket raw%s]",
                 color(2), color_reset);
                 perror(text_error);
                 exit(EXIT_FAILURE);
         }
         if (sendto(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, addrlen) < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError ao enviar packet ARP%s]: ",
+                sprintf(text_error, "[%sError ao enviar packet ARP%s]",
                 color(2), color_reset);
                 perror(text_error);
                 close(sockfd);
@@ -196,7 +196,7 @@ uint8_t * get_mac(uint8_t * source_mac, uint32_t source_ip, uint32_t dest_ip, ch
         memset(buffer, 0, sizeof(buffer));
         if (recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, &addrlen) < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al recivir el encabezado ARP%s]: ",
+                sprintf(text_error, "[%sError al recivir el encabezado ARP%s]",
                 color(2), color_reset);
                 perror(text_error);
                 close(sockfd);
@@ -234,14 +234,14 @@ uint8_t * dest_mac, uint32_t dest_ip, char * iface) {
         int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
         if (sockfd < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al crear socket raw%s]: ",
+                sprintf(text_error, "[%sError al crear socket raw%s]",
                 color(2), color_reset);
                 perror(text_error);
                 exit(EXIT_FAILURE);
         }
         if (sendto(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)&addr, addrlen) < 0) {
                 char text_error[100];
-                sprintf(text_error, "[%sError al enviar packete ARP%s]: ",
+                sprintf(text_error, "[%sError al enviar packete ARP%s]",
                 color(2), color_reset);
                 perror(text_error);
                 close(sockfd);
