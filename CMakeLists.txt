@@ -4,4 +4,7 @@ project(ARP_Spoofer)
 
 include_directories(include/)
 
-add_executable(arp src/main.c)
+add_executable(arp
+  src/main.c
+  src/functions.c
+)
