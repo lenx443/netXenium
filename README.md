@@ -44,7 +44,7 @@ sudo ./arp
 
 ## Autor
 
-**X-Leamsi**\
+**Lenx**\
 Proyecto de investigación 2024
 
 ---
