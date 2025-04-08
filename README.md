@@ -41,6 +41,7 @@ sudo ./arp
 - Linux
 - Compilador C compatible con POSIX
 - Permisos de superusuario (uso de sockets RAW)
+- Pcap instalado
 
 ## Autor
 
