@@ -21,7 +21,7 @@
 
 ### Opción 1: Descargar releases
 
-Puedes descargar binarios precompilados desde la sección [Releases](https://github.com/lenx443/ARP-Spoofer-C/releases) del repositorio (si no estan disponible en este momento se debera usar la opción 2 asta que se suban releases).
+Puedes descargar binarios precompilados desde la sección [Releases](https://github.com/lenx443/netXenium/releases) del repositorio (si no estan disponible en este momento se debera usar la opción 2 asta que se suban releases).
 
 ### Opción 2: Compilación manual
 
@@ -30,7 +30,7 @@ Instala las dependencias necesarias y compila el proyecto:
 ```sh
 pkg update
 pkg install clang libpcap cmake make
-git clone https://github.com/lenx443/ARP-Spoofer-C.git
+git clone https://github.com/lenx443/netXenium.git
 cd ARP-Spoofer-C
 mkdir build && cd build
 cmake ..
@@ -49,8 +49,8 @@ sudo ./xenium
 
 Dentro de la shell:
 
-1. Usa el comando `_help_` para ver la ayuda disponible.
-2. Utiliza `_exit_` o `CTRL+C` para salir de la shell.
+1. Usa el comando `help` para ver la ayuda disponible.
+2. Utiliza `exit` o `CTRL+C` para salir de la shell.
 
 ## Próximamente
 
