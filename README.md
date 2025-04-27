@@ -1,55 +1,74 @@
-# ARP Spoofer
+# netXenium
 
-Este es un proyecto en desarrollo llamado **ARP Spoofer**, una herramienta escrita en C que permite realizar ataques de spoofing ARP (Address Resolution Protocol). Esta técnica se utiliza para interceptar el tráfico de red entre un objetivo y su puerta de enlace (router), haciéndoles creer que tú eres el otro dispositivo.
+**netXenium** es un programa en desarrollo que permite automatizar y operar tareas y ataques de red de alto y bajo nivel. Está diseñado para ser una herramienta flexible tanto para administradores como para investigadores de seguridad.
 
-> **Advertencia:** Este software tiene propósitos educativos y de investigación en entornos controlados. El uso indebido puede ser ilegal.
+> **Advertencia:** Este software fue desarrollado con fines educativos y de investigación en entornos controlados o laborales. El desarrollador **no se hace responsable** del uso indebido que se le pueda dar.
 
 ## Características actuales
 
-- Descubre la dirección IP y MAC del objetivo y del router.
-- Envía paquetes ARP falsos para envenenar las tablas ARP.
-- Interfaz interactiva desde terminal (selección de interfaz de red, IPs, etc).
-- Interfaz colorida para mejorar la experiencia visual.
-- Automatiza el proceso de envío y restauración de ARP.
+- Shell interactiva con comandos específicos para operaciones de red.
+- Interfaz de línea de comandos colorida y dinámica.
+- Automatización básica de tareas comunes en redes.
+- Comandos internos como `help` y `exit` para facilitar el uso.
 
-## Compilación
+## Requisitos
 
-Usa CMake para compilar el proyecto:
+- Sistema operativo **Linux**
+- **Permisos de superusuario** (root)
+- **libpcap** instalada
+
+## Instalación
+
+### Opción 1: Descargar releases
+
+Puedes descargar binarios precompilados desde la sección [Releases](https://github.com/lenx443/ARP-Spoofer-C/releases) del repositorio (si no estan disponible en este momento se debera usar la opción 2 asta que se suban releases).
+
+### Opción 2: Compilación manual
+
+Instala las dependencias necesarias y compila el proyecto:
 
 ```sh
+pkg update
+pkg install clang libpcap cmake make
+git clone https://github.com/lenx443/ARP-Spoofer-C.git
+cd ARP-Spoofer-C
 mkdir build && cd build
 cmake ..
 make
 ```
 
-Esto generará el binario `arp` dentro del directorio `build`.
+Esto generará el binario `xenium` dentro del directorio `build`.
 
 ## Uso
 
+Ejecuta el programa con permisos de superusuario:
+
 ```sh
-sudo ./arp
+sudo ./xenium
 ```
 
-1. Introduce la interfaz de red (por ejemplo `eth0` o `wlan0`).
-2. Introduce la IP del objetivo.
-3. Introduce la IP del router.
-4. El programa obtendrá automáticamente las MACs y lanzará el ataque.
-5. Presiona `Q` para detener el ataque y restaurar las tablas ARP.
+Dentro de la shell:
 
-## Dependencias
+1. Usa el comando `_help_` para ver la ayuda disponible.
+2. Utiliza `_exit_` o `CTRL+C` para salir de la shell.
 
-- Linux
-- Compilador C compatible con POSIX
-- Permisos de superusuario (uso de sockets RAW)
-- Pcap instalado
+## Próximamente
+
+- Soporte para **scripting** de comandos para automatizar sesiones completas.
+- Mejoras en la **interfaz**:
+  - Historial de comandos
+  - Autocompletado
+  - Cursor interactivo y accesos rápidos
+- Nuevos comandos como `input` y `echo` para enriquecer el scripting.
+- Mejoras en el **manejo de errores** con mensajes más detallados.
 
 ## Autor
 
 **Lenx**\
-Proyecto de investigación 2024
+Proyecto de investigación 2024-2025
 
 ---
 
-**¡Recuerda!** Este proyecto debe ejecutarse *solo* con fines de aprendizaje en redes propias o laboratorios controlados.
+**¡Recuerda!** netXenium debe ser usado únicamente en redes propias o en entornos de laboratorio controlado.
 
 

@@ -1,4 +1,15 @@
+/*
+ * En este archivo se definen una
+ * gran parte de las fubciones
+ * empleadas en este programa
+ * formando asi una parte de su
+ * API interna
+ */
+
 #include <arpa/inet.h>
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
+#include <errno.h>
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
 #include <net/if.h>
@@ -7,39 +18,23 @@
 #include <pcap.h>
 #include <pcap/pcap.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <unistd.h>
-
+#include "error_codes.h"
+#include "errs.h"
 #include "functions.h"
 
-char *color(int index) {
-  char *var_color = calloc(6, sizeof(char));
-  if (var_color)
-    sprintf(var_color, "\x1b[3%dm", index);
-  return var_color;
-}
-
-char *background(int index) {
-  char *var_background = calloc(6, sizeof(char));
-  if (var_background)
-    sprintf(var_background, "\x1b[4%dm", index);
-  return var_background;
-}
-
-char *mac_to_text(uint8_t *mac) {
-  char *text = calloc(18, sizeof(char));
-  if (text)
-    sprintf(text, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2],
-            mac[3], mac[4], mac[5]);
-  return text;
-}
-
+/*
+ * Esta funcion permite obtener
+ * la direccion IP de esta maquina
+ * en una interfaz de red empleando
+ * la llamada al sistema `ioctl`.
+ * Si se produce un error lo puntualiza
+ * en la global `code_error`.
+ */
 int get_local_ip(uint32_t *local_ip, char *iface) {
-  char *cl = color(2);
   struct ifreq ifr;
   memset(&ifr, 0x00, sizeof(struct ifreq));
   memset(local_ip, 0x00, sizeof(uint32_t));
@@ -47,57 +42,83 @@ int get_local_ip(uint32_t *local_ip, char *iface) {
   strncpy(ifr.ifr_name, iface, IFNAMSIZ);
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError al crear socket%s]", cl, color_reset);
-    perror(text_error);
-    free(cl);
+    if (errno == EMFILE || errno == ENFILE)
+      code_error = ERROR_SOCKET_FD_LIMIT;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_SOCKET_PERMISSIONS;
+    else
+      code_error = ERROR_SOCKET;
     return 0;
   }
   if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError en el ioctl%s]", cl, color_reset);
-    perror(text_error);
     close(sockfd);
-    free(cl);
+    if (errno == EBADF)
+      code_error = ERROR_IOCTL_FD_INVALID;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_IOCTL_PERMISSIONS;
+    else if (errno == ENOMEM || errno == EFAULT)
+      code_error = ERROR_IOCTL_MEMORY;
+    else
+      code_error = ERROR_IOCTL;
     return 0;
   }
   close(sockfd);
-  free(cl);
   memcpy(local_ip, &addr->sin_addr.s_addr, sizeof(uint32_t));
   return 1;
 }
 
+/*
+ * Esta funcion permite obtener
+ * la direccion MAC de esta maquina
+ * en una interfaz de red empleando
+ * la llamada al sistema `ioctl`.
+ * Si se produce un error lo puntualiza
+ * en la global `code_error`.
+ */
 int get_local_mac(uint8_t *local_mac, char *iface) {
-  char *cl = color(2);
   struct ifreq ifr;
   memset(&ifr, 0x00, sizeof(struct ifreq));
   memset(local_mac, 0x00, sizeof(uint32_t));
   strncpy(ifr.ifr_name, iface, IFNAMSIZ);
   int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError al crear socket%s]", cl, color_reset);
-    perror(text_error);
-    free(cl);
+    if (errno == EMFILE || errno == ENFILE)
+      code_error = ERROR_SOCKET_FD_LIMIT;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_SOCKET_PERMISSIONS;
+    else
+      code_error = ERROR_SOCKET;
     return 0;
   }
   if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
-    char text_error[100];
-    printf(text_error, "[%sError en el ioctl%s]", cl, color_reset);
-    perror(text_error);
     close(sockfd);
-    free(cl);
+    if (errno == EBADF)
+      code_error = ERROR_IOCTL_FD_INVALID;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_IOCTL_PERMISSIONS;
+    else if (errno == ENOMEM || errno == EFAULT)
+      code_error = ERROR_IOCTL_MEMORY;
+    else
+      code_error = ERROR_IOCTL;
     return 0;
   }
   close(sockfd);
-  free(cl);
   memcpy(local_mac, ifr.ifr_hwaddr.sa_data, 6);
   return 1;
 }
 
-int get_mac(uint8_t *mac, uint8_t *source_mac, uint32_t source_ip,
-            uint32_t dest_ip, char *iface) {
-  char *cl = color(2);
+/*
+ * Esta funcion construye y envia un
+ * paquete ARP request, usando como
+ * direccion MAC ethernet la MAC del
+ * gateway y como direccion MAC arp
+ * una MAC llena de ceros (para
+ * decubrir direcciones MAC).
+ * Los errores se puntualizan en la
+ * global `code_error`.
+ */
+int send_arp_request(uint8_t *source_mac, uint32_t source_ip, uint32_t dest_ip,
+                     char *iface) {
   uint8_t ether_dst[6];
   uint8_t arp_dst[6];
   memset(ether_dst, 0xff, 6);
@@ -129,70 +150,44 @@ int get_mac(uint8_t *mac, uint8_t *source_mac, uint32_t source_ip,
   socklen_t addrlen = sizeof(addr);
   int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
   if (sockfd < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError al crear el socket raw%s]", cl, color_reset);
-    perror(text_error);
-    free(cl);
+    if (errno == EMFILE || errno == ENFILE)
+      code_error = ERROR_SOCKET_RAW_FD_LIMIT;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_SOCKET_RAW_PERMISSIONS;
+    else
+      code_error = ERROR_SOCKET_RAW;
     return 0;
   }
   if (sendto(sockfd, send_buffer, sizeof(send_buffer), 0,
              (struct sockaddr *)&addr, addrlen) < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError ao enviar packet ARP%s]", cl, color_reset);
-    perror(text_error);
     close(sockfd);
-    free(cl);
+    if (errno == ENOBUFS || errno == ENOMEM)
+      code_error = ERROR_SEND_BUFFER;
+    else if (errno == EINTR)
+      code_error = ERROR_SEND_INTERRUPT;
+    else if (errno == ENETUNREACH || errno == EHOSTUNREACH ||
+             errno == ECONNREFUSED)
+      code_error = ERROR_SEND_REFUSED;
+    else if (errno == EPIPE || errno == ECONNREFUSED)
+      code_error = ERROR_SEND_CONNECT;
+    else if (errno == EACCES)
+      code_error = ERROR_SEND_ACCESS;
+    else
+      code_error = ERROR_SEND;
     return 0;
   }
-  memset(send_buffer, 0, sizeof(send_buffer));
   close(sockfd);
-
-  char pcap_errbuf[PCAP_ERRBUF_SIZE];
-  pcap_t *pcap_handle = pcap_open_live(iface, BUFSIZ, 0, 100, pcap_errbuf);
-  if (!pcap_handle) {
-    printf("[%sError al recivir respuesta%s]: %s\n", cl, color_reset,
-           pcap_errbuf);
-    free(cl);
-    return 0;
-  }
-  char bpf_filter[100];
-  snprintf(bpf_filter, 100, "arp[6:2] = 2 and arp[14:4] = 0x%08x",
-           htonl(dest_ip));
-  struct bpf_program fp;
-  if (pcap_compile(pcap_handle, &fp, bpf_filter, 0, PCAP_NETMASK_UNKNOWN) < 0) {
-    printf("[%sError al configurar filtro de red%s]: %s\n", cl, color_reset,
-           pcap_geterr(pcap_handle));
-    pcap_close(pcap_handle);
-    free(cl);
-    return 0;
-  }
-  if (pcap_setfilter(pcap_handle, &fp) < 0) {
-    printf("[%sError aplicando filtro de red%s]: %s\n", cl, color_reset,
-           pcap_geterr(pcap_handle));
-    pcap_close(pcap_handle);
-    free(cl);
-    return 0;
-  }
-  struct pcap_pkthdr header;
-  const u_char *packet = pcap_next(pcap_handle, &header);
-  if (!packet) {
-    printf("[%sError al capturar paquete%s]: %s", cl, color_reset,
-           pcap_geterr(pcap_handle));
-    pcap_close(pcap_handle);
-    free(cl);
-    return 0;
-  }
-  struct arp_header resp =
-      *(struct arp_header *)(packet + sizeof(struct ethhdr));
-  memcpy(mac, resp.sha, 6);
-  pcap_close(pcap_handle);
-  free(cl);
   return 1;
 }
 
-void send_arp(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac,
-              uint32_t dest_ip, char *iface) {
-  char *cl = color(2);
+/*
+ * Esta funcion construye y envia
+ * un paquete ARP reply.
+ * Los errores se puntualizan
+ * en la global `code_error`.
+ */
+int send_arp_reply(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac,
+                   uint32_t dest_ip, char *iface) {
   struct ethhdr eth;
   memcpy(eth.h_source, source_mac, 6);
   memcpy(eth.h_dest, dest_mac, 6);
@@ -217,21 +212,32 @@ void send_arp(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac,
   socklen_t addrlen = sizeof(addr);
   int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
   if (sockfd < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError al crear socket raw%s]", cl, color_reset);
-    perror(text_error);
-    free(cl);
-    exit(EXIT_FAILURE);
+    if (errno == EMFILE || errno == ENFILE)
+      code_error = ERROR_SOCKET_RAW_FD_LIMIT;
+    else if (errno == EACCES || errno == EPERM)
+      code_error = ERROR_SOCKET_RAW_PERMISSIONS;
+    else
+      code_error = ERROR_SOCKET_RAW;
+    return 0;
   }
   if (sendto(sockfd, send_buffer, sizeof(send_buffer), 0,
              (struct sockaddr *)&addr, addrlen) < 0) {
-    char text_error[100];
-    sprintf(text_error, "[%sError al enviar packete ARP%s]", cl, color_reset);
-    perror(text_error);
     close(sockfd);
-    free(cl);
-    exit(EXIT_FAILURE);
+    if (errno == ENOBUFS || errno == ENOMEM)
+      code_error = ERROR_SEND_BUFFER;
+    else if (errno == EINTR)
+      code_error = ERROR_SEND_INTERRUPT;
+    else if (errno == ENETUNREACH || errno == EHOSTUNREACH ||
+             errno == ECONNREFUSED)
+      code_error = ERROR_SEND_REFUSED;
+    else if (errno == EPIPE || errno == ECONNREFUSED)
+      code_error = ERROR_SEND_CONNECT;
+    else if (errno == EACCES)
+      code_error = ERROR_SEND_ACCESS;
+    else
+      code_error = ERROR_SEND;
+    return 0;
   }
   close(sockfd);
-  free(cl);
+  return 1;
 }

