@@ -1,16 +1,17 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
-#include "error_codes.h"
-#include "errs.h"
 #include "list.h"
+#include "logs.h"
 
 LIST_ptr list_new() {
   LIST_ptr list = malloc(sizeof(LIST));
   if (list == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     return NULL;
   }
+  dyn_error = DYN_OK;
   list->head = NULL;
   list->tail = NULL;
   return list;
@@ -18,15 +19,12 @@ LIST_ptr list_new() {
 
 LIST_ptr list_new_string(char *str) {
   LIST_ptr list = list_new();
-  if (!list_push_back_string(list, str)) {
-    return NULL;
-  }
+  if (!list_push_back_string(list, str)) { return NULL; }
   return list;
 }
 
 int list_size(LIST list) {
-  if (list_empty(&list))
-    return 0;
+  if (list_empty(&list)) return 0;
   NODE_ptr current = list.head;
   int n = 0;
   while (current != NULL) {
@@ -38,24 +36,37 @@ int list_size(LIST list) {
 
 int list_empty(LIST_ptr list) {
   if (list == NULL || list->head == NULL) {
-    code_error = ERROR_LIST_NULL;
+    dyn_error = DYN_EMPTY;
     return 1;
   }
   return 0;
 }
 
+int list_valid(LIST_ptr list) {
+  if (list == NULL) {
+    dyn_error = DYN_INVALID;
+    return 0;
+  }
+  return 1;
+}
+
 int list_push_back(LIST_ptr list, void *value, size_t size) {
   if (list == NULL) {
-    code_error = ERROR_LIST_NULL;
+    dyn_error = DYN_INVALID;
     return 0;
   }
   NODE_ptr newNode = malloc(sizeof(NODE));
   if (newNode == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->size = size;
   newNode->point = malloc(newNode->size);
+  if (newNode == NULL) {
+    dyn_error = DYN_NO_MEMORY;
+    free(newNode);
+    return 0;
+  }
   memcpy(newNode->point, value, newNode->size);
   newNode->next = NULL;
   if (list->head == NULL)
@@ -66,35 +77,61 @@ int list_push_back(LIST_ptr list, void *value, size_t size) {
   return 1;
 }
 
+int list_push_begin(LIST_ptr list, void *value, size_t size) {
+  if (list == NULL) {
+    dyn_error = DYN_INVALID;
+    return 0;
+  }
+  NODE_ptr newNode = malloc(sizeof(NODE));
+  if (newNode == NULL) {
+    dyn_error = DYN_NO_MEMORY;
+    return 0;
+  }
+  newNode->size = size;
+  newNode->point = malloc(newNode->size);
+  if (newNode->point == NULL) {
+    dyn_error = DYN_NO_MEMORY;
+    free(newNode);
+    return 0;
+  }
+  memcpy(newNode->point, value, newNode->size);
+  newNode->next = NULL;
+  if (list->head == NULL) {
+    list->head = newNode;
+    list->tail = newNode;
+    return 1;
+  }
+  newNode->next = list->head;
+  list->head = newNode;
+  return 1;
+}
+
 int list_push_back_string(LIST_ptr list, char *str) {
   for (char *p = str; *p != '\0'; p++) {
-    if (!list_push_back(list, p, 1))
-      return 0;
+    if (!list_push_back(list, p, 1)) return 0;
   }
   return 1;
 }
 
 int list_push_back_string_node(LIST_ptr list, char *str) {
   int size = strlen(str) + 1;
-  if (!list_push_back(list, str, size))
-    return 0;
+  if (!list_push_back(list, str, size)) return 0;
   return 1;
 }
 
 NODE_ptr list_pop_back(LIST_ptr list) {
-  if (list_empty(list))
-    return NULL;
+  if (list_empty(list)) return NULL;
   NODE_ptr current = list->head;
   NODE_ptr prev = NULL;
   if (current == list->tail) {
     NODE *data = malloc(sizeof(NODE));
     if (data == NULL) {
-      code_error = ERROR_LIST_MEMORY;
+      dyn_error = DYN_NO_MEMORY;
       return NULL;
     }
     data->point = malloc(current->size);
     if (data->point == NULL) {
-      code_error = ERROR_LIST_MEMORY;
+      dyn_error = DYN_NO_MEMORY;
       free(data);
       return NULL;
     }
@@ -112,12 +149,12 @@ NODE_ptr list_pop_back(LIST_ptr list) {
   current = current->next;
   NODE_ptr data = malloc(sizeof(NODE));
   if (data == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     return NULL;
   }
   data->point = malloc(current->size);
   if (data->point == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     free(data);
     return NULL;
   }
@@ -131,24 +168,60 @@ NODE_ptr list_pop_back(LIST_ptr list) {
   return data;
 }
 
-int list_search(LIST list, void *value, size_t size) {
-  if (list_empty(&list))
-    return 0;
-  NODE_ptr current = list.head;
+void list_erase_at_index(LIST_ptr list, int index) {
+  if (list_empty(list) || index < 0) return;
+
+  NODE_ptr current = list->head;
+  NODE_ptr previous = NULL;
   int n = 0;
-  while (current != NULL) {
-    if (memcmp(current->point, value, size) == 0)
-      return n;
+
+  while (current != NULL && n < index) {
+    previous = current;
     current = current->next;
     n++;
   }
-  code_error = ERROR_LIST_FINDED;
+
+  if (current == NULL) return;
+
+  if (previous == NULL) {
+    list->head = current->next;
+  } else {
+    previous->next = current->next;
+  }
+
+  node_free(&current);
+}
+
+int list_search(LIST list, void *value, size_t size) {
+  if (list_empty(&list)) return 0;
+  NODE_ptr current = list.head;
+  int n = 0;
+  while (current != NULL) {
+    if (memcmp(current->point, value, size) == 0) return n;
+    current = current->next;
+    n++;
+  }
+  dyn_error = DYN_ELEMENT_NO_MATCH;
+  return -1;
+}
+
+int list_search_string(LIST list, char *value) {
+  if (list_empty(&list)) return 0;
+  NODE_ptr current = list.head;
+  int n = 0;
+  while (current != NULL) {
+    char *current_str = (char *)current->point;
+    if (strcmp(current_str, value) == 0) return n;
+    current = current->next;
+    n++;
+  }
+  dyn_error = DYN_ELEMENT_NO_MATCH;
   return -1;
 }
 
 int list_forEach(NODE_ptr *current, LIST list) {
   if (current == NULL) {
-    code_error = ERROR_LIST_NODE_NULL;
+    dyn_error = DYN_ELEMENT_INVALID;
     return 0;
   }
   if (*current == NULL)
@@ -159,11 +232,9 @@ int list_forEach(NODE_ptr *current, LIST list) {
 }
 
 NODE_ptr list_index_get(int index, LIST list) {
-  if (list_empty(&list)) {
-    return NULL;
-  }
+  if (list_empty(&list)) { return NULL; }
   if (index < 0) {
-    code_error = ERROR_LIST_INDEX;
+    dyn_error = DYN_ELEMENT_NO_MATCH;
     return NULL;
   }
   NODE_ptr current = list.head;
@@ -173,18 +244,16 @@ NODE_ptr list_index_get(int index, LIST list) {
     n++;
   }
   if (current == NULL) {
-    code_error = ERROR_LIST_INDEX;
+    dyn_error = DYN_ELEMENT_NO_MATCH;
     return NULL;
   }
   return current;
 }
 
 int list_index_set(int index, LIST_ptr list, void *value, size_t size) {
-  if (list_empty(list)) {
-    return 0;
-  }
+  if (list_empty(list)) { return 0; }
   if (index < 0) {
-    code_error = ERROR_LIST_INDEX;
+    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
   NODE_ptr current = list->head;
@@ -196,17 +265,17 @@ int list_index_set(int index, LIST_ptr list, void *value, size_t size) {
     n++;
   }
   if (current == NULL) {
-    code_error = ERROR_LIST_INDEX;
+    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
   NODE_ptr newNode = malloc(sizeof(NODE));
   if (newNode == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->point = malloc(size);
   if (newNode->point == NULL) {
-    code_error = ERROR_LIST_MEMORY;
+    dyn_error = DYN_NO_MEMORY;
     free(newNode);
     return 0;
   }
@@ -234,10 +303,23 @@ void list_as_string(LIST list, char *str, int size) {
   str[n] = '\0';
 }
 
-void list_free(LIST_ptr list) {
-  if (list_empty(list)) {
-    return;
+void list_clear(LIST_ptr list) {
+  if (list == NULL || list->head == NULL) return;
+
+  NODE_ptr current = list->head;
+  while (current != NULL) {
+    NODE_ptr next = current->next;
+    free(current->point);
+    free(current);
+    current = next;
   }
+
+  list->head = NULL;
+  list->tail = NULL;
+}
+
+void list_free(LIST_ptr list) {
+  if (list_empty(list)) return;
   NODE_ptr current = list->head;
   while (current != NULL) {
     NODE_ptr next = current->next;
@@ -250,17 +332,28 @@ void list_free(LIST_ptr list) {
 
 int node_empty(NODE_ptr *node) {
   if (node == NULL || *node == NULL) {
-    code_error = ERROR_LIST_NODE_NULL;
+    dyn_error = DYN_ELEMENT_INVALID;
     return 1;
   }
   return 0;
 }
 
 void node_free(NODE_ptr *node) {
-  if (node_empty(node)) {
-    return;
-  }
+  if (node_empty(node)) { return; }
   free((*node)->point);
   free(*node);
   *node = NULL;
 }
+
+void DynSetLog(LIST_ptr log) {
+  switch (dyn_error) {
+  case DYN_OK: log_add(log, INFO, "Dyn-Lists", "No se ah generado ningun problema"); break;
+  case DYN_NO_MEMORY: log_add(log, ERROR, "Dyn-Lists", "No hay suficuente memoria"); break;
+  case DYN_EMPTY: log_add(log, ERROR, "Dyn-Lists", "La lista esta bacia"); break;
+  case DYN_INVALID: log_add(log, ERROR, "Dyn-Lists", "La lista no es valida"); break;
+  case DYN_ELEMENT_INVALID: log_add(log, ERROR, "Dyn-Lists", "El elemento de la lista no es valido"); break;
+  case DYN_ELEMENT_NO_MATCH: log_add(log, ERROR, "Dyn-Lists", "No se encontro el elemento en la lista"); break;
+  }
+  dyn_error = DYN_OK;
+}
+DynListErrors dyn_error = DYN_OK;
