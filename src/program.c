@@ -526,8 +526,7 @@ void shell_loop(char *name) {
         if (tim == (time_t)-1) break;
         if (cmd[0] != '\0') {
           HISTORY_struct *previus_history = history_get(*history, 0);
-          if (previus_history == NULL) continue;
-          if (strcmp(cmd, previus_history->command) != 0) {
+          if (previus_history == NULL || strcmp(cmd, previus_history->command) != 0) {
             HISTORY_struct new_history_line;
             new_history_line.time_stamp = (long)tim;
             strncpy(new_history_line.command, cmd, CMDSIZ - 1);
