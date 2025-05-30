@@ -1,0 +1,13 @@
+# se ejecuta con `sudo ntxenium change_ip.nxm`
+
+new nueva_ip IP
+echo 'Pasa la nueva direccion IP: '
+input nueva_ip
+
+new interfaz IFACE
+echo 'Pasa la interfaz de red destino: '
+input interfaz
+
+new CHG_ADDR IP $nueva_ip
+iface change addr $interfaz
+exit 0
