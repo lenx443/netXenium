@@ -61,9 +61,9 @@ int prop_reg_type_validate(prop_types type, char *key) {
   if (type != OTHER) {
     for (int i = 0; map_types[i].key != OTHER; i++) {
       if (map_types[i].key == type) {
-        if (map_types[i].validate(key))
+        if (map_types[i].validate(key)) {
           result_code = map_types[i].validate(key) ? 1 : 2;
-        else
+        } else
           result_code = 1;
       }
     }
@@ -76,7 +76,7 @@ int prop_reg_type_validate(prop_types type, char *key) {
 }
 
 void prop_reg_free(LIST_ptr list) {
-  if (list_valid(list)) return;
+  if (!list_valid(list)) return;
   NODE_ptr current = list->head;
   while (current != NULL) {
     NODE_ptr next = current->next;

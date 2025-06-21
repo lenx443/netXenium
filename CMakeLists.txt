@@ -8,11 +8,17 @@ pkg_check_modules(JSONC REQUIRED json-c)
 
 set(CMAKE_C_FLAGS_DEBUG "-g -O0")
 
+set(BUILD_SHARED_LIBS ON)
+set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
+
 set(C_STANDARD 99)
 
 include_directories(
-  include/
-  dynamic_lists/include/
+  core/include/
+  core/interpreter/include/
+  api/include/
+  dynamic/linked_lists/include/
+  dynamic/hash_tables/include/
   header/
 )
 
@@ -20,26 +26,41 @@ add_executable(ntxenium
   # Codigo fuente principal (Funcion main)
   main.c
 
-  # Codigo fuente donde se implementan
-  # las funciones definidas en include/
-  src/functions.c
-  src/properties_types.c
-  src/program.c
-  src/pcap_wrapper.c
-  src/terminal.c
+  # Codigo fuente donde del nucleo
+  # del proyecto.
+  core/src/properties_types.c
+  core/src/program.c
+  core/src/read_string_utf8.c
+
+  # Codigo que se encarga de procesar
+  # e interpretar scripts
+  core/interpreter/src/lexer.c
+  core/interpreter/src/parser.c
+  core/interpreter/src/interpreter.c
+
+  # codigo fuente de la la API
+  # del Framework.
+  api/src/functions.c
+  api/src/pcap_wrapper.c
+  api/src/terminal.c
 
   # Implementaciones de los codigos
-  # fuente de las librerias dinamicas
-  # definidas en dynamic_lists/include/
-  dynamic_lists/src/list.c
-  dynamic_lists/src/properties.c
-  dynamic_lists/src/history.c
-  dynamic_lists/src/suggestion.c
-  dynamic_lists/src/logs.c
+  # fuente de las listas enlazadas
+  dynamic/linked_lists/src/list.c
+  dynamic/linked_lists/src/properties.c
+  dynamic/linked_lists/src/history.c
+  dynamic/linked_lists/src/suggestion.c
+  dynamic/linked_lists/src/logs.c
+  dynamic/linked_lists/src/string_utf8.c
+  dynamic/linked_lists/src/raw_arguments.c
+
+  # Implementaciones de los codigos
+  # fuente de las tablas hash
+  dynamic/hash_tables/src/string_hash_table.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
-  # include/commands.h
+  # core/include/commands.h
   commands/help.c
   commands/exit.c
   commands/new.c

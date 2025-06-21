@@ -12,6 +12,39 @@
 #include "logs.h"
 #include "macros.h"
 
+static void history_to_string(char *str, void *str_out, size_t size) {
+  char *out = (char *)str_out;
+  size_t i = 0;
+  while (str[i] && (size_t)(out - (char *)str_out) < size - 2) {
+    unsigned char c = (unsigned char)str[i++];
+    if (c == '\n') {
+      *out++ = '\\';
+      *out++ = 'n';
+    } else if (c == '\t') {
+      *out++ = '\\';
+      *out++ = 't';
+    } else if (c == '\r') {
+      *out++ = '\\';
+      *out++ = 'r';
+    } else if (c == '\b') {
+      *out++ = '\\';
+      *out++ = 'b';
+    } else if (c == '\\') {
+      *out++ = '\\';
+      *out++ = '\\';
+    } else if (c < 32 || c > 126) {
+      if ((size_t)(out - (char *)str_out) < size - 4) {
+        sprintf(out, "\\x%02X", c);
+        out += 4;
+      } else
+        break;
+    } else {
+      *out++ = c;
+    }
+  }
+  *out = '\0';
+}
+
 HISTORY_ptr history_new(const char *filename) {
   HISTORY_ptr new_history = malloc(sizeof(HISTORY));
   if (new_history == NULL) {
@@ -98,14 +131,18 @@ HISTORY_ptr history_new(const char *filename) {
     }
 
     history_line.time_stamp = json_object_get_int64(time_stamp);
-    strncpy(history_line.command, json_object_get_string(command), sizeof(history_line.command));
-    history_line.command[sizeof(history_line.command) - 1] = '\0';
+    char str_command[CMDSIZ];
+    strncpy(str_command, json_object_get_string(command), sizeof(history_line.command));
+    str_command[sizeof(str_command) - 1] = '\0';
+    history_to_string(str_command, history_line.command, CMDSIZ);
 
     json_object_put(parser);
 
-    if (!list_push_begin(new_history->cache_history, &history_line, sizeof(HISTORY_struct))) {
+    if (!list_push_begin(new_history->cache_history, &history_line,
+                         sizeof(HISTORY_struct))) {
       DynSetLog(NULL);
-      log_add(NULL, ERROR, "History", "No se pudo cargar el contenido del historial en memoria");
+      log_add(NULL, ERROR, "History",
+              "No se pudo cargar el contenido del historial en memoria");
       break;
     }
   }
@@ -175,14 +212,17 @@ int history_save(HISTORY hist) {
   NODE_ptr node = list_pop_back(hist.local_history);
   while (node != NULL) {
     HISTORY_struct *hist_struct = (HISTORY_struct *)node->point;
-    fprintf(fp, "{\"time_stamp\": %ld, \"command\": \"%s\"}\n", hist_struct->time_stamp, hist_struct->command);
+    fprintf(fp, "{\"time_stamp\": %ld, \"command\": \"%s\"}\n", hist_struct->time_stamp,
+            hist_struct->command);
     node = list_pop_back(hist.local_history);
   }
   fclose(fp);
   return 1;
 }
 
-int history_size(HISTORY hist) { return list_size(*hist.cache_history) + list_size(*hist.local_history); }
+int history_size(HISTORY hist) {
+  return list_size(*hist.cache_history) + list_size(*hist.local_history);
+}
 
 void history_free(HISTORY_ptr hist) {
   list_free(hist->local_history);

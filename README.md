@@ -10,6 +10,7 @@
   - Soporte para navegacaión con flechas.
   - Historial empleable (almacenamiento local en memoria y en archivo externo)
   - Autocompletado interactivo con soporte para comandos y propiedades.
+  - Soporte para caracteres con codificación UTF-8.
 - Interfaz de línea de comandos colorida y dinámica.
 - Automatización básica de tareas comunes en redes.
 - Scripting reutilizable para automatizar tareas repetitivas.
@@ -62,7 +63,7 @@ Dentro de la shell:
 
 **Lenx**\
 Proyecto de investigación 2024-2025
-(C) 2024-2025 Lenx443 <menasalejandro153@gmail.com>
+<p>(C) 2024-2025 Lenx443 <menasalejandro153@gmail.com></p>
 
 ## Contacto y Notas de Uso
 
@@ -71,10 +72,7 @@ Proyecto de investigación 2024-2025
 - Puedes [abrir un issue](https://github.com/lenx443/netXenium/issues) para reportar problemas o proponer mejoras.
 - También puedes ponerte en contacto conmigo a través de [mi perfil de GitHub](https://github.com/lenx443), donde encontrarás más información y enlaces a mis redes sociales.
 
-> **Recuerda:** netXenium debe utilizarse únicamente en redes propias o entornos de laboratorio controlado. El mal uso del software queda bajo la responsabilidad del usuario.
-
 ---
 
 **¡Recuerda!** netXenium debe ser usado únicamente en redes propias o en entornos de laboratorio controlado.
-
 

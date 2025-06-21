@@ -5,7 +5,7 @@
 #include "history.h"
 #include "program.h"
 
-#define NAME "clear-history"
+#define NAME "clear_history"
 
 static int fn_clear_history(LIST_ptr args) {
   if (history == NULL) return EXIT_FAILURE;

@@ -106,6 +106,65 @@ int list_push_begin(LIST_ptr list, void *value, size_t size) {
   return 1;
 }
 
+int list_push_at_index(LIST_ptr list, int index, void *value, size_t size) {
+  if (index < 0) {
+    dyn_error = DYN_ELEMENT_NO_MATCH;
+    return 0;
+  }
+  if (index == 0 || list_empty(list)) {
+    NODE_ptr node = malloc(sizeof(NODE));
+    if (!node) {
+      dyn_error = DYN_NO_MEMORY;
+      return 0;
+    }
+    node->point = malloc(size);
+    if (!node->point) {
+      free(node);
+      dyn_error = DYN_NO_MEMORY;
+      return 0;
+    }
+    memcpy(node->point, value, size);
+    node->size = size;
+    node->next = (index == 0) ? list->head : NULL;
+    if (index == 0)
+      list->head = node;
+    else
+      list->head = node;
+    return 1;
+  }
+
+  NODE_ptr prev = list->head;
+  int n = 0;
+  while (prev && n < index - 1) {
+    prev = prev->next;
+    n++;
+  }
+
+  if (!prev) {
+    dyn_error = DYN_ELEMENT_NO_MATCH;
+    return 0;
+  }
+
+  NODE_ptr node = malloc(sizeof(NODE));
+  if (!node) {
+    dyn_error = DYN_NO_MEMORY;
+    return 0;
+  }
+  node->point = malloc(size);
+  if (!node->point) {
+    free(node);
+    dyn_error = DYN_NO_MEMORY;
+    return 0;
+  }
+
+  memcpy(node->point, value, size);
+  node->size = size;
+
+  node->next = prev->next;
+  prev->next = node;
+  return 1;
+}
+
 int list_push_back_string(LIST_ptr list, char *str) {
   for (char *p = str; *p != '\0'; p++) {
     if (!list_push_back(list, p, 1)) return 0;
@@ -169,7 +228,10 @@ NODE_ptr list_pop_back(LIST_ptr list) {
 }
 
 void list_erase_at_index(LIST_ptr list, int index) {
-  if (list_empty(list) || index < 0) return;
+  if (list_empty(list) || index < 0) {
+    dyn_error = DYN_ELEMENT_NO_MATCH;
+    return;
+  }
 
   NODE_ptr current = list->head;
   NODE_ptr previous = NULL;
@@ -347,12 +409,20 @@ void node_free(NODE_ptr *node) {
 
 void DynSetLog(LIST_ptr log) {
   switch (dyn_error) {
-  case DYN_OK: log_add(log, INFO, "Dyn-Lists", "No se ah generado ningun problema"); break;
-  case DYN_NO_MEMORY: log_add(log, ERROR, "Dyn-Lists", "No hay suficuente memoria"); break;
+  case DYN_OK:
+    log_add(log, INFO, "Dyn-Lists", "No se ah generado ningun problema");
+    break;
+  case DYN_NO_MEMORY:
+    log_add(log, ERROR, "Dyn-Lists", "No hay suficuente memoria");
+    break;
   case DYN_EMPTY: log_add(log, ERROR, "Dyn-Lists", "La lista esta bacia"); break;
   case DYN_INVALID: log_add(log, ERROR, "Dyn-Lists", "La lista no es valida"); break;
-  case DYN_ELEMENT_INVALID: log_add(log, ERROR, "Dyn-Lists", "El elemento de la lista no es valido"); break;
-  case DYN_ELEMENT_NO_MATCH: log_add(log, ERROR, "Dyn-Lists", "No se encontro el elemento en la lista"); break;
+  case DYN_ELEMENT_INVALID:
+    log_add(log, ERROR, "Dyn-Lists", "El elemento de la lista no es valido");
+    break;
+  case DYN_ELEMENT_NO_MATCH:
+    log_add(log, ERROR, "Dyn-Lists", "No se encontro el elemento en la lista");
+    break;
   }
   dyn_error = DYN_OK;
 }

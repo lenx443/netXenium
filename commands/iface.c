@@ -37,34 +37,41 @@ static int fn_iface(LIST_ptr args) {
     if (strcmp(addr, "addr") == 0) {
       prop_struct *new_addr_prop = prop_reg_value("CHG_ADDR", *prop_register);
       if (new_addr_prop == NULL) {
-        log_add(NULL, ERROR, NAME, "No se pudo acceder a la propiedad " AZUL "CHG_ADDR" RESET);
+        log_add(NULL, ERROR, NAME,
+                "No se pudo acceder a la propiedad " AZUL "CHG_ADDR" RESET);
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
       if (new_addr_prop->type != IP) {
-        log_add(NULL, ERROR, NAME, "El valor de la propiedad " AZUL "CHG_ADDR" RESET "no es una IP");
+        log_add(NULL, ERROR, NAME,
+                "El valor de la propiedad " AZUL "CHG_ADDR" RESET "no es una IP");
         return 153;
       }
       uint32_t new_addr;
       if (!to_ip(&new_addr, new_addr_prop->value)) {
-        log_add(NULL, ERROR, NAME, "Ocurrio un error al combertir la IP a binario (big-endian)");
+        log_add(NULL, ERROR, NAME,
+                "Ocurrio un error al combertir la IP a binario (big-endian)");
         log_show_and_clear(NULL);
         return 0;
       }
       if (!set_local_ip(new_addr, iface)) {
-        log_add(NULL, ERROR, NAME, "Ocurrio un error al cambiar la IP en la interfaz " CIAN "%s" RESET, iface);
+        log_add(NULL, ERROR, NAME,
+                "Ocurrio un error al cambiar la IP en la interfaz " CIAN "%s" RESET,
+                iface);
         log_show_and_clear(NULL);
         return 0;
       }
     } else if (strcmp(addr, "netmask") == 0) {
       prop_struct *new_addr_prop = prop_reg_value("CHG_NETMASK", *prop_register);
       if (new_addr_prop == NULL) {
-        log_add(NULL, ERROR, NAME, "No se pudo acceder a la propiedad " AZUL "CHG_NETMASK" RESET);
+        log_add(NULL, ERROR, NAME,
+                "No se pudo acceder a la propiedad " AZUL "CHG_NETMASK" RESET);
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
       if (new_addr_prop->type != IP) {
-        log_add(NULL, ERROR, NAME, "El valor de la propiedad " AZUL "CHG_NETMASK" RESET "no es una IP");
+        log_add(NULL, ERROR, NAME,
+                "El valor de la propiedad " AZUL "CHG_NETMASK" RESET "no es una IP");
         return 153;
       }
       uint32_t new_addr;
@@ -76,7 +83,9 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
       if (!set_local_netmask(new_addr, iface)) {
-        log_add(NULL, ERROR, NAME, "Ocurrio un error al cambiar la mascara de red en la interfaz " CIAN "%s" RESET,
+        log_add(NULL, ERROR, NAME,
+                "Ocurrio un error al cambiar la mascara de red en la interfaz " CIAN
+                "%s" RESET,
                 iface);
         log_show_and_clear(NULL);
         return 0;
@@ -84,12 +93,14 @@ static int fn_iface(LIST_ptr args) {
     } else if (strcmp(addr, "broad") == 0) {
       prop_struct *new_addr_prop = prop_reg_value("CHG_BROADCAST", *prop_register);
       if (new_addr_prop == NULL) {
-        log_add(NULL, ERROR, NAME, "No se pudo acceder a la propiedad " AZUL "CHG_BROADCAST" RESET);
+        log_add(NULL, ERROR, NAME,
+                "No se pudo acceder a la propiedad " AZUL "CHG_BROADCAST" RESET);
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
       if (new_addr_prop->type != IP) {
-        log_add(NULL, ERROR, NAME, "El valor de la propiedad " AZUL "CHG_BROADCAST" RESET "no es una IP");
+        log_add(NULL, ERROR, NAME,
+                "El valor de la propiedad " AZUL "CHG_BROADCAST" RESET "no es una IP");
         return 153;
       }
       uint32_t new_addr;
@@ -101,19 +112,24 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
       if (!set_local_broadcast(new_addr, iface)) {
-        log_add(NULL, ERROR, NAME, "Ocurrio un error al cambiar el BROADCAST en la interfaz " CIAN "%s" RESET, iface);
+        log_add(NULL, ERROR, NAME,
+                "Ocurrio un error al cambiar el BROADCAST en la interfaz " CIAN
+                "%s" RESET,
+                iface);
         log_show_and_clear(NULL);
         return 0;
       }
     } else if (strcmp(addr, "hwaddr") == 0) {
       prop_struct *new_addr_prop = prop_reg_value("CHG_HWADDR", *prop_register);
       if (new_addr_prop == NULL) {
-        log_add(NULL, ERROR, NAME, "No se pudo acceder a la propiedad " AZUL "CHG_HWADDR" RESET);
+        log_add(NULL, ERROR, NAME,
+                "No se pudo acceder a la propiedad " AZUL "CHG_HWADDR" RESET);
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
       if (new_addr_prop->type != MAC) {
-        log_add(NULL, ERROR, NAME, "El valor de la propiedad " AZUL "CHG_HWADDR" RESET "no es una MAC");
+        log_add(NULL, ERROR, NAME,
+                "El valor de la propiedad " AZUL "CHG_HWADDR" RESET "no es una MAC");
         return 153;
       }
       uint8_t new_addr[6];
@@ -123,7 +139,9 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
       if (!set_local_mac(new_addr, iface)) {
-        log_add(NULL, ERROR, NAME, "Ocurrio un error al cambiar la MAC en la interfaz " CIAN "%s" RESET, iface);
+        log_add(NULL, ERROR, NAME,
+                "Ocurrio un error al cambiar la MAC en la interfaz " CIAN "%s" RESET,
+                iface);
         log_show_and_clear(NULL);
         return 0;
       }
@@ -331,7 +349,8 @@ const Command cmd_iface = {
     "      - Las propiedades deben tener el tipo correcto (IP o MAC).\n"
     "\n"
     "  get <tipo> [interfaz]\n"
-    "    Obtiene parámetros de red de una interfaz específica o lista todas las interfaces.\n"
+    "    Obtiene parámetros de red de una interfaz específica o lista todas las "
+    "interfaces.\n"
     "    Tipos disponibles:\n"
     "      ifaces    -> Lista todas las interfaces disponibles\n"
     "      addr      -> Obtiene la dirección IP de la interfaz\n"
@@ -354,6 +373,6 @@ const Command cmd_iface = {
     "  iface change addr eth0       -> Cambia la IP de eth0 usando CHG_ADDR\n"
     "  iface get addr eth0          -> Guarda la IP de eth0 en RSLT_ADDR\n"
     "  iface get ifaces             -> Lista todas las interfaces disponibles\n",
-    {1, 3},
+    {2, 3},
     fn_iface,
 };

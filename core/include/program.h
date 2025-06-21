@@ -6,6 +6,9 @@
 #include "suggestion.h"
 
 typedef struct {
+  char **argv;
+  int argc;
+  char *name;
   int closed;
   int exit_code;
   int return_code;

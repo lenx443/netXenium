@@ -43,7 +43,10 @@ static int fn_set(LIST_ptr args) {
   prop_struct *config_prop = (prop_struct *)value_prop->point;
   int result_code = prop_reg_type_validate(config_prop->type, text_value);
   switch (result_code) {
-  case 0: log_add(NULL, ERROR, NAME, "No se encontro el tipo de dato que contiene la propiedad"); return EXIT_FAILURE;
+  case 0:
+    log_add(NULL, ERROR, NAME,
+            "No se encontro el tipo de dato que contiene la propiedad");
+    return EXIT_FAILURE;
   case 2:
     log_add(NULL, ERROR, NAME,
             "El formato de la entrada no coincide con el formato "

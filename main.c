@@ -34,7 +34,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <locale.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include "list.h"
 #include "logs.h"
@@ -49,14 +51,21 @@ int main(int argc, char **argv) {
     log_show_and_clear(NULL);
     return 1;
   }
+  setlocale(LC_CTYPE, "");
 
-  if (argc > 1)
+  program.argv = argv;
+  program.argc = argc;
+
+  if (argc > 1) {
+    program.name = strdup(argv[1]);
     load_script(argv[1]);
-  else {
+  } else {
+    program.name = strdup(argv[0]);
     signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);
   }
 
+  free(program.name);
   prop_reg_free(prop_register);
   log_free(NULL);
   return program.exit_code;
