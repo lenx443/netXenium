@@ -17,7 +17,7 @@ include_directories(
   core/include/
   core/interpreter/include/
   api/include/
-  dynamic/linked_lists/includeQqqqqqqqq
+  dynamic/linked_lists/include/
   dynamic/hash_tables/include/
   dynamic/trees/include/
   header/
