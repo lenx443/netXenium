@@ -40,3 +40,6 @@ AST_Node_t *ast_make_cmd(const char *, ArgExpr_t **, int);
 ArgExpr_t *ast_make_arg_literal(const char *);
 ArgExpr_t *ast_make_arg_property(const char *);
 ArgExpr_t *ast_make_arg_concat(ArgExpr_t **, int count);
+
+void ast_free(AST_Node_t *);
+void ast_free_arg(ArgExpr_t *);
