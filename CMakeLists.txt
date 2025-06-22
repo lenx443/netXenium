@@ -17,8 +17,9 @@ include_directories(
   core/include/
   core/interpreter/include/
   api/include/
-  dynamic/linked_lists/include/
+  dynamic/linked_lists/includeQqqqqqqqq
   dynamic/hash_tables/include/
+  dynamic/trees/include/
   header/
 )
 
@@ -57,6 +58,10 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de las tablas hash
   dynamic/hash_tables/src/string_hash_table.c
+
+  # Implementaciones de los codigos
+  # fuente de los arboles dinamicos
+  dynamic/trees/src/ast.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
