@@ -30,27 +30,19 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
   if (c == '\0') {
     token.tkn_type = TKN_EOF;
     strcpy(token.tkn_text, "<EOF>");
-  } else if ((isalpha(c) || c == '_') && lexer->tkn_pos == 0) {
-    lexer->tkn_pos++;
-    size_t start = lexer->pos;
-    while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
-      lexer->pos++;
-    size_t len = lexer->pos - start;
-    strncpy(token.tkn_text, lexer->src + start, len);
-    token.tkn_text[len] = '\0';
-    token.tkn_type = TKN_COMMAND;
+  } else if (c == '\n' || c == '\r') {
+    token.tkn_type = TKN_NEWLINE;
+    strcpy(token.tkn_text, "<New-Line>");
   } else if (isalnum(c) || c == '_') {
-    lexer->tkn_pos++;
     size_t start = lexer->pos;
     while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
       lexer->pos++;
     size_t len = lexer->pos - start;
     strncpy(token.tkn_text, lexer->src + start, len);
     token.tkn_text[len] = '\0';
-    token.tkn_type = TKN_ARGUMENT;
+    token.tkn_type = TKN_IDENTIFIER;
   } else if (c == '$') {
     lexer->pos++;
-    lexer->tkn_pos++;
     size_t start = lexer->pos;
     while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
       lexer->pos++;
@@ -60,13 +52,11 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_type = TKN_PROPERTY;
   } else if (c == '\'' || c == '"') {
     lexer->pos++;
-    lexer->tkn_pos++;
     size_t start = lexer->pos;
     while (lexer->src[lexer->pos] != '\'' && lexer->src[lexer->pos] != '"') {
       lexer->pos++;
       if (lexer->src[lexer->pos] == '\0') {
         lexer->pos++;
-        lexer->tkn_pos++;
         token.tkn_type = TKN_UNDEFINED;
         strcpy(token.tkn_text, "<UNDEF>");
         return token;
@@ -79,7 +69,6 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     lexer->pos++;
   } else if (c == '@') {
     lexer->pos++;
-    lexer->tkn_pos++;
     if (lexer->src[lexer->pos] == '@') {
       lexer->pos++;
       token.tkn_type = TKN_CONCAT;
@@ -89,19 +78,16 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[1] = lexer->src[lexer->pos];
       token.tkn_text[2] = '\0';
       lexer->pos++;
-      lexer->tkn_pos++;
       token.tkn_type = TKN_UNDEFINED;
     }
   } else if (c == '=') {
     lexer->pos++;
-    lexer->tkn_pos++;
     token.tkn_type = TKN_EQUAL;
     strcat(token.tkn_text, "=");
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
     token.tkn_text[1] = '\0';
     lexer->pos++;
-    lexer->tkn_pos++;
     token.tkn_type = TKN_UNDEFINED;
   }
   return token;

@@ -1,3 +1,6 @@
+#ifndef __AST_H__
+#define __AST_H__
+
 typedef enum {
   ARG_LITERAL = 0,
   ARG_PROPERTY,
@@ -43,3 +46,5 @@ ArgExpr_t *ast_make_arg_concat(ArgExpr_t **, int count);
 
 void ast_free(AST_Node_t *);
 void ast_free_arg(ArgExpr_t *);
+
+#endif

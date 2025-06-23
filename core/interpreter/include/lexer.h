@@ -7,8 +7,8 @@
 
 typedef enum {
   TKN_EOF = 0,
-  TKN_COMMAND,
-  TKN_ARGUMENT,
+  TKN_NEWLINE,
+  TKN_IDENTIFIER,
   TKN_PROPERTY,
   TKN_STRING,
   TKN_CONCAT,
@@ -24,7 +24,6 @@ typedef struct {
 typedef struct {
   const char *src;
   size_t pos;
-  size_t tkn_pos;
 } Lexer;
 
 void skip_whitespace(Lexer *);
