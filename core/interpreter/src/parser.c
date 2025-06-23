@@ -13,7 +13,7 @@ int parser_stmt(Parser *p, AST_Node_t *ast) {
     parser_next(p);
     ArgExpr_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
-    while (p->token.tkn_type != TKN_NEWLINE || p->token.tkn_type != TKN_UNDEFINED ||
+    while (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_UNDEFINED &&
            p->token.tkn_type != TKN_EOF) {
       ArgExpr_t *arg = parser_concat(p);
       if (!arg) goto error_exit;
