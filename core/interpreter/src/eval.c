@@ -36,7 +36,6 @@ char *eval_arg(const ArgExpr_t *arg) {
 // Evalúa el AST de un comando e imprime el comando y sus argumentos evaluados
 void ast_eval(const AST_Node_t *node) {
   if (!node) return;
-  puts("Evaluing...");
   switch (node->ast_type) {
   case AST_CMD:
     printf("Comando: %s\n", node->cmd.cmd_name);

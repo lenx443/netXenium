@@ -13,8 +13,13 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     parser_next(p);
     ArgExpr_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
-    while (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_UNDEFINED &&
-           p->token.tkn_type != TKN_EOF) {
+    while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
+      if (p->token.tkn_type == TKN_NEWLINE) {
+        puts("Parsing new line");
+        free(cmd_name);
+        parser_next(p);
+        return 1;
+      }
       ArgExpr_t *arg = parser_concat(p);
       if (!arg) goto error_exit;
       if (arg_count == arg_cap) {
@@ -29,10 +34,6 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   error_exit:
     free(cmd_name);
     return 0;
-  }
-  if (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-    return 1;
   }
   return 0;
 }

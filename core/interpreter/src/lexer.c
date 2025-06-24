@@ -10,7 +10,7 @@ void skip_whitespace(Lexer *lexer) {
     char c = lexer->src[lexer->pos];
     if (isspace(c)) {
       lexer->pos++;
-    } else if (c == '/' && lexer->src[lexer->pos + 1] == '/') {
+    } else if (c == '#') {
       while (lexer->src[lexer->pos] && lexer->src[lexer->pos] != '\n')
         lexer->pos++;
     } else {
@@ -31,6 +31,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_type = TKN_EOF;
     strcpy(token.tkn_text, "<EOF>");
   } else if (c == '\n' || c == '\r') {
+    lexer->pos++;
     token.tkn_type = TKN_NEWLINE;
     strcpy(token.tkn_text, "<New-Line>");
   } else if (isalnum(c) || c == '_') {
