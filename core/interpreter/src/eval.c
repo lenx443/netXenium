@@ -43,7 +43,6 @@ char *eval_arg(const ArgExpr_t *arg) {
   }
 }
 
-// Evalúa el AST de un comando e imprime el comando y sus argumentos evaluados
 void ast_eval(const AST_Node_t *node) {
   if (!node) return;
   switch (node->ast_type) {
