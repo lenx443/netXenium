@@ -1,16 +1,13 @@
 #include <ctype.h>
-#include <errno.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
+#include "ast.h"
 #include "colors.h"
 #include "commands.h"
-#include "functions.h"
+#include "eval.h"
 #include "history.h"
-#include "interpreter.h"
 #include "lexer.h"
 #include "list.h"
 #include "logs.h"
@@ -330,12 +327,12 @@ void shell_loop(char *name) {
   while (1) {
     LIST_ptr cmd = read_string_utf8();
     char *cmd_str = string_utf8_get(cmd);
-    Lexer lexer = {cmd_str, 0, 0};
+    Lexer lexer = {cmd_str, 0};
     Parser parser = {&lexer};
-    Parser_Code parsed_code = {0};
+    AST_Node_t *ast = NULL;
     parser_next(&parser);
-    if (parser_stmt(&parser, &parsed_code)) interpreter(&parsed_code, cmd_str);
-    parser_code_free(&parsed_code);
+    while (parser_stmt(&parser, &ast))
+      ast_eval(ast);
     free(cmd_str);
     if (program.closed) break;
   }

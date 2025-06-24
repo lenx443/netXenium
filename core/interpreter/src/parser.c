@@ -7,7 +7,7 @@
 
 void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 
-int parser_stmt(Parser *p, AST_Node_t *ast) {
+int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     char *cmd_name = strdup(p->token.tkn_text);
     parser_next(p);
@@ -23,7 +23,7 @@ int parser_stmt(Parser *p, AST_Node_t *ast) {
       }
       args[arg_count++] = arg;
     }
-    ast = ast_make_cmd(cmd_name, args, arg_count);
+    *ast = ast_make_cmd(cmd_name, args, arg_count);
     free(cmd_name);
     return 1;
   error_exit:
@@ -66,5 +66,11 @@ ArgExpr_t *parser_arg(Parser *p) {
     parser_next(p);
     return node;
   }
+  if (p->token.tkn_type == TKN_PROPERTY) {
+    ArgExpr_t *node = ast_make_arg_property(p->token.tkn_text);
+    parser_next(p);
+    return node;
+  }
+  parser_next(p);
   return NULL;
 }

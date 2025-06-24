@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     load_script(argv[1]);
   } else {
     program.name = strdup(argv[0]);
-    signal(SIGINT, SIG_IGN);
+    // signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);
   }
 

@@ -37,7 +37,7 @@ add_executable(ntxenium
   # e interpretar scripts
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
-  core/interpreter/src/interpreter.c
+  core/interpreter/src/eval.c
 
   # codigo fuente de la la API
   # del Framework.
