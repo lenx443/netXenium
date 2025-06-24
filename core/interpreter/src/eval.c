@@ -3,15 +3,21 @@
 #include <string.h>
 
 #include "ast.h"
+#include "commands.h"
 #include "eval.h"
+#include "list.h"
+#include "program.h"
+#include "properties.h"
 
 char *eval_arg(const ArgExpr_t *arg) {
   if (!arg) return NULL;
   switch (arg->arg_type) {
   case ARG_LITERAL: return strdup(arg->literal);
-  case ARG_PROPERTY:
-    // Aquí podrías buscar el valor de la propiedad, por ahora solo lo devuelve
-    return strdup(arg->property);
+  case ARG_PROPERTY: {
+    prop_struct *prop_s = prop_reg_value(arg->property, *prop_register);
+    if (!prop_s) { return NULL; }
+    return strdup(prop_s->value);
+  }
   case ARG_CONCAT: {
     // Concatenar todos los resultados de las partes
     size_t total_len = 1; // 1 para el '\0'
@@ -37,14 +43,26 @@ char *eval_arg(const ArgExpr_t *arg) {
 void ast_eval(const AST_Node_t *node) {
   if (!node) return;
   switch (node->ast_type) {
-  case AST_CMD:
-    printf("Comando: %s\n", node->cmd.cmd_name);
+  case AST_CMD: {
+    LIST_ptr args = list_new();
+    list_push_back_string_node(args, node->cmd.cmd_name);
     for (int i = 0; i < node->cmd.arg_count; ++i) {
       char *arg_val = eval_arg(node->cmd.cmd_args[i]);
-      printf("  Arg %d: %s\n", i + 1, arg_val ? arg_val : "(null)");
+      list_push_back_string_node(args, arg_val);
       free(arg_val);
     }
+    for (int i = 0; cmds_table[i] != NULL; i++) {
+      if (strcmp(cmds_table[i]->name, node->cmd.cmd_name) == 0) {
+        int args_size = list_size(*args);
+        if ((args_size - 1) < cmds_table[i]->args_len[0] ||
+            (args_size - 1) > cmds_table[i]->args_len[1])
+          break;
+        program.return_code = cmds_table[i]->func(args);
+        break;
+      }
+    }
     break;
+  }
   default: printf("Tipo de nodo AST no soportado.\n");
   }
 }

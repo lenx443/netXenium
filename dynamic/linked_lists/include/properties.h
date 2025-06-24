@@ -27,8 +27,8 @@ typedef struct {
 
 LIST_ptr prop_reg_new();
 int prop_reg_add(LIST_ptr, char *, char *, prop_types);
-int prop_reg_search_key(char *, LIST);
-prop_struct *prop_reg_value(char *, LIST);
+int prop_reg_search_key(const char *, LIST);
+prop_struct *prop_reg_value(const char *, LIST);
 int prop_reg_type_validate(prop_types, char *);
 void prop_reg_free(LIST_ptr);
 

@@ -8,7 +8,7 @@
 void skip_whitespace(Lexer *lexer) {
   while (1) {
     char c = lexer->src[lexer->pos];
-    if (isspace(c)) {
+    if (c == ' ' || c == '\t') {
       lexer->pos++;
     } else if (c == '#') {
       while (lexer->src[lexer->pos] && lexer->src[lexer->pos] != '\n')

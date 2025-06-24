@@ -326,15 +326,16 @@ void shell_loop(char *name) {
 
   while (1) {
     LIST_ptr cmd = read_string_utf8();
-    char *cmd_str = "command1 arg1 $prop2 \"text - 3\"\n"
-                    "command2 $prop1 'text - 2' arg3";
-    // string_utf8_get(cmd);
+    char *cmd_str = string_utf8_get(cmd);
     Lexer lexer = {cmd_str, 0};
     Parser parser = {&lexer};
     AST_Node_t *ast = NULL;
     parser_next(&parser);
-    while (parser_stmt(&parser, &ast))
+    while (parser_stmt(&parser, &ast)) {
       ast_eval(ast);
+      free(ast);
+      ast = NULL;
+    }
     free(cmd_str);
     if (program.closed) break;
   }

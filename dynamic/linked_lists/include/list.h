@@ -35,7 +35,7 @@ LIST_ptr list_new();
 int list_size(LIST);
 int list_empty(LIST_ptr);
 int list_valid(LIST_ptr);
-int list_push_back(LIST_ptr, void *, size_t);
+int list_push_back(LIST_ptr, const void *, size_t);
 int list_push_begin(LIST_ptr, void *, size_t);
 int list_push_at_index(LIST_ptr, int, void *, size_t);
 NODE_ptr list_pop_back(LIST_ptr);
@@ -50,8 +50,8 @@ void list_free(LIST_ptr);
 #define DEPRECATED __attribute__((deprecated("new string_utf8")))
 DEPRECATED LIST_ptr list_new_string(char *);
 DEPRECATED int list_push_back_string(LIST_ptr, char *);
-int list_push_back_string_node(LIST_ptr, char *);
-int list_search_string(LIST, char *);
+int list_push_back_string_node(LIST_ptr, const char *);
+int list_search_string(LIST, const char *);
 DEPRECATED void list_as_string(LIST, char *, int);
 
 int node_empty(NODE_ptr *);

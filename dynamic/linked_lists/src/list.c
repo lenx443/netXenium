@@ -50,7 +50,7 @@ int list_valid(LIST_ptr list) {
   return 1;
 }
 
-int list_push_back(LIST_ptr list, void *value, size_t size) {
+int list_push_back(LIST_ptr list, const void *value, size_t size) {
   if (list == NULL) {
     dyn_error = DYN_INVALID;
     return 0;
@@ -172,7 +172,7 @@ int list_push_back_string(LIST_ptr list, char *str) {
   return 1;
 }
 
-int list_push_back_string_node(LIST_ptr list, char *str) {
+int list_push_back_string_node(LIST_ptr list, const char *str) {
   int size = strlen(str) + 1;
   if (!list_push_back(list, str, size)) return 0;
   return 1;
@@ -267,7 +267,7 @@ int list_search(LIST list, void *value, size_t size) {
   return -1;
 }
 
-int list_search_string(LIST list, char *value) {
+int list_search_string(LIST list, const char *value) {
   if (list_empty(&list)) return 0;
   NODE_ptr current = list.head;
   int n = 0;

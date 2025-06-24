@@ -31,7 +31,7 @@ int prop_reg_add(LIST_ptr list, char *key, char *value, prop_types type) {
   return 1;
 }
 
-int prop_reg_search_key(char *key, LIST list) {
+int prop_reg_search_key(const char *key, LIST list) {
   NODE_ptr node = NULL;
   int n = 0;
   FOR_EACH(&node, list) {
@@ -44,7 +44,7 @@ int prop_reg_search_key(char *key, LIST list) {
   return -1;
 }
 
-prop_struct *prop_reg_value(char *key, LIST list) {
+prop_struct *prop_reg_value(const char *key, LIST list) {
   int n = prop_reg_search_key(key, list);
   if (n == -1) return NULL;
   NODE_ptr node = list_index_get(n, list);

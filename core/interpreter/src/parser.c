@@ -15,13 +15,16 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     int arg_count = 0, arg_cap = 0;
     while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
       if (p->token.tkn_type == TKN_NEWLINE) {
-        puts("Parsing new line");
+        *ast = ast_make_cmd(cmd_name, args, arg_count);
         free(cmd_name);
         parser_next(p);
         return 1;
       }
       ArgExpr_t *arg = parser_concat(p);
-      if (!arg) goto error_exit;
+      if (!arg) {
+        free(cmd_name);
+        return 0;
+      }
       if (arg_count == arg_cap) {
         arg_cap = arg_cap ? arg_cap * 2 : 4;
         args = realloc(args, sizeof(ArgExpr_t *) * arg_cap);
@@ -31,9 +34,6 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     *ast = ast_make_cmd(cmd_name, args, arg_count);
     free(cmd_name);
     return 1;
-  error_exit:
-    free(cmd_name);
-    return 0;
   }
   return 0;
 }
