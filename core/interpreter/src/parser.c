@@ -34,6 +34,10 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     *ast = ast_make_cmd(cmd_name, args, arg_count);
     free(cmd_name);
     return 1;
+  } else if (p->token.tkn_type == TKN_NEWLINE) {
+    *ast = ast_make_empty();
+    parser_next(p);
+    return 1;
   }
   return 0;
 }

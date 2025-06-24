@@ -10,5 +10,5 @@ input LOCAL_IFACE
 
 echo 'obteniendo MAC, utilize CTRL+C para abortar\n'
 resolve target
-echo 'la MAC de $TARGET_ADDR es $TARGET_HWADDR\n'
+echo 'la MAC de ' @@ $TARGET_ADDR @@ ' es ' @@ $TARGET_HWADDR @@ '\n'
 exit 0

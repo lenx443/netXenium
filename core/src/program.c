@@ -304,12 +304,38 @@ void load_script(char *filename) {
     return;
   }
   char line[CMDSIZ];
-  while (fgets(line, CMDSIZ, fp)) {
-    line[strcspn(line, "\n")] = '\0';
-    if (!command_parser(line, EXEC_MODE, NULL, 0) || program.closed ||
-        program.return_code != 0)
-      return;
+  LIST_ptr buffer = list_new();
+  if (!buffer) {
+    program.exit_code = EXIT_FAILURE;
+    return;
   }
+  while (fgets(line, CMDSIZ, fp)) {
+    if (!string_utf8_push_back(buffer, line)) {
+      list_free(buffer);
+      fclose(fp);
+      program.exit_code = EXIT_FAILURE;
+      return;
+    }
+  }
+  fclose(fp);
+  char *file_content = string_utf8_get(buffer);
+  if (!file_content) {
+    list_free(buffer);
+    program.exit_code = EXIT_FAILURE;
+    return;
+  }
+  Lexer lexer = {file_content, 0};
+  Parser parser = {&lexer};
+  AST_Node_t *ast = NULL;
+  parser_next(&parser);
+  while (parser_stmt(&parser, &ast)) {
+    ast_eval(ast);
+    ast_free(ast);
+    ast = NULL;
+    if (program.return_code == EXIT_FAILURE) break;
+  }
+  free(file_content);
+  list_free(buffer);
 }
 
 void shell_loop(char *name) {
@@ -333,7 +359,7 @@ void shell_loop(char *name) {
     parser_next(&parser);
     while (parser_stmt(&parser, &ast)) {
       ast_eval(ast);
-      free(ast);
+      ast_free(ast);
       ast = NULL;
     }
     free(cmd_str);

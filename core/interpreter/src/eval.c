@@ -6,6 +6,7 @@
 #include "commands.h"
 #include "eval.h"
 #include "list.h"
+#include "logs.h"
 #include "program.h"
 #include "properties.h"
 
@@ -15,7 +16,10 @@ char *eval_arg(const ArgExpr_t *arg) {
   case ARG_LITERAL: return strdup(arg->literal);
   case ARG_PROPERTY: {
     prop_struct *prop_s = prop_reg_value(arg->property, *prop_register);
-    if (!prop_s) { return NULL; }
+    if (!prop_s) {
+      log_add(NULL, ERROR, program.name, "No se encontro la propiedad %s", arg->property);
+      return NULL;
+    }
     return strdup(prop_s->value);
   }
   case ARG_CONCAT: {
@@ -43,11 +47,19 @@ char *eval_arg(const ArgExpr_t *arg) {
 void ast_eval(const AST_Node_t *node) {
   if (!node) return;
   switch (node->ast_type) {
+  case AST_EMPTY: break;
   case AST_CMD: {
     LIST_ptr args = list_new();
     list_push_back_string_node(args, node->cmd.cmd_name);
     for (int i = 0; i < node->cmd.arg_count; ++i) {
       char *arg_val = eval_arg(node->cmd.cmd_args[i]);
+      if (!arg_val) {
+        log_add(NULL, ERROR, program.name, "Error al formar argumentos");
+        log_show_and_clear(NULL);
+        program.return_code = EXIT_FAILURE;
+        list_free(args);
+        return;
+      }
       list_push_back_string_node(args, arg_val);
       free(arg_val);
     }
@@ -61,6 +73,7 @@ void ast_eval(const AST_Node_t *node) {
         break;
       }
     }
+    free(args);
     break;
   }
   default: printf("Tipo de nodo AST no soportado.\n");

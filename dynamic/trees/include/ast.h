@@ -22,7 +22,8 @@ struct ArgExpr_s {
 typedef struct ArgExpr_s ArgExpr_t;
 
 typedef enum {
-  AST_CMD = 0,
+  AST_EMPTY = 0,
+  AST_CMD,
 } ASTNodeType;
 
 struct AST_Node_s {
@@ -38,6 +39,7 @@ struct AST_Node_s {
 
 typedef struct AST_Node_s AST_Node_t;
 
+AST_Node_t *ast_make_empty();
 AST_Node_t *ast_make_cmd(const char *, ArgExpr_t **, int);
 
 ArgExpr_t *ast_make_arg_literal(const char *);

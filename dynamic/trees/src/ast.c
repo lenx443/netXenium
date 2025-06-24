@@ -2,6 +2,12 @@
 
 #include "ast.h"
 
+AST_Node_t *ast_make_empty() {
+  AST_Node_t *node = malloc(sizeof(AST_Node_t));
+  node->ast_type = AST_EMPTY;
+  return node;
+}
+
 AST_Node_t *ast_make_cmd(const char *cmd_name, ArgExpr_t **cmd_args, int arg_count) {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_CMD;
