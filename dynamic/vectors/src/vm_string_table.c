@@ -18,7 +18,7 @@ vm_String_Table_ptr vm_string_table_new() {
 int vm_string_table_add(vm_String_Table_ptr table, char *str) {
   if (!table) {
     log_add(NULL, ERROR, "VM / String table", "No se pudo agregar el elemento");
-    log_add(NULL, ERROR, "VM / String table", "Tabla de cadenas bacia");
+    log_add(NULL, ERROR, "VM / String table", "Tabla de cadenas vacía");
     return 0;
   }
   if (table->size >= table->capacity) {
@@ -32,7 +32,13 @@ int vm_string_table_add(vm_String_Table_ptr table, char *str) {
     table->strings = new_mem;
     table->capacity = new_capacity;
   }
-  table->strings[table->size++] = strdup(str);
+  char *new_string = strdup(str);
+  if (!new_string) {
+    log_add(NULL, ERROR, "VM / String table", "No se pudo agregar el elemento");
+    log_add(NULL, ERROR, "VM / String table", "No hay memoria disponible");
+    return 0;
+  }
+  table->strings[table->size++] = new_string;
   return 1;
 }
 
