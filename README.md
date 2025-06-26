@@ -20,6 +20,7 @@
 ## Requisitos
 
 - Sistema operativo **Linux**
+- Entorno Posix (glibc requerido)
 - **Permisos de superusuario** (root)
 - **libpcap** y **json-c** instaladas
 

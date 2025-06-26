@@ -21,6 +21,11 @@ int vm_string_table_add(vm_String_Table_ptr table, char *str) {
     log_add(NULL, ERROR, "VM / String table", "Tabla de cadenas vacía");
     return 0;
   }
+  if (!str) {
+    log_add(NULL, ERROR, "VM / String table", "No se pudo agregar el elemento");
+    log_add(NULL, ERROR, "VM / String table", "Cadena nula recibida");
+    return 0;
+  }
   if (table->size >= table->capacity) {
     int new_capacity = (table->capacity == 0) ? 8 : table->capacity * 2;
     char **new_mem = realloc(table->strings, new_capacity * sizeof(char *));
