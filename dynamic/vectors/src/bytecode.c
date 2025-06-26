@@ -23,7 +23,7 @@ void bc_free(const Bytecode_Array_ptr bc) {
   free(bc);
 }
 
-int bc_add_nop(Bytecode_Array_ptr bc) {
+int bc_add_instr(Bytecode_Array_ptr bc, bc_Instruct_t instr) {
   if (!bc) {
     error("El arreglo de bytecode esta vacío");
     return 0;
@@ -38,6 +38,10 @@ int bc_add_nop(Bytecode_Array_ptr bc) {
     bc->bc_array = new_mem;
     bc->bc_capacity = new_capacity;
   }
-  bc->bc_array[bc->bc_size++] = (bc_Instruct_t){.bci_opcode = NOP, 0, 0, 0};
+  bc->bc_array[bc->bc_size++] = instr;
   return 1;
+}
+
+int bc_add_nop(Bytecode_Array_ptr bc) {
+  return bc_add_instr(bc, (bc_Instruct_t){NOP, 0, 0, 0});
 }
