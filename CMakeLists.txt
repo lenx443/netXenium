@@ -20,6 +20,7 @@ include_directories(
   dynamic/linked_lists/include/
   dynamic/hash_tables/include/
   dynamic/trees/include/
+  dynamic/vectors/include/
   header/
 )
 
@@ -38,6 +39,7 @@ add_executable(ntxenium
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
   core/interpreter/src/eval.c
+  core/interpreter/src/vm.c
 
   # codigo fuente de la la API
   # del Framework.
@@ -62,6 +64,10 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de los arboles dinamicos
   dynamic/trees/src/ast.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores
+  dynamic/vectors/src/bytecode.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
