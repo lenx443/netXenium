@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum {
+typedef enum __attribute__((packed)) {
   NOP = 0,
 } bc_opcode;
 
@@ -26,6 +26,9 @@ typedef struct Bytecode_Array Bytecode_Array_t;
 typedef bc_Instruct_t *bc_Instruct_ptr;
 typedef Bytecode_Array_t *Bytecode_Array_ptr;
 
+Bytecode_Array_ptr bc_new();
 void bc_free(const Bytecode_Array_ptr);
+
+int bc_add_nop(Bytecode_Array_ptr);
 
 #endif
