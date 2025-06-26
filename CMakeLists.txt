@@ -68,6 +68,7 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de los vectores
   dynamic/vectors/src/bytecode.c
+  dynamic/vectors/src/vm_string_table.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
