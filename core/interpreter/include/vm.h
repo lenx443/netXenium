@@ -8,7 +8,7 @@
 #include "vm_string_table.h"
 
 typedef struct {
-  int *reg;
+  uintptr_t *reg;
   size_t capacity;
 } VM_Register;
 
@@ -23,7 +23,7 @@ typedef struct {
 typedef VM *VM_ptr;
 
 VM_ptr vm_new();
-int vm_load_strings(VM_ptr);
+void vm_run(VM_ptr);
 void vm_free(VM_ptr);
 
 #endif

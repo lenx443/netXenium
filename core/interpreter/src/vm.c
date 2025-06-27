@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "bytecode.h"
@@ -38,6 +39,36 @@ VM_ptr vm_new() {
   vm->ip = 0;
   vm->running = 0;
   return vm;
+}
+
+void vm_run(VM_ptr vm) {
+  vm->running = 1;
+  while (vm->running) {
+    const bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
+    switch (instr.bci_opcode) {
+    case OP_NOP: break;
+    case OP_LOAD_IMM:
+      if (instr.bci_dst >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      vm->reg.reg[instr.bci_dst] = instr.bci_src2;
+      break;
+    case OP_LOAD_STRING:
+      if (instr.bci_dst >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      if (instr.bci_src2 >= vm->String_Table->size) {
+        vm->running = 0;
+        break;
+      }
+      vm->reg.reg[instr.bci_dst] = (uintptr_t)vm->String_Table->strings[instr.bci_src2];
+      break;
+    case OP_HALT:
+    default: vm->running = 0; break;
+    }
+  }
 }
 
 void vm_free(VM_ptr vm) {
