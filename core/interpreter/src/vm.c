@@ -48,14 +48,14 @@ void vm_run(VM_ptr vm) {
     switch (instr.bci_opcode) {
     case OP_NOP: break;
     case OP_LOAD_IMM:
-      if (instr.bci_dst >= vm->reg.capacity) {
+      if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
         vm->running = 0;
         break;
       }
-      vm->reg.reg[instr.bci_dst] = instr.bci_src2;
+      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = instr.bci_src2;
       break;
     case OP_LOAD_STRING:
-      if (instr.bci_dst >= vm->reg.capacity) {
+      if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
         vm->running = 0;
         break;
       }
@@ -63,7 +63,8 @@ void vm_run(VM_ptr vm) {
         vm->running = 0;
         break;
       }
-      vm->reg.reg[instr.bci_dst] = (uintptr_t)vm->String_Table->strings[instr.bci_src2];
+      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
+          (uintptr_t)vm->String_Table->strings[instr.bci_src2];
       break;
     case OP_HALT:
     default: vm->running = 0; break;

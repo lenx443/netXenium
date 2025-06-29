@@ -29,6 +29,10 @@ struct Bytecode_Array {
   size_t bc_capacity;
 };
 
+#define BC_REG_PACK(reg, flag) ((flag ? 0x80 : 0) | (reg & 0x7f))
+#define BC_REG_GET_FLAG_BIT(reg) (reg & 0x80) >> 7
+#define BC_REG_GET_VALUE(reg) (reg & 0x7f)
+
 typedef union bc_Instruct bc_Instruct_t;
 typedef struct Bytecode_Array Bytecode_Array_t;
 typedef bc_Instruct_t *bc_Instruct_ptr;
