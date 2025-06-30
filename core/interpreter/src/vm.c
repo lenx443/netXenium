@@ -18,7 +18,13 @@ VM_ptr vm_new() {
   size_t reg_capacity = 128;
   vm->reg.reg = malloc(reg_capacity * sizeof(int));
   if (!vm->reg.reg) {
-    error("No hay memoria disponible");
+    error("no hay memoria disponible");
+    free(vm);
+    return NULL;
+  }
+  vm->reg.point_flag = malloc(reg_capacity);
+  if (!vm->reg.point_flag) {
+    error("no hay memoria disponible");
     free(vm);
     return NULL;
   }
@@ -26,6 +32,7 @@ VM_ptr vm_new() {
   vm->String_Table = vm_string_table_new();
   if (!vm->String_Table) {
     free(vm->reg.reg);
+    free(vm->reg.point_flag);
     free(vm);
     return NULL;
   }
@@ -33,6 +40,7 @@ VM_ptr vm_new() {
   if (!vm->bytecode) {
     vm_string_table_free(vm->String_Table);
     free(vm->reg.reg);
+    free(vm->reg.point_flag);
     free(vm);
     return NULL;
   }
@@ -65,6 +73,7 @@ void vm_run(VM_ptr vm) {
       }
       vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
           (uintptr_t)vm->String_Table->strings[instr.bci_src2];
+      vm->reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
       break;
     case OP_HALT:
     default: vm->running = 0; break;
@@ -77,5 +86,6 @@ void vm_free(VM_ptr vm) {
   bc_free(vm->bytecode);
   vm_string_table_free(vm->String_Table);
   free(vm->reg.reg);
+  free(vm->reg.point_flag);
   free(vm);
 }

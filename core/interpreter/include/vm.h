@@ -9,6 +9,7 @@
 
 typedef struct {
   uintptr_t *reg;
+  uint8_t *point_flag;
   size_t capacity;
 } VM_Register;
 
