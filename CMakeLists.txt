@@ -16,11 +16,12 @@ set(C_STANDARD 99)
 include_directories(
   core/include/
   core/interpreter/include/
+  core/interpreter/virtual_machine/include/
+  core/interpreter/virtual_machine/dynamic/vectors/include
   api/include/
   dynamic/linked_lists/include/
   dynamic/hash_tables/include/
   dynamic/trees/include/
-  dynamic/vectors/include/
   header/
 )
 
@@ -39,7 +40,16 @@ add_executable(ntxenium
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
   core/interpreter/src/eval.c
-  core/interpreter/src/vm.c
+
+  # Entorno de maquina virtual para la
+  # ejecucion de bytecode.
+  core/interpreter/virtual_machine/src/vm.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores de la
+  # maquina virtual
+  core/interpreter/virtual_machine/dynamic/vectors/src/bytecode.c
+  core/interpreter/virtual_machine/dynamic/vectors/src/vm_string_table.c
 
   # codigo fuente de la la API
   # del Framework.
@@ -64,11 +74,6 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de los arboles dinamicos
   dynamic/trees/src/ast.c
-
-  # Implementaciones de los codigos
-  # fuente de los vectores
-  dynamic/vectors/src/bytecode.c
-  dynamic/vectors/src/vm_string_table.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
