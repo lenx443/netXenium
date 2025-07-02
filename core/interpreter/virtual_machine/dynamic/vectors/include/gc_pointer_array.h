@@ -15,7 +15,7 @@ typedef struct GCPointer_array GCPointer_array_t;
 typedef GCPointer_array_t *GCPointer_array_ptr;
 
 GCPointer_array_ptr gc_pointer_array_new();
-int gc_pointer_array_add(GCPointer_ptr);
+int gc_pointer_array_add(GCPointer_array_ptr, GCPointer_ptr);
 void gc_pointer_array_free(GCPointer_array_ptr);
 
 #endif
