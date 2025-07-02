@@ -7,7 +7,6 @@ struct GCPointer {
   void *gc_ptr;
   size_t gc_size;
   int gc_market;
-  struct GCPointer **childs;
 };
 
 typedef struct GCPointer GCPointer_t;
