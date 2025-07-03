@@ -25,7 +25,10 @@ void garbage_collector_sweep_array(GCPointer_node_ptr *gc_ptr_list) {
     if (!current->gc_pointer->gc_marked) {
       gc_pointer_free(current->gc_pointer);
       free(current);
-      if (previous) { previous->next = next; }
+      if (previous)
+        previous->next = next;
+      else
+        *gc_ptr_list = next;
     } else
       previous = current;
     current = next;

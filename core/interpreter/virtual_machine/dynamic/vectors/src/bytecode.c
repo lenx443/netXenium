@@ -44,6 +44,7 @@ int bc_add_instr(Bytecode_Array_ptr bc, bc_Instruct_t instr) {
 
 // clang-format off
 int bc_add_nop(Bytecode_Array_ptr bc) { return bc_add_instr(bc, (bc_Instruct_t){OP_NOP, 0, 0, 0}); }
+int bc_add_syscall(Bytecode_Array_ptr bc) {return bc_add_instr(bc, (bc_Instruct_t){OP_SYSCALL, 0, 0, 0}); }
 int bc_add_load_imm(Bytecode_Array_ptr bc, int reg, int imm) { return bc_add_instr(bc, (bc_Instruct_t){OP_LOAD_IMM, reg, 0, imm}); }
 int bc_add_load_string(Bytecode_Array_ptr bc, int reg, int string) { return bc_add_instr(bc, (bc_Instruct_t){OP_LOAD_STRING, reg, 0, string}); }
 int bc_add_halt(Bytecode_Array_ptr bc) { return bc_add_instr(bc, (bc_Instruct_t){OP_HALT, 0, 0, 0}); }

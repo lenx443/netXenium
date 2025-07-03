@@ -56,7 +56,6 @@ add_executable(ntxenium
   # maquina virtual
   core/interpreter/virtual_machine/dynamic/vectors/src/bytecode.c
   core/interpreter/virtual_machine/dynamic/vectors/src/vm_string_table.c
-  core/interpreter/virtual_machine/dynamic/vectors/src/gc_pointer_array.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

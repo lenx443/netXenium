@@ -34,14 +34,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdlib.h>
 
+#include "bytecode.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
 #include "properties.h"
+#include "vm.h"
+#include "vm_string_table.h"
 
 int main(int argc, char **argv) {
   global_logs = list_new();
@@ -60,6 +64,17 @@ int main(int argc, char **argv) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);
   } else {
+    VM_ptr vm = vm_new();
+    assert(vm != NULL);
+    assert(vm_string_table_add(vm->String_Table, "hola mundo"));
+    bc_add_load_imm(vm->bytecode, 0, 64);
+    bc_add_load_imm(vm->bytecode, 1, 1);
+    bc_add_load_string(vm->bytecode, 2, 0);
+    bc_add_load_imm(vm->bytecode, 3, 10);
+    bc_add_syscall(vm->bytecode);
+    vm_run(vm);
+
+    return 1;
     program.name = strdup(argv[0]);
     // signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);

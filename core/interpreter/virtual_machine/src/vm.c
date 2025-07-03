@@ -1,7 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+#include "GCPointer.h"
 #include "bytecode.h"
 #include "logs.h"
 #include "vm.h"
@@ -55,6 +57,19 @@ void vm_run(VM_ptr vm) {
     const bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
     switch (instr.bci_opcode) {
     case OP_NOP: break;
+    case OP_SYSCALL: {
+      uintptr_t syscall_num = vm->reg.reg[0];
+      uintptr_t args[6];
+      for (int i = 1; i <= 6; i++) {
+        if (vm->reg.point_flag[i]) {
+          args[i - 1] = (uintptr_t)((GCPointer_ptr)vm->reg.reg[i])->gc_ptr;
+        } else {
+          args[i - 1] = vm->reg.reg[i];
+        }
+      }
+      syscall(syscall_num, args[0], args[1], args[2], args[3], args[4], args[5]);
+      break;
+    }
     case OP_LOAD_IMM:
       if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
         vm->running = 0;
