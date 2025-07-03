@@ -19,6 +19,7 @@ include_directories(
   core/interpreter/virtual_machine/include/
   core/interpreter/virtual_machine/types/include/
   core/interpreter/virtual_machine/dynamic/vectors/include
+  core/interpreter/virtual_machine/dynamic/linked_lists/include/
   api/include/
   dynamic/linked_lists/include/
   dynamic/hash_tables/include/
@@ -45,6 +46,7 @@ add_executable(ntxenium
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
   core/interpreter/virtual_machine/src/vm.c
+  core/interpreter/virtual_machine/src/garbage_collector.c
 
   # Tiposbdefinidos en la maquina virtual
   core/interpreter/virtual_machine/types/src/GCPointer.c
@@ -55,6 +57,11 @@ add_executable(ntxenium
   core/interpreter/virtual_machine/dynamic/vectors/src/bytecode.c
   core/interpreter/virtual_machine/dynamic/vectors/src/vm_string_table.c
   core/interpreter/virtual_machine/dynamic/vectors/src/gc_pointer_array.c
+
+  # Implementaciones de los codigos
+  # fuente de las listas enlazadas
+  # de la maquina virtual
+  core/interpreter/virtual_machine/dynamic/linked_lists/src/gc_pointer_list.c
 
   # codigo fuente de la la API
   # del Framework.

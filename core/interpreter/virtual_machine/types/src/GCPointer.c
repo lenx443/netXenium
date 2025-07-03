@@ -20,7 +20,7 @@ GCPointer_ptr gc_pointer_new(void *ptr, size_t size) {
   }
   memcpy(gc_ptr->gc_ptr, ptr, size);
   gc_ptr->gc_size = size;
-  gc_ptr->gc_market = 0;
+  gc_ptr->gc_marked = 0;
   return gc_ptr;
 }
 

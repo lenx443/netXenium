@@ -73,7 +73,6 @@ void vm_run(VM_ptr vm) {
       }
       vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
           (uintptr_t)vm->String_Table->strings[instr.bci_src2];
-      vm->reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
       break;
     case OP_HALT:
     default: vm->running = 0; break;
