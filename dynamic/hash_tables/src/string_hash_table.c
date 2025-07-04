@@ -4,6 +4,18 @@
 #include "logs.h"
 #include "string_hash_table.h"
 
+uint32_t hash_fnv_1a(const void *key, size_t len) {
+  const uint8_t *data = (const uint8_t *)key;
+  uint32_t hash = 2166136261u;
+
+  for (size_t i = 0; i < len; ++i) {
+    hash ^= data[i];
+    hash *= 16777619u;
+  }
+
+  return hash;
+}
+
 unsigned long str_hash(const char *str) {
   unsigned long hash = 0x1505;
   int c;

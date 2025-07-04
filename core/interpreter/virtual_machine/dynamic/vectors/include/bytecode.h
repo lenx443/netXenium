@@ -9,6 +9,7 @@ typedef enum {
   OP_SYSCALL,
   OP_LOAD_IMM,
   OP_LOAD_STRING,
+  OP_STRING_CONCAT,
   OP_HALT,
 } bc_opcode;
 
@@ -46,6 +47,7 @@ int bc_add_nop(Bytecode_Array_ptr);
 int bc_add_syscall(Bytecode_Array_ptr);
 int bc_add_load_imm(Bytecode_Array_ptr, int, int);
 int bc_add_load_string(Bytecode_Array_ptr, int, int);
+int bc_add_string_concat(Bytecode_Array_ptr, int, int, int);
 int bc_add_halt(Bytecode_Array_ptr);
 
 #endif

@@ -16,6 +16,7 @@ set(C_STANDARD 99)
 include_directories(
   core/include/
   core/interpreter/include/
+  core/interpreter/dynamic/trees/include/
   core/interpreter/virtual_machine/include/
   core/interpreter/virtual_machine/types/include/
   core/interpreter/virtual_machine/dynamic/vectors/include
@@ -23,7 +24,6 @@ include_directories(
   api/include/
   dynamic/linked_lists/include/
   dynamic/hash_tables/include/
-  dynamic/trees/include/
   header/
 )
 
@@ -42,6 +42,11 @@ add_executable(ntxenium
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
   core/interpreter/src/eval.c
+
+  # Implementaciones de los codigos
+  # fuente de los arboles dinamicos
+  # del interpreter
+  core/interpreter/dynamic/trees/src/ast.c
 
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
@@ -81,10 +86,6 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de las tablas hash
   dynamic/hash_tables/src/string_hash_table.c
-
-  # Implementaciones de los codigos
-  # fuente de los arboles dinamicos
-  dynamic/trees/src/ast.c
 
   # Implementaciones de los codigo fuente
   # de los comandos definidos en
