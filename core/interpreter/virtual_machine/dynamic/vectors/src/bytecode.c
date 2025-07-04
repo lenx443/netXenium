@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "bc_instruct.h"
 #include "bytecode.h"
 #include "logs.h"
 
@@ -74,12 +75,28 @@ int bc_add_load_string(Bytecode_Array_ptr bc, int reg, int string) {
                               string,
                           });
 }
+int bc_add_load_prop(Bytecode_Array_ptr bc, int reg, int prop_key) {
+  return bc_add_instr(bc, (bc_Instruct_t){
+                              OP_LOAD_PROP,
+                              BC_REG_PACK(reg, 0),
+                              0,
+                              prop_key,
+                          });
+}
 int bc_add_string_concat(Bytecode_Array_ptr bc, int reg, int src, int str) {
   return bc_add_instr(bc, (bc_Instruct_t){
                               OP_STRING_CONCAT,
                               BC_REG_PACK(reg, 1),
                               BC_REG_PACK(src, 0),
                               str,
+                          });
+}
+int bc_add_reg_concat(Bytecode_Array_ptr bc, int reg, int src1, int src2) {
+  return bc_add_instr(bc, (bc_Instruct_t){
+                              OP_STRING_CONCAT,
+                              BC_REG_PACK(reg, 1),
+                              BC_REG_PACK(src1, 0),
+                              BC_REG_PACK(src2, 0),
                           });
 }
 int bc_add_halt(Bytecode_Array_ptr bc) {

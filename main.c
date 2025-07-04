@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bc_instruct.h"
 #include "bytecode.h"
 #include "list.h"
 #include "logs.h"
@@ -65,14 +66,18 @@ int main(int argc, char **argv) {
     load_script(argv[1]);
   } else {
     VM_ptr vm = vm_new();
-    vm_string_table_add(vm->String_Table, "hola mundo\n");
+    vm_string_table_add(vm->String_Table, "text");
+    vm_string_table_add(vm->String_Table, "hola\n");
+    prop_reg_add(prop_register, "text", "mundo\n", STRING);
     // clang-format off
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_LOAD_IMM,    0, 0, 64}); // LOAD_IMM    0, 64
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_LOAD_IMM,    1, 0, 1});  // LOAD_IMM    1, 1
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_LOAD_STRING, 2, 0, 0});  // LOAD_STRING 2, 0
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_LOAD_IMM,    3, 0, 11}); // LOAD_IMM    3, 11
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_SYSCALL,     0, 0, 0});  // SYSCALL
-    bc_add_instr(vm->bytecode, (bc_Instruct_t){OP_HALT,        0, 0, 0});  // HALT
+    bc_add_load_imm(vm->bytecode,    0, 64);
+    bc_add_load_imm(vm->bytecode,    1, 1);
+    bc_add_load_string(vm->bytecode, 2, 1);
+    // bc_add_load_prop(vm->bytecode,   3, 0);
+    // bc_add_reg_concat(vm->bytecode,  2, 2, 3);
+    bc_add_load_imm(vm->bytecode,    3, 5);
+    bc_add_syscall(vm->bytecode);
+    bc_add_halt(vm->bytecode);
     // clang-format on
     vm_run(vm);
 

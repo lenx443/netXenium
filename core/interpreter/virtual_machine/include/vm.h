@@ -7,8 +7,10 @@
 #include "bytecode.h"
 #include "vm_string_table.h"
 
+typedef uintptr_t reg_t;
+
 typedef struct {
-  uintptr_t *reg;
+  reg_t *reg;
   uint8_t *point_flag;
   size_t capacity;
 } VM_Register;

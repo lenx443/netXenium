@@ -5,10 +5,12 @@
 #include <unistd.h>
 
 #include "GCPointer.h"
+#include "bc_instruct.h"
 #include "bytecode.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "logs.h"
+#include "properties.h"
 #include "vm.h"
 #include "vm_string_table.h"
 
@@ -62,11 +64,11 @@ void vm_run(VM_ptr vm) {
     switch (instr.bci_opcode) {
     case OP_NOP: break;
     case OP_SYSCALL: {
-      uintptr_t syscall_num = vm->reg.reg[0];
-      uintptr_t args[6];
+      reg_t syscall_num = vm->reg.reg[0];
+      reg_t args[6];
       for (int i = 1; i <= 6; i++) {
         if (vm->reg.point_flag[i]) {
-          args[i - 1] = (uintptr_t)((GCPointer_ptr)vm->reg.reg[i])->gc_ptr;
+          args[i - 1] = (reg_t)((GCPointer_ptr)vm->reg.reg[i])->gc_ptr;
         } else {
           args[i - 1] = vm->reg.reg[i];
         }
@@ -92,7 +94,25 @@ void vm_run(VM_ptr vm) {
         break;
       }
       vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
-          (uintptr_t)vm->String_Table->strings[instr.bci_src2];
+          (reg_t)vm->String_Table->strings[instr.bci_src2];
+      break;
+    case OP_LOAD_PROP:
+      if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      if (instr.bci_src2 >= vm->String_Table->size) {
+        vm->running = 0;
+        break;
+      }
+      char *prop_key = vm->String_Table->strings[instr.bci_src2];
+      prop_struct *prop = prop_reg_value(prop_key, *prop_register);
+      if (!prop) {
+        error("No se encontro la propiedad '%s' no se encontro", prop_key);
+        vm->running = 0;
+        break;
+      }
+      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)prop->value;
       break;
     case OP_STRING_CONCAT: {
       if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
@@ -124,9 +144,59 @@ void vm_run(VM_ptr vm) {
       if (!temp) {
         garbage_collector_run_as_registers(&gc_array, vm);
         temp = gc_pointer_list_append(&gc_array, buffer, str_size);
-        if (!temp) break;
+        if (!temp) {
+          error("Memoria insuficiente");
+          vm->running = 0;
+          break;
+        }
       }
-      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (uintptr_t)temp;
+      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)temp;
+      vm->reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
+      break;
+    }
+    case OP_REG_CONCAT: {
+      if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      if (BC_REG_GET_VALUE(instr.bci_src1) >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      if (BC_REG_GET_VALUE(instr.bci_src2) >= vm->reg.capacity) {
+        vm->running = 0;
+        break;
+      }
+      uint8_t src1_reg = BC_REG_GET_VALUE(instr.bci_src1);
+      uint8_t src2_reg = BC_REG_GET_VALUE(instr.bci_src2);
+      char *reg_value;
+      if (vm->reg.point_flag[src1_reg]) {
+        reg_value = (char *)((GCPointer_ptr)vm->reg.reg[src1_reg])->gc_ptr;
+      } else {
+        reg_value = (char *)vm->reg.reg[src1_reg];
+      }
+      char *concat_string;
+      if (vm->reg.point_flag[src2_reg]) {
+        concat_string = (char *)((GCPointer_ptr)vm->reg.reg[src2_reg])->gc_ptr;
+      } else {
+        concat_string = (char *)vm->reg.reg[src2_reg];
+      }
+      int str_size = strlen(reg_value) + strlen(concat_string) + 1;
+      char buffer[str_size];
+      strcpy(buffer, reg_value);
+      strcat(buffer, concat_string);
+      buffer[str_size - 1] = '\0';
+      GCPointer_ptr temp = gc_pointer_list_append(&gc_array, buffer, str_size);
+      if (!temp) {
+        garbage_collector_run_as_registers(&gc_array, vm);
+        temp = gc_pointer_list_append(&gc_array, buffer, str_size);
+        if (!temp) {
+          error("Memoria insuficiente");
+          vm->running = 0;
+          break;
+        }
+      }
+      vm->reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)temp;
       vm->reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
       break;
     }
@@ -134,6 +204,7 @@ void vm_run(VM_ptr vm) {
     default: vm->running = 0; break;
     }
   }
+  log_show_and_clear(NULL);
   gc_pointer_list_free(gc_array);
 }
 
