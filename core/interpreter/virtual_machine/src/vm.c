@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -9,7 +10,9 @@
 #include "bytecode.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
+#include "list.h"
 #include "logs.h"
+#include "program.h"
 #include "properties.h"
 #include "vm.h"
 #include "vm_string_table.h"
@@ -75,6 +78,49 @@ void vm_run(VM_ptr vm) {
       }
       vm->reg.reg[1] =
           syscall(syscall_num, args[0], args[1], args[2], args[3], args[4], args[5]);
+      break;
+    }
+    case OP_FUN_CALL: {
+      char *fun_name = (char *)vm->reg.reg[0];
+      const Command *cmd = NULL;
+      for (int i = 0; cmds_table[i] != NULL; i++) {
+        if (strcmp(cmds_table[i]->name, fun_name) == 0) {
+          cmd = cmds_table[i];
+          break;
+        }
+      }
+      if (cmd == NULL) {
+        error("No se encontro el commando '%s'", fun_name);
+        vm->running = 0;
+        break;
+      }
+      int arg_num = instr.bci_src2;
+      if (arg_num < cmd->args_len[0] || arg_num > cmd->args_len[1]) {
+        error("Numero de argumentos invalido");
+        vm->running = 0;
+        break;
+      }
+      LIST_ptr args = list_new();
+      if (!list_push_back_string_node(args, fun_name)) {
+        error("Memoria insuficiente");
+        vm->running = 0;
+        break;
+      }
+      for (int i = 1; i <= arg_num; i++) {
+        char *arg_val;
+        if (vm->reg.point_flag[i]) {
+          arg_val = (char *)((GCPointer_ptr)vm->reg.reg[i])->gc_ptr;
+        } else {
+          arg_val = (char *)vm->reg.reg[i];
+        }
+        if (!list_push_back_string_node(args, arg_val)) {
+          error("Memoria insuficiente");
+          vm->running = 0;
+          break;
+        }
+      }
+      vm->reg.reg[1] = cmd->func(args);
+      list_free(args);
       break;
     }
     case OP_LOAD_IMM:

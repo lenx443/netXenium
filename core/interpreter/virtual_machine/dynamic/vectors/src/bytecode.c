@@ -59,6 +59,14 @@ int bc_add_syscall(Bytecode_Array_ptr bc) {
                               0,
                           });
 }
+int bc_add_fun_call(Bytecode_Array_ptr bc, int args) {
+  return bc_add_instr(bc, (bc_Instruct_t){
+                              OP_FUN_CALL,
+                              0,
+                              0,
+                              args,
+                          });
+}
 int bc_add_load_imm(Bytecode_Array_ptr bc, int reg, int imm) {
   return bc_add_instr(bc, (bc_Instruct_t){
                               OP_LOAD_IMM,
@@ -93,7 +101,7 @@ int bc_add_string_concat(Bytecode_Array_ptr bc, int reg, int src, int str) {
 }
 int bc_add_reg_concat(Bytecode_Array_ptr bc, int reg, int src1, int src2) {
   return bc_add_instr(bc, (bc_Instruct_t){
-                              OP_STRING_CONCAT,
+                              OP_REG_CONCAT,
                               BC_REG_PACK(reg, 1),
                               BC_REG_PACK(src1, 0),
                               BC_REG_PACK(src2, 0),

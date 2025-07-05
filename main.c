@@ -66,17 +66,14 @@ int main(int argc, char **argv) {
     load_script(argv[1]);
   } else {
     VM_ptr vm = vm_new();
-    vm_string_table_add(vm->String_Table, "text");
-    vm_string_table_add(vm->String_Table, "hola\n");
-    prop_reg_add(prop_register, "text", "mundo\n", STRING);
+    vm_string_table_add(vm->String_Table, "iface");
+    vm_string_table_add(vm->String_Table, "get");
+    vm_string_table_add(vm->String_Table, "ifaces");
     // clang-format off
-    bc_add_load_imm(vm->bytecode,    0, 64);
-    bc_add_load_imm(vm->bytecode,    1, 1);
-    bc_add_load_string(vm->bytecode, 2, 1);
-    // bc_add_load_prop(vm->bytecode,   3, 0);
-    // bc_add_reg_concat(vm->bytecode,  2, 2, 3);
-    bc_add_load_imm(vm->bytecode,    3, 5);
-    bc_add_syscall(vm->bytecode);
+    bc_add_load_string(vm->bytecode, 0, 0);
+    bc_add_load_string(vm->bytecode, 1, 1);
+    bc_add_load_string(vm->bytecode, 2, 2);
+    bc_add_fun_call(vm->bytecode, 2);
     bc_add_halt(vm->bytecode);
     // clang-format on
     vm_run(vm);

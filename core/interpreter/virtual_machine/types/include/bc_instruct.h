@@ -6,6 +6,7 @@
 typedef enum {
   OP_NOP = 0,
   OP_SYSCALL,
+  OP_FUN_CALL,
   OP_LOAD_IMM,
   OP_LOAD_STRING,
   OP_LOAD_PROP,
