@@ -15,9 +15,6 @@
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
-#define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
-
-static void bytecode_printer(VM_ptr);
 
 int interpreter(const char *text_code) {
   if (!text_code) {
@@ -60,22 +57,4 @@ int interpreter(const char *text_code) {
   vm_run(vm);
   vm_free(vm);
   return 1;
-}
-
-void bytecode_printer(VM_ptr vm) {
-#ifndef NDEBUG
-  for (int i = 0; i < vm->bytecode->bc_size; i++) {
-    bc_Instruct_t instr = vm->bytecode->bc_array[i];
-    switch (instr.bci_opcode) {
-    case OP_LOAD_PROP:
-    case OP_LOAD_STRING:
-      info("(%d): %d, 0, %s", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
-           vm->String_Table->strings[instr.bci_src2]);
-      break;
-    default:
-      info("(%d): %d, %d, %d", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
-           BC_REG_GET_VALUE(instr.bci_src1), BC_REG_GET_VALUE(instr.bci_src2));
-    }
-  }
-#endif
 }
