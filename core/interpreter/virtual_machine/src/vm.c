@@ -1,6 +1,5 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -18,6 +17,7 @@
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
+#define info(msg, ...) log_add(NULL, INFO, "VM", msg, ##__VA_ARGS__)
 
 VM_ptr vm_new() {
   VM_ptr vm = malloc(sizeof(VM));
@@ -32,7 +32,7 @@ VM_ptr vm_new() {
     free(vm);
     return NULL;
   }
-  vm->reg.point_flag = malloc(reg_capacity);
+  vm->reg.point_flag = calloc(reg_capacity, sizeof(uint8_t));
   if (!vm->reg.point_flag) {
     error("no hay memoria disponible");
     free(vm);
@@ -59,11 +59,48 @@ VM_ptr vm_new() {
   return vm;
 }
 
+VM_ptr vm_program_code_new(ProgramCode_t code) {
+  VM_ptr vm = malloc(sizeof(VM));
+  if (!vm) {
+    error("No hay memoria disponible");
+    return NULL;
+  }
+  size_t reg_capacity = 128;
+  vm->reg.reg = malloc(reg_capacity * sizeof(int));
+  if (!vm->reg.reg) {
+    error("no hay memoria disponible");
+    free(vm);
+    return NULL;
+  }
+  vm->reg.point_flag = calloc(reg_capacity, sizeof(uint8_t));
+  if (!vm->reg.point_flag) {
+    error("no hay memoria disponible");
+    free(vm);
+    return NULL;
+  }
+  vm->reg.capacity = reg_capacity;
+  vm->String_Table = code.strings;
+  vm->bytecode = code.code;
+  vm->ip = 0;
+  vm->running = 0;
+  return vm;
+}
+
 void vm_run(VM_ptr vm) {
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
   while (vm->running) {
     const bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
+    switch (instr.bci_opcode) {
+    case OP_LOAD_PROP:
+    case OP_LOAD_STRING:
+      printf("(%d): %d, 0, %s\n", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
+             vm->String_Table->strings[instr.bci_src2]);
+      break;
+    default:
+      printf("(%d): %d, %d, %d\n", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
+             BC_REG_GET_VALUE(instr.bci_src1), BC_REG_GET_VALUE(instr.bci_src2));
+    }
     switch (instr.bci_opcode) {
     case OP_NOP: break;
     case OP_SYSCALL: {
@@ -153,7 +190,9 @@ void vm_run(VM_ptr vm) {
       }
       char *prop_key = vm->String_Table->strings[instr.bci_src2];
       prop_struct *prop = prop_reg_value(prop_key, *prop_register);
+      log_show_and_clear(NULL);
       if (!prop) {
+        info("&prop = %p\n", prop);
         error("No se encontro la propiedad '%s' no se encontro", prop_key);
         vm->running = 0;
         break;
@@ -228,7 +267,12 @@ void vm_run(VM_ptr vm) {
         concat_string = (char *)vm->reg.reg[src2_reg];
       }
       int str_size = strlen(reg_value) + strlen(concat_string) + 1;
-      char buffer[str_size];
+      char *buffer = malloc(str_size);
+      if (!buffer) {
+        error("memoria insuficiente");
+        vm->running = 0;
+        break;
+      }
       strcpy(buffer, reg_value);
       strcat(buffer, concat_string);
       buffer[str_size - 1] = '\0';
@@ -251,6 +295,7 @@ void vm_run(VM_ptr vm) {
     }
   }
   log_show_and_clear(NULL);
+
   gc_pointer_list_free(gc_array);
 }
 

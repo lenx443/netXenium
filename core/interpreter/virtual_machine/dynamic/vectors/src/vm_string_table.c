@@ -15,7 +15,7 @@ vm_String_Table_ptr vm_string_table_new() {
   return table;
 }
 
-int vm_string_table_add(vm_String_Table_ptr table, char *str) {
+int vm_string_table_add(vm_String_Table_ptr table, const char *str) {
   if (!table) {
     log_add(NULL, ERROR, "VM / String table", "No se pudo agregar el elemento");
     log_add(NULL, ERROR, "VM / String table", "Tabla de cadenas vacía");

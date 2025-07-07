@@ -3,16 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ast.h"
 #include "colors.h"
 #include "commands.h"
-#include "eval.h"
 #include "history.h"
-#include "lexer.h"
+#include "interpreter.h"
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
-#include "parser.h"
 #include "program.h"
 #include "properties.h"
 #include "read_string_utf8.h"
@@ -324,16 +321,7 @@ void load_script(char *filename) {
     program.exit_code = EXIT_FAILURE;
     return;
   }
-  Lexer lexer = {file_content, 0};
-  Parser parser = {&lexer};
-  AST_Node_t *ast = NULL;
-  parser_next(&parser);
-  while (parser_stmt(&parser, &ast)) {
-    ast_eval(ast);
-    ast_free(ast);
-    ast = NULL;
-    if (program.return_code == EXIT_FAILURE) break;
-  }
+  if (!interpreter(file_content)) { log_show_and_clear(NULL); }
   free(file_content);
   list_free(buffer);
 }
@@ -353,14 +341,10 @@ void shell_loop(char *name) {
   while (1) {
     LIST_ptr cmd = read_string_utf8();
     char *cmd_str = string_utf8_get(cmd);
-    Lexer lexer = {cmd_str, 0};
-    Parser parser = {&lexer};
-    AST_Node_t *ast = NULL;
-    parser_next(&parser);
-    while (parser_stmt(&parser, &ast)) {
-      ast_eval(ast);
-      ast_free(ast);
-      ast = NULL;
+    if (!interpreter(cmd_str)) {
+      log_show_and_clear(NULL);
+      free(cmd_str);
+      break;
     }
     free(cmd_str);
     if (program.closed) break;

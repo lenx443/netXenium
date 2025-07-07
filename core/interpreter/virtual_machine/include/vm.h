@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "bytecode.h"
+#include "program_code.h"
 #include "vm_string_table.h"
 
 typedef uintptr_t reg_t;
@@ -26,6 +27,7 @@ typedef struct {
 typedef VM *VM_ptr;
 
 VM_ptr vm_new();
+VM_ptr vm_program_code_new(ProgramCode_t);
 void vm_run(VM_ptr);
 void vm_free(VM_ptr);
 

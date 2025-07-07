@@ -1,0 +1,81 @@
+#include "ast.h"
+#include "ast_array.h"
+#include "ast_compiler.h"
+#include "bc_instruct.h"
+#include "block_list.h"
+#include "blocks_compiler.h"
+#include "blocks_linealizer.h"
+#include "bytecode.h"
+#include "interpreter.h"
+#include "lexer.h"
+#include "logs.h"
+#include "parser.h"
+#include "program.h"
+#include "vm.h"
+#include "vm_string_table.h"
+
+#define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
+#define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
+
+static void bytecode_printer(VM_ptr);
+
+int interpreter(const char *text_code) {
+  if (!text_code) {
+    error("Codigo invalido");
+    return 0;
+  }
+  Lexer lexer = {text_code, 0};
+  Parser parser = {&lexer};
+  parser_next(&parser);
+  AST_Array_ptr ast_array = ast_array_new();
+  if (!ast_array) return 0;
+  AST_Node_t *current_ast;
+  while (parser_stmt(&parser, &current_ast)) {
+    if (!ast_array_add(ast_array, current_ast)) {
+      ast_array_free(ast_array);
+      return 0;
+    }
+    current_ast = NULL;
+  }
+  block_list_ptr blocks = ast_compile(ast_array->ast_array, ast_array->ast_count);
+  if (!blocks) {
+    ast_array_free(ast_array);
+    return 0;
+  }
+  ast_array_free(ast_array);
+  blocks_linealizer(blocks);
+  ProgramCode_t program_code;
+  if (!blocks_compiler(&program_code, blocks)) {
+    block_list_free(blocks);
+    return 0;
+  }
+  block_list_free(blocks);
+  VM_ptr vm = vm_program_code_new(program_code);
+  if (!vm) {
+    vm_string_table_free(program_code.strings);
+    bc_free(program_code.code);
+    return 0;
+  }
+  log_show_and_clear(NULL);
+  vm_run(vm);
+  vm_free(vm);
+  return 1;
+}
+
+void bytecode_printer(VM_ptr vm) {
+#ifndef NDEBUG
+  for (int i = 0; i < vm->bytecode->bc_size; i++) {
+    bc_Instruct_t instr = vm->bytecode->bc_array[i];
+    switch (instr.bci_opcode) {
+    case OP_LOAD_PROP:
+    case OP_LOAD_STRING:
+      info("(%d): %d, 0, %s", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
+           vm->String_Table->strings[instr.bci_src2]);
+      break;
+    default:
+      info("(%d): %d, %d, %d", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
+           BC_REG_GET_VALUE(instr.bci_src1), BC_REG_GET_VALUE(instr.bci_src2));
+    }
+  }
+#endif
+}

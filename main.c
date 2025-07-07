@@ -36,17 +36,12 @@
 
 #include <locale.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "bc_instruct.h"
-#include "bytecode.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
 #include "properties.h"
-#include "vm.h"
-#include "vm_string_table.h"
 
 int main(int argc, char **argv) {
   global_logs = list_new();
@@ -65,22 +60,8 @@ int main(int argc, char **argv) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);
   } else {
-    VM_ptr vm = vm_new();
-    vm_string_table_add(vm->String_Table, "iface");
-    vm_string_table_add(vm->String_Table, "get");
-    vm_string_table_add(vm->String_Table, "ifaces");
-    // clang-format off
-    bc_add_load_string(vm->bytecode, 0, 0);
-    bc_add_load_string(vm->bytecode, 1, 1);
-    bc_add_load_string(vm->bytecode, 2, 2);
-    bc_add_fun_call(vm->bytecode, 2);
-    bc_add_halt(vm->bytecode);
-    // clang-format on
-    vm_run(vm);
-
-    return 1;
     program.name = strdup(argv[0]);
-    // signal(SIGINT, SIG_IGN);
+    signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);
   }
 

@@ -16,13 +16,18 @@ set(C_STANDARD 99)
 include_directories(
   core/include/
   core/interpreter/include/
+  core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/
+  core/interpreter/compiler/include
+  core/interpreter/compiler/types/include/
+  core/interpreter/compiler/dynamic/lists/include/
+  core/interpreter/compiler/dynamic/vectors/include/
   core/interpreter/virtual_machine/include/
   core/interpreter/virtual_machine/types/include/
   core/interpreter/virtual_machine/dynamic/vectors/include
-  core/interpreter/virtual_machine/dynamic/linked_lists/include/
+  core/interpreter/virtual_machine/dynamic/lists/include/
   api/include/
-  dynamic/linked_lists/include/
+  dynamic/lists/include/
   dynamic/hash_tables/include/
   header/
 )
@@ -39,14 +44,39 @@ add_executable(ntxenium
 
   # Codigo que se encarga de procesar
   # e interpretar scripts
+  core/interpreter/src/interpreter.c
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
-  core/interpreter/src/eval.c
 
   # Implementaciones de los codigos
   # fuente de los arboles dinamicos
   # del interpreter
   core/interpreter/dynamic/trees/src/ast.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores del
+  # interpreter
+  core/interpreter/dynamic/vectors/src/ast_array.c
+
+  # Compilador a bytecode.
+  # [AST Tree]
+  #    |
+  # [IR bytecode]
+  #    |
+  # [bytecode]
+  core/interpreter/compiler/src/ast_compiler.c
+  core/interpreter/compiler/src/blocks_linealizer.c
+  core/interpreter/compiler/src/blocks_compiler.c
+
+  # Implementaciones de los codigos
+  # fuente de las listas enlazadas
+  # de el compilador
+  core/interpreter/compiler/dynamic/lists/src/block_list.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores de el
+  # compilador
+  core/interpreter/compiler/dynamic/vectors/src/ir_bytecode.c
 
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
@@ -65,7 +95,7 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   # de la maquina virtual
-  core/interpreter/virtual_machine/dynamic/linked_lists/src/gc_pointer_list.c
+  core/interpreter/virtual_machine/dynamic/lists/src/gc_pointer_list.c
 
   # codigo fuente de la la API
   # del Framework.
@@ -75,13 +105,13 @@ add_executable(ntxenium
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
-  dynamic/linked_lists/src/list.c
-  dynamic/linked_lists/src/properties.c
-  dynamic/linked_lists/src/history.c
-  dynamic/linked_lists/src/suggestion.c
-  dynamic/linked_lists/src/logs.c
-  dynamic/linked_lists/src/string_utf8.c
-  dynamic/linked_lists/src/raw_arguments.c
+  dynamic/lists/src/list.c
+  dynamic/lists/src/properties.c
+  dynamic/lists/src/history.c
+  dynamic/lists/src/suggestion.c
+  dynamic/lists/src/logs.c
+  dynamic/lists/src/string_utf8.c
+  dynamic/lists/src/raw_arguments.c
 
   # Implementaciones de los codigos
   # fuente de las tablas hash

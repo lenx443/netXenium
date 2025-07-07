@@ -231,6 +231,7 @@ void log_get(LIST_ptr object, char *log_out, size_t bufsiz) {
 
 void log_show(LIST_ptr object) {
   LIST_ptr log = object ? object : global_logs;
+  if (!log->head) return;
   char logs_text[65536];
   log_get(log, logs_text, 65536);
   printf("%s\n", logs_text);
