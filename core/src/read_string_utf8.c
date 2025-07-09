@@ -4,6 +4,8 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <asm-generic/signal-defs.h>
+#include <asm-generic/signal.h>
 
 #include "colors.h"
 #include "functions.h"
