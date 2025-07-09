@@ -28,7 +28,7 @@ static int fn_set(LIST_ptr args) {
   }
   char *text_prop = (char *)node_prop->point;
   char *text_value = (char *)node_value->point;
-  int position_prop = prop_reg_search_key(text_prop, *prop_register);
+  int position_prop = prop_reg_search_key(text_prop, *prop_register, 1);
   if (position_prop == -1) {
     log_add(NULL, ERROR, NAME, "No se encontro la propiedad");
     return EXIT_FAILURE;

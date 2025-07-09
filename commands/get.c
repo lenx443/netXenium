@@ -41,13 +41,13 @@ static int fn_get(LIST_ptr args) {
         if (map_types[i].key == current_prop->type) type = strdup(map_types[i].key_str);
       }
       if (current_prop->type != OTHER) {
-        printf(AZUL "%-*s" RESET " = " ROJO "%s(" AMARILLO "%s" ROJO ")" RESET "\n", max_key_size, current_prop->key,
-               type, current_prop->value);
+        printf(AZUL "%-*s" RESET " = " ROJO "%s(" AMARILLO "%s" ROJO ")" RESET "\n",
+               max_key_size, current_prop->key, type, current_prop->value);
       }
       free(type);
     }
   } else {
-    int position_prop = prop_reg_search_key(text_prop, *prop_register);
+    int position_prop = prop_reg_search_key(text_prop, *prop_register, 1);
     if (position_prop == -1) {
       log_add(NULL, ERROR, NAME, "No se encontro la propiedad");
       return EXIT_FAILURE;

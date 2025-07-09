@@ -27,12 +27,16 @@ int interpreter(const char *text_code) {
   AST_Array_ptr ast_array = ast_array_new();
   if (!ast_array) return 0;
   AST_Node_t *current_ast;
-  while (parser_stmt(&parser, &current_ast)) {
+  while (parser_stmt(&parser, &current_ast) == 1) {
     if (!ast_array_add(ast_array, current_ast)) {
       ast_array_free(ast_array);
       return 0;
     }
     current_ast = NULL;
+  }
+  if (ast_array->ast_array == NULL) {
+    ast_array_free(ast_array);
+    return 1;
   }
   block_list_ptr blocks = ast_compile(ast_array->ast_array, ast_array->ast_count);
   if (!blocks) {

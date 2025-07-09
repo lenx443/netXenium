@@ -35,7 +35,7 @@ static int fn_iface(LIST_ptr args) {
       iface[i] = tolower(iface[i]);
 
     if (strcmp(addr, "addr") == 0) {
-      prop_struct *new_addr_prop = prop_reg_value("CHG_ADDR", *prop_register);
+      prop_struct *new_addr_prop = prop_reg_value("CHG_ADDR", *prop_register, 1);
       if (new_addr_prop == NULL) {
         log_add(NULL, ERROR, NAME,
                 "No se pudo acceder a la propiedad " AZUL "CHG_ADDR" RESET);
@@ -62,7 +62,7 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
     } else if (strcmp(addr, "netmask") == 0) {
-      prop_struct *new_addr_prop = prop_reg_value("CHG_NETMASK", *prop_register);
+      prop_struct *new_addr_prop = prop_reg_value("CHG_NETMASK", *prop_register, 1);
       if (new_addr_prop == NULL) {
         log_add(NULL, ERROR, NAME,
                 "No se pudo acceder a la propiedad " AZUL "CHG_NETMASK" RESET);
@@ -91,7 +91,7 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
     } else if (strcmp(addr, "broad") == 0) {
-      prop_struct *new_addr_prop = prop_reg_value("CHG_BROADCAST", *prop_register);
+      prop_struct *new_addr_prop = prop_reg_value("CHG_BROADCAST", *prop_register, 1);
       if (new_addr_prop == NULL) {
         log_add(NULL, ERROR, NAME,
                 "No se pudo acceder a la propiedad " AZUL "CHG_BROADCAST" RESET);
@@ -120,7 +120,7 @@ static int fn_iface(LIST_ptr args) {
         return 0;
       }
     } else if (strcmp(addr, "hwaddr") == 0) {
-      prop_struct *new_addr_prop = prop_reg_value("CHG_HWADDR", *prop_register);
+      prop_struct *new_addr_prop = prop_reg_value("CHG_HWADDR", *prop_register, 1);
       if (new_addr_prop == NULL) {
         log_add(NULL, ERROR, NAME,
                 "No se pudo acceder a la propiedad " AZUL "CHG_HWADDR" RESET);
@@ -208,14 +208,15 @@ static int fn_iface(LIST_ptr args) {
 
       if (strcmp(addr, "addr") == 0) {
         prop_struct *rslt_addr_prop = NULL;
-        rslt_addr_prop = prop_reg_value("RSLT_ADDR", *prop_register);
+        rslt_addr_prop = prop_reg_value("RSLT_ADDR", *prop_register, 0);
         if (rslt_addr_prop == NULL) {
           if (!prop_reg_add(prop_register, "RSLT_ADDR", "", IP)) {
+            log_clear(NULL);
             log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad RSLT_ADDR");
             log_show_and_clear(NULL);
             return EXIT_FAILURE;
           }
-          rslt_addr_prop = prop_reg_value("RSLT_ADDR", *prop_register);
+          rslt_addr_prop = prop_reg_value("RSLT_ADDR", *prop_register, 0);
         } else {
           if (rslt_addr_prop->type != IP) {
             log_add(NULL, ERROR, NAME, "La propiedad RSLT_ADDR no es una IP");
@@ -226,8 +227,9 @@ static int fn_iface(LIST_ptr args) {
         uint32_t local_addr;
         if (!get_local_ip(&local_addr, iface)) {
           log_add(NULL, ERROR, NAME, "No se pudo obtener la direccion IP");
-          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz");
+          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz", iface);
           log_show_and_clear(NULL);
+          return EXIT_FAILURE;
         }
         char local_addr_str[16];
         from_ip(local_addr_str, &local_addr, 16);
@@ -236,14 +238,14 @@ static int fn_iface(LIST_ptr args) {
       }
       if (strcmp(addr, "netmask") == 0) {
         prop_struct *rslt_addr_prop = NULL;
-        rslt_addr_prop = prop_reg_value("RSLT_NETMASK", *prop_register);
+        rslt_addr_prop = prop_reg_value("RSLT_NETMASK", *prop_register, 0);
         if (rslt_addr_prop == NULL) {
           if (!prop_reg_add(prop_register, "RSLT_NETMASK", "", IP)) {
             log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad RSLT_NETMASK");
             log_show_and_clear(NULL);
             return EXIT_FAILURE;
           }
-          rslt_addr_prop = prop_reg_value("RSLT_NETMASK", *prop_register);
+          rslt_addr_prop = prop_reg_value("RSLT_NETMASK", *prop_register, 0);
         } else {
           if (rslt_addr_prop->type != IP) {
             log_add(NULL, ERROR, NAME, "La propiedad RSLT_NETMASK no es una IP");
@@ -254,8 +256,9 @@ static int fn_iface(LIST_ptr args) {
         uint32_t local_addr;
         if (!get_local_netmask(&local_addr, iface)) {
           log_add(NULL, ERROR, NAME, "No se pudo obtener la direccion mascara de red");
-          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz");
+          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz", iface);
           log_show_and_clear(NULL);
+          return EXIT_FAILURE;
         }
         char local_addr_str[16];
         from_ip(local_addr_str, &local_addr, 16);
@@ -264,19 +267,14 @@ static int fn_iface(LIST_ptr args) {
       }
       if (strcmp(addr, "broad") == 0) {
         prop_struct *rslt_addr_prop = NULL;
-        rslt_addr_prop = prop_reg_value("RSLT_BROADCAST", *prop_register);
+        rslt_addr_prop = prop_reg_value("RSLT_BROADCAST", *prop_register, 0);
         if (rslt_addr_prop == NULL) {
-          prop_struct addr_prop = {
-              strdup("RSLT_BROADCAST"),
-              strdup(""),
-              IP,
-          };
           if (!prop_reg_add(prop_register, "RSLT_BROADCAST", "", IP)) {
             log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad RSLT_BROADCAST");
             log_show_and_clear(NULL);
             return EXIT_FAILURE;
           }
-          rslt_addr_prop = prop_reg_value("RSLT_BROADCAST", *prop_register);
+          rslt_addr_prop = prop_reg_value("RSLT_BROADCAST", *prop_register, 0);
         } else {
           if (rslt_addr_prop->type != IP) {
             log_add(NULL, ERROR, NAME, "La propiedad RSLT_BROADCAST no es una IP");
@@ -287,8 +285,9 @@ static int fn_iface(LIST_ptr args) {
         uint32_t local_addr;
         if (!get_local_broadcast(&local_addr, iface)) {
           log_add(NULL, ERROR, NAME, "No se pudo obtener el broadcast");
-          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz");
+          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz", iface);
           log_show_and_clear(NULL);
+          return EXIT_FAILURE;
         }
         char local_addr_str[16];
         from_ip(local_addr_str, &local_addr, 16);
@@ -297,14 +296,14 @@ static int fn_iface(LIST_ptr args) {
       }
       if (strcmp(addr, "hwaddr") == 0) {
         prop_struct *rslt_addr_prop = NULL;
-        rslt_addr_prop = prop_reg_value("RSLT_HWADDR", *prop_register);
+        rslt_addr_prop = prop_reg_value("RSLT_HWADDR", *prop_register, 0);
         if (rslt_addr_prop == NULL) {
           if (!prop_reg_add(prop_register, "RSLT_HWADDR", "", MAC)) {
             log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad RSLT_HWADDR");
             log_show_and_clear(NULL);
             return EXIT_FAILURE;
           }
-          rslt_addr_prop = prop_reg_value("RSLT_HWADDR", *prop_register);
+          rslt_addr_prop = prop_reg_value("RSLT_HWADDR", *prop_register, 0);
         } else {
           if (rslt_addr_prop->type != MAC) {
             log_add(NULL, ERROR, NAME, "La propiedad RSLT_HWADDR no es una MAC");
@@ -314,9 +313,10 @@ static int fn_iface(LIST_ptr args) {
         }
         uint8_t local_addr[6];
         if (!get_local_mac(local_addr, iface)) {
-          log_add(NULL, ERROR, NAME, "No se pudo obtener el broadcast");
-          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz");
+          log_add(NULL, ERROR, NAME, "No se pudo obtener la MAC");
+          log_add(NULL, ERROR, NAME, CIAN "{%s}" RESET " <- interfaz", iface);
           log_show_and_clear(NULL);
+          return EXIT_FAILURE;
         }
         char local_addr_str[18];
         from_mac(local_addr_str, &local_addr, 18);

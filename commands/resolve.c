@@ -30,11 +30,12 @@ static void keyboard_interrupt_handle(int sign) {
 
 static int fn_resolve(LIST_ptr args) {
   if (list_size(*args) < 2) {
-    fprintf(stderr, "Uso: " NAME " [propiedad de entrada (IP)] [propiedad de salida(MAC)]\n");
+    fprintf(stderr,
+            "Uso: " NAME " [propiedad de entrada (IP)] [propiedad de salida(MAC)]\n");
     return EXIT_FAILURE;
   }
 
-  prop_struct *iface = prop_reg_value("LOCAL_IFACE", *prop_register);
+  prop_struct *iface = prop_reg_value("LOCAL_IFACE", *prop_register, 1);
   if (iface == NULL) {
     log_add(NULL, ERROR, NAME, "Error al obtener la interfaz local");
     log_show_and_clear(NULL);
@@ -67,7 +68,7 @@ static int fn_resolve(LIST_ptr args) {
   uint32_t dest_ip;
 
   if (strcmp(in_prop_value, "target") == 0) {
-    prop_struct *target_prop_cfg = prop_reg_value("TARGET_ADDR", *prop_register);
+    prop_struct *target_prop_cfg = prop_reg_value("TARGET_ADDR", *prop_register, 1);
     if (target_prop_cfg == NULL) {
       log_add(NULL, ERROR, NAME, "Propiedad TARGET_ADDR requerida");
       log_show_and_clear(NULL);
@@ -78,14 +79,14 @@ static int fn_resolve(LIST_ptr args) {
       return EXIT_FAILURE;
     }
     out_prop_value = "TARGET_HWADDR";
-    out_prop_cfg = prop_reg_value("TARGET_HWADDR", *prop_register);
+    out_prop_cfg = prop_reg_value("TARGET_HWADDR", *prop_register, 0);
     if (out_prop_cfg == NULL) {
       if (!prop_reg_add(prop_register, "TARGET_HWADDR", "", MAC)) {
         log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad TARGET_HWADDR");
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
-      out_prop_cfg = prop_reg_value("TARGET_HWADDR", *prop_register);
+      out_prop_cfg = prop_reg_value("TARGET_HWADDR", *prop_register, 0);
     } else if (out_prop_cfg->type != MAC) {
       log_add(NULL, ERROR, NAME, "La propiedad TARGET_HWADDR no es una MAC");
       log_show_and_clear(NULL);
@@ -94,7 +95,7 @@ static int fn_resolve(LIST_ptr args) {
     to_ip(&dest_ip, target_prop_cfg->value);
 
   } else if (strcmp(in_prop_value, "router") == 0) {
-    prop_struct *router_prop_cfg = prop_reg_value("ROUTER_ADDR", *prop_register);
+    prop_struct *router_prop_cfg = prop_reg_value("ROUTER_ADDR", *prop_register, 1);
     if (router_prop_cfg == NULL) {
       log_add(NULL, ERROR, NAME, "Propiedad ROUTER_ADDR requerida");
       log_show_and_clear(NULL);
@@ -105,14 +106,14 @@ static int fn_resolve(LIST_ptr args) {
       return EXIT_FAILURE;
     }
     out_prop_value = "ROUTER_HWADDR";
-    out_prop_cfg = prop_reg_value("ROUTER_HWADDR", *prop_register);
+    out_prop_cfg = prop_reg_value("ROUTER_HWADDR", *prop_register, 0);
     if (out_prop_cfg == NULL) {
       if (!prop_reg_add(prop_register, "ROUTER_HWADDR", "", MAC)) {
         log_add(NULL, ERROR, NAME, "No se pudo crear la propiedad ROUTER_HWADDR");
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
-      out_prop_cfg = prop_reg_value("ROUTER_HWADDR", *prop_register);
+      out_prop_cfg = prop_reg_value("ROUTER_HWADDR", *prop_register, 0);
     } else if (out_prop_cfg->type != MAC) {
       log_add(NULL, ERROR, NAME, "La propiedad ROUTER_HWADDR no es una MAC");
       log_show_and_clear(NULL);
@@ -121,7 +122,7 @@ static int fn_resolve(LIST_ptr args) {
     to_ip(&dest_ip, router_prop_cfg->value);
 
   } else {
-    prop_struct *in_prop_cfg = prop_reg_value(in_prop_value, *prop_register);
+    prop_struct *in_prop_cfg = prop_reg_value(in_prop_value, *prop_register, 1);
     if (in_prop_cfg == NULL) {
       log_add(NULL, ERROR, NAME, "No se encontro la propiedad de entrada");
       log_show_and_clear(NULL);
@@ -136,7 +137,7 @@ static int fn_resolve(LIST_ptr args) {
       return EXIT_FAILURE;
     }
     out_prop_value = (char *)out_prop->point;
-    out_prop_cfg = prop_reg_value(out_prop_value, *prop_register);
+    out_prop_cfg = prop_reg_value(out_prop_value, *prop_register, 1);
     if (out_prop_cfg == NULL) {
       log_add(NULL, ERROR, NAME, "No se encontro la propiedad de salida");
       log_show_and_clear(NULL);
@@ -218,7 +219,7 @@ static int fn_resolve(LIST_ptr args) {
 
   (void)(free(out_prop_cfg->key), free(out_prop_cfg->value));
   prop_struct new_config = {strdup(out_prop_value), strdup(str_mac), MAC};
-  int position = prop_reg_search_key(out_prop_value, *prop_register);
+  int position = prop_reg_search_key(out_prop_value, *prop_register, 0);
   if (position == -1) {
     log_add(NULL, ERROR, NAME, "No se encontro la propiedad de salida");
     pcap_close(pcap_handle);

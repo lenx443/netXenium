@@ -20,7 +20,7 @@ static int fn_echo(LIST_ptr args) {
       fputs(printeable, stdout);
     }
   } else {
-    prop_struct *output_prop = prop_reg_value("OUTPUT", *prop_register);
+    prop_struct *output_prop = prop_reg_value("OUTPUT", *prop_register, 0);
     if (output_prop == NULL) {
       log_clear(NULL);
       return EXIT_SUCCESS;

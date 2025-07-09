@@ -10,7 +10,7 @@
 int fn_del(LIST_ptr args) {
   NODE_ptr node_prop = list_index_get(1, *args);
   char *str_prop = (char *)node_prop->point;
-  int index_prop = prop_reg_search_key(str_prop, *prop_register);
+  int index_prop = prop_reg_search_key(str_prop, *prop_register, 1);
   if (index_prop == -1) {
     log_add(NULL, ERROR, NAME, "No se pudo eliminar la propiedad");
     log_show_and_clear(NULL);

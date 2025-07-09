@@ -18,16 +18,18 @@ static int fn_new(LIST_ptr args) {
   for (int i = 0; prop_name[i] != '\0'; i++) {
     char c = toupper(prop_name[i]);
     if (!isalnum(prop_name[i]) && c != '_') {
-      log_add(NULL, ERROR, NAME, "El nombre {" AZUL "\"%s\"" RESET "} no es adecuado para una propiedad", prop_name);
+      log_add(NULL, ERROR, NAME,
+              "El nombre {" AZUL "\"%s\"" RESET "} no es adecuado para una propiedad",
+              prop_name);
       return 153;
     }
   }
-  if (prop_reg_search_key(prop_name, *prop_register) != -1) {
-    log_add(NULL, ERROR, NAME, "El nombre {" AZUL "\"%s\"" RESET "} ya fue usado por otra propiedad", prop_name);
+  if (prop_reg_search_key(prop_name, *prop_register, 0) != -1) {
+    log_add(NULL, ERROR, NAME,
+            "El nombre {" AZUL "\"%s\"" RESET "} ya fue usado por otra propiedad",
+            prop_name);
     return 153;
-  } else
-    log_clear(NULL);
-  log_clear(NULL);
+  }
   prop_types type_value = OTHER;
   int (*validate_type)(char *);
   for (int i = 0; map_types[i].key != OTHER; i++) {
@@ -38,7 +40,8 @@ static int fn_new(LIST_ptr args) {
     }
   }
   if (type_value == OTHER) {
-    log_add(NULL, ERROR, NAME, "El tipo {" VERDE "\"%s\"" RESET "} no es valido", prop_type);
+    log_add(NULL, ERROR, NAME, "El tipo {" VERDE "\"%s\"" RESET "} no es valido",
+            prop_type);
     return 153;
   }
   char *prop_value = NULL;
@@ -49,13 +52,15 @@ static int fn_new(LIST_ptr args) {
 
     if (!validate_type(prop_value)) {
       log_add(NULL, ERROR, NAME,
-              "El valor {" AMARILLO "\"%s\"" RESET "} no es valido para propiedades del tipo " VERDE "%s" RESET,
+              "El valor {" AMARILLO "\"%s\"" RESET
+              "} no es valido para propiedades del tipo " VERDE "%s" RESET,
               prop_value, prop_type);
       return 153;
     }
   }
   if (!prop_reg_add(prop_register, prop_name, prop_value ? prop_value : "", type_value)) {
-    log_add(NULL, ERROR, NAME, "Ocurrio un error al agregar la nueva propiedad al registro");
+    log_add(NULL, ERROR, NAME,
+            "Ocurrio un error al agregar la nueva propiedad al registro");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
@@ -78,7 +83,8 @@ const Command cmd_new = {
     "Argumentos:\n"
     "  <nombre> : Nombre de la propiedad. Debe ser alfanumerico o contener '_'.\n"
     "  <tipo>   : Tipo de la propiedad. Debe ser uno de los tipos reconocidos.\n"
-    "  <valor>  : (opcional) Valor inicial de la propiedad. Debe ser valido para el tipo.\n"
+    "  <valor>  : (opcional) Valor inicial de la propiedad. Debe ser valido para el "
+    "tipo.\n"
     "\n"
     "Tipos disponibles:\n"
     "  (Consultar la lista definida en map_types; por ejemplo: int, str, bool, etc.)\n"

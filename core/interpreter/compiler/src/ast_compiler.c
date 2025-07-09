@@ -28,7 +28,7 @@ block_list_ptr ast_compile(AST_Node_t **ast, size_t ast_count) {
   }
   for (int ast_iterator = 0; ast_iterator < ast_count; ast_iterator++) {
     switch (ast[ast_iterator]->ast_type) {
-    case AST_EMPTY: ir_add_nop(block_main->instr_array); break;
+    case AST_EMPTY: break;
     case AST_CMD: compile_cmd(block_result, block_main, ast[ast_iterator]);
     }
   }

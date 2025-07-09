@@ -31,7 +31,7 @@ int prop_reg_add(LIST_ptr list, char *key, char *value, prop_types type) {
   return 1;
 }
 
-int prop_reg_search_key(const char *key, LIST list) {
+int prop_reg_search_key(const char *key, LIST list, int verbose) {
   NODE_ptr node = NULL;
   int n = 0;
   FOR_EACH(&node, list) {
@@ -39,13 +39,15 @@ int prop_reg_search_key(const char *key, LIST list) {
     if (strcmp(current->key, key) == 0) return n;
     n++;
   }
-  log_add(NULL, ERROR, "Properties-Search-Key", "El elemento no fue encontrado");
-  log_add(NULL, ERROR, "Properties-Search-Key", "key: " AMARILLO "{%s}" RESET, key);
+  if (verbose) {
+    log_add(NULL, ERROR, "Properties-Search-Key", "El elemento no fue encontrado");
+    log_add(NULL, ERROR, "Properties-Search-Key", "key: " AMARILLO "{%s}" RESET, key);
+  }
   return -1;
 }
 
-prop_struct *prop_reg_value(const char *key, LIST list) {
-  int n = prop_reg_search_key(key, list);
+prop_struct *prop_reg_value(const char *key, LIST list, int verbose) {
+  int n = prop_reg_search_key(key, list, verbose);
   if (n == -1) return NULL;
   NODE_ptr node = list_index_get(n, list);
   if (node == NULL) {

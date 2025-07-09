@@ -190,12 +190,11 @@ LIST_ptr read_string_utf8() {
   CodeUTF8 c;
 
   char prompt[100] = "\0";
-  int prompt_position = prop_reg_search_key("PROMPT", *prop_register);
+  int prompt_position = prop_reg_search_key("PROMPT", *prop_register, 0);
   if (prompt_position == -1) {
     default_promp(prompt);
-    log_clear(NULL);
   } else {
-    prop_struct *prompt_prop = prop_reg_value("PROMPT", *prop_register);
+    prop_struct *prompt_prop = prop_reg_value("PROMPT", *prop_register, 0);
     if (prompt_prop->type != STRING) {
       default_promp(prompt);
     } else {

@@ -17,13 +17,13 @@ static int fn_input(LIST_ptr args) {
   if (args_len == 2) {
     NODE_ptr node_in = list_index_get(1, *args);
     char *str_in = (char *)node_in->point;
-    if ((in_prop = prop_reg_value(str_in, *prop_register)) == NULL) {
+    if ((in_prop = prop_reg_value(str_in, *prop_register, 0)) == NULL) {
       if (!prop_reg_add(prop_register, "str_in", "", STRING)) {
         log_add(NULL, ERROR, NAME, "No se pudo crear la uneva propiedad");
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
-      in_prop = prop_reg_value(str_in, *prop_register);
+      in_prop = prop_reg_value(str_in, *prop_register, 0);
       validator = is_string;
     } else {
       for (int i = 0; map_types[i].key != OTHER; i++) {
@@ -34,13 +34,13 @@ static int fn_input(LIST_ptr args) {
       }
     }
   } else {
-    if ((in_prop = prop_reg_value("INPUT", *prop_register)) == NULL) {
+    if ((in_prop = prop_reg_value("INPUT", *prop_register, 0)) == NULL) {
       if (!prop_reg_add(prop_register, "INPUT", "", STRING)) {
         log_add(NULL, ERROR, NAME, "No se pudo crear la nueva propiedad");
         log_show_and_clear(NULL);
         return EXIT_FAILURE;
       }
-      in_prop = prop_reg_value("INPUT", *prop_register);
+      in_prop = prop_reg_value("INPUT", *prop_register, 0);
       validator = is_string;
     } else {
       for (int i = 0; map_types[i].key != OTHER; i++) {
@@ -56,7 +56,8 @@ static int fn_input(LIST_ptr args) {
   in_buffer[strcspn(in_buffer, "\n")] = '\0';
   if (validator != NULL) {
     if (!validator(in_buffer)) {
-      log_add(NULL, ERROR, NAME, "La entrada no coincide con el valor requerido por la propiedad");
+      log_add(NULL, ERROR, NAME,
+              "La entrada no coincide con el valor requerido por la propiedad");
       log_add(NULL, ERROR, NAME, AMARILLO "%s" RESET " es invalido", in_buffer);
       log_show_and_clear(NULL);
       return EXIT_FAILURE;

@@ -40,7 +40,7 @@ static int extract_money_token(const char *cmd, int start, char money, char **ou
     i++;
   }
   prop_name[j] = '\0';
-  prop_struct *prop_value = prop_reg_value(prop_name, *prop_register);
+  prop_struct *prop_value = prop_reg_value(prop_name, *prop_register, 1);
   if (!prop_value) {
     log_add(NULL, ERROR, "Command Parser",
             "Error al obtener el valor de la propiedad " AZUL "%s" RESET, prop_name);

@@ -17,7 +17,6 @@
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
-#define info(msg, ...) log_add(NULL, INFO, "VM", msg, ##__VA_ARGS__)
 
 VM_ptr vm_new() {
   VM_ptr vm = malloc(sizeof(VM));
@@ -92,16 +91,6 @@ void vm_run(VM_ptr vm) {
   while (vm->running) {
     const bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
     switch (instr.bci_opcode) {
-    case OP_LOAD_PROP:
-    case OP_LOAD_STRING:
-      printf("(%d): %d, 0, %s\n", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
-             vm->String_Table->strings[instr.bci_src2]);
-      break;
-    default:
-      printf("(%d): %d, %d, %d\n", instr.bci_opcode, BC_REG_GET_VALUE(instr.bci_dst),
-             BC_REG_GET_VALUE(instr.bci_src1), BC_REG_GET_VALUE(instr.bci_src2));
-    }
-    switch (instr.bci_opcode) {
     case OP_NOP: break;
     case OP_SYSCALL: {
       reg_t syscall_num = vm->reg.reg[0];
@@ -156,7 +145,13 @@ void vm_run(VM_ptr vm) {
           break;
         }
       }
-      vm->reg.reg[1] = cmd->func(args);
+      int ret = vm->reg.reg[1] = cmd->func(args);
+      if (ret != EXIT_SUCCESS) {
+        if (ret == 153) error("Error interno en '%s'", fun_name);
+        list_free(args);
+        vm->running = 0;
+        break;
+      }
       list_free(args);
       break;
     }
@@ -189,10 +184,8 @@ void vm_run(VM_ptr vm) {
         break;
       }
       char *prop_key = vm->String_Table->strings[instr.bci_src2];
-      prop_struct *prop = prop_reg_value(prop_key, *prop_register);
-      log_show_and_clear(NULL);
+      prop_struct *prop = prop_reg_value(prop_key, *prop_register, 1);
       if (!prop) {
-        info("&prop = %p\n", prop);
         error("No se encontro la propiedad '%s' no se encontro", prop_key);
         vm->running = 0;
         break;

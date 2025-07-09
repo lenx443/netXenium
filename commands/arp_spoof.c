@@ -155,7 +155,7 @@ static int fn_arp_spoof(LIST_ptr args) {
   char *option_value = (char *)option_node->point;
   if (strcmp(option_value, "help") == 0) return spoof_help();
 
-  iface = prop_reg_value("LOCAL_IFACE", *prop_register);
+  iface = prop_reg_value("LOCAL_IFACE", *prop_register, 1);
   if (iface == NULL) {
     log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la interfaz de red");
     log_show_and_clear(NULL);
@@ -173,25 +173,25 @@ static int fn_arp_spoof(LIST_ptr args) {
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
-  prop_struct *router_addr = prop_reg_value("ROUTER_ADDR", *prop_register);
+  prop_struct *router_addr = prop_reg_value("ROUTER_ADDR", *prop_register, 1);
   if (router_addr == NULL) {
     log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección IP del router");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
-  prop_struct *router_hwaddr = prop_reg_value("ROUTER_HWADDR", *prop_register);
+  prop_struct *router_hwaddr = prop_reg_value("ROUTER_HWADDR", *prop_register, 1);
   if (router_hwaddr == NULL) {
     log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección MAC del router");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
-  prop_struct *target_addr = prop_reg_value("TARGET_ADDR", *prop_register);
+  prop_struct *target_addr = prop_reg_value("TARGET_ADDR", *prop_register, 1);
   if (target_addr == NULL) {
     log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección IP objetivo");
     log_show_and_clear(NULL);
     return EXIT_FAILURE;
   }
-  prop_struct *target_hwaddr = prop_reg_value("TARGET_HWADDR", *prop_register);
+  prop_struct *target_hwaddr = prop_reg_value("TARGET_HWADDR", *prop_register, 1);
   if (target_hwaddr == NULL) {
     log_add(NULL, ERROR, "ARPSpoof", "No se pudo obtener la dirección MAC objetivo");
     log_show_and_clear(NULL);
