@@ -353,14 +353,11 @@ LIST_ptr read_string_utf8() {
           continue;
         }
         printf("\n");
-        time_t tim = time(NULL);
-        if (tim == (time_t)-1) break;
         if (cmd->head != NULL) {
           HISTORY_struct *previus_history = history_get(*history, 0);
           if (previus_history == NULL ||
               string_utf8_strcmp_cstring(cmd, previus_history->command) != 0) {
             HISTORY_struct new_history_line;
-            new_history_line.time_stamp = (long)tim;
             char *cmd_cstring = string_utf8_get(cmd);
             if (cmd_cstring == NULL) {
               log_add(NULL, ERROR, "SHELL",

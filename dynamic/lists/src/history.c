@@ -1,49 +1,11 @@
-#include <errno.h>
-#include <json-c/json.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "history.h"
-#include "json_object.h"
-#include "json_tokener.h"
-#include "json_types.h"
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
-
-static void history_to_string(char *str, void *str_out, size_t size) {
-  char *out = (char *)str_out;
-  size_t i = 0;
-  while (str[i] && (size_t)(out - (char *)str_out) < size - 2) {
-    unsigned char c = (unsigned char)str[i++];
-    if (c == '\n') {
-      *out++ = '\\';
-      *out++ = 'n';
-    } else if (c == '\t') {
-      *out++ = '\\';
-      *out++ = 't';
-    } else if (c == '\r') {
-      *out++ = '\\';
-      *out++ = 'r';
-    } else if (c == '\b') {
-      *out++ = '\\';
-      *out++ = 'b';
-    } else if (c == '\\') {
-      *out++ = '\\';
-      *out++ = '\\';
-    } else if (c < 32 || c > 126) {
-      if ((size_t)(out - (char *)str_out) < size - 4) {
-        sprintf(out, "\\x%02X", c);
-        out += 4;
-      } else
-        break;
-    } else {
-      *out++ = c;
-    }
-  }
-  *out = '\0';
-}
 
 HISTORY_ptr history_new(const char *filename) {
   HISTORY_ptr new_history = malloc(sizeof(HISTORY));
@@ -115,28 +77,9 @@ HISTORY_ptr history_new(const char *filename) {
     line[strcspn(line, "\n")] = '\0';
     HISTORY_struct history_line;
 
-    struct json_object *parser = json_tokener_parse(line);
-
-    struct json_object *time_stamp;
-    if (!json_object_object_get_ex(parser, "time_stamp", &time_stamp)) {
-      log_add(NULL, ERROR, "History", "Ah ocurrido un error al parciar el historial");
-      json_object_put(parser);
-      continue;
-    }
-    struct json_object *command;
-    if (!json_object_object_get_ex(parser, "command", &command)) {
-      log_add(NULL, ERROR, "History", "Ah ocurrido un error al parciar el historial");
-      json_object_put(parser);
-      continue;
-    }
-
-    history_line.time_stamp = json_object_get_int64(time_stamp);
     char str_command[CMDSIZ];
-    strncpy(str_command, json_object_get_string(command), sizeof(history_line.command));
-    str_command[sizeof(str_command) - 1] = '\0';
-    history_to_string(str_command, history_line.command, CMDSIZ);
-
-    json_object_put(parser);
+    strncpy(history_line.command, line, sizeof(history_line.command));
+    history_line.command[sizeof(history_line.command) - 1] = '\0';
 
     if (!list_push_begin(new_history->cache_history, &history_line,
                          sizeof(HISTORY_struct))) {
@@ -165,10 +108,7 @@ int history_push_line(HISTORY_ptr hist, HISTORY_struct line) {
 
 static HISTORY_struct *history_get_cache(HISTORY hist, int index) {
   int size = list_size(*hist.cache_history);
-  if (size == 0) {
-    log_add(NULL, INFO, "History", "El historial esta basio");
-    return NULL;
-  }
+  if (size == 0) return NULL;
   if ((size - index) <= 0) {
     log_add(NULL, ERROR, "History", "El indice %d esta fuera de limite", index);
     return NULL;
@@ -212,8 +152,8 @@ int history_save(HISTORY hist) {
   NODE_ptr node = list_pop_back(hist.local_history);
   while (node != NULL) {
     HISTORY_struct *hist_struct = (HISTORY_struct *)node->point;
-    fprintf(fp, "{\"time_stamp\": %ld, \"command\": \"%s\"}\n", hist_struct->time_stamp,
-            hist_struct->command);
+    fputs(hist_struct->command, fp);
+    fputc('\n', fp);
     node = list_pop_back(hist.local_history);
   }
   fclose(fp);

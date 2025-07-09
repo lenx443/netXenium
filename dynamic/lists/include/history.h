@@ -7,7 +7,6 @@
 #include "macros.h"
 
 typedef struct {
-  int64_t time_stamp;
   char command[CMDSIZ];
 } HISTORY_struct;
 

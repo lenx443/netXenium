@@ -134,5 +134,5 @@ add_executable(ntxenium
   commands/iface.c
 )
 
-target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS} ${JSONC_INCLUDE_DIRS})
-target_link_libraries(ntxenium ${PCAP_LIBRARIES} ${JSONC_LIBRARIES})
+target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(ntxenium ${PCAP_LIBRARIES})
