@@ -4,7 +4,6 @@ project(NetXenium)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
-pkg_check_modules(JSONC REQUIRED json-c)
 
 set(CMAKE_C_FLAGS_DEBUG "-g -O0")
 

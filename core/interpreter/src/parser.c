@@ -9,20 +9,21 @@ void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 
 int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
-    char *cmd_name = strdup(p->token.tkn_text);
+    char *identifier_name = strdup(p->token.tkn_text);
+    if (strcmp(identifier_name, "if") == 0) { return parser_if_cindional(p, ast); }
     parser_next(p);
     ArgExpr_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
     while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
       if (p->token.tkn_type == TKN_NEWLINE) {
-        *ast = ast_make_cmd(cmd_name, args, arg_count);
-        free(cmd_name);
+        *ast = ast_make_cmd(identifier_name, args, arg_count);
+        free(identifier_name);
         parser_next(p);
         return 1;
       }
       ArgExpr_t *arg = parser_concat(p);
       if (!arg) {
-        free(cmd_name);
+        free(identifier_name);
         return 0;
       }
       if (arg_count == arg_cap) {
@@ -31,8 +32,8 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
       }
       args[arg_count++] = arg;
     }
-    *ast = ast_make_cmd(cmd_name, args, arg_count);
-    free(cmd_name);
+    *ast = ast_make_cmd(identifier_name, args, arg_count);
+    free(identifier_name);
     return 1;
   } else if (p->token.tkn_type == TKN_NEWLINE) {
     *ast = ast_make_empty();
@@ -40,6 +41,11 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     return 1;
   }
   return 0;
+}
+
+int parser_if_cindional(Parser *p, AST_Node_t **ast) {
+  ;
+  return 1;
 }
 
 ArgExpr_t *parser_concat(Parser *p) {

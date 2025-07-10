@@ -81,10 +81,29 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       lexer->pos++;
       token.tkn_type = TKN_UNDEFINED;
     }
+  } else if (c == '{') {
+    lexer->pos++;
+    token.tkn_type = TKN_LBRACE;
+    token.tkn_text[0] = '{';
+    token.tkn_text[1] = '\0';
+  } else if (c == '}') {
+    lexer->pos++;
+    token.tkn_type = TKN_RBRACE;
+    token.tkn_text[0] = '}';
+    token.tkn_text[1] = '\0';
   } else if (c == '=') {
     lexer->pos++;
-    token.tkn_type = TKN_EQUAL;
-    strcat(token.tkn_text, "=");
+    if (lexer->src[lexer->pos] == '>') {
+      lexer->pos++;
+      token.tkn_type = TKN_BLOCK;
+      token.tkn_text[0] = '=';
+      token.tkn_text[1] = '>';
+      token.tkn_text[2] = '\n';
+    } else {
+      token.tkn_type = TKN_EQUAL;
+      token.tkn_text[0] = '=';
+      token.tkn_text[1] = '\0';
+    }
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
     token.tkn_text[1] = '\0';

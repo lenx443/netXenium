@@ -11,6 +11,7 @@ typedef struct {
 
 void parser_next(Parser *);
 int parser_stmt(Parser *, AST_Node_t **);
+int parser_if_cindional(Parser *, AST_Node_t **);
 ArgExpr_t *parser_concat(Parser *);
 ArgExpr_t *parser_arg(Parser *);
 
