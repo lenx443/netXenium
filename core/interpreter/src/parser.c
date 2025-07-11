@@ -71,7 +71,6 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
           return 0;
         }
         *ast_array = temp;
-        puts("parsing block");
         b_cap = new_cap;
       }
       if (!parser_stmt(p, &(*ast_array)[b_count])) {
