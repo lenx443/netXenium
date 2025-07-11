@@ -28,6 +28,7 @@ int interpreter(const char *text_code) {
   if (!ast_array) return 0;
   AST_Node_t *current_ast;
   while (parser_stmt(&parser, &current_ast) == 1) {
+    ast_print(current_ast);
     if (!ast_array_add(ast_array, current_ast)) {
       ast_array_free(ast_array);
       return 0;
@@ -38,6 +39,7 @@ int interpreter(const char *text_code) {
     ast_array_free(ast_array);
     return 1;
   }
+  return 1;
   block_list_ptr blocks = ast_compile(ast_array->ast_array, ast_array->ast_count);
   if (!blocks) {
     ast_array_free(ast_array);

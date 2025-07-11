@@ -46,7 +46,7 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   return 0;
 }
 
-int parser_block(Parser *p, AST_Node_t **ast_array, size_t *block_count) {
+int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
   parser_next(p);
   while (p->token.tkn_type != TKN_BLOCK) {
     if (p->token.tkn_type == TKN_NEWLINE)
@@ -70,11 +70,11 @@ int parser_block(Parser *p, AST_Node_t **ast_array, size_t *block_count) {
           error("Memoria insuficiente");
           return 0;
         }
-        ast_array = temp;
+        *ast_array = temp;
         b_cap = new_cap;
       }
-      if (!parser_stmt(p, &ast_array[b_count])) {
-        ast_free_block(ast_array, b_count);
+      if (!parser_stmt(p, *(&ast_array[b_count]))) {
+        ast_free_block(*ast_array, b_count);
         return 0;
       }
       b_count++;
@@ -85,7 +85,7 @@ int parser_block(Parser *p, AST_Node_t **ast_array, size_t *block_count) {
       error("Memoria insuficiente");
       return 0;
     }
-    if (parser_stmt(p, ast_array)) {
+    if (parser_stmt(p, *ast_array)) {
       free(ast_array);
       return 0;
     }
@@ -114,12 +114,12 @@ int parser_if_cindional(Parser *p, AST_Node_t **ast) {
   }
   size_t count;
   AST_Node_t **body;
-  if (!parser_block(p, body, &count)) {
+  if (!parser_block(p, &body, &count)) {
     ast_free_bool(b1);
     ast_free_bool(b2);
     return 0;
   }
-  ast_make_if_conditional(ast_make_bool_pair_t(b1, b2), body, count);
+  *ast = ast_make_if_conditional(ast_make_bool_pair_t(b1, b2), body, count);
   return 1;
 }
 

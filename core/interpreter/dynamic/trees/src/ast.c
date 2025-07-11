@@ -129,3 +129,124 @@ void ast_free_arg(ArgExpr_t *arg) {
   }
   free(arg);
 }
+
+static void print_indent(int indent) {
+  for (int i = 0; i < indent; ++i)
+    printf("  ");
+}
+
+static void print_bool_expr(const BoolExpr_t *expr, int indent);
+
+static void print_bool_pair(const BoolExprPair_t *pair, int indent) {
+  print_indent(indent);
+  printf("BoolPair:\n");
+  if (pair) {
+    print_bool_expr(pair->c1, indent + 1);
+    print_bool_expr(pair->c2, indent + 1);
+  }
+}
+
+static void print_bool_expr(const BoolExpr_t *expr, int indent) {
+  if (!expr) {
+    print_indent(indent);
+    printf("BoolExpr: NULL\n");
+    return;
+  }
+  switch (expr->type) {
+  case BOOL_LITERAL:
+    print_indent(indent);
+    printf("BoolLiteral: \"%s\"\n", expr->content ? expr->content : "NULL");
+    break;
+  case BOOL_PROPERTY:
+    print_indent(indent);
+    printf("BoolProperty: \"%s\"\n", expr->content ? expr->content : "NULL");
+    break;
+  case BOOL_PAIR:
+    print_indent(indent);
+    printf("BoolPair:\n");
+    print_bool_expr(expr->pair.c1, indent + 1);
+    print_bool_expr(expr->pair.c2, indent + 1);
+    break;
+  default: print_indent(indent); printf("BoolExpr: Unknown type\n");
+  }
+}
+
+static void print_arg_expr(const ArgExpr_t *arg, int indent) {
+  if (!arg) {
+    print_indent(indent);
+    printf("ArgExpr: NULL\n");
+    return;
+  }
+  switch (arg->arg_type) {
+  case ARG_LITERAL:
+    print_indent(indent);
+    printf("ArgLiteral: \"%s\"\n", arg->literal ? arg->literal : "NULL");
+    break;
+  case ARG_PROPERTY:
+    print_indent(indent);
+    printf("ArgProperty: \"%s\"\n", arg->property ? arg->property : "NULL");
+    break;
+  case ARG_CONCAT:
+    print_indent(indent);
+    printf("ArgConcat:\n");
+    for (int i = 0; i < arg->concat.count; ++i) {
+      print_arg_expr(arg->concat.parts[i], indent + 1);
+    }
+    break;
+  default: print_indent(indent); printf("ArgExpr: Unknown type\n");
+  }
+}
+
+static void print_ast_node(const AST_Node_t *node, int indent);
+
+static void print_ast_block(AST_Node_t **body, size_t body_count, int indent) {
+  for (size_t i = 0; i < body_count; ++i) {
+    print_ast_node(body[i], indent);
+  }
+}
+
+static void print_ast_node(const AST_Node_t *node, int indent) {
+  if (!node) {
+    print_indent(indent);
+    printf("AST_Node: NULL\n");
+    return;
+  }
+  switch (node->ast_type) {
+  case AST_EMPTY:
+    print_indent(indent);
+    printf("AST_EMPTY\n");
+    break;
+  case AST_CMD:
+    print_indent(indent);
+    printf("AST_CMD: \"%s\"\n", node->cmd.cmd_name ? node->cmd.cmd_name : "NULL");
+    for (int i = 0; i < node->cmd.arg_count; ++i) {
+      print_arg_expr(node->cmd.cmd_args[i], indent + 1);
+    }
+    break;
+  case AST_IF:
+    print_indent(indent);
+    printf("AST_IF:\n");
+    print_indent(indent + 1);
+    printf("Condition:\n");
+    if (node->if_conditional.condition)
+      print_bool_pair(node->if_conditional.condition, indent + 2);
+    else
+      print_indent(indent + 2), printf("NULL\n");
+    print_indent(indent + 1);
+    printf("Body:\n");
+    print_ast_block(node->if_conditional.body, node->if_conditional.body_count,
+                    indent + 2);
+    break;
+  default: print_indent(indent); printf("AST_Node: Unknown type\n");
+  }
+}
+
+void ast_print(const AST_Node_t *node) { print_ast_node(node, 0); }
+
+void ast_print_block(AST_Node_t **nodes, size_t count) {
+  for (size_t i = 0; i < count; ++i) {
+    printf("Node %zu:\n", i);
+    ast_print(nodes[i]);
+    printf("\n");
+  }
+}

@@ -95,4 +95,7 @@ void ast_free_bool(BoolExpr_t *);
 void ast_free_bool_pair(BoolExprPair_t *);
 void ast_free_arg(ArgExpr_t *);
 
+void ast_print(const AST_Node_t *node);
+void ast_print_block(AST_Node_t **nodes, size_t count);
+
 #endif
