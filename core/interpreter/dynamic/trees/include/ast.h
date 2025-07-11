@@ -1,21 +1,30 @@
 #ifndef __AST_H__
 #define __AST_H__
 
+#include <stddef.h>
+
 typedef enum {
   BOOL_LITERAL = 0,
   BOOL_PROPERTY,
+  BOOL_PAIR,
 } BoolExprType;
 
 struct BoolExpr_s {
   BoolExprType type;
-  char *content;
+  union {
+    char *content;
+    struct {
+      struct BoolExpr_s *c1;
+      struct BoolExpr_s *c2;
+    } pair;
+  };
 };
 
 typedef struct BoolExpr_s BoolExpr_t;
 
 struct BoolExprPair_s {
-  struct BoolExpr_s c1;
-  struct BoolExpr_s c2;
+  struct BoolExpr_s *c1;
+  struct BoolExpr_s *c2;
 };
 
 typedef struct BoolExprPair_s BoolExprPair_t;
@@ -42,6 +51,7 @@ typedef struct ArgExpr_s ArgExpr_t;
 
 typedef enum {
   AST_EMPTY = 0,
+  AST_IF,
   AST_CMD,
 } ASTNodeType;
 
@@ -53,24 +63,35 @@ struct AST_Node_s {
       ArgExpr_t **cmd_args;
       int arg_count;
     } cmd;
+    struct {
+      BoolExprPair_t *condition;
+      struct {
+        size_t body_count;
+        struct AST_Node_s **body;
+      };
+    } if_conditional;
   };
 };
 
 typedef struct AST_Node_s AST_Node_t;
 
 AST_Node_t *ast_make_empty();
+AST_Node_t *ast_make_if_conditional(BoolExprPair_t *, AST_Node_t **, size_t);
 AST_Node_t *ast_make_cmd(const char *, ArgExpr_t **, int);
 
 BoolExpr_t *ast_make_bool_literal(char *);
 BoolExpr_t *ast_make_bool_property(char *);
+BoolExpr_t *ast_make_bool_pair(BoolExprPair_t *);
 
-BoolExprPair_t *ast_make_bool_pair(BoolExpr_t *, BoolExpr_t *);
+BoolExprPair_t *ast_make_bool_pair_t(BoolExpr_t *, BoolExpr_t *);
 
 ArgExpr_t *ast_make_arg_literal(const char *);
 ArgExpr_t *ast_make_arg_property(const char *);
 ArgExpr_t *ast_make_arg_concat(ArgExpr_t **, int count);
 
 void ast_free(AST_Node_t *);
+void ast_free_bool(BoolExpr_t *);
+void ast_free_bool_pair(BoolExprPair_t *);
 void ast_free_arg(ArgExpr_t *);
 
 #endif

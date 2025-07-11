@@ -3,7 +3,10 @@
 
 #include "ast.h"
 #include "lexer.h"
+#include "logs.h"
 #include "parser.h"
+
+#define error(msg, ...) log_add(NULL, ERROR, "Parser", msg, ##__VA_ARGS__)
 
 void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 
@@ -44,7 +47,24 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
 }
 
 int parser_if_cindional(Parser *p, AST_Node_t **ast) {
-  ;
+  parser_next(p);
+  BoolExpr_t *b1;
+  BoolExpr_t *b2;
+  switch (p->token.tkn_type) {
+  case TKN_STRING: b1 = ast_make_bool_literal(p->token.tkn_text); break;
+  case TKN_PROPERTY: b1 = ast_make_bool_property(p->token.tkn_text); break;
+  default: error("Invalid token"); return 0;
+  }
+  parser_next(p);
+  switch (p->token.tkn_type) {
+  case TKN_STRING: b2 = ast_make_bool_literal(p->token.tkn_text); break;
+  case TKN_PROPERTY: b2 = ast_make_bool_property(p->token.tkn_text); break;
+  default:
+    error("Invalid token");
+    ast_free_bool(b1);
+    return 0;
+  }
+  // ast_make_if_conditional(ast_make_bool_pair_t(b1, b2), AST_Node_t **, size_t);
   return 1;
 }
 
