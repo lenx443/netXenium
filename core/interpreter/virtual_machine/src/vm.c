@@ -91,7 +91,7 @@ void vm_run(VM_ptr vm) {
                                    &&STRING_CONCAT, &&REG_CONCAT};
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
-  bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
+  bc_Instruct_t instr;
 next: {
   instr = vm->bytecode->bc_array[vm->ip++];
   if (instr.bci_opcode > OP_HALT) goto _default;
@@ -294,7 +294,7 @@ REG_CONCAT: {
 HALT:
 _default:
   vm->running = 0;
-  goto next;
+  goto end;
 end:
   log_show_and_clear(NULL);
 
