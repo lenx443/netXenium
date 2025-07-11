@@ -93,9 +93,9 @@ void vm_run(VM_ptr vm) {
   GCPointer_node_ptr gc_array = NULL;
   bc_Instruct_t instr;
 next: {
+  if (!vm->running) goto end;
   instr = vm->bytecode->bc_array[vm->ip++];
   if (instr.bci_opcode > OP_HALT) goto _default;
-  if (!vm->running) goto end;
   goto *dispatch_table[instr.bci_opcode];
 }
 NOP:
@@ -120,7 +120,7 @@ FUN_CALL: {
   for (int i = 0; cmds_table[i] != NULL; i++) {
     if (strcmp(cmds_table[i]->name, fun_name) == 0) {
       cmd = cmds_table[i];
-      goto next;
+      break;
     }
   }
   if (cmd == NULL) {
