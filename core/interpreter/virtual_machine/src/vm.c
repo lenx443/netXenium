@@ -88,13 +88,12 @@ VM_ptr vm_program_code_new(ProgramCode_t code) {
 void vm_run(VM_ptr vm) {
   static void *dispatch_table[] = {&&NOP,           &&SYSCALL,     &&FUN_CALL,
                                    &&LOAD_IMM,      &&LOAD_STRING, &&LOAD_PROP,
-                                   &&STRING_CONCAT, &&REG_CONCAT};
+                                   &&STRING_CONCAT, &&REG_CONCAT,  &&HALT};
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
   bc_Instruct_t instr;
   while (vm->running && vm->ip < vm->bytecode->bc_size) {
     bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
-
     if (instr.bci_opcode > OP_HALT) {
       vm->running = 0;
       break;
@@ -294,6 +293,9 @@ void vm_run(VM_ptr vm) {
     vm->reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
     continue;
   }
+  HALT:
+    vm->running = 0;
+    continue;
   }
   log_show_and_clear(NULL);
   gc_pointer_list_free(gc_array);
