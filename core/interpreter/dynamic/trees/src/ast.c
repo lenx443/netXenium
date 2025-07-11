@@ -82,9 +82,7 @@ void ast_free(AST_Node_t *ast) {
   if (!ast) return;
   if (ast->ast_type == AST_IF) {
     ast_free_bool_pair(ast->if_conditional.condition);
-    for (int i = 0; i < ast->if_conditional.body_count; i++) {
-      ast_free(ast->if_conditional.body[i]);
-    }
+    ast_free_block(ast->if_conditional.body, ast->if_conditional.body_count);
   } else if (ast->ast_type == AST_CMD) {
     free((void *)ast->cmd.cmd_name);
     for (int i = 0; i < ast->cmd.arg_count; ++i)
@@ -92,6 +90,13 @@ void ast_free(AST_Node_t *ast) {
     free(ast->cmd.cmd_args);
   }
   free(ast);
+}
+
+void ast_free_block(AST_Node_t **block, size_t b_count) {
+  for (int i = 0; i < b_count; i++) {
+    ast_free(block[i]);
+  }
+  free(block);
 }
 
 void ast_free_bool(BoolExpr_t *bool) {

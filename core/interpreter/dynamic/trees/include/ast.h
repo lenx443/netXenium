@@ -90,6 +90,7 @@ ArgExpr_t *ast_make_arg_property(const char *);
 ArgExpr_t *ast_make_arg_concat(ArgExpr_t **, int count);
 
 void ast_free(AST_Node_t *);
+void ast_free_block(AST_Node_t **, size_t);
 void ast_free_bool(BoolExpr_t *);
 void ast_free_bool_pair(BoolExprPair_t *);
 void ast_free_arg(ArgExpr_t *);
