@@ -78,19 +78,20 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
       }
       b_count++;
     }
+    parser_next(p);
   } else {
-    ast_array = malloc(sizeof(AST_Node_t *));
-    if (!ast_array) {
+    *ast_array = malloc(sizeof(AST_Node_t *));
+    if (*ast_array == NULL) {
       error("Memoria insuficiente");
       return 0;
     }
-    if (parser_stmt(p, *ast_array)) {
-      free(ast_array);
+    if (!parser_stmt(p, *ast_array)) {
+      free(*ast_array);
       return 0;
     }
+    b_count = 1;
   }
   *block_count = b_count;
-  parser_next(p);
   return 1;
 }
 
@@ -119,7 +120,7 @@ int parser_if_cindional(Parser *p, AST_Node_t **ast) {
     ast_free_bool(b2);
     return 0;
   }
-  *ast = ast_make_if_conditional(ast_make_bool_pair_t(b1, b2), body, count);
+  *ast = ast_make_if_conditional(ast_make_bool_pair(b1, b2), body, count);
   return 1;
 }
 

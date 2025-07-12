@@ -8,7 +8,7 @@ AST_Node_t *ast_make_empty() {
   return node;
 }
 
-AST_Node_t *ast_make_if_conditional(BoolExprPair_t *condition, AST_Node_t **body,
+AST_Node_t *ast_make_if_conditional(BoolExpr_t *condition, AST_Node_t **body,
                                     size_t body_count) {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_IF;
@@ -41,18 +41,11 @@ BoolExpr_t *ast_make_bool_property(char *property) {
   return node;
 }
 
-BoolExpr_t *ast_make_bool_pair(BoolExprPair_t *pair) {
+BoolExpr_t *ast_make_bool_pair(BoolExpr_t *c1, BoolExpr_t *c2) {
   BoolExpr_t *node = malloc(sizeof(BoolExpr_t));
   node->type = BOOL_PAIR;
-  node->pair.c1 = pair->c1;
-  node->pair.c2 = pair->c2;
-  return node;
-}
-
-BoolExprPair_t *ast_make_bool_pair_t(BoolExpr_t *c1, BoolExpr_t *c2) {
-  BoolExprPair_t *node = malloc(sizeof(BoolExprPair_t));
-  node->c1 = c1;
-  node->c2 = c2;
+  node->pair.c1 = c1;
+  node->pair.c2 = c2;
   return node;
 }
 
@@ -81,7 +74,7 @@ ArgExpr_t *ast_make_arg_concat(ArgExpr_t **parts, int count) {
 void ast_free(AST_Node_t *ast) {
   if (!ast) return;
   if (ast->ast_type == AST_IF) {
-    ast_free_bool_pair(ast->if_conditional.condition);
+    ast_free_bool(ast->if_conditional.condition);
     ast_free_block(ast->if_conditional.body, ast->if_conditional.body_count);
   } else if (ast->ast_type == AST_CMD) {
     free((void *)ast->cmd.cmd_name);
@@ -110,12 +103,6 @@ void ast_free_bool(BoolExpr_t *bool) {
   free(bool);
 }
 
-void ast_free_bool_pair(BoolExprPair_t *bool_pair) {
-  if (!bool_pair) return;
-  ast_free_bool(bool_pair->c1);
-  ast_free_bool(bool_pair->c2);
-}
-
 void ast_free_arg(ArgExpr_t *arg) {
   if (!arg) return;
   switch (arg->arg_type) {
@@ -136,15 +123,6 @@ static void print_indent(int indent) {
 }
 
 static void print_bool_expr(const BoolExpr_t *expr, int indent);
-
-static void print_bool_pair(const BoolExprPair_t *pair, int indent) {
-  print_indent(indent);
-  printf("BoolPair:\n");
-  if (pair) {
-    print_bool_expr(pair->c1, indent + 1);
-    print_bool_expr(pair->c2, indent + 1);
-  }
-}
 
 static void print_bool_expr(const BoolExpr_t *expr, int indent) {
   if (!expr) {
@@ -229,7 +207,7 @@ static void print_ast_node(const AST_Node_t *node, int indent) {
     print_indent(indent + 1);
     printf("Condition:\n");
     if (node->if_conditional.condition)
-      print_bool_pair(node->if_conditional.condition, indent + 2);
+      print_bool_expr(node->if_conditional.condition, indent + 2);
     else
       print_indent(indent + 2), printf("NULL\n");
     print_indent(indent + 1);

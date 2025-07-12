@@ -39,6 +39,7 @@ int interpreter(const char *text_code) {
     ast_array_free(ast_array);
     return 1;
   }
+  log_show_and_clear(NULL);
   return 1;
   block_list_ptr blocks = ast_compile(ast_array->ast_array, ast_array->ast_count);
   if (!blocks) {
