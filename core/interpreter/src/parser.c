@@ -39,9 +39,8 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
     free(identifier_name);
     return 1;
   } else if (p->token.tkn_type == TKN_NEWLINE) {
-    *ast = ast_make_empty();
     parser_next(p);
-    return 1;
+    return parser_stmt(p, ast);
   }
   return 0;
 }
@@ -58,14 +57,14 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
   while (p->token.tkn_type == TKN_NEWLINE) {
     parser_next(p);
   }
-  ast_array = NULL;
+  *ast_array = NULL;
   size_t b_count = 0, b_cap = 0;
   if (p->token.tkn_type == TKN_LBRACE) {
     parser_next(p);
     while (p->token.tkn_type != TKN_RBRACE) {
       if (b_count >= b_cap) {
         int new_cap = b_cap == 0 ? 4 : b_cap * 2;
-        AST_Node_t **temp = realloc(ast_array, sizeof(AST_Node_t *) * new_cap);
+        AST_Node_t **temp = realloc(*ast_array, sizeof(AST_Node_t *) * new_cap);
         if (!temp) {
           error("Memoria insuficiente");
           return 0;
@@ -91,6 +90,7 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
     }
   }
   *block_count = b_count;
+  parser_next(p);
   return 1;
 }
 
