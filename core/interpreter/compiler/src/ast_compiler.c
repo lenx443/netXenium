@@ -3,38 +3,71 @@
 #include "ast.h"
 #include "ast_compiler.h"
 #include "block_list.h"
+#include "ir_bytecode.h"
 #include "logs.h"
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "AST Compiler", msg, ##__VA_ARGS__)
 
+static int compile_if(block_list_ptr, block_node_ptr *, AST_Node_t *);
 static int compile_cmd(block_list_ptr, block_node_ptr, AST_Node_t *);
 
 static int store_arg_literal(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
 static int store_arg_property(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
 static int store_arg_concat(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
 
-block_list_ptr ast_compile(AST_Node_t **ast, size_t ast_count) {
+block_node_ptr ast_compile(block_list_ptr block_result, AST_Node_t **ast,
+                           size_t ast_count) {
   if (!ast) {
     error("arreglo de arboles ast nulo");
     return NULL;
   }
-  block_list_ptr block_result = block_list_new();
-  if (!block_result) return NULL;
   block_node_ptr block_main = block_new();
-  if (!block_main) {
-    block_list_free(block_result);
-    return NULL;
-  }
+  if (!block_main) { return NULL; }
+  block_list_push_node(block_result, block_main);
   for (int ast_iterator = 0; ast_iterator < ast_count; ast_iterator++) {
     switch (ast[ast_iterator]->ast_type) {
     case AST_EMPTY: break;
-    case AST_CMD: compile_cmd(block_result, block_main, ast[ast_iterator]);
+    case AST_IF: compile_if(block_result, &block_main, ast[ast_iterator]); break;
+    case AST_CMD: compile_cmd(block_result, block_main, ast[ast_iterator]); break;
     }
   }
   ir_add_halt(block_main->instr_array);
-  block_list_push_node(block_result, block_main);
-  return block_result;
+  return block_main;
+}
+
+static int compile_if(block_list_ptr blocks, block_node_ptr *block, AST_Node_t *ast) {
+  if (!*block || !ast) {
+    error("No se pudo compilar la condional");
+    return 0;
+  }
+  int b1_n = blocks->strings->size;
+  vm_string_table_add(blocks->strings, ast->if_conditional.condition->pair.c1->content);
+  if (ast->if_conditional.condition->pair.c1->type == BOOL_LITERAL) {
+    ir_add_load_string((*block)->instr_array, 1, b1_n);
+  } else if (ast->if_conditional.condition->pair.c1->type == BOOL_PROPERTY) {
+    ir_add_load_prop((*block)->instr_array, 1, b1_n);
+  }
+  int b2_n = blocks->strings->size;
+  vm_string_table_add(blocks->strings, ast->if_conditional.condition->pair.c2->content);
+  if (ast->if_conditional.condition->pair.c2->type == BOOL_LITERAL) {
+    ir_add_load_string((*block)->instr_array, 2, b2_n);
+  } else if (ast->if_conditional.condition->pair.c2->type == BOOL_PROPERTY) {
+    ir_add_load_prop((*block)->instr_array, 2, b2_n);
+  }
+  block_node_ptr new_block =
+      ast_compile(blocks, ast->if_conditional.body, ast->if_conditional.body_count);
+  if (!new_block) return 0;
+  ir_add_jump_if_squad((*block)->instr_array, new_block);
+  block_node_ptr end_block = block_new();
+  if (!end_block) {
+    block_free(new_block);
+    return 0;
+  }
+  block_list_push_node(blocks, new_block);
+  block_list_push_node(blocks, end_block);
+  *block = end_block;
+  return 1;
 }
 
 int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {

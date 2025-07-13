@@ -2,6 +2,7 @@
 
 #include "bc_instruct.h"
 #include "ir_bytecode.h"
+#include "ir_instruct.h"
 #include "logs.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "IR Array", msg, ##__VA_ARGS__)
@@ -49,6 +50,7 @@ int ir_add_nop(IR_Bytecode_Array_ptr ir) {
                               0,
                               0,
                               0,
+                              NULL,
                           });
 }
 int ir_add_syscall(IR_Bytecode_Array_ptr ir) {
@@ -57,6 +59,7 @@ int ir_add_syscall(IR_Bytecode_Array_ptr ir) {
                               0,
                               0,
                               0,
+                              NULL,
                           });
 }
 int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
@@ -65,14 +68,27 @@ int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
                               0,
                               0,
                               args,
+                              NULL,
                           });
 }
+
+int ir_add_jump_if_squad(IR_Bytecode_Array_ptr ir, void *block_ptr) {
+  return ir_add_instr(ir, (IR_Instruct_t){
+                              OP_JUMP_IF_SQUAD,
+                              0,
+                              0,
+                              0,
+                              block_ptr,
+                          });
+}
+
 int ir_add_load_imm(IR_Bytecode_Array_ptr ir, int reg, int imm) {
   return ir_add_instr(ir, (IR_Instruct_t){
                               OP_LOAD_IMM,
                               BC_REG_PACK(reg, 0),
                               0,
                               imm,
+                              NULL,
                           });
 }
 int ir_add_load_string(IR_Bytecode_Array_ptr ir, int reg, int string) {
@@ -81,6 +97,7 @@ int ir_add_load_string(IR_Bytecode_Array_ptr ir, int reg, int string) {
                               BC_REG_PACK(reg, 0),
                               0,
                               string,
+                              NULL,
                           });
 }
 int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
@@ -89,6 +106,7 @@ int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
                               BC_REG_PACK(reg, 0),
                               0,
                               prop_key,
+                              NULL,
                           });
 }
 int ir_add_string_concat(IR_Bytecode_Array_ptr ir, int reg, int src, int str) {
@@ -97,6 +115,7 @@ int ir_add_string_concat(IR_Bytecode_Array_ptr ir, int reg, int src, int str) {
                               BC_REG_PACK(reg, 1),
                               BC_REG_PACK(src, 0),
                               str,
+                              NULL,
                           });
 }
 int ir_add_reg_concat(IR_Bytecode_Array_ptr ir, int reg, int src1, int src2) {
@@ -105,6 +124,7 @@ int ir_add_reg_concat(IR_Bytecode_Array_ptr ir, int reg, int src1, int src2) {
                               BC_REG_PACK(reg, 1),
                               BC_REG_PACK(src1, 0),
                               BC_REG_PACK(src2, 0),
+                              NULL,
                           });
 }
 int ir_add_halt(IR_Bytecode_Array_ptr ir) {
@@ -113,5 +133,6 @@ int ir_add_halt(IR_Bytecode_Array_ptr ir) {
                               0,
                               0,
                               0,
+                              NULL,
                           });
 }

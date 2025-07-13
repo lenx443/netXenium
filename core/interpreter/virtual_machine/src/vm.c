@@ -86,9 +86,9 @@ VM_ptr vm_program_code_new(ProgramCode_t code) {
 }
 
 void vm_run(VM_ptr vm) {
-  static void *dispatch_table[] = {&&NOP,           &&SYSCALL,     &&FUN_CALL,
-                                   &&LOAD_IMM,      &&LOAD_STRING, &&LOAD_PROP,
-                                   &&STRING_CONCAT, &&REG_CONCAT,  &&HALT};
+  static void *dispatch_table[] = {
+      &&NOP,         &&SYSCALL,   &&FUN_CALL,      &&JUMP_IF_SQUAD, &&LOAD_IMM,
+      &&LOAD_STRING, &&LOAD_PROP, &&STRING_CONCAT, &&REG_CONCAT,    &&HALT};
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
   bc_Instruct_t instr;
@@ -165,6 +165,8 @@ void vm_run(VM_ptr vm) {
     list_free(args);
     continue;
   }
+  JUMP_IF_SQUAD:
+    continue;
   LOAD_IMM:
     if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
       vm->running = 0;

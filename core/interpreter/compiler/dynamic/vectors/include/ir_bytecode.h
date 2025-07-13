@@ -1,3 +1,6 @@
+#ifndef __IR_BYTECODE_H__
+#define __IR_BYTECODE_H__
+
 #include <stddef.h>
 
 #include "ir_instruct.h"
@@ -21,9 +24,12 @@ int ir_add_instr(IR_Bytecode_Array_ptr, IR_Instruct_t);
 int ir_add_nop(IR_Bytecode_Array_ptr);
 int ir_add_syscall(IR_Bytecode_Array_ptr);
 int ir_add_fun_call(IR_Bytecode_Array_ptr, int);
+int ir_add_jump_if_squad(IR_Bytecode_Array_ptr, void *);
 int ir_add_load_imm(IR_Bytecode_Array_ptr, int, int);
 int ir_add_load_string(IR_Bytecode_Array_ptr, int, int);
 int ir_add_load_prop(IR_Bytecode_Array_ptr, int, int);
 int ir_add_string_concat(IR_Bytecode_Array_ptr, int, int, int);
 int ir_add_reg_concat(IR_Bytecode_Array_ptr, int, int, int);
 int ir_add_halt(IR_Bytecode_Array_ptr);
+
+#endif
