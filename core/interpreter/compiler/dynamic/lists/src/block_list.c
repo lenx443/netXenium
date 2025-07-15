@@ -68,7 +68,7 @@ void block_list_free(block_list_ptr blocks) {
   }
   vm_string_table_free(blocks->strings);
   block_node_ptr current = blocks->head;
-  while (!current) {
+  while (current) {
     block_node_ptr next = current->next;
     block_free(current);
     current = next;

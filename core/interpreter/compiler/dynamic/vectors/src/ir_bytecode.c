@@ -72,6 +72,16 @@ int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
                           });
 }
 
+int ir_add_jump(IR_Bytecode_Array_ptr ir, void *block_ptr) {
+  return ir_add_instr(ir, (IR_Instruct_t){
+                              OP_JUMP,
+                              0,
+                              0,
+                              0,
+                              block_ptr,
+                          });
+}
+
 int ir_add_jump_if_squad(IR_Bytecode_Array_ptr ir, void *block_ptr) {
   return ir_add_instr(ir, (IR_Instruct_t){
                               OP_JUMP_IF_SQUAD,

@@ -4,6 +4,6 @@
 #include "ast.h"
 #include "block_list.h"
 
-block_node_ptr ast_compile(block_list_ptr, AST_Node_t **, size_t);
+int ast_compile(block_list_ptr, block_node_ptr *, AST_Node_t **, size_t);
 
 #endif

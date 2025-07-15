@@ -86,9 +86,10 @@ VM_ptr vm_program_code_new(ProgramCode_t code) {
 }
 
 void vm_run(VM_ptr vm) {
-  static void *dispatch_table[] = {
-      &&NOP,         &&SYSCALL,   &&FUN_CALL,      &&JUMP_IF_SQUAD, &&LOAD_IMM,
-      &&LOAD_STRING, &&LOAD_PROP, &&STRING_CONCAT, &&REG_CONCAT,    &&HALT};
+  static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
+                                   &&JUMP,        &&JUMP_IF_SQUAD, &&LOAD_IMM,
+                                   &&LOAD_STRING, &&LOAD_PROP,     &&STRING_CONCAT,
+                                   &&REG_CONCAT,  &&HALT};
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
   bc_Instruct_t instr;
@@ -165,8 +166,26 @@ void vm_run(VM_ptr vm) {
     list_free(args);
     continue;
   }
-  JUMP_IF_SQUAD:
+  JUMP: {
+    vm->ip = instr.bci_src2;
     continue;
+  }
+  JUMP_IF_SQUAD: {
+    char *reg1_value;
+    if (vm->reg.point_flag[1]) {
+      reg1_value = (char *)((GCPointer_ptr)vm->reg.reg[1])->gc_ptr;
+    } else {
+      reg1_value = (char *)vm->reg.reg[1];
+    }
+    char *reg2_value;
+    if (vm->reg.point_flag[2]) {
+      reg2_value = (char *)((GCPointer_ptr)vm->reg.reg[2])->gc_ptr;
+    } else {
+      reg2_value = (char *)vm->reg.reg[2];
+    }
+    if (strcmp(reg1_value, reg2_value) == 0) { vm->ip = instr.bci_src2; }
+    continue;
+  }
   LOAD_IMM:
     if (BC_REG_GET_VALUE(instr.bci_dst) >= vm->reg.capacity) {
       vm->running = 0;
@@ -218,17 +237,17 @@ void vm_run(VM_ptr vm) {
       continue;
     }
     uint8_t src_reg = BC_REG_GET_VALUE(instr.bci_src1);
-    char *reg_value;
+    char *reg1_value;
     if (vm->reg.point_flag[src_reg]) {
-      reg_value = (char *)((GCPointer_ptr)vm->reg.reg[src_reg])->gc_ptr;
+      reg1_value = (char *)((GCPointer_ptr)vm->reg.reg[src_reg])->gc_ptr;
     } else {
-      reg_value = (char *)vm->reg.reg[src_reg];
+      reg1_value = (char *)vm->reg.reg[src_reg];
     }
-    char *concat_string = vm->String_Table->strings[instr.bci_src2];
-    int str_size = strlen(reg_value) + strlen(concat_string) + 1;
+    char *reg2_value = vm->String_Table->strings[instr.bci_src2];
+    int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
     char buffer[str_size];
-    strcpy(buffer, reg_value);
-    strcat(buffer, concat_string);
+    strcpy(buffer, reg1_value);
+    strcat(buffer, reg2_value);
     buffer[str_size - 1] = '\0';
     GCPointer_ptr temp = gc_pointer_list_append(&gc_array, buffer, str_size);
     if (!temp) {
@@ -259,27 +278,27 @@ void vm_run(VM_ptr vm) {
     }
     uint8_t src1_reg = BC_REG_GET_VALUE(instr.bci_src1);
     uint8_t src2_reg = BC_REG_GET_VALUE(instr.bci_src2);
-    char *reg_value;
+    char *reg1_value;
     if (vm->reg.point_flag[src1_reg]) {
-      reg_value = (char *)((GCPointer_ptr)vm->reg.reg[src1_reg])->gc_ptr;
+      reg1_value = (char *)((GCPointer_ptr)vm->reg.reg[src1_reg])->gc_ptr;
     } else {
-      reg_value = (char *)vm->reg.reg[src1_reg];
+      reg1_value = (char *)vm->reg.reg[src1_reg];
     }
-    char *concat_string;
+    char *reg2_value;
     if (vm->reg.point_flag[src2_reg]) {
-      concat_string = (char *)((GCPointer_ptr)vm->reg.reg[src2_reg])->gc_ptr;
+      reg2_value = (char *)((GCPointer_ptr)vm->reg.reg[src2_reg])->gc_ptr;
     } else {
-      concat_string = (char *)vm->reg.reg[src2_reg];
+      reg2_value = (char *)vm->reg.reg[src2_reg];
     }
-    int str_size = strlen(reg_value) + strlen(concat_string) + 1;
+    int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
     char *buffer = malloc(str_size);
     if (!buffer) {
       error("memoria insuficiente");
       vm->running = 0;
       continue;
     }
-    strcpy(buffer, reg_value);
-    strcat(buffer, concat_string);
+    strcpy(buffer, reg1_value);
+    strcat(buffer, reg2_value);
     buffer[str_size - 1] = '\0';
     GCPointer_ptr temp = gc_pointer_list_append(&gc_array, buffer, str_size);
     if (!temp) {

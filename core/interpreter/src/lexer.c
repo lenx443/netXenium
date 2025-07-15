@@ -30,7 +30,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
   if (c == '\0') {
     token.tkn_type = TKN_EOF;
     strcpy(token.tkn_text, "<EOF>");
-  } else if (c == '\n' || c == '\r') {
+  } else if (c == ';' || c == '\n' || c == '\r') {
     lexer->pos++;
     token.tkn_type = TKN_NEWLINE;
     strcpy(token.tkn_text, "<New-Line>");
@@ -51,10 +51,27 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     strncpy(token.tkn_text, lexer->src + start, len);
     token.tkn_text[len] = '\0';
     token.tkn_type = TKN_PROPERTY;
-  } else if (c == '\'' || c == '"') {
+  } else if (c == '"') {
     lexer->pos++;
     size_t start = lexer->pos;
-    while (lexer->src[lexer->pos] != '\'' && lexer->src[lexer->pos] != '"') {
+    while (lexer->src[lexer->pos] != '"') {
+      lexer->pos++;
+      if (lexer->src[lexer->pos] == '\0') {
+        lexer->pos++;
+        token.tkn_type = TKN_UNDEFINED;
+        strcpy(token.tkn_text, "<UNDEF>");
+        return token;
+      }
+    }
+    size_t len = lexer->pos - start;
+    strncpy(token.tkn_text, lexer->src + start, len);
+    token.tkn_text[len] = '\0';
+    token.tkn_type = TKN_STRING;
+    lexer->pos++;
+  } else if (c == '\'') {
+    lexer->pos++;
+    size_t start = lexer->pos;
+    while (lexer->src[lexer->pos] != '\'') {
       lexer->pos++;
       if (lexer->src[lexer->pos] == '\0') {
         lexer->pos++;

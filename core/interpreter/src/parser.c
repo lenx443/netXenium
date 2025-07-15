@@ -41,7 +41,12 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   } else if (p->token.tkn_type == TKN_NEWLINE) {
     parser_next(p);
     return parser_stmt(p, ast);
+  } else if (p->token.tkn_type == TKN_EOF) {
+    *ast = ast_make_empty();
+    return 0;
   }
+  error("El token '%s' es invalido. Use `help` para mas información", p->token.tkn_text);
+  *ast = ast_make_empty();
   return 0;
 }
 
@@ -50,8 +55,10 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
   while (p->token.tkn_type != TKN_BLOCK) {
     if (p->token.tkn_type == TKN_NEWLINE)
       parser_next(p);
-    else
+    else {
+      error("El token '%s' es invalido.", p->token.tkn_text);
       return 0;
+    }
   }
   parser_next(p);
   while (p->token.tkn_type == TKN_NEWLINE) {

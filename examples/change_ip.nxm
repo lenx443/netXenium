@@ -8,6 +8,13 @@ new interfaz IFACE
 echo 'Pasa la interfaz de red destino: '
 input interfaz
 
+if $interfaz "lo" => {
+  echo "Alerta! Esta usando la interfaz loopback\n"
+  echo "Si no desea continuar escriba 'no'"
+  input continue
+  if $continue "no" => exit
+}
+
 new CHG_ADDR IP $nueva_ip
 iface change addr $interfaz
 exit 0

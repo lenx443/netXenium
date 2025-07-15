@@ -7,6 +7,7 @@
 #include "blocks_linealizer.h"
 #include "bytecode.h"
 #include "interpreter.h"
+#include "ir_bytecode.h"
 #include "ir_instruct.h"
 #include "lexer.h"
 #include "logs.h"
@@ -30,41 +31,49 @@ int interpreter(const char *text_code) {
   if (!ast_array) return 0;
   AST_Node_t *current_ast;
   while (parser_stmt(&parser, &current_ast) == 1) {
+    ast_print(current_ast);
     if (!ast_array_add(ast_array, current_ast)) {
       ast_array_free(ast_array);
       return 0;
     }
     current_ast = NULL;
   }
+  log_show_and_clear(NULL);
   if (ast_array->ast_array == NULL) {
     ast_array_free(ast_array);
     return 1;
   }
   block_list_ptr blocks = block_list_new();
   if (!blocks) { ast_array_free(ast_array); }
-  if (!ast_compile(blocks, ast_array->ast_array, ast_array->ast_count)) {
+  block_node_ptr main_block = block_new();
+  if (!main_block) { ast_array_free(ast_array); }
+  block_list_push_node(blocks, main_block);
+  if (!ast_compile(blocks, &main_block, ast_array->ast_array, ast_array->ast_count)) {
     ast_array_free(ast_array);
     block_list_free(blocks);
     return 0;
   }
+  ir_add_halt(main_block->instr_array);
   ast_array_free(ast_array);
   blocks_linealizer(blocks);
   block_node_ptr current = blocks->head;
+  int n = 0;
   while (current) {
+    info("BLOCK%d:", n++);
     for (int i = 0; i < current->instr_array->ir_size; i++) {
       IR_Instruct_t instr = current->instr_array->ir_array[i];
-      if (instr.opcode == OP_JUMP_IF_SQUAD) {
-        info("%d ——— %d, %d, %d, %d", instr.instr_num, instr.opcode,
+      if (instr.opcode == OP_JUMP_IF_SQUAD || instr.opcode == OP_JUMP) {
+        info("%d ———— %d, %d, %d, %d", instr.instr_num, instr.opcode,
              BC_REG_GET_VALUE(instr.dst), BC_REG_GET_VALUE(instr.src1),
              ((block_node_ptr)instr.jump_block)->instr_array->ir_array[0].instr_num);
       } else {
-        info("%d ——— %d, %d, %d, %d", instr.instr_num, instr.opcode,
+        info("%d ———— %d, %d, %d, %d", instr.instr_num, instr.opcode,
              BC_REG_GET_VALUE(instr.dst), BC_REG_GET_VALUE(instr.src1), instr.src2);
       }
     }
+    current = current->next;
   }
   log_show_and_clear(NULL);
-  return 1;
   ProgramCode_t program_code;
   if (!blocks_compiler(&program_code, blocks)) {
     block_list_free(blocks);
