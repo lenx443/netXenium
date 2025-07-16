@@ -18,7 +18,7 @@ static int fn_input(LIST_ptr args) {
     NODE_ptr node_in = list_index_get(1, *args);
     char *str_in = (char *)node_in->point;
     if ((in_prop = prop_reg_value(str_in, *prop_register, 0)) == NULL) {
-      if (!prop_reg_add(prop_register, "str_in", "", STRING)) {
+      if (!prop_reg_add(prop_register, str_in, "", STRING)) {
         log_add(NULL, ERROR, NAME, "No se pudo crear la uneva propiedad");
         log_show_and_clear(NULL);
         return EXIT_FAILURE;

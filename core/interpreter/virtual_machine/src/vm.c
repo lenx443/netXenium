@@ -93,7 +93,7 @@ void vm_run(VM_ptr vm) {
   vm->running = 1;
   GCPointer_node_ptr gc_array = NULL;
   bc_Instruct_t instr;
-  while (vm->running && vm->ip < vm->bytecode->bc_size) {
+  while (vm->running && vm->ip < vm->bytecode->bc_size && !program.closed) {
     bc_Instruct_t instr = vm->bytecode->bc_array[vm->ip++];
     if (instr.bci_opcode > OP_HALT) {
       vm->running = 0;

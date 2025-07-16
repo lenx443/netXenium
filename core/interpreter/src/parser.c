@@ -69,6 +69,10 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
   if (p->token.tkn_type == TKN_LBRACE) {
     parser_next(p);
     while (p->token.tkn_type != TKN_RBRACE) {
+      while (p->token.tkn_type == TKN_NEWLINE) {
+        parser_next(p);
+      }
+      if (p->token.tkn_type == TKN_RBRACE) break;
       if (b_count >= b_cap) {
         int new_cap = b_cap == 0 ? 4 : b_cap * 2;
         AST_Node_t **temp = realloc(*ast_array, sizeof(AST_Node_t *) * new_cap);
