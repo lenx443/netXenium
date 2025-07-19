@@ -56,7 +56,6 @@ int main(int argc, char **argv) {
 
   program.argv = argv;
   program.argc = argc;
-  hello();
 
   if (argc > 1) {
     program.name = strdup(argv[1]);
