@@ -1,11 +1,11 @@
+#include <asm-generic/signal-defs.h>
+#include <asm-generic/signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <asm-generic/signal-defs.h>
-#include <asm-generic/signal.h>
 
 #include "colors.h"
 #include "functions.h"
@@ -13,6 +13,7 @@
 #include "logs.h"
 #include "program.h"
 #include "properties.h"
+#include "properties_types.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "suggestion.h"
@@ -200,7 +201,7 @@ LIST_ptr read_string_utf8() {
     if (prompt_prop->type != STRING) {
       default_promp(prompt);
     } else {
-      strncpy(prompt, prompt_prop->value, 99);
+      to_string(prompt, prompt_prop->value);
       prompt[99] = '\0';
     }
   }
