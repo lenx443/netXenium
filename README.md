@@ -19,6 +19,8 @@
 
 ## Requisitos
 
+- Lenguajes: Rust y Clang
+- Herramientas de construcción: CMake y Make
 - Sistema operativo **Linux**
 - Entorno Posix (glibc requerido)
 - **Permisos de superusuario** (root)
@@ -36,9 +38,10 @@ Instala las dependencias necesarias y compila el proyecto:
 
 ```sh
 pkg update
-pkg install clang libpcap json-c cmake make
+pkg install clang libpcap cmake make, rust
 git clone https://github.com/lenx443/netXenium.git
 cd netXenium
+cargo build --release
 mkdir build && cd build
 cmake ..
 make

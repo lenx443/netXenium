@@ -1,2 +1,6 @@
 [workspace]
-members = ["core/instances/rust"]
+members = [
+  "crates/localtime",
+  "core/instances/rust",
+  "logger/rust"
+]

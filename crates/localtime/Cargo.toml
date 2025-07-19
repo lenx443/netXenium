@@ -1,0 +1,7 @@
+[package]
+name = "localtime"
+version = "1.0.0"
+editon = "2021"
+
+[lib]
+crate-type = ["rlib"]

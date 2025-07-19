@@ -7,6 +7,7 @@ include(ExternalProject)
 add_library(rust STATIC IMPORTED)
 set_target_properties(rust PROPERTIES
   IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/target/release/libinstances.a"
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/target/release/liblogger.a"
 )
 
 find_package(PkgConfig REQUIRED)
@@ -33,6 +34,7 @@ include_directories(
   core/interpreter/virtual_machine/dynamic/vectors/include
   core/interpreter/virtual_machine/dynamic/lists/include/
   core/instances/include/
+  logger/include/
   api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
