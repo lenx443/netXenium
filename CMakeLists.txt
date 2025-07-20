@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 
 project(NetXenium)
 
-include(ExternalProject)
-
-add_library(rust STATIC IMPORTED)
-set_target_properties(rust PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/target/release/libinstances.a"
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/target/release/liblogger.a"
-)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
@@ -144,4 +136,4 @@ add_executable(ntxenium
 )
 
 target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(ntxenium PRIVATE rust ${PCAP_LIBRARIES})
+target_link_libraries(ntxenium PRIVATE ${PCAP_LIBRARIES})

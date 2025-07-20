@@ -1,7 +1,0 @@
-[package]
-name = "instances"
-version = "1.0.0"
-edition = "2021"
-
-[lib]
-crate-type = ["staticlib"]

@@ -19,5 +19,3 @@ Makefile
 .cache/
 /build/
 scripts/
-**/target/
-Cargo.lock

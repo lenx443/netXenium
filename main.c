@@ -39,7 +39,6 @@
 #include <stdlib.h>
 
 #include "list.h"
-#include "logger.h"
 #include "logs.h"
 #include "program.h"
 #include "properties.h"
@@ -56,8 +55,6 @@ int main(int argc, char **argv) {
 
   program.argv = argv;
   program.argc = argc;
-
-  test_log();
 
   if (argc > 1) {
     program.name = strdup(argv[1]);
