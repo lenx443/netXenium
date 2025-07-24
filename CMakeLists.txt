@@ -17,16 +17,17 @@ include_directories(
   core/interpreter/include/
   core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/
-  core/interpreter/compiler/include
+  core/interpreter/compiler/include/
   core/interpreter/compiler/types/include/
   core/interpreter/compiler/dynamic/lists/include/
   core/interpreter/compiler/dynamic/vectors/include/
   core/interpreter/virtual_machine/include/
   core/interpreter/virtual_machine/types/include/
-  core/interpreter/virtual_machine/dynamic/vectors/include
+  core/interpreter/virtual_machine/dynamic/vectors/include/
   core/interpreter/virtual_machine/dynamic/lists/include/
   core/instances/include/
-  logger/include/
+  core/instances/types/
+  core/instances/callable/dynamic/vectors/include/
   api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
@@ -97,6 +98,11 @@ add_executable(ntxenium
   # fuente de las listas enlazadas
   # de la maquina virtual
   core/interpreter/virtual_machine/dynamic/lists/src/gc_pointer_list.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores de los objetos
+  # Callables
+  core/instances/callable/dynamic/vectors/src/call_args.c
 
   # codigo fuente de la la API
   # del Framework.
