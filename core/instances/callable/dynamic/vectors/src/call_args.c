@@ -27,18 +27,67 @@ int call_args_push(CallArgs *args, struct CArg data) {
     free(data_pointer);
     return 0;
   }
-  memcpy(new_data,
-         &(struct CArg){
-             .pointer = data_pointer,
-             data.size,
-         },
-         sizeof(struct CArg));
+  new_data->pointer = data_pointer;
+  new_data->size = data.size;
   args->args[args->size++] = new_data;
   return 1;
 }
 
-Unmut_CallArgs *call_args_unmute(CallArgs *args) {}
+Unmut_CallArgs *const call_args_unmute(CallArgs *args) {
+  struct CArg **const new_args = malloc(sizeof(struct CArg *) * args->size);
+  if (!new_args) { return NULL; }
+  for (size_t i = 0; i < args->size; i++) {
+    struct CArg *src = args->args[i];
+    struct CArg *copy = malloc(sizeof(struct CArg));
+    if (!copy) {
+      for (size_t j = 0; j < i; j++) {
+        free(new_args[j]->pointer);
+        free(new_args[j]);
+      }
+      free(new_args);
+      return NULL;
+    }
 
-void call_args_free(CallArgs *args) {}
+    copy->size = src->size;
 
-void call_args_unmute_free(Unmut_CallArgs *args);
+    if (src->pointer && src->size > 0) {
+      copy->pointer = malloc(src->size);
+      if (!copy->pointer) {
+        free(copy);
+        for (size_t j = 0; j < i; j++) {
+          free(new_args[j]->pointer);
+          free(new_args[j]);
+        }
+        free(new_args);
+        return NULL;
+      }
+      memcpy(copy->pointer, src->pointer, src->size);
+    } else {
+      copy->pointer = NULL;
+    }
+
+    new_args[i] = copy;
+  }
+  Unmut_CallArgs *const new_unmutable = malloc(sizeof(Unmut_CallArgs));
+  if (!new_unmutable) {
+    free(new_args);
+    return NULL;
+  }
+  *(struct CArg ***)&new_unmutable->args = new_args;
+  new_unmutable->size = args->size;
+  call_args_free(args);
+  return new_unmutable;
+}
+
+#define FREE_ARGS(args)                                                                  \
+  if (!args) return;                                                                     \
+  for (int i = 0; i < args->size; i++) {                                                 \
+    free(args->args[i]->pointer);                                                        \
+    free(args->args[i]);                                                                 \
+  }                                                                                      \
+  free(args->args);                                                                      \
+  free(args);
+
+void call_args_free(CallArgs *args) { FREE_ARGS(args) }
+
+void call_args_unmute_free(Unmut_CallArgs *args) { FREE_ARGS(args) }

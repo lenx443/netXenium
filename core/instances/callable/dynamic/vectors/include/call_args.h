@@ -20,11 +20,11 @@ struct Unmut_Callable_Args {
 };
 
 typedef struct Callable_Args CallArgs;
-typedef struct Unmut_Callable_Args const Unmut_CallArgs;
+typedef struct Unmut_Callable_Args Unmut_CallArgs;
 
 CallArgs *call_args_new();
 int call_args_push(CallArgs *, struct CArg);
-Unmut_CallArgs *call_args_unmute(CallArgs *);
+Unmut_CallArgs *const call_args_unmute(CallArgs *);
 void call_args_free(CallArgs *);
 void call_args_unmute_free(Unmut_CallArgs *);
 
