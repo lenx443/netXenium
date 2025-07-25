@@ -1,6 +1,7 @@
 #ifndef __CALLABLE_H__
 #define __CALLABLE_H__
 
+#include "call_args.h"
 #include "list.h"
 #include "program_code.h"
 
@@ -14,7 +15,7 @@ enum Callable_Type {
 struct Callable {
   enum Callable_Type callable_type;
   union {
-    int (*native_callable)(const struct __Instance, LIST_ptr);
+    int (*native_callable)(const struct __Instance *, Unmut_CallArgs *const);
     ProgramCode_t code;
   };
 };

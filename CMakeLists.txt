@@ -27,6 +27,7 @@ include_directories(
   core/interpreter/virtual_machine/dynamic/lists/include/
   core/instances/include/
   core/instances/types/
+  core/instances/callable/types/include/
   core/instances/callable/dynamic/vectors/include/
   api/include/
   dynamic/lists/include/
