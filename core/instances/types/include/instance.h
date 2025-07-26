@@ -10,9 +10,8 @@ struct __Instance {
 };
 
 struct __Instance *__instance_new();
-const struct __Instance *__instance_new_const(uint16_t, void *, CALLABLE_ptr);
+void __instance_free(struct __Instance *);
 
 #define __XENIUM_INSTANCE struct __Instance *__instance_ptr;
-#define __XENIUM_CONST const struct __Instance *__instance_ptr;
 
 #endif

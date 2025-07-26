@@ -15,7 +15,7 @@ enum Callable_Type {
 struct Callable {
   enum Callable_Type callable_type;
   union {
-    int (*native_callable)(const struct __Instance *, Unmut_CallArgs *const);
+    int (*native_callable)(struct __Instance *, Unmut_CallArgs *const);
     ProgramCode_t code;
   };
 };
