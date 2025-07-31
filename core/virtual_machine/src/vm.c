@@ -14,78 +14,12 @@
 #include "program.h"
 #include "properties.h"
 #include "vm.h"
+#include "vm_def.h"
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
-VM_ptr vm_new() {
-  VM_ptr vm = malloc(sizeof(VM));
-  if (!vm) {
-    error("No hay memoria disponible");
-    return NULL;
-  }
-  size_t reg_capacity = 128;
-  vm->reg.reg = malloc(reg_capacity * sizeof(int));
-  if (!vm->reg.reg) {
-    error("no hay memoria disponible");
-    free(vm);
-    return NULL;
-  }
-  vm->reg.point_flag = calloc(reg_capacity, sizeof(uint8_t));
-  if (!vm->reg.point_flag) {
-    error("no hay memoria disponible");
-    free(vm);
-    return NULL;
-  }
-  vm->reg.capacity = reg_capacity;
-  vm->String_Table = vm_string_table_new();
-  if (!vm->String_Table) {
-    free(vm->reg.reg);
-    free(vm->reg.point_flag);
-    free(vm);
-    return NULL;
-  }
-  vm->bytecode = bc_new();
-  if (!vm->bytecode) {
-    vm_string_table_free(vm->String_Table);
-    free(vm->reg.reg);
-    free(vm->reg.point_flag);
-    free(vm);
-    return NULL;
-  }
-  vm->ip = 0;
-  vm->running = 0;
-  return vm;
-}
-
-VM_ptr vm_program_code_new(ProgramCode_t code) {
-  VM_ptr vm = malloc(sizeof(VM));
-  if (!vm) {
-    error("No hay memoria disponible");
-    return NULL;
-  }
-  size_t reg_capacity = 128;
-  vm->reg.reg = malloc(reg_capacity * sizeof(int));
-  if (!vm->reg.reg) {
-    error("no hay memoria disponible");
-    free(vm);
-    return NULL;
-  }
-  vm->reg.point_flag = calloc(reg_capacity, sizeof(uint8_t));
-  if (!vm->reg.point_flag) {
-    error("no hay memoria disponible");
-    free(vm);
-    return NULL;
-  }
-  vm->reg.capacity = reg_capacity;
-  vm->String_Table = code.strings;
-  vm->bytecode = code.code;
-  vm->ip = 0;
-  vm->running = 0;
-  return vm;
-}
-
-void vm_run(VM_ptr vm) {
+void vm_run() {
   static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
                                    &&JUMP,        &&JUMP_IF_SQUAD, &&LOAD_IMM,
                                    &&LOAD_STRING, &&LOAD_PROP,     &&STRING_CONCAT,
@@ -320,13 +254,4 @@ void vm_run(VM_ptr vm) {
   }
   log_show_and_clear(NULL);
   gc_pointer_list_free(gc_array);
-}
-
-void vm_free(VM_ptr vm) {
-  if (!vm) return;
-  bc_free(vm->bytecode);
-  vm_string_table_free(vm->String_Table);
-  free(vm->reg.reg);
-  free(vm->reg.point_flag);
-  free(vm);
 }

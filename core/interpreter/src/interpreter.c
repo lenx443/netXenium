@@ -60,14 +60,6 @@ int interpreter(const char *text_code) {
     return 0;
   }
   block_list_free(blocks);
-  VM_ptr vm = vm_program_code_new(program_code);
-  if (!vm) {
-    vm_string_table_free(program_code.strings);
-    bc_free(program_code.code);
-    return 0;
-  }
   log_show_and_clear(NULL);
-  vm_run(vm);
-  vm_free(vm);
   return 1;
 }

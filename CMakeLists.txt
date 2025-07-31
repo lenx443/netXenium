@@ -18,15 +18,14 @@ include_directories(
   core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/
   core/interpreter/compiler/include/
-  core/interpreter/compiler/types/include/
+  core/interpreter/compiler/types/header/
   core/interpreter/compiler/dynamic/lists/include/
   core/interpreter/compiler/dynamic/vectors/include/
-  core/interpreter/virtual_machine/include/
-  core/interpreter/virtual_machine/types/include/
-  core/interpreter/virtual_machine/dynamic/vectors/include/
-  core/interpreter/virtual_machine/dynamic/lists/include/
-  core/instances/include/
-  core/instances/types/
+  core/virtual_machine/include/
+  core/virtual_machine/types/include/
+  core/virtual_machine/dynamic/vectors/include/
+  core/virtual_machine/dynamic/lists/include/
+  core/instances/types/include/
   core/instances/callable/types/include/
   core/instances/callable/dynamic/vectors/include/
   api/include/
@@ -83,27 +82,36 @@ add_executable(ntxenium
 
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
-  core/interpreter/virtual_machine/src/vm.c
-  core/interpreter/virtual_machine/src/garbage_collector.c
+  core/virtual_machine/src/vm.c
+  core/virtual_machine/src/garbage_collector.c
 
-  # Tiposbdefinidos en la maquina virtual
-  core/interpreter/virtual_machine/types/src/GCPointer.c
+  # Tipos definidos en la maquina virtual
+  core/virtual_machine/types/src/GCPointer.c
+  core/virtual_machine/types/src/vm_def.c
+  core/virtual_machine/types/src/vm_register.c
+  core/virtual_machine/types/src/run_ctx.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de la
   # maquina virtual
-  core/interpreter/virtual_machine/dynamic/vectors/src/bytecode.c
-  core/interpreter/virtual_machine/dynamic/vectors/src/vm_string_table.c
+  core/virtual_machine/dynamic/vectors/src/bytecode.c
+  core/virtual_machine/dynamic/vectors/src/vm_string_table.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   # de la maquina virtual
-  core/interpreter/virtual_machine/dynamic/lists/src/gc_pointer_list.c
+  core/virtual_machine/dynamic/lists/src/gc_pointer_list.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de los objetos
   # Callables
   core/instances/callable/dynamic/vectors/src/call_args.c
+
+  # Implementacion de estructura `Callable`
+  core/instances/callable/types/src/callable.c
+
+  #Implementacion de estaructura `Instance`
+  core/instances/types/src/instance.c
 
   # codigo fuente de la la API
   # del Framework.

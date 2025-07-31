@@ -3,7 +3,7 @@
 
 #include "GCPointer.h"
 #include "gc_pointer_list.h"
-#include "vm.h"
+#include "vm_def.h"
 
 void garbage_collector_mark(GCPointer_ptr);
 void garbage_collector_mark_array_as_registers(VM_ptr);

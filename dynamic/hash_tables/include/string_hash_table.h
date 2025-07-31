@@ -18,7 +18,6 @@ typedef struct String_Hash_Table Str_HT;
 typedef Str_HT_Node *Str_HT_Node_ptr;
 typedef Str_HT *Str_HT_ptr;
 
-// djb2 hash function
 unsigned long str_hash(const char *);
 Str_HT_ptr str_ht_new(int);
 int str_ht_insert(Str_HT_ptr, const char *, void *, int);
