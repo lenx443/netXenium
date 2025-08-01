@@ -9,10 +9,11 @@ void garbage_collector_mark(GCPointer_ptr gc_ptr) {
   gc_ptr->gc_marked = 1;
 }
 
-void garbage_collector_mark_array_as_registers(VM_ptr vm) {
-  if (!vm) return;
-  for (int i = 0; i < vm->reg.capacity; i++) {
-    if (vm->reg.point_flag[i]) garbage_collector_mark((GCPointer_ptr)vm->reg.reg[i]);
+void garbage_collector_mark_array_as_registers(RunContext_ptr ctx) {
+  if (!ctx) return;
+  for (int i = 0; i < ctx->ctx_reg.capacity; i++) {
+    if (ctx->ctx_reg.point_flag[i])
+      garbage_collector_mark((GCPointer_ptr)ctx->ctx_reg.reg[i]);
   }
 }
 
@@ -35,8 +36,9 @@ void garbage_collector_sweep_array(GCPointer_node_ptr *gc_ptr_list) {
   }
 }
 
-void garbage_collector_run_as_registers(GCPointer_node_ptr *gc_ptr_list, VM_ptr vm) {
-  if (!gc_ptr_list || !vm) return;
-  garbage_collector_mark_array_as_registers(vm);
+void garbage_collector_run_as_registers(GCPointer_node_ptr *gc_ptr_list,
+                                        RunContext_ptr ctx) {
+  if (!gc_ptr_list || !ctx) return;
+  garbage_collector_mark_array_as_registers(ctx);
   garbage_collector_sweep_array(gc_ptr_list);
 }

@@ -20,6 +20,7 @@ typedef struct Bytecode_Array Bytecode_Array_t;
 typedef Bytecode_Array_t *Bytecode_Array_ptr;
 
 Bytecode_Array_ptr bc_new();
+void bc_clear(Bytecode_Array_ptr);
 void bc_free(const Bytecode_Array_ptr);
 int bc_add_instr(Bytecode_Array_ptr, bc_Instruct_t);
 int bc_add_nop(Bytecode_Array_ptr);

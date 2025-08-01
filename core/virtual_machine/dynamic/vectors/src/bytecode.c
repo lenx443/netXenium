@@ -18,6 +18,13 @@ Bytecode_Array_ptr bc_new() {
   return bytecode;
 }
 
+void bc_clear(Bytecode_Array_ptr bc) {
+  if (!bc) return;
+  free(bc->bc_array);
+  bc->bc_size = 0;
+  bc->bc_capacity = 0;
+}
+
 void bc_free(const Bytecode_Array_ptr bc) {
   if (!bc) return;
   free(bc->bc_array);

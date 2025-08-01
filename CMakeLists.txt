@@ -101,6 +101,7 @@ add_executable(ntxenium
   # fuente de las listas enlazadas
   # de la maquina virtual
   core/virtual_machine/dynamic/lists/src/gc_pointer_list.c
+  core/virtual_machine/dynamic/lists/src/run_ctx_stack.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de los objetos

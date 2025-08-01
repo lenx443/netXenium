@@ -11,7 +11,10 @@
 #include "logs.h"
 #include "parser.h"
 #include "program.h"
+#include "run_ctx.h"
+#include "run_ctx_stack.h"
 #include "vm.h"
+#include "vm_def.h"
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
@@ -54,12 +57,13 @@ int interpreter(const char *text_code) {
   ast_array_free(ast_array);
   blocks_linealizer(blocks);
   block_node_ptr current = blocks->head;
-  ProgramCode_t program_code;
-  if (!blocks_compiler(&program_code, blocks)) {
+  RunContext_ptr main_context = run_context_stack_peek_top(&vm->vm_ctx_stack);
+  if (!blocks_compiler(&main_context->ctx_code, blocks)) {
     block_list_free(blocks);
     return 0;
   }
   block_list_free(blocks);
+  vm_run_ctx(main_context);
   log_show_and_clear(NULL);
   return 1;
 }

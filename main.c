@@ -42,6 +42,7 @@
 #include "logs.h"
 #include "program.h"
 #include "properties.h"
+#include "run_ctx_stack.h"
 #include "vm_def.h"
 
 int main(int argc, char **argv) {
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
     log_free(NULL);
     return 1;
   }
+  run_context_stack_push(&vm->vm_ctx_stack);
   setlocale(LC_CTYPE, "");
 
   program.argv = argv;
