@@ -4,7 +4,6 @@
 #include "block_list.h"
 #include "blocks_compiler.h"
 #include "blocks_linealizer.h"
-#include "bytecode.h"
 #include "interpreter.h"
 #include "ir_bytecode.h"
 #include "lexer.h"
@@ -12,10 +11,8 @@
 #include "parser.h"
 #include "program.h"
 #include "run_ctx.h"
-#include "run_ctx_stack.h"
 #include "vm.h"
 #include "vm_def.h"
-#include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
@@ -57,13 +54,13 @@ int interpreter(const char *text_code) {
   ast_array_free(ast_array);
   blocks_linealizer(blocks);
   block_node_ptr current = blocks->head;
-  RunContext_ptr main_context = run_context_stack_peek_top(&vm->vm_ctx_stack);
-  if (!blocks_compiler(&main_context->ctx_code, blocks)) {
+  vm_ctx_clear(Main_Context);
+  if (!blocks_compiler(&Main_Context->ctx_code, blocks)) {
     block_list_free(blocks);
     return 0;
   }
   block_list_free(blocks);
-  vm_run_ctx(main_context);
+  vm_run_ctx(Main_Context);
   log_show_and_clear(NULL);
   return 1;
 }

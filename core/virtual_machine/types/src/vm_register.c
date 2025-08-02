@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "logs.h"
 #include "vm_register.h"
@@ -19,6 +20,11 @@ int vm_register_new(VM_Register *reg) {
   }
   reg->capacity = __REGISTER_CAPACITY__;
   return 1;
+}
+
+void vm_register_clear(VM_Register *reg) {
+  memset(reg->reg, 0, reg->capacity * sizeof(reg_t));
+  memset(reg->point_flag, 0, reg->capacity);
 }
 
 void vm_register_free(VM_Register reg) {

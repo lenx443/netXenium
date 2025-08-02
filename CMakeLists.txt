@@ -40,6 +40,7 @@ add_executable(ntxenium
 
   # Codigo fuente donde del nucleo
   # del proyecto.
+  core/src/xen_life.c
   core/src/properties_types.c
   core/src/program.c
   core/src/read_string_utf8.c

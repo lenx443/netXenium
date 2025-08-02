@@ -34,37 +34,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <locale.h>
 #include <signal.h>
-#include <stdlib.h>
+#include <string.h>
 
-#include "list.h"
-#include "logs.h"
 #include "program.h"
-#include "properties.h"
-#include "run_ctx_stack.h"
-#include "vm_def.h"
+#include "xen_life.h"
 
 int main(int argc, char **argv) {
-  global_logs = list_new();
-  if (!vm_create()) {
-    log_free(NULL);
-    return 1;
-  }
-  prop_register = prop_reg_new();
-  if (prop_register == NULL) {
-    log_add(NULL, ERROR, argv[0], "No se pudo iniciar la configuracion");
-    log_show_and_clear(NULL);
-    vm_destroy();
-    log_free(NULL);
-    return 1;
-  }
-  run_context_stack_push(&vm->vm_ctx_stack);
-  setlocale(LC_CTYPE, "");
-
-  program.argv = argv;
-  program.argc = argc;
-
+  if (!Xen_Init(argc, argv)) { return 1; }
   if (argc > 1) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);
@@ -73,10 +50,6 @@ int main(int argc, char **argv) {
     signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);
   }
-
-  free(program.name);
-  prop_reg_free(prop_register);
-  vm_destroy();
-  log_free(NULL);
+  Xen_Finish();
   return program.exit_code;
 }

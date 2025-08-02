@@ -47,6 +47,16 @@ int vm_string_table_add(vm_String_Table_ptr table, const char *str) {
   return 1;
 }
 
+void vm_string_table_clear(vm_String_Table_ptr table) {
+  if (!table) return;
+  for (int i = 0; i < table->size; i++)
+    free(table->strings[i]);
+  free(table->strings);
+  table->strings = NULL;
+  table->size = 0;
+  table->capacity = 0;
+}
+
 void vm_string_table_free(vm_String_Table_ptr table) {
   if (!table) return;
   for (int i = 0; i < table->size; i++)

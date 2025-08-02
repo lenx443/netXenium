@@ -17,6 +17,7 @@ typedef struct {
 } VM_Register;
 
 int vm_register_new(VM_Register *);
+void vm_register_clear(VM_Register *);
 void vm_register_free(VM_Register);
 
 #endif

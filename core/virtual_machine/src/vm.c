@@ -15,9 +15,18 @@
 #include "properties.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "vm_register.h"
 #include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
+
+void vm_ctx_clear(RunContext_ptr ctx) {
+  bc_clear(ctx->ctx_code.code);
+  vm_string_table_clear(ctx->ctx_code.strings);
+  vm_register_clear(&ctx->ctx_reg);
+  ctx->ctx_ip = 0;
+  ctx->ctx_running = 0;
+}
 
 void vm_run_ctx(RunContext_ptr ctx) {
   static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
