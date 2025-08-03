@@ -33,7 +33,7 @@ int call_args_push(CallArgs *args, struct CArg data) {
   return 1;
 }
 
-Unmut_CallArgs *const call_args_unmute(CallArgs *args) {
+Unmut_CallArgs *call_args_unmute(CallArgs *args) {
   struct CArg **const new_args = malloc(sizeof(struct CArg *) * args->size);
   if (!new_args) { return NULL; }
   for (size_t i = 0; i < args->size; i++) {
@@ -68,7 +68,7 @@ Unmut_CallArgs *const call_args_unmute(CallArgs *args) {
 
     new_args[i] = copy;
   }
-  Unmut_CallArgs *const new_unmutable = malloc(sizeof(Unmut_CallArgs));
+  Unmut_CallArgs *new_unmutable = malloc(sizeof(Unmut_CallArgs));
   if (!new_unmutable) {
     free(new_args);
     return NULL;

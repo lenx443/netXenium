@@ -1,7 +1,9 @@
 #include <malloc.h>
 #include <stdlib.h>
 
+#include "call_args.h"
 #include "logs.h"
+#include "program.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm_def.h"
@@ -16,8 +18,25 @@ int vm_create() {
     return 0;
   }
   vm->vm_ctx_stack = NULL;
-  if (!run_context_stack_push(&vm->vm_ctx_stack)) {
+  CallArgs *args = call_args_new();
+  if (!args) {
     free(vm);
+    return 0;
+  }
+  for (int i = 0; i < program.argc; i++) {
+    if (!call_args_push(args, (struct CArg){
+                                  CARG_POINTER,
+                                  program.argv[i],
+                                  strlen(program.argv[i]),
+                              })) {
+      free(vm);
+      call_args_free(args);
+      return 0;
+    }
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, args)) {
+    free(vm);
+    call_args_free(args);
     return 0;
   }
   Main_Context = run_context_stack_pop_top(&vm->vm_ctx_stack);

@@ -5,6 +5,7 @@
 
 struct __Instance {
   uint16_t __type_index;
+  struct __Instance **__elements_table;
   void *__value_ptr;
   CALLABLE_ptr __as_string;
 };

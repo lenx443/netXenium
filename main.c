@@ -35,13 +35,37 @@
  */
 
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
 
+#include "call_args.h"
+#include "callable.h"
+#include "instance.h"
 #include "program.h"
+#include "run_ctx.h"
+#include "run_ctx_stack.h"
+#include "vm.h"
+#include "vm_def.h"
 #include "xen_life.h"
+
+void test_native() {
+  char *arg1 =
+      (char *)run_context_stack_peek_top(&vm->vm_ctx_stack)->ctx_args->args[0]->pointer;
+  printf("Test native Function\n  Arg[0] = '%s'\n", arg1);
+}
 
 int main(int argc, char **argv) {
   if (!Xen_Init(argc, argv)) { return 1; }
+  struct __Instance *test_inst = __instance_new();
+  test_inst->__type_index = 1;
+  test_inst->__elements_table = NULL;
+  test_inst->__value_ptr = NULL;
+  test_inst->__as_string = callable_new_native(test_native);
+  CallArgs *args = call_args_new();
+  call_args_push(args, (struct CArg){CARG_POINTER, "Hola Mundo", 10});
+  vm_run_callable(test_inst->__as_string, args);
+  __instance_free(test_inst);
+  return 1;
   if (argc > 1) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);
