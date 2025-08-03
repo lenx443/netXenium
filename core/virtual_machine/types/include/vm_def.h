@@ -6,6 +6,7 @@
 
 typedef struct {
   RunContext_Stack_ptr vm_ctx_stack;
+  RunContext_ptr root_context;
 } VM;
 
 typedef VM *VM_ptr;
@@ -14,6 +15,5 @@ int vm_create();
 void vm_destroy();
 
 extern VM_ptr vm;
-extern RunContext_ptr Main_Context;
 
 #endif

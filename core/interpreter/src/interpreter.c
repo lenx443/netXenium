@@ -64,15 +64,15 @@ int interpreter(const char *text_code) {
     return 0;
   }
   block_list_free(blocks);
-  vm_ctx_clear(Main_Context);
+  vm_ctx_clear(vm->root_context);
   CALLABLE_ptr code = callable_new_code(pc);
   if (!code) {
     vm_string_table_free(pc.strings);
     bc_free(pc.code);
     return 0;
   }
-  Main_Context->code = code;
-  vm_run_ctx(Main_Context);
+  vm->root_context->code = code;
+  vm_run_ctx(vm->root_context);
   callable_free(code);
   log_show_and_clear(NULL);
   return 1;

@@ -39,7 +39,7 @@ int vm_create() {
     call_args_free(args);
     return 0;
   }
-  Main_Context = run_context_stack_pop_top(&vm->vm_ctx_stack);
+  vm->root_context = run_context_stack_pop_top(&vm->vm_ctx_stack);
   return 1;
 }
 
@@ -50,4 +50,3 @@ void vm_destroy() {
 }
 
 VM_ptr vm = NULL;
-RunContext_ptr Main_Context = NULL;
