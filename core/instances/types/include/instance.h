@@ -7,8 +7,6 @@
 struct __Instance {
   char *__name;
   struct __Implement *__impl;
-  size_t __pointer_size;
-  void *__pointer;
 };
 
 struct __Instance *__instance_new(char *, struct __Implement *);

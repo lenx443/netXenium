@@ -33,7 +33,7 @@ void vm_ctx_clear(RunContext_ptr ctx) {
 }
 
 int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
-  if (!callable || !args) { return 0; }
+  if (!callable) { return 0; }
   if (!run_context_stack_push(&vm->vm_ctx_stack, self, args)) { return 0; }
   RunContext_ptr ctx = run_context_stack_peek_top(&vm->vm_ctx_stack);
   ctx->code = callable;
@@ -41,7 +41,7 @@ int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs
 }
 
 int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
-  if (!callable || !args) { return 0; }
+  if (!callable) { return 0; }
   if (!vm_new_ctx_callable(callable, self, args)) { return 0; }
   vm_run_ctx(run_context_stack_peek_top(&vm->vm_ctx_stack));
   run_context_stack_pop_top(&vm->vm_ctx_stack);
