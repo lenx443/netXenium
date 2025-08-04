@@ -1,16 +1,17 @@
 #include <malloc.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "call_args.h"
+#include "implementations.h"
 #include "logs.h"
 #include "program.h"
-#include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm_def.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
-int vm_create() {
+bool vm_create() {
   if (vm != NULL) return 1;
   vm = malloc(sizeof(VM));
   if (!vm) {
@@ -34,12 +35,19 @@ int vm_create() {
       return 0;
     }
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, NULL, args)) {
     free(vm);
     call_args_free(args);
     return 0;
   }
   vm->root_context = run_context_stack_pop_top(&vm->vm_ctx_stack);
+  vm->global_implements = __implementations_new();
+  if (!vm->global_implements) {
+    run_context_stack_free(&vm->vm_ctx_stack);
+    free(vm);
+    call_args_free(args);
+    return 0;
+  }
   return 1;
 }
 

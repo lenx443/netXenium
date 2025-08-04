@@ -5,6 +5,7 @@ project(NetXenium)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS_DEBUG "-g -O0")
 
 set(BUILD_SHARED_LIBS ON)
@@ -26,6 +27,7 @@ include_directories(
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/types/include/
+  core/instances/dynamic/vectors/include/
   core/instances/callable/types/include/
   core/instances/callable/dynamic/vectors/include/
   api/include/
@@ -115,6 +117,11 @@ add_executable(ntxenium
   #Implementacion de estaructura `Instance`
   core/instances/types/src/implement.c
   core/instances/types/src/instance.c
+
+  # Implementaciones de los codigos
+  # fuente de los vectores de las
+  # Instancias
+  core/instances/dynamic/vectors/src/implementations.c
 
   # codigo fuente de la la API
   # del Framework.

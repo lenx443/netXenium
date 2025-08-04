@@ -3,11 +3,12 @@
 
 #include "call_args.h"
 #include "callable.h"
+#include "instance.h"
 #include "run_ctx.h"
 
 void vm_ctx_clear(RunContext_ptr);
-int vm_new_ctx_callable(CALLABLE_ptr, CallArgs *);
-int vm_run_callable(CALLABLE_ptr, CallArgs *);
+int vm_new_ctx_callable(CALLABLE_ptr, struct __Instance *, CallArgs *);
+int vm_run_callable(CALLABLE_ptr, struct __Instance *, CallArgs *);
 void vm_run_ctx(RunContext_ptr);
 
 #endif

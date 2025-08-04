@@ -43,7 +43,7 @@ struct __Instance *__instance_new(char *name, struct __Implement *impl) {
     free(inst);
     return NULL;
   }
-  if (!vm_run_callable(impl->__alloc, alloc_args)) {
+  if (!vm_run_callable(impl->__alloc, inst, alloc_args)) {
     call_args_free(alloc_args);
     free(inst->__name);
     free(inst);
@@ -72,7 +72,7 @@ void __instnace_free(struct __Instance *inst) {
     free(inst);
     return;
   }
-  if (!vm_run_callable(inst->__impl->__destroy, destroy_args)) {
+  if (!vm_run_callable(inst->__impl->__destroy, inst, destroy_args)) {
     call_args_free(destroy_args);
     free(inst->__pointer);
     free(inst->__name);

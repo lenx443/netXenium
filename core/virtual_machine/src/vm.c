@@ -11,6 +11,7 @@
 #include "callable.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
+#include "instance.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -31,17 +32,17 @@ void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_running = 0;
 }
 
-int vm_new_ctx_callable(CALLABLE_ptr callable, CallArgs *args) {
+int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
   if (!callable || !args) { return 0; }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, args)) { return 0; }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, self, args)) { return 0; }
   RunContext_ptr ctx = run_context_stack_peek_top(&vm->vm_ctx_stack);
   ctx->code = callable;
   return 1;
 }
 
-int vm_run_callable(CALLABLE_ptr callable, CallArgs *args) {
+int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
   if (!callable || !args) { return 0; }
-  if (!vm_new_ctx_callable(callable, args)) { return 0; }
+  if (!vm_new_ctx_callable(callable, self, args)) { return 0; }
   vm_run_ctx(run_context_stack_peek_top(&vm->vm_ctx_stack));
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   return 1;

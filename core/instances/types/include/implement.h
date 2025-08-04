@@ -10,6 +10,7 @@ struct __Implement {
   CALLABLE_ptr __alloc;
   CALLABLE_ptr __destroy;
   CALLABLE_ptr __as_string;
+  CALLABLE_ptr __callable;
 };
 
 struct __Implement *__implement_new(char *);

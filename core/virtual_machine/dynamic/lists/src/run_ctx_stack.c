@@ -1,14 +1,16 @@
 #include <stdlib.h>
 
 #include "call_args.h"
+#include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
 
-int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, CallArgs *args) {
+int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, struct __Instance *self,
+                           CallArgs *args) {
   if (!ctx_stack) { return 0; }
   RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) { return 0; }
-  ctx_stack_new->ctx = run_context_new(args);
+  ctx_stack_new->ctx = run_context_new(self, args);
   if (!ctx_stack_new->ctx) {
     free(ctx_stack_new);
     return 0;
