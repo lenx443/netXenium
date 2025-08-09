@@ -9,7 +9,6 @@ struct __Implement {
   char *__impl_name;
   CALLABLE_ptr __alloc;
   CALLABLE_ptr __destroy;
-  CALLABLE_ptr __as_string;
   CALLABLE_ptr __callable;
 };
 

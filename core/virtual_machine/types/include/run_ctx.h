@@ -9,18 +9,19 @@
 #include "instance.h"
 #include "vm_register.h"
 
-typedef struct {
-  struct __Instance *self;
-  CALLABLE_ptr code;
+struct RunContext {
+  struct RunContext *ctx_caller;
+  struct __Instance *ctx_self;
+  CALLABLE_ptr ctx_code;
   VM_Register ctx_reg;
-  Unmut_CallArgs *ctx_args;
+  CallArgs *ctx_args;
   uint32_t ctx_ip;
   bool ctx_running;
-} RunContext;
+};
 
-typedef RunContext *RunContext_ptr;
+typedef struct RunContext *RunContext_ptr;
 
-RunContext_ptr run_context_new(struct __Instance *, CallArgs *);
+RunContext_ptr run_context_new(RunContext_ptr, struct __Instance *, CallArgs *);
 void run_context_free(const RunContext_ptr);
 
 #endif

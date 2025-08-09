@@ -35,7 +35,7 @@ bool vm_create() {
       return 0;
     }
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, NULL, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, NULL, NULL, args)) {
     free(vm);
     call_args_free(args);
     return 0;
@@ -48,6 +48,7 @@ bool vm_create() {
     call_args_free(args);
     return 0;
   }
+  vm->implements_index = 0;
   return 1;
 }
 

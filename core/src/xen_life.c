@@ -1,7 +1,7 @@
 #include <locale.h>
-#include <stdio.h>
 #include <stdlib.h>
 
+#include "command_implement.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -28,6 +28,13 @@ int Xen_Init(int argc, char **argv) {
 
   program.argv = argv;
   program.argc = argc;
+
+  if (!command_implement(vm->global_implements)) {
+    prop_reg_free(prop_register);
+    vm_destroy();
+    log_free(NULL);
+    return 0;
+  }
   return 1;
 }
 

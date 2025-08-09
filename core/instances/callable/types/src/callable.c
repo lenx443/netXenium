@@ -1,10 +1,12 @@
 #include <stdlib.h>
 
 #include "bytecode.h"
+#include "call_args.h"
 #include "callable.h"
+#include "instance.h"
 #include "vm_string_table.h"
 
-CALLABLE_ptr callable_new_native(void (*native)()) {
+CALLABLE_ptr callable_new_native(int (*native)(struct __Instance *, CallArgs *)) {
   CALLABLE_ptr new_callable = malloc(sizeof(CALLABLE));
   if (!new_callable) { return NULL; }
   new_callable->callable_type = CALL_NATIVE_FUNCTIIN;

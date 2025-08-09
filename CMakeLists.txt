@@ -30,6 +30,8 @@ include_directories(
   core/instances/dynamic/vectors/include/
   core/instances/callable/types/include/
   core/instances/callable/dynamic/vectors/include/
+  core/instances/command/include/
+  core/instances/command/types/header/
   api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
@@ -99,6 +101,7 @@ add_executable(ntxenium
   # maquina virtual
   core/virtual_machine/dynamic/vectors/src/bytecode.c
   core/virtual_machine/dynamic/vectors/src/vm_string_table.c
+  core/virtual_machine/dynamic/vectors/src/vm_consts.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
@@ -118,10 +121,14 @@ add_executable(ntxenium
   core/instances/types/src/implement.c
   core/instances/types/src/instance.c
 
+  # Implementacion del objeto `Command`
+  core/instances/command/src/command_implement.c
+
   # Implementaciones de los codigos
   # fuente de los vectores de las
   # Instancias
   core/instances/dynamic/vectors/src/implementations.c
+  core/instances/dynamic/vectors/src/instances_array.c
 
   # codigo fuente de la la API
   # del Framework.

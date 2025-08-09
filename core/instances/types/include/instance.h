@@ -12,4 +12,8 @@ struct __Instance {
 struct __Instance *__instance_new(char *, struct __Implement *);
 void __instnace_free(struct __Instance *);
 
+#define Xen_INSTANCE                                                                     \
+  char *__name;                                                                          \
+  struct __Implement *__impl;
+
 #endif

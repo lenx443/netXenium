@@ -71,7 +71,7 @@ int interpreter(const char *text_code) {
     bc_free(pc.code);
     return 0;
   }
-  vm->root_context->code = code;
+  vm->root_context->ctx_code = code;
   vm_run_ctx(vm->root_context);
   callable_free(code);
   log_show_and_clear(NULL);

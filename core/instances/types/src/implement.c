@@ -10,7 +10,6 @@ struct __Implement *__implement_new(char *impl_name) {
   impl->__impl_name = strdup(impl_name);
   impl->__alloc = NULL;
   impl->__destroy = NULL;
-  impl->__as_string = NULL;
   impl->__callable = NULL;
   return impl;
 }
@@ -20,7 +19,6 @@ void __implement_free(struct __Implement *impl) {
   free(impl->__impl_name);
   callable_free(impl->__alloc);
   callable_free(impl->__destroy);
-  callable_free(impl->__as_string);
   callable_free(impl->__callable);
   free(impl);
 }

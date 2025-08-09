@@ -26,7 +26,7 @@
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
 void vm_ctx_clear(RunContext_ptr ctx) {
-  ctx->code = NULL;
+  ctx->ctx_code = NULL;
   vm_register_clear(&ctx->ctx_reg);
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
@@ -34,9 +34,12 @@ void vm_ctx_clear(RunContext_ptr ctx) {
 
 int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
   if (!callable) { return 0; }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, self, args)) { return 0; }
+  if (!run_context_stack_push(
+          &vm->vm_ctx_stack, run_context_stack_peek_top(&vm->vm_ctx_stack), self, args)) {
+    return 0;
+  }
   RunContext_ptr ctx = run_context_stack_peek_top(&vm->vm_ctx_stack);
-  ctx->code = callable;
+  ctx->ctx_code = callable;
   return 1;
 }
 
@@ -49,15 +52,20 @@ int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *ar
 }
 
 void vm_run_ctx(RunContext_ptr ctx) {
-  if (ctx->code->callable_type == CALL_NATIVE_FUNCTIIN) {
-    ctx->code->native_callable();
-  } else if (ctx->code->callable_type == CALL_BYTECODE_PROGRAM) {
+  if (ctx->ctx_code->callable_type == CALL_NATIVE_FUNCTIIN) {
+    if (ctx->ctx_caller) {
+      ctx->ctx_caller->ctx_reg.reg[1] =
+          ctx->ctx_code->native_callable(ctx->ctx_self, ctx->ctx_args);
+    } else {
+      ctx->ctx_code->native_callable(ctx->ctx_self, ctx->ctx_args);
+    }
+  } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
                                      &&JUMP,        &&JUMP_IF_SQUAD, &&LOAD_IMM,
                                      &&LOAD_STRING, &&LOAD_PROP,     &&STRING_CONCAT,
                                      &&REG_CONCAT,  &&HALT};
     ctx->ctx_running = 1;
-    ProgramCode_t pc = ctx->code->code;
+    ProgramCode_t pc = ctx->ctx_code->code;
     GCPointer_node_ptr gc_array = NULL;
     bc_Instruct_t instr;
     while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size && !program.closed) {
@@ -285,6 +293,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
       ctx->ctx_running = 0;
       continue;
     }
+    if (ctx->ctx_caller) { ctx->ctx_caller->ctx_reg.reg[1] = ctx->ctx_reg.reg[1]; }
     log_show_and_clear(NULL);
     gc_pointer_list_free(gc_array);
   }

@@ -4,6 +4,7 @@
 
 #include "implement.h"
 #include "implementations.h"
+#include "vm_def.h"
 
 struct __Implementations *__implementations_new() {
   struct __Implementations *impls_new = malloc(sizeof(struct __Implementations));
@@ -24,6 +25,7 @@ bool __implementations_push(struct __Implementations *impls, struct __Implement 
     impls->__impls = new_mem;
     impls->__capacity = capacity_new;
   }
+  impl->__type_index = ++vm->implements_index;
   impls->__impls[impls->__size++] = impl;
   return true;
 }
