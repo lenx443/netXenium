@@ -24,7 +24,7 @@ struct __Instance *__instance_new(char *name, struct __Implement *impl) {
   return inst;
 }
 
-void __instnace_free(struct __Instance *inst) {
+void __instance_free(struct __Instance *inst) {
   if (!inst) { return; }
   if (!vm_run_callable(inst->__impl->__destroy, inst, NULL)) {
     free(inst->__name);

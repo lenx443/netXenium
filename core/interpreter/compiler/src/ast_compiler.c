@@ -1,11 +1,10 @@
 #include "ast.h"
 #include "ast_compiler.h"
-#include "bc_instruct.h"
 #include "block_list.h"
 #include "ir_bytecode.h"
-#include "list.h"
 #include "logs.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
+#include <string.h>
 
 #define error(msg, ...) log_add(NULL, ERROR, "AST Compiler", msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, "AST Compiler", msg, ##__VA_ARGS__)
@@ -38,15 +37,15 @@ static int compile_if(block_list_ptr blocks, block_node_ptr *block, AST_Node_t *
     error("No se pudo compilar la condional");
     return 0;
   }
-  int b1_n = blocks->strings->size;
-  vm_string_table_add(blocks->strings, ast->if_conditional.condition->pair.c1->content);
+  int b1_n = blocks->consts->c_names_size;
+  vm_consts_push_name(blocks->consts, ast->if_conditional.condition->pair.c1->content);
   if (ast->if_conditional.condition->pair.c1->type == BOOL_LITERAL) {
     ir_add_load_string((*block)->instr_array, 1, b1_n);
   } else if (ast->if_conditional.condition->pair.c1->type == BOOL_PROPERTY) {
     ir_add_load_prop((*block)->instr_array, 1, b1_n);
   }
-  int b2_n = blocks->strings->size;
-  vm_string_table_add(blocks->strings, ast->if_conditional.condition->pair.c2->content);
+  int b2_n = blocks->consts->c_names_size;
+  vm_consts_push_name(blocks->consts, ast->if_conditional.condition->pair.c2->content);
   if (ast->if_conditional.condition->pair.c2->type == BOOL_LITERAL) {
     ir_add_load_string((*block)->instr_array, 2, b2_n);
   } else if (ast->if_conditional.condition->pair.c2->type == BOOL_PROPERTY) {
@@ -77,8 +76,8 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
     error("No se pudo compilar el commndo");
     return 0;
   }
-  int cmd_name_index = blocks->strings->size;
-  if (!vm_string_table_add(blocks->strings, ast->cmd.cmd_name)) return 0;
+  int cmd_name_index = blocks->consts->c_names_size;
+  if (!vm_consts_push_name(blocks->consts, strdup(ast->cmd.cmd_name))) return 0;
   if (!ir_add_load_string(block->instr_array, 0, cmd_name_index)) return 0;
   for (int arg_iterator = 0; arg_iterator < ast->cmd.arg_count; arg_iterator++) {
     ArgExpr_t *arg = ast->cmd.cmd_args[arg_iterator];
@@ -100,16 +99,16 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
 
 int store_arg_literal(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                       int reg) {
-  int literal_index = blocks->strings->size;
-  if (!vm_string_table_add(blocks->strings, arg->literal)) return 0;
+  int literal_index = blocks->consts->c_names_size;
+  if (!vm_consts_push_name(blocks->consts, strdup(arg->literal))) return 0;
   if (!ir_add_load_string(block->instr_array, reg, literal_index)) return 0;
   return 1;
 }
 
 int store_arg_property(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                        int reg) {
-  int prop_name_index = blocks->strings->size;
-  if (!vm_string_table_add(blocks->strings, arg->property)) return 0;
+  int prop_name_index = blocks->consts->c_names_size;
+  if (!vm_consts_push_name(blocks->consts, strdup(arg->property))) return 0;
   if (!ir_add_load_prop(block->instr_array, reg, prop_name_index)) return 0;
   return 1;
 }

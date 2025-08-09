@@ -3,7 +3,7 @@
 #include "blocks_compiler.h"
 #include "bytecode.h"
 #include "logs.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Blocks Compiler", msg, ##__VA_ARGS__)
 
@@ -12,22 +12,22 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
     error("lista de bloques nula");
     return 0;
   }
-  code->strings = vm_string_table_new();
-  if (!code->strings) {
+  code->consts = vm_consts_new();
+  if (!code->consts) {
     error("Memoria insufciente");
     return 0;
   }
   code->code = bc_new();
   if (!code->code) {
     error("Memoria insufciente");
-    vm_string_table_free(code->strings);
+    vm_consts_free(code->consts);
     return 0;
   }
-  for (int string_iterator = 0; string_iterator < blocks->strings->size;
-       string_iterator++) {
-    if (!vm_string_table_add(code->strings, blocks->strings->strings[string_iterator])) {
+  for (int name_iterator = 0; name_iterator < blocks->consts->c_names_size;
+       name_iterator++) {
+    if (!vm_consts_push_name(code->consts, blocks->consts->c_names[name_iterator])) {
       error("Memoria insufciente");
-      vm_string_table_free(code->strings);
+      vm_consts_free(code->consts);
       bc_free(code->code);
       return 0;
     }
@@ -56,7 +56,7 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
                         .instr_num,
                 })) {
           error("Memoria insufciente");
-          vm_string_table_free(code->strings);
+          vm_consts_free(code->consts);
           bc_free(code->code);
           return 0;
         }
@@ -69,7 +69,7 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
                               current_block->instr_array->ir_array[instr_iterator].src2,
                           })) {
           error("Memoria insufciente");
-          vm_string_table_free(code->strings);
+          vm_consts_free(code->consts);
           bc_free(code->code);
           return 0;
         }

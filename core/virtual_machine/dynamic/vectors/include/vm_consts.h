@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "instance.h"
+struct __Instance;
 
 typedef struct {
   char **c_names;

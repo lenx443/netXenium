@@ -173,23 +173,23 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= pc.strings->size) {
+      if (instr.bci_src2 >= pc.consts->c_names_size) {
         ctx->ctx_running = 0;
         continue;
       }
       ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
-          (reg_t)pc.strings->strings[instr.bci_src2];
+          (reg_t)pc.consts->c_names[instr.bci_src2];
       continue;
     LOAD_PROP:
       if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= pc.strings->size) {
+      if (instr.bci_src2 >= pc.consts->c_names_size) {
         ctx->ctx_running = 0;
         continue;
       }
-      char *prop_key = pc.strings->strings[instr.bci_src2];
+      char *prop_key = pc.consts->c_names[instr.bci_src2];
       prop_struct *prop = prop_reg_value(prop_key, *prop_register, 1);
       if (!prop) {
         error("No se encontro la propiedad '%s' no se encontro", prop_key);
@@ -207,7 +207,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= pc.strings->size) {
+      if (instr.bci_src2 >= pc.consts->c_names_size) {
         ctx->ctx_running = 0;
         continue;
       }
@@ -218,7 +218,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
       } else {
         reg1_value = (char *)ctx->ctx_reg.reg[src_reg];
       }
-      char *reg2_value = pc.strings->strings[instr.bci_src2];
+      char *reg2_value = pc.consts->c_names[instr.bci_src2];
       int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
       char buffer[str_size];
       strcpy(buffer, reg1_value);

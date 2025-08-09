@@ -3,7 +3,7 @@
 
 #include "block_list.h"
 #include "logs.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Block list", msg, ##__VA_ARGS__)
 
@@ -38,8 +38,8 @@ block_list_ptr block_list_new() {
     error("Memoria insuficiente");
     return NULL;
   }
-  new_list->strings = vm_string_table_new();
-  if (!new_list->strings) {
+  new_list->consts = vm_consts_new();
+  if (!new_list->consts) {
     free(new_list);
     return NULL;
   }
@@ -66,7 +66,7 @@ void block_list_free(block_list_ptr blocks) {
     error("lista de bloques nula");
     return;
   }
-  vm_string_table_free(blocks->strings);
+  vm_consts_free(blocks->consts);
   block_node_ptr current = blocks->head;
   while (current) {
     block_node_ptr next = current->next;

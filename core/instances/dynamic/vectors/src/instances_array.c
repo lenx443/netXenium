@@ -32,7 +32,7 @@ bool __instances_array_push(struct __Instances_Array *inst_array,
 void __instances_array_free(struct __Instances_Array *inst_array) {
   if (!inst_array) { return; }
   for (int i = 0; i < inst_array->__size; i++) {
-    __instnace_free(inst_array->__inst[i]);
+    __instance_free(inst_array->__inst[i]);
   }
   free(inst_array->__inst);
   free(inst_array);

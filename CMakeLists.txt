@@ -100,7 +100,6 @@ add_executable(ntxenium
   # fuente de los vectores de la
   # maquina virtual
   core/virtual_machine/dynamic/vectors/src/bytecode.c
-  core/virtual_machine/dynamic/vectors/src/vm_string_table.c
   core/virtual_machine/dynamic/vectors/src/vm_consts.c
 
   # Implementaciones de los codigos

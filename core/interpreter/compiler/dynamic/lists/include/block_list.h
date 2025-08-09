@@ -2,7 +2,7 @@
 #define __BLOCK_LIST_H__
 
 #include "ir_bytecode.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
 
 struct block_node {
   IR_Bytecode_Array_ptr instr_array;
@@ -11,7 +11,7 @@ struct block_node {
 };
 
 struct block_list {
-  vm_String_Table_ptr strings;
+  vm_Consts_ptr consts;
   struct block_node *head;
   struct block_node *tail;
 };

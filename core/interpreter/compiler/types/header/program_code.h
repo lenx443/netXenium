@@ -2,10 +2,10 @@
 #define __PROGRAM_CODE_H__
 
 #include "bytecode.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
 
 struct ProgramCode {
-  vm_String_Table_ptr strings;
+  vm_Consts_ptr consts;
   Bytecode_Array_ptr code;
 };
 

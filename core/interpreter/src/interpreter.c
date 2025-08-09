@@ -15,8 +15,8 @@
 #include "program_code.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "vm_consts.h"
 #include "vm_def.h"
-#include "vm_string_table.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
@@ -67,7 +67,7 @@ int interpreter(const char *text_code) {
   vm_ctx_clear(vm->root_context);
   CALLABLE_ptr code = callable_new_code(pc);
   if (!code) {
-    vm_string_table_free(pc.strings);
+    vm_consts_free(pc.consts);
     bc_free(pc.code);
     return 0;
   }

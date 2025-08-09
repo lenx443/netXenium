@@ -4,7 +4,7 @@
 #include "call_args.h"
 #include "callable.h"
 #include "instance.h"
-#include "vm_string_table.h"
+#include "vm_consts.h"
 
 CALLABLE_ptr callable_new_native(int (*native)(struct __Instance *, CallArgs *)) {
   CALLABLE_ptr new_callable = malloc(sizeof(CALLABLE));
@@ -26,7 +26,7 @@ void callable_free(CALLABLE_ptr callable) {
   if (!callable) return;
   if (callable->callable_type == CALL_BYTECODE_PROGRAM) {
     bc_free(callable->code.code);
-    vm_string_table_free(callable->code.strings);
+    vm_consts_free(callable->code.consts);
   }
   free(callable);
 }
