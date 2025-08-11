@@ -1,10 +1,12 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "ast.h"
 #include "ast_compiler.h"
 #include "block_list.h"
 #include "ir_bytecode.h"
 #include "logs.h"
 #include "vm_consts.h"
-#include <string.h>
 
 #define error(msg, ...) log_add(NULL, ERROR, "AST Compiler", msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, "AST Compiler", msg, ##__VA_ARGS__)
@@ -77,7 +79,7 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
     return 0;
   }
   int cmd_name_index = blocks->consts->c_names_size;
-  if (!vm_consts_push_name(blocks->consts, strdup(ast->cmd.cmd_name))) return 0;
+  if (!vm_consts_push_name(blocks->consts, ast->cmd.cmd_name)) return 0;
   if (!ir_add_load_string(block->instr_array, 0, cmd_name_index)) return 0;
   for (int arg_iterator = 0; arg_iterator < ast->cmd.arg_count; arg_iterator++) {
     ArgExpr_t *arg = ast->cmd.cmd_args[arg_iterator];
@@ -100,7 +102,7 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
 int store_arg_literal(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                       int reg) {
   int literal_index = blocks->consts->c_names_size;
-  if (!vm_consts_push_name(blocks->consts, strdup(arg->literal))) return 0;
+  if (!vm_consts_push_name(blocks->consts, arg->literal)) return 0;
   if (!ir_add_load_string(block->instr_array, reg, literal_index)) return 0;
   return 1;
 }
@@ -108,7 +110,7 @@ int store_arg_literal(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *ar
 int store_arg_property(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                        int reg) {
   int prop_name_index = blocks->consts->c_names_size;
-  if (!vm_consts_push_name(blocks->consts, strdup(arg->property))) return 0;
+  if (!vm_consts_push_name(blocks->consts, arg->property)) return 0;
   if (!ir_add_load_prop(block->instr_array, reg, prop_name_index)) return 0;
   return 1;
 }

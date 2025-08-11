@@ -4,16 +4,13 @@
 #include "implement.h"
 #include <stddef.h>
 
+#define Xen_INSTANCE struct __Implement *__impl;
+
 struct __Instance {
-  char *__name;
-  struct __Implement *__impl;
+  Xen_INSTANCE
 };
 
-struct __Instance *__instance_new(char *, struct __Implement *);
+struct __Instance *__instance_new(struct __Implement *);
 void __instance_free(struct __Instance *);
-
-#define Xen_INSTANCE                                                                     \
-  char *__name;                                                                          \
-  struct __Implement *__impl;
 
 #endif

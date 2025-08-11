@@ -32,6 +32,12 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
       return 0;
     }
   }
+  for (int instance_iterator = 0; instance_iterator < blocks->consts->c_instances_size;
+       instance_iterator++) {
+    if (!vm_consts_push_instance(code->consts,
+                                 blocks->consts->c_instances[instance_iterator]))
+      ;
+  }
   block_node_ptr current_block = blocks->head;
   while (current_block) {
     if (!current_block->ready) {

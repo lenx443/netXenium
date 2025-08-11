@@ -189,7 +189,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      char *prop_key = pc.consts->c_names[instr.bci_src2];
+      const char *prop_key = pc.consts->c_names[instr.bci_src2];
       prop_struct *prop = prop_reg_value(prop_key, *prop_register, 1);
       if (!prop) {
         error("No se encontro la propiedad '%s' no se encontro", prop_key);
@@ -218,7 +218,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
       } else {
         reg1_value = (char *)ctx->ctx_reg.reg[src_reg];
       }
-      char *reg2_value = pc.consts->c_names[instr.bci_src2];
+      const char *reg2_value = pc.consts->c_names[instr.bci_src2];
       int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
       char buffer[str_size];
       strcpy(buffer, reg1_value);
