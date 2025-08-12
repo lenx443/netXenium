@@ -34,13 +34,13 @@ void __instance_free(struct __Instance *inst) {
       .ctx_code = inst->__impl->__destroy,
       .ctx_reg =
           {
-              reg,
-              reg_flags,
-              32,
+              .reg = reg,
+              .point_flag = reg_flags,
+              .capacity = 32,
           },
-      NULL,
-      0,
-      false,
+      .ctx_args = NULL,
+      .ctx_ip = 0,
+      .ctx_running = false,
   };
   vm_run_ctx(&static_ctx);
   free(inst);
