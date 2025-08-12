@@ -33,7 +33,8 @@ bool vm_consts_push_name(vm_Consts_ptr consts, const char *c_name) {
   return true;
 }
 
-bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance) {
+bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance,
+                             bool ref) {
   if (!consts || !c_instance) { return false; };
   if (consts->c_instances_size >= consts->c_instances_capacity) {
     size_t new_capacity =
@@ -44,21 +45,18 @@ bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance
     consts->c_instances = new_mem;
     consts->c_instances_capacity = new_capacity;
   }
+  if (ref) Xen_ADD_REF(c_instance);
   consts->c_instances[consts->c_instances_size++] = c_instance;
   return true;
-}
-
-void vm_consts_instances_free(vm_Consts_ptr consts) {
-  if (!consts) { return; }
-  for (int i = 0; i < consts->c_instances_size; i++) {
-    __instance_free(consts->c_instances[i]);
-  }
 }
 
 void vm_consts_free(vm_Consts_ptr consts) {
   if (!consts) { return; }
   for (int i = 0; i < consts->c_names_size; i++) {
     free((void *)consts->c_names[i]);
+  }
+  for (int i = 0; i < consts->c_instances_size; i++) {
+    Xen_DEL_REF(consts->c_instances[i]);
   }
   free(consts->c_names);
   free(consts->c_instances);

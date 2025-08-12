@@ -26,7 +26,6 @@ void callable_free(CALLABLE_ptr callable) {
   if (!callable) return;
   if (callable->callable_type == CALL_BYTECODE_PROGRAM) {
     bc_free(callable->code.code);
-    vm_consts_instances_free(callable->code.consts);
     vm_consts_free(callable->code.consts);
   }
   free(callable);
