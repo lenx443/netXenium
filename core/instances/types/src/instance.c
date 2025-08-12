@@ -28,7 +28,7 @@ void __instance_free(struct __Instance *inst) {
   uint8_t reg_flags[32];
   memset(reg, 0, sizeof(reg));
   memset(reg_flags, 0, sizeof(reg_flags));
-  struct RunContext static_ctx = {
+  struct RunContext local_ctx = {
       .ctx_caller = run_context_stack_peek_top(&vm->vm_ctx_stack),
       .ctx_self = inst,
       .ctx_code = inst->__impl->__destroy,
@@ -42,6 +42,6 @@ void __instance_free(struct __Instance *inst) {
       .ctx_ip = 0,
       .ctx_running = false,
   };
-  vm_run_ctx(&static_ctx);
+  vm_run_ctx(&local_ctx);
   free(inst);
 }
