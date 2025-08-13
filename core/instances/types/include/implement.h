@@ -7,9 +7,11 @@
 struct __Implement {
   uint16_t __type_index;
   char *__impl_name;
+  size_t __inst_size;
   CALLABLE_ptr __alloc;
   CALLABLE_ptr __destroy;
   CALLABLE_ptr __callable;
+  CALLABLE_ptr __hash;
 };
 
 struct __Implement *__implement_new(char *);

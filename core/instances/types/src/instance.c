@@ -4,14 +4,12 @@
 
 #include "implement.h"
 #include "instance.h"
-#include "run_ctx_stack.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "vm_register.h"
 
 struct __Instance *__instance_new(struct __Implement *impl) {
   if (!impl) { return NULL; }
-  struct __Instance *inst = malloc(sizeof(struct __Instance));
+  struct __Instance *inst = malloc(impl->__inst_size);
   if (!inst) { return NULL; }
   inst->__refers = 1;
   inst->__impl = impl;
@@ -29,7 +27,7 @@ void __instance_free(struct __Instance *inst) {
   memset(reg, 0, sizeof(reg));
   memset(reg_flags, 0, sizeof(reg_flags));
   struct RunContext local_ctx = {
-      .ctx_caller = run_context_stack_peek_top(&vm->vm_ctx_stack),
+      .ctx_caller = vm_current_ctx(),
       .ctx_self = inst,
       .ctx_code = inst->__impl->__destroy,
       .ctx_reg =

@@ -2,15 +2,22 @@
 
 #include "callable.h"
 #include "implement.h"
+#include "instance.h"
 
 struct __Implement *__implement_new(char *impl_name) {
   struct __Implement *impl = malloc(sizeof(struct __Implement));
   if (!impl) { return NULL; }
   impl->__type_index = 0;
   impl->__impl_name = strdup(impl_name);
+  if (!impl->__impl_name) {
+    free(impl);
+    return NULL;
+  }
+  impl->__inst_size = sizeof(struct __Instance);
   impl->__alloc = NULL;
   impl->__destroy = NULL;
   impl->__callable = NULL;
+  impl->__hash = NULL;
   return impl;
 }
 
@@ -20,5 +27,6 @@ void __implement_free(struct __Implement *impl) {
   callable_free(impl->__alloc);
   callable_free(impl->__destroy);
   callable_free(impl->__callable);
+  callable_free(impl->__hash);
   free(impl);
 }

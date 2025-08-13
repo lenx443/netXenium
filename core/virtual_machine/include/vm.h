@@ -6,6 +6,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 
+RunContext_ptr vm_current_ctx();
 void vm_ctx_clear(RunContext_ptr);
 int vm_new_ctx_callable(CALLABLE_ptr, struct __Instance *, CallArgs *);
 int vm_run_callable(CALLABLE_ptr, struct __Instance *, CallArgs *);

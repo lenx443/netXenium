@@ -33,14 +33,9 @@ static int command_callable(struct __Instance *self, CallArgs *args) {
 
 bool command_implement(struct __Implementations *impls) {
   if (!impls) { return false; }
-  struct __Implement *impl = malloc(sizeof(struct __Implement));
+  struct __Implement *impl = __implement_new("Command");
   if (!impl) { return false; }
-  impl->__type_index = 0;
-  impl->__impl_name = strdup("Command");
-  if (!impl->__impl_name) {
-    free(impl);
-    return false;
-  }
+  impl->__inst_size = sizeof(Xen_Command);
   impl->__alloc = callable_new_native(command_alloc);
   if (!impl->__alloc) {
     free(impl->__impl_name);

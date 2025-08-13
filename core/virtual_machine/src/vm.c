@@ -25,6 +25,8 @@
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
+RunContext_ptr vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
+
 void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_code = NULL;
   vm_register_clear(&ctx->ctx_reg);
