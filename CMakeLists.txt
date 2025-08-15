@@ -127,7 +127,7 @@ add_executable(ntxenium
   # fuente de los vectores de las
   # Instancias
   core/instances/dynamic/vectors/src/implementations.c
-  core/instances/dynamic/vectors/src/instances_array.c
+  core/instances/dynamic/vectors/src/instances_map.c
 
   # codigo fuente de la la API
   # del Framework.

@@ -15,15 +15,15 @@
     if (inst && --((inst)->__refers) == 0) __instance_free((struct __Instance *)inst);   \
   } while (0)
 
-#define Xen_INSTANCE                                                                     \
+#define Xen_INSTANCE_HEAD                                                                \
   size_t __refers;                                                                       \
   struct __Implement *__impl;
 
-struct __Instance {
-  Xen_INSTANCE
-};
+#define Xen_INSTANCE struct __Instance
 
-struct __Instance *__instance_new(struct __Implement *);
-void __instance_free(struct __Instance *);
+Xen_INSTANCE{Xen_INSTANCE_HEAD};
+
+Xen_INSTANCE *__instance_new(struct __Implement *);
+void __instance_free(Xen_INSTANCE *);
 
 #endif

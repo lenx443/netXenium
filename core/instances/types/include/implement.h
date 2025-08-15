@@ -4,6 +4,8 @@
 #include "callable.h"
 #include <stddef.h>
 
+struct __Instance;
+
 struct __Implement {
   uint16_t __type_index;
   char *__impl_name;
