@@ -30,6 +30,7 @@ include_directories(
   core/instances/dynamic/vectors/include/
   core/instances/callable/types/include/
   core/instances/callable/dynamic/vectors/include/
+  core/instances/basic/include/
   core/instances/command/include/
   core/instances/command/types/header/
   api/include/
@@ -116,9 +117,12 @@ add_executable(ntxenium
   # Implementacion de estructura `Callable`
   core/instances/callable/types/src/callable.c
 
-  #Implementacion de estaructura `Instance`
+  # Implementacion de estaructura `Instance`
   core/instances/types/src/implement.c
   core/instances/types/src/instance.c
+
+  # Implementacion del objeto `Basic`
+  core/instances/basic/src/basic.c
 
   # Implementacion del objeto `Command`
   core/instances/command/src/command_implement.c
@@ -126,7 +130,6 @@ add_executable(ntxenium
   # Implementaciones de los codigos
   # fuente de los vectores de las
   # Instancias
-  core/instances/dynamic/vectors/src/implementations.c
   core/instances/dynamic/vectors/src/instances_map.c
 
   # codigo fuente de la la API

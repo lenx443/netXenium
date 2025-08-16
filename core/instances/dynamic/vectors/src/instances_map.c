@@ -18,10 +18,12 @@ struct __Instances_Map *__instances_map_new(size_t capacity) {
   struct __Instances_Map *inst_map = malloc(sizeof(struct __Instances_Map));
   if (!inst_map) { return NULL; }
   inst_map->__buckets = malloc(sizeof(struct __Instances_Hash_Node *) * capacity);
-  memset(inst_map, NULL, sizeof(struct __Instances_Hash_Node *) * capacity);
   if (!inst_map->__buckets) {
     free(inst_map);
     return NULL;
+  }
+  for (int i = 0; i < capacity; i++) {
+    inst_map->__buckets[i] = NULL;
   }
   inst_map->__buckets_capacity = capacity;
   inst_map->__vec_inst = NULL;

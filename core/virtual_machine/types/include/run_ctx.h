@@ -7,6 +7,7 @@
 #include "call_args.h"
 #include "callable.h"
 #include "instance.h"
+#include "instances_map.h"
 #include "vm_register.h"
 
 struct RunContext {
@@ -15,6 +16,7 @@ struct RunContext {
   CALLABLE_ptr ctx_code;
   VM_Register ctx_reg;
   CallArgs *ctx_args;
+  struct __Instances_Map *ctx_instances;
   uint32_t ctx_ip;
   bool ctx_running;
 };

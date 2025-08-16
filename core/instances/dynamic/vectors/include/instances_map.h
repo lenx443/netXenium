@@ -6,6 +6,8 @@
 
 #include "instance.h"
 
+#define INSTANCES_MAP_DEFAULT_CAPACITY 128
+
 struct __Instances_Hash_Node {
   char *name;
   size_t index;

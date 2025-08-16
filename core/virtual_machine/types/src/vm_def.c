@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "call_args.h"
-#include "implementations.h"
 #include "logs.h"
 #include "program.h"
 #include "run_ctx_stack.h"
@@ -41,14 +40,6 @@ bool vm_create() {
     return 0;
   }
   vm->root_context = run_context_stack_pop_top(&vm->vm_ctx_stack);
-  vm->global_implements = __implementations_new();
-  if (!vm->global_implements) {
-    run_context_stack_free(&vm->vm_ctx_stack);
-    free(vm);
-    call_args_free(args);
-    return 0;
-  }
-  vm->implements_index = 0;
   return 1;
 }
 

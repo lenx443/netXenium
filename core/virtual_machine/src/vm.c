@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,6 +10,8 @@
 #include "bytecode.h"
 #include "call_args.h"
 #include "callable.h"
+#include "command_implement.h"
+#include "command_instance.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "instance.h"
@@ -26,6 +29,25 @@
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
 RunContext_ptr vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
+
+bool vm_define_native_command(struct __Instances_Map *inst_map, Xen_INSTANCE *self,
+                              const char *name, Xen_Native_Func fun) {
+  Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement);
+  if (!cmd_inst) { return false; }
+  struct Xen_Command_Instance *command_inst = (struct Xen_Command_Instance *)cmd_inst;
+  command_inst->cmd_callable = callable_new_native(fun);
+  if (!command_inst->cmd_callable) {
+    Xen_DEL_REF(cmd_inst);
+    return false;
+  }
+  command_inst->self = self;
+  Xen_ADD_REF(self);
+  if (!__instances_map_add(inst_map, name, cmd_inst)) {
+    Xen_DEL_REF(cmd_inst);
+    return false;
+  }
+  return true;
+}
 
 void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_code = NULL;

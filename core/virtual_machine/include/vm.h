@@ -1,11 +1,16 @@
 #ifndef __VM_H__
 #define __VM_H__
 
+#include <stdbool.h>
+
 #include "call_args.h"
 #include "callable.h"
 #include "instance.h"
+#include "instances_map.h"
 #include "run_ctx.h"
 
+bool vm_define_native_command(struct __Instances_Map *, Xen_INSTANCE *, const char *,
+                              Xen_Native_Func);
 RunContext_ptr vm_current_ctx();
 void vm_ctx_clear(RunContext_ptr);
 int vm_new_ctx_callable(CALLABLE_ptr, struct __Instance *, CallArgs *);

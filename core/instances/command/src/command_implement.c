@@ -1,12 +1,9 @@
-#include <stdbool.h>
-#include <stdlib.h>
-
+#include "basic.h"
 #include "call_args.h"
 #include "callable.h"
 #include "command_implement.h"
 #include "command_instance.h"
 #include "implement.h"
-#include "implementations.h"
 #include "instance.h"
 #include "vm.h"
 
@@ -20,6 +17,7 @@ static int command_alloc(struct __Instance *self, CallArgs *args) {
 static int command_destroy(struct __Instance *self, CallArgs *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) callable_free(inst->cmd_callable);
+  Xen_DEL_REF(inst->self);
   return 1;
 }
 
@@ -31,39 +29,12 @@ static int command_callable(struct __Instance *self, CallArgs *args) {
   return 1;
 }
 
-bool command_implement(struct __Implementations *impls) {
-  if (!impls) { return false; }
-  struct __Implement *impl = __implement_new("Command");
-  if (!impl) { return false; }
-  impl->__inst_size = sizeof(Xen_Command);
-  impl->__alloc = callable_new_native(command_alloc);
-  if (!impl->__alloc) {
-    free(impl->__impl_name);
-    free(impl);
-    return false;
-  }
-  impl->__destroy = callable_new_native(command_destroy);
-  if (!impl->__destroy) {
-    callable_free(impl->__alloc);
-    free(impl->__impl_name);
-    free(impl);
-    return false;
-  }
-  impl->__callable = callable_new_native(command_callable);
-  if (!impl->__callable) {
-    callable_free(impl->__destroy);
-    callable_free(impl->__alloc);
-    free(impl->__impl_name);
-    free(impl);
-    return false;
-  }
-  if (!__implementations_push(impls, impl)) {
-    callable_free(impl->__callable);
-    callable_free(impl->__destroy);
-    callable_free(impl->__alloc);
-    free(impl->__impl_name);
-    free(impl);
-    return false;
-  }
-  return true;
-}
+struct __Implement Xen_Command_Implement = {
+    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    .__impl_name = "Command",
+    .__inst_size = sizeof(Xen_Command),
+    .__alloc = command_alloc,
+    .__destroy = command_destroy,
+    .__callable = command_callable,
+    .__hash = NULL,
+};

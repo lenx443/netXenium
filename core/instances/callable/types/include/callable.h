@@ -6,6 +6,8 @@
 
 struct __Instance;
 
+typedef int (*Xen_Native_Func)(struct __Instance *, CallArgs *);
+
 enum Callable_Type {
   CALL_NATIVE_FUNCTIIN,
   CALL_BYTECODE_PROGRAM,
@@ -14,7 +16,7 @@ enum Callable_Type {
 struct Callable {
   enum Callable_Type callable_type;
   union {
-    int (*native_callable)(struct __Instance *, CallArgs *);
+    Xen_Native_Func native_callable;
     ProgramCode_t code;
   };
 };
@@ -23,7 +25,7 @@ typedef enum Callable_Type CALLABLE_TYPE;
 typedef struct Callable CALLABLE;
 typedef CALLABLE *CALLABLE_ptr;
 
-CALLABLE_ptr callable_new_native(int (*)(struct __Instance *, CallArgs *));
+CALLABLE_ptr callable_new_native(Xen_Native_Func);
 CALLABLE_ptr callable_new_code(ProgramCode_t);
 void callable_free(CALLABLE_ptr);
 

@@ -1,12 +1,10 @@
 #include <stdlib.h>
 
 #include "bytecode.h"
-#include "call_args.h"
 #include "callable.h"
-#include "instance.h"
 #include "vm_consts.h"
 
-CALLABLE_ptr callable_new_native(int (*native)(struct __Instance *, CallArgs *)) {
+CALLABLE_ptr callable_new_native(Xen_Native_Func native) {
   CALLABLE_ptr new_callable = malloc(sizeof(CALLABLE));
   if (!new_callable) { return NULL; }
   new_callable->callable_type = CALL_NATIVE_FUNCTIIN;

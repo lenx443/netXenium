@@ -1,16 +1,22 @@
 #include <stdlib.h>
 
+#include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "instances_map.h"
 
 struct __Implement *__implement_new(char *impl_name) {
-  struct __Implement *impl = malloc(sizeof(struct __Implement));
+  struct __Implement *impl = (struct __Implement *)__instance_new(&Xen_Basic);
   if (!impl) { return NULL; }
-  impl->__type_index = 0;
   impl->__impl_name = strdup(impl_name);
   if (!impl->__impl_name) {
     free(impl);
+    return NULL;
+  }
+  impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  if (!impl->__props) {
+    Xen_DEL_REF(impl);
     return NULL;
   }
   impl->__inst_size = sizeof(struct __Instance);
@@ -19,14 +25,4 @@ struct __Implement *__implement_new(char *impl_name) {
   impl->__callable = NULL;
   impl->__hash = NULL;
   return impl;
-}
-
-void __implement_free(struct __Implement *impl) {
-  if (!impl) return;
-  free(impl->__impl_name);
-  callable_free(impl->__alloc);
-  callable_free(impl->__destroy);
-  callable_free(impl->__callable);
-  callable_free(impl->__hash);
-  free(impl);
 }

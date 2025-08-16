@@ -2,6 +2,7 @@
 
 #include "call_args.h"
 #include "instance.h"
+#include "instances_map.h"
 #include "run_ctx.h"
 #include "vm_register.h"
 
@@ -18,6 +19,12 @@ RunContext_ptr run_context_new(RunContext_ptr caller, struct __Instance *self,
     if (!ctx_new->ctx_args) { free(ctx_new); }
   } else
     ctx_new->ctx_args = NULL;
+  ctx_new->ctx_instances = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  if (!ctx_new->ctx_instances) {
+    if (ctx_new->ctx_args) call_args_free(ctx_new->ctx_args);
+    vm_register_free(ctx_new->ctx_reg);
+    free(ctx_new);
+  }
   ctx_new->ctx_ip = 0;
   ctx_new->ctx_running = 0;
   return ctx_new;
@@ -25,6 +32,7 @@ RunContext_ptr run_context_new(RunContext_ptr caller, struct __Instance *self,
 
 void run_context_free(const RunContext_ptr ctx) {
   if (!ctx) return;
+  __instances_map_free(ctx->ctx_instances);
   if (ctx->ctx_args) call_args_free(ctx->ctx_args);
   vm_register_free(ctx->ctx_reg);
   free(ctx);

@@ -1,22 +1,25 @@
 #ifndef __IMPLEMENT_H__
 #define __IMPLEMENT_H__
 
-#include "callable.h"
 #include <stddef.h>
+
+#include "callable.h"
+#include "instance.h"
+#include "instances_map.h"
 
 struct __Instance;
 
 struct __Implement {
-  uint16_t __type_index;
+  Xen_INSTANCE_HEAD;
   char *__impl_name;
   size_t __inst_size;
-  CALLABLE_ptr __alloc;
-  CALLABLE_ptr __destroy;
-  CALLABLE_ptr __callable;
-  CALLABLE_ptr __hash;
+  struct __Instances_Map *__props;
+  Xen_Native_Func __alloc;
+  Xen_Native_Func __destroy;
+  Xen_Native_Func __callable;
+  Xen_Native_Func __hash;
 };
 
 struct __Implement *__implement_new(char *);
-void __implement_free(struct __Implement *);
 
 #endif

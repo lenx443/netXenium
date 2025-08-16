@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include "implementations.h"
+#include "implement.h"
 
-bool command_implement(struct __Implementations *);
+extern struct __Implement Xen_Command_Implement;
 
 #endif
