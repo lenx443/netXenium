@@ -11,6 +11,7 @@
 #include "vm_register.h"
 
 struct RunContext {
+  Xen_INSTANCE_HEAD;
   struct RunContext *ctx_caller;
   struct __Instance *ctx_self;
   CALLABLE_ptr ctx_code;
@@ -22,8 +23,5 @@ struct RunContext {
 };
 
 typedef struct RunContext *RunContext_ptr;
-
-RunContext_ptr run_context_new(RunContext_ptr, struct __Instance *, CallArgs *);
-void run_context_free(const RunContext_ptr);
 
 #endif

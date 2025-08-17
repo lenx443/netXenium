@@ -2,16 +2,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "call_args.h"
 #include "implement.h"
 #include "instance.h"
 
-struct __Instance *__instance_new(struct __Implement *impl) {
+struct __Instance *__instance_new(struct __Implement *impl, CallArgs *args) {
   if (!impl) { return NULL; }
   struct __Instance *inst = malloc(impl->__inst_size);
   if (!inst) { return NULL; }
   inst->__refers = 1;
   inst->__impl = impl;
-  if (!impl->__alloc(inst, NULL)) {
+  if (!impl->__alloc(inst, args)) {
     free(inst);
     return NULL;
   }

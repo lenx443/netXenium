@@ -4,15 +4,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "call_args.h"
+
+#define Xen_TYPE(inst) (((struct __Instance *)inst)->__impl)
+
 #define Xen_ADD_REF(inst)                                                                \
   do {                                                                                   \
-    if (inst) (inst)->__refers++;                                                        \
+    if (inst) ((struct __Instance *)inst)->__refers++;                                   \
   } while (0)
 
 #define Xen_DEL_REF(inst)                                                                \
   do {                                                                                   \
-    if (inst && (inst)->__refers > 0) {                                                  \
-      if (--((inst)->__refers) == 0) __instance_free((struct __Instance *)(inst));       \
+    if (inst && ((struct __Instance *)inst)->__refers > 0) {                             \
+      if (--(((struct __Instance *)inst)->__refers) == 0)                                \
+        __instance_free((struct __Instance *)(inst));                                    \
     }                                                                                    \
   } while (0)
 
@@ -31,7 +36,7 @@
 
 Xen_INSTANCE{Xen_INSTANCE_HEAD};
 
-Xen_INSTANCE *__instance_new(struct __Implement *);
+Xen_INSTANCE *__instance_new(struct __Implement *, CallArgs *);
 void __instance_free(Xen_INSTANCE *);
 
 #endif

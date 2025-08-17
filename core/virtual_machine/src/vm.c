@@ -32,7 +32,7 @@ RunContext_ptr vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_
 
 bool vm_define_native_command(struct __Instances_Map *inst_map, Xen_INSTANCE *self,
                               const char *name, Xen_Native_Func fun) {
-  Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement);
+  Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, NULL);
   if (!cmd_inst) { return false; }
   struct Xen_Command_Instance *command_inst = (struct Xen_Command_Instance *)cmd_inst;
   command_inst->cmd_callable = callable_new_native(fun);

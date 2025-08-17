@@ -4,14 +4,27 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
+#include "run_frame.h"
 
 int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, RunContext_ptr caller,
                            struct __Instance *self, CallArgs *args) {
   if (!ctx_stack) { return 0; }
   RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) { return 0; }
-  ctx_stack_new->ctx = run_context_new(caller, self, args);
+  struct CArg arg3 = {CARG_POINTER, args, sizeof(*args)};
+  CallArgs *alloc_args =
+      call_args_create(3, (struct CArg[]){
+                              {CARG_INSTANCE, caller, sizeof(struct RunContext)},
+                              {CARG_INSTANCE, self, sizeof(*self)},
+                              {CARG_POINTER, args, sizeof(*args)},
+                          });
+  if (!alloc_args) {
+    free(ctx_stack_new);
+    return 0;
+  }
+  ctx_stack_new->ctx = (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args);
   if (!ctx_stack_new->ctx) {
+    call_args_free(alloc_args);
     free(ctx_stack_new);
     return 0;
   }
@@ -44,7 +57,7 @@ void run_context_stack_free(RunContext_Stack_ptr *ctx_stack) {
   RunContext_Stack_ptr current = *ctx_stack;
   while (current) {
     RunContext_Stack_ptr next = current->next;
-    run_context_free(current->ctx);
+    Xen_DEL_REF(current->ctx);
     free(current);
     current = next;
   }

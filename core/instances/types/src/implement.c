@@ -7,7 +7,7 @@
 #include "instances_map.h"
 
 struct __Implement *__implement_new(char *impl_name) {
-  struct __Implement *impl = (struct __Implement *)__instance_new(&Xen_Basic);
+  struct __Implement *impl = (struct __Implement *)__instance_new(&Xen_Basic, NULL);
   if (!impl) { return NULL; }
   impl->__impl_name = strdup(impl_name);
   if (!impl->__impl_name) {

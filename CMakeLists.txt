@@ -23,6 +23,7 @@ include_directories(
   core/interpreter/compiler/dynamic/lists/include/
   core/interpreter/compiler/dynamic/vectors/include/
   core/virtual_machine/include/
+  core/virtual_machine/types/header/
   core/virtual_machine/types/include/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
@@ -95,7 +96,7 @@ add_executable(ntxenium
   core/virtual_machine/types/src/GCPointer.c
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_register.c
-  core/virtual_machine/types/src/run_ctx.c
+  core/virtual_machine/types/src/run_frame.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de la

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "call_args.h"
+#include "instances_map.h"
 #include "logs.h"
 #include "program.h"
 #include "run_ctx_stack.h"
@@ -40,11 +41,17 @@ bool vm_create() {
     return 0;
   }
   vm->root_context = run_context_stack_pop_top(&vm->vm_ctx_stack);
+  vm->global_props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  if (!vm->global_props) {
+    run_context_stack_free(&vm->vm_ctx_stack);
+    free(vm);
+  }
   return 1;
 }
 
 void vm_destroy() {
   if (!vm) return;
+  __instances_map_free(vm->global_props);
   run_context_stack_free(&vm->vm_ctx_stack);
   free(vm);
 }
