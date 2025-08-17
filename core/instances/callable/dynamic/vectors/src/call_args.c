@@ -49,6 +49,7 @@ int call_args_push(CallArgs *args, struct CArg data) {
     free(data_pointer);
     return 0;
   }
+  new_data->point_type = data.point_type;
   new_data->pointer = data_pointer;
   new_data->size = data.size;
   args->args[args->size++] = new_data;
