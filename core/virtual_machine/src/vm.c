@@ -15,6 +15,7 @@
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "instance.h"
+#include "instances_map.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -22,6 +23,7 @@
 #include "properties.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
+#include "run_frame.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_register.h"
@@ -47,6 +49,79 @@ bool vm_define_native_command(struct __Instances_Map *inst_map, Xen_INSTANCE *se
     return false;
   }
   return true;
+}
+
+bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self, CallArgs *args) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, vm_current_ctx(), self, args)) {
+    return false;
+  }
+  if (!func(vm_current_ctx()->ctx_id, self, args)) {
+    run_context_stack_pop_top(&vm->vm_ctx_stack);
+    return false;
+  }
+  run_context_stack_pop_top(&vm->vm_ctx_stack);
+  return true;
+}
+
+bool vm_call_basic_native_function(Xen_Native_Func func, struct __Instance *self) {
+  reg_t regs[128];
+  uint8_t reg_flag[128];
+  memset(regs, 0, 128);
+  memset(reg_flag, 0, 128);
+  struct RunContext run_ctx = {
+      Xen_INSTANCE_SET(0, &Xen_Run_Frame, XEN_INSTANCE_FLAG_STATIC),
+      .ctx_flags = CTX_FLAG_STATIC,
+      .ctx_caller = vm_current_ctx(),
+      .ctx_self = self,
+      .ctx_code = NULL,
+      .ctx_reg =
+          {
+              .reg = regs,
+              .point_flag = reg_flag,
+              .capacity = 128,
+          },
+      .ctx_args = NULL,
+      .ctx_instances = NULL,
+      .ctx_ip = 0,
+      .ctx_running = false,
+  };
+  Xen_ADD_REF(self);
+  if (!run_context_stack_push_refer(&vm->vm_ctx_stack, &run_ctx)) {
+    Xen_DEL_REF(self);
+    return false;
+  }
+  Xen_ADD_REF(self);
+  func(vm_current_ctx()->ctx_id, self, NULL);
+  Xen_DEL_REF(self);
+  run_context_stack_pop_top(&vm->vm_ctx_stack);
+  Xen_DEL_REF(self);
+  return true;
+}
+
+Xen_INSTANCE *vm_get_prop_register(const char *name, ctx_id_t id) {
+  if (!name || !VM_CHECK_ID(id)) { return NULL; }
+  if ((strcmp(name, "__expose") == 0) || (strncmp(name, "__expose_", 9) == 0)) {
+    Xen_INSTANCE *expose = __instances_map_get(vm->global_props, name);
+    if (!expose) { return NULL; }
+    Xen_ADD_REF(expose);
+    return expose;
+  }
+  Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
+  if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
+    Xen_INSTANCE *prop = __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);
+    if (!prop) {
+      Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
+      if (!impl_prop) { return NULL; }
+      Xen_ADD_REF(impl_prop);
+      return impl_prop;
+    }
+    Xen_ADD_REF(prop);
+    return prop;
+  }
+  Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
+  if (!impl_prop) { return NULL; }
+  Xen_ADD_REF(impl_prop);
+  return impl_prop;
 }
 
 void vm_ctx_clear(RunContext_ptr ctx) {
@@ -79,9 +154,9 @@ void vm_run_ctx(RunContext_ptr ctx) {
   if (ctx->ctx_code->callable_type == CALL_NATIVE_FUNCTIIN) {
     if (ctx->ctx_caller) {
       ctx->ctx_caller->ctx_reg.reg[1] =
-          ctx->ctx_code->native_callable(ctx->ctx_self, ctx->ctx_args);
+          ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
     } else {
-      ctx->ctx_code->native_callable(ctx->ctx_self, ctx->ctx_args);
+      ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
     }
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,

@@ -26,15 +26,25 @@
   struct __Implement *__impl;                                                            \
   uint8_t __flags;
 
+#define Xen_INSTANCE_MAPPED_HEAD                                                         \
+  Xen_INSTANCE_HEAD;                                                                     \
+  struct __Instances_Map *__map;
+
 #define Xen_INSTANCE struct __Instance
 
-#define Xen_INSTANCE_SET(refers, impl, flags)                                            \
-  .__refers = refers, .__impl = impl, .__flags = flags
+#define Xen_INSTANCE_MAPPED struct __Instance_Mapped
 
-#define XEN_INSTANCE_FLAG_STATIC (1UL << 7)
-#define XEN_INSTANCE_FLAG_IS_STATIC(flag) (flag >> 7)
+#define Xen_INSTANCE_SET(refers, impl, flags)                                            \
+  .__refers = refers, .__impl = impl, .__flags = (flags)
+
+#define XEN_INSTANCE_FLAG_STATIC (1 << 0)
+#define XEN_INSTANCE_FLAG_MAPPED (1 << 1)
+
+#define XEN_INSTANCE_GET_FLAG(inst, flag)                                                \
+  (((((struct __Instance *)inst)->__flags) & (flag)) != 0)
 
 Xen_INSTANCE{Xen_INSTANCE_HEAD};
+Xen_INSTANCE_MAPPED{Xen_INSTANCE_MAPPED_HEAD};
 
 Xen_INSTANCE *__instance_new(struct __Implement *, CallArgs *);
 void __instance_free(Xen_INSTANCE *);

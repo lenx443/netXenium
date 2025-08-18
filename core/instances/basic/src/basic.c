@@ -5,10 +5,11 @@
 #include "call_args.h"
 #include "implement.h"
 #include "instance.h"
+#include "run_ctx.h"
 
-int basic_alloc(struct __Instance *inst, CallArgs *args) { return 1; }
+int basic_alloc(ctx_id_t id, struct __Instance *inst, CallArgs *args) { return 1; }
 
-int basic_destroy(struct __Instance *inst, CallArgs *args) {
+int basic_destroy(ctx_id_t id, struct __Instance *inst, CallArgs *args) {
   struct __Implement *impl = (struct __Implement *)inst;
   if (!impl) return false;
   if (impl->__props) __instances_map_free(impl->__props);
@@ -16,7 +17,7 @@ int basic_destroy(struct __Instance *inst, CallArgs *args) {
   return 1;
 }
 
-int basic_callable(struct __Instance *inst, CallArgs *args) { return 1; }
+int basic_callable(ctx_id_t id, struct __Instance *inst, CallArgs *args) { return 1; }
 
 struct __Implement Xen_Basic = {
     Xen_INSTANCE_SET(0, &Xen_Basic, 0),

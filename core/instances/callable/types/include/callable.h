@@ -6,7 +6,7 @@
 
 struct __Instance;
 
-typedef int (*Xen_Native_Func)(struct __Instance *, CallArgs *);
+typedef int (*Xen_Native_Func)(unsigned long, struct __Instance *, CallArgs *);
 
 enum Callable_Type {
   CALL_NATIVE_FUNCTIIN,

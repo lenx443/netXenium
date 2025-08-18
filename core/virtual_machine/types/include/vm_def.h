@@ -11,6 +11,7 @@ typedef struct {
   RunContext_Stack_ptr vm_ctx_stack;
   RunContext_ptr root_context;
   struct __Instances_Map *global_props;
+  ctx_id_t ctx_id_count;
 } VM;
 
 typedef VM *VM_ptr;

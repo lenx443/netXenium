@@ -40,12 +40,13 @@ bool vm_create() {
     call_args_free(args);
     return 0;
   }
-  vm->root_context = run_context_stack_pop_top(&vm->vm_ctx_stack);
+  vm->root_context = run_context_stack_peek_top(&vm->vm_ctx_stack);
   vm->global_props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
   if (!vm->global_props) {
     run_context_stack_free(&vm->vm_ctx_stack);
     free(vm);
   }
+  vm->ctx_id_count = 0;
   return 1;
 }
 

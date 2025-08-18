@@ -5,7 +5,7 @@
 #include "run_ctx.h"
 #include "run_frame.h"
 
-static int frame_alloc(Xen_INSTANCE *self, CallArgs *args) {
+static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
   if (!args || args->size != 3 || args->args[0]->point_type != CARG_INSTANCE ||
       args->args[1]->point_type != CARG_INSTANCE ||
       args->args[2]->point_type != CARG_POINTER ||
@@ -14,6 +14,8 @@ static int frame_alloc(Xen_INSTANCE *self, CallArgs *args) {
     return 0;
   }
   struct RunContext *ctx_new = (struct RunContext *)self;
+  ctx_new->ctx_flags = CTX_FLAG_PROPS;
+  ctx_new->ctx_id = 0;
   ctx_new->ctx_caller = (struct RunContext *)args->args[0]->pointer;
   ctx_new->ctx_self = (Xen_INSTANCE *)args->args[1]->pointer;
   ctx_new->ctx_code = NULL;
@@ -34,7 +36,7 @@ static int frame_alloc(Xen_INSTANCE *self, CallArgs *args) {
   return 1;
 }
 
-static int frame_destroy(Xen_INSTANCE *self, CallArgs *args) {
+static int frame_destroy(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
   struct RunContext *ctx = (struct RunContext *)self;
   __instances_map_free(ctx->ctx_instances);
   if (ctx->ctx_args) call_args_free(ctx->ctx_args);

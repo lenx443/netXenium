@@ -34,6 +34,8 @@ include_directories(
   core/instances/basic/include/
   core/instances/command/include/
   core/instances/command/types/header/
+  core/register_enginer/include/
+  core/register_enginer/types/header/
   api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
@@ -132,6 +134,9 @@ add_executable(ntxenium
   # fuente de los vectores de las
   # Instancias
   core/instances/dynamic/vectors/src/instances_map.c
+
+  # motor de registros
+  core/register_enginer/src/xen_register.c
 
   # codigo fuente de la la API
   # del Framework.
