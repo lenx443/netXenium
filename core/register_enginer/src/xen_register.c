@@ -3,13 +3,19 @@
 
 #include "implement.h"
 #include "instance.h"
+#include "instances_map.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "xen_register.h"
 #include "xen_register_flow.h"
 
-static Xen_INSTANCE *__expose_handle(const char *name) {
+static int __expose_set_handle(const char *name, Xen_INSTANCE *inst) {
+  if (!__instances_map_add(vm->global_props, name, inst)) { return 0; }
+  return 1;
+}
+
+static Xen_INSTANCE *__expose_get_handle(const char *name) {
   Xen_INSTANCE *expose = __instances_map_get(vm->global_props, name);
   if (!expose) { return NULL; }
   Xen_ADD_REF(expose);
@@ -17,10 +23,29 @@ static Xen_INSTANCE *__expose_handle(const char *name) {
 }
 
 static struct Xen_RegisterFlow flows[] = {
-    {"__expose", true, __expose_handle},
-    {"__expose_", false, __expose_handle},
-    {NULL, false, NULL},
+    {"__expose", true, __expose_set_handle, __expose_get_handle},
+    {"__expose_", false, __expose_set_handle, __expose_get_handle},
+    {NULL, false, NULL, NULL},
 };
+
+int xen_register_prop_set(const char *name, struct __Instance *inst, ctx_id_t id) {
+  if (!name || !inst || !VM_CHECK_ID(id)) { return 1; }
+  for (struct Xen_RegisterFlow *f = flows; f->prefix; f++) {
+    if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
+        (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
+      if (f->set_handle) { return f->set_handle(name, inst); }
+      break;
+    }
+  }
+  Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
+  if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
+    if (!__instances_map_add(((Xen_INSTANCE_MAPPED *)self)->__map, name, inst)) {
+      return 0;
+    }
+    return 1;
+  }
+  return 0;
+}
 
 Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) { return NULL; }
@@ -28,7 +53,7 @@ Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
         (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
       if (f->get_handle) { return f->get_handle(name); }
-      return NULL;
+      break;
     }
   }
   Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
