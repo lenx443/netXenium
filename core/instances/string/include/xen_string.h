@@ -5,7 +5,6 @@
 
 #include "xen_string_instance.h"
 
-bool Xen_String_Push_CString(Xen_String *, const char *);
 Xen_String *Xen_String_From_CString(const char *);
 const char *Xen_String_As_CString(Xen_String *);
 

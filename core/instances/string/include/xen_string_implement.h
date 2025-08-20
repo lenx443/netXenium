@@ -5,7 +5,4 @@
 
 extern struct __Implement Xen_String_Implement;
 
-int xen_string_implement_init();
-void xen_string_implement_destroy();
-
 #endif
