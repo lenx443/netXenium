@@ -11,8 +11,7 @@
 
 #define VM_CHECK_ID(id) ((vm_current_ctx()->ctx_id) == (id))
 
-bool vm_define_native_command(struct __Instances_Map *, Xen_INSTANCE *, const char *,
-                              Xen_Native_Func);
+bool vm_define_native_command(struct __Instances_Map *, const char *, Xen_Native_Func);
 bool vm_call_native_function(Xen_Native_Func, Xen_INSTANCE *, CallArgs *);
 bool vm_call_basic_native_function(Xen_Native_Func, Xen_INSTANCE *);
 Xen_INSTANCE *vm_get_prop_register(const char *, ctx_id_t);

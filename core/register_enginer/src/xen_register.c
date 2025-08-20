@@ -22,6 +22,8 @@ static Xen_INSTANCE *__expose_get_handle(const char *name) {
   return expose;
 }
 
+static void __expose_del_handle(const char *name) { return; }
+
 static struct Xen_RegisterFlow flows[] = {
     {"__expose", true, __expose_set_handle, __expose_get_handle},
     {"__expose_", false, __expose_set_handle, __expose_get_handle},
@@ -38,13 +40,17 @@ int xen_register_prop_set(const char *name, struct __Instance *inst, ctx_id_t id
     }
   }
   Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
-  if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
-    if (!__instances_map_add(((Xen_INSTANCE_MAPPED *)self)->__map, name, inst)) {
-      return 0;
+  if (self) {
+    if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
+      if (!__instances_map_add(((Xen_INSTANCE_MAPPED *)self)->__map, name, inst)) {
+        return 0;
+      }
+      return 1;
     }
-    return 1;
+    return 0;
   }
-  return 0;
+  if (!__instances_map_add(vm->global_props, name, inst)) { return 0; }
+  return 1;
 }
 
 Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
@@ -57,19 +63,25 @@ Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
     }
   }
   Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
-  if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
-    Xen_INSTANCE *prop = __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);
-    if (!prop) {
+  if (self) {
+    if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
+      Xen_INSTANCE *prop =
+          __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);
+      if (!prop) { goto IMPL; }
+      Xen_ADD_REF(prop);
+      return prop;
+    }
+  IMPL:
+    if (self->__impl->__props) {
       Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
       if (!impl_prop) { return NULL; }
       Xen_ADD_REF(impl_prop);
       return impl_prop;
     }
-    Xen_ADD_REF(prop);
-    return prop;
+    return NULL;
   }
-  Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
-  if (!impl_prop) { return NULL; }
-  Xen_ADD_REF(impl_prop);
-  return impl_prop;
+  Xen_INSTANCE *root_prop = __instances_map_get(vm->global_props, name);
+  if (!root_prop) { return NULL; };
+  Xen_ADD_REF(root_prop);
+  return root_prop;
 }

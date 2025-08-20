@@ -34,6 +34,8 @@ include_directories(
   core/instances/basic/include/
   core/instances/command/include/
   core/instances/command/types/header/
+  core/instances/string/include/
+  core/instances/string/types/header/
   core/register_enginer/include/
   core/register_enginer/types/header/
   api/include/
@@ -134,6 +136,10 @@ add_executable(ntxenium
   # fuente de los vectores de las
   # Instancias
   core/instances/dynamic/vectors/src/instances_map.c
+
+  # Implementacion del objeto `String`
+  core/instances/string/src/xen_string_implement.c
+  core/instances/string/src/xen_string.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c

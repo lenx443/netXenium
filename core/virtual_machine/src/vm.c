@@ -32,8 +32,8 @@
 
 RunContext_ptr vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
 
-bool vm_define_native_command(struct __Instances_Map *inst_map, Xen_INSTANCE *self,
-                              const char *name, Xen_Native_Func fun) {
+bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name,
+                              Xen_Native_Func fun) {
   Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, NULL);
   if (!cmd_inst) { return false; }
   struct Xen_Command_Instance *command_inst = (struct Xen_Command_Instance *)cmd_inst;
@@ -42,8 +42,6 @@ bool vm_define_native_command(struct __Instances_Map *inst_map, Xen_INSTANCE *se
     Xen_DEL_REF(cmd_inst);
     return false;
   }
-  command_inst->self = self;
-  Xen_ADD_REF(self);
   if (!__instances_map_add(inst_map, name, cmd_inst)) {
     Xen_DEL_REF(cmd_inst);
     return false;

@@ -6,7 +6,6 @@
 
 struct Xen_Command_Instance {
   Xen_INSTANCE_HEAD;
-  struct __Instance *self;
   CALLABLE_ptr cmd_callable;
 };
 
