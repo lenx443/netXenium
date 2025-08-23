@@ -36,6 +36,8 @@ include_directories(
   core/instances/command/types/header/
   core/instances/string/include/
   core/instances/string/types/header/
+  core/instances/number/include/
+  core/instances/number/types/header/
   core/register_enginer/include/
   core/register_enginer/types/header/
   api/include/
@@ -140,6 +142,10 @@ add_executable(ntxenium
   # Implementacion del objeto `String`
   core/instances/string/src/xen_string_implement.c
   core/instances/string/src/xen_string.c
+
+  # Implementacion del objeto `Number`
+  core/instances/number/src/xen_number_implement.c
+  core/instances/number/src/xen_number.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c
