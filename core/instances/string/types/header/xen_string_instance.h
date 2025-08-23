@@ -9,7 +9,6 @@ struct Xen_String_Instance {
   Xen_INSTANCE_HEAD;
   char *characters;
   size_t length;
-  size_t capacity;
 };
 
 typedef struct Xen_String_Instance Xen_String;

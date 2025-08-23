@@ -13,7 +13,6 @@ static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
   Xen_String *string = (Xen_String *)self;
   string->characters = NULL;
   string->length = 0;
-  string->capacity = 0;
   return 1;
 }
 
