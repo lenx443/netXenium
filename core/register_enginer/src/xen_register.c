@@ -29,7 +29,7 @@ static struct Xen_RegisterStream streams[] = {
 };
 
 int xen_register_prop_set(const char *name, struct __Instance *inst, ctx_id_t id) {
-  if (!name || !inst || !VM_CHECK_ID(id)) { return 1; }
+  if (!name || !inst) { return 1; }
   for (struct Xen_RegisterStream *f = streams; f->prefix; f++) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
         (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
@@ -38,7 +38,7 @@ int xen_register_prop_set(const char *name, struct __Instance *inst, ctx_id_t id
     }
   }
   Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
-  if (self) {
+  if (self && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       if (!__instances_map_add(((Xen_INSTANCE_MAPPED *)self)->__map, name, inst)) {
         return 0;
@@ -52,7 +52,7 @@ int xen_register_prop_set(const char *name, struct __Instance *inst, ctx_id_t id
 }
 
 Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
-  if (!name || !VM_CHECK_ID(id)) { return NULL; }
+  if (!name) { return NULL; }
   for (struct Xen_RegisterStream *f = streams; f->prefix; f++) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
         (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
@@ -61,7 +61,7 @@ Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
     }
   }
   Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
-  if (self) {
+  if (self && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_INSTANCE *prop =
           __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);

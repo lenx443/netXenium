@@ -52,7 +52,7 @@ bool __instances_map_add(struct __Instances_Map *inst_map, const char *key,
     free(hash_node);
     return false;
   }
-  if (inst_map->__vec_size < inst_map->__vec_capacity) {
+  if (inst_map->__vec_size >= inst_map->__vec_capacity) {
     size_t capacity_new =
         inst_map->__vec_capacity == 0 ? 4 : inst_map->__vec_capacity * 2;
     struct __Instance **new_mem =
