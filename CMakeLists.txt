@@ -164,7 +164,6 @@ add_executable(ntxenium
   dynamic/lists/src/suggestion.c
   dynamic/lists/src/logs.c
   dynamic/lists/src/string_utf8.c
-  dynamic/lists/src/raw_arguments.c
 
   # Implementaciones de los codigos
   # fuente de las tablas hash
