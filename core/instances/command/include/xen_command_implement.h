@@ -1,5 +1,5 @@
-#ifndef __COMMAND_IMPLEMENT_H__
-#define __COMMAND_IMPLEMENT_H__
+#ifndef __XEN_COMMAND_IMPLEMENT_H__
+#define __XEN_COMMAND_IMPLEMENT_H__
 
 #include <stdbool.h>
 

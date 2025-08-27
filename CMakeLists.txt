@@ -132,7 +132,8 @@ add_executable(ntxenium
   core/instances/basic/src/basic.c
 
   # Implementacion del objeto `Command`
-  core/instances/command/src/command_implement.c
+  core/instances/command/src/xen_command_implement.c
+  core/instances/command/src/xen_command.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de las

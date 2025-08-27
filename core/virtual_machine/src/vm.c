@@ -10,8 +10,6 @@
 #include "bytecode.h"
 #include "call_args.h"
 #include "callable.h"
-#include "command_implement.h"
-#include "command_instance.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "instance.h"
@@ -27,6 +25,8 @@
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_register.h"
+#include "xen_command_implement.h"
+#include "xen_command_instance.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 

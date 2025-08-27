@@ -558,6 +558,66 @@ Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
   return z;
 }
 
+// Convierte un Xen_Number_Instance a un C-string decimal
+const char *Xen_Number_As_CString(const Xen_Number *n) {
+  if (!n) return NULL;
+  if (n->sign == 0 || n->size == 0) {
+    char *zero = malloc(2);
+    if (!zero) return NULL;
+    zero[0] = '0';
+    zero[1] = '\0';
+    return zero;
+  }
+
+  // Copia temporal de los dígitos
+  uint32_t *temp = malloc(n->size * sizeof(uint32_t));
+  if (!temp) return NULL;
+  memcpy(temp, n->digits, n->size * sizeof(uint32_t));
+  size_t temp_size = n->size;
+
+  // Array temporal para almacenar los dígitos decimales en orden inverso
+  char *buf = malloc(temp_size * 10 * 10 + 2); // sobreestimación generosa
+  if (!buf) {
+    free(temp);
+    return NULL;
+  }
+
+  size_t pos = 0;
+  while (temp_size > 0) {
+    uint64_t remainder = 0;
+    // Dividir por 10, propagar carry
+    for (ssize_t i = temp_size - 1; i >= 0; i--) {
+      uint64_t cur = ((uint64_t)remainder << 32) | temp[i];
+      temp[i] = (uint32_t)(cur / 10);
+      remainder = cur % 10;
+    }
+    buf[pos++] = (char)('0' + remainder);
+
+    // Reducir tamaño si el dígito más alto es 0
+    while (temp_size > 0 && temp[temp_size - 1] == 0)
+      temp_size--;
+  }
+
+  // Construir string final
+  size_t len = pos + (n->sign < 0 ? 1 : 0) + 1; // +1 para '\0'
+  char *str = malloc(len);
+  if (!str) {
+    free(temp);
+    free(buf);
+    return NULL;
+  }
+
+  size_t idx = 0;
+  if (n->sign < 0) str[idx++] = '-';
+  for (ssize_t i = pos - 1; i >= 0; i--)
+    str[idx++] = buf[i];
+  str[idx] = '\0';
+
+  free(temp);
+  free(buf);
+  return str;
+}
+
 const signed char Xen_Char_Digit_Value[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -571,4 +631,5 @@ const signed char Xen_Char_Digit_Value[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};

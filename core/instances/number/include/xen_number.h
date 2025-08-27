@@ -13,6 +13,8 @@ Xen_Number *Xen_Number_From_ULong(unsigned long);
 Xen_Number *Xen_Number_From_LongLong(long long);
 Xen_Number *Xen_Number_From_ULongLong(unsigned long long);
 
+const char *Xen_Number_As_CString(const Xen_Number *);
+
 extern const signed char Xen_Char_Digit_Value[256];
 
 #endif

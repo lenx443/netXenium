@@ -1,17 +1,17 @@
 #include "basic.h"
 #include "call_args.h"
 #include "callable.h"
-#include "command_implement.h"
-#include "command_instance.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_register.h"
+#include "xen_command_implement.h"
+#include "xen_command_instance.h"
 
 static int command_alloc(ctx_id_t id, struct __Instance *self, CallArgs *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   inst->cmd_callable = NULL;
+  inst->self = NULL;
   return 1;
 }
 
@@ -23,9 +23,10 @@ static int command_destroy(ctx_id_t id, struct __Instance *self, CallArgs *args)
 
 static int command_callable(ctx_id_t id, struct __Instance *self, CallArgs *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
-  Xen_INSTANCE *self_caller = xen_register_prop_get("__expose", id);
   if (inst->cmd_callable) {
-    if (vm_run_callable(inst->cmd_callable, self_caller, args)) { return 0; }
+    if (inst->self) Xen_ADD_REF(inst->self);
+    if (vm_run_callable(inst->cmd_callable, inst->self, args)) { return 0; }
+    if (inst->self) Xen_DEL_REF(inst->self);
   }
   return 1;
 }
