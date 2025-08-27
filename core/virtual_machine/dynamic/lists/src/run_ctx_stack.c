@@ -23,7 +23,7 @@ int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, RunContext_ptr calle
     free(ctx_stack_new);
     return 0;
   }
-  ctx_stack_new->ctx = (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args);
+  ctx_stack_new->ctx = (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, 0);
   if (!ctx_stack_new->ctx) {
     call_args_free(alloc_args);
     free(ctx_stack_new);

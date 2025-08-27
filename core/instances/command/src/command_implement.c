@@ -34,6 +34,7 @@ struct __Implement Xen_Command_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Command",
     .__inst_size = sizeof(Xen_Command),
+    .__inst_default_flags = 0x00,
     .__alloc = command_alloc,
     .__destroy = command_destroy,
     .__callable = command_callable,

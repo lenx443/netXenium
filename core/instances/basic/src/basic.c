@@ -23,6 +23,7 @@ struct __Implement Xen_Basic = {
     Xen_INSTANCE_SET(0, &Xen_Basic, 0),
     .__impl_name = "Basic",
     .__inst_size = sizeof(struct __Implement),
+    .__inst_default_flags = 0x00,
     .__props = NULL,
     .__alloc = basic_alloc,
     .__destroy = basic_destroy,

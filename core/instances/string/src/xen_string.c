@@ -9,7 +9,7 @@
 
 Xen_String *Xen_String_From_CString(const char *cstring) {
   if (!cstring) { return NULL; }
-  Xen_String *string = (Xen_String *)__instance_new(&Xen_String_Implement, NULL);
+  Xen_String *string = (Xen_String *)__instance_new(&Xen_String_Implement, NULL, 0);
   if (!string) { return NULL; }
   string->length = strlen(cstring);
   string->characters = malloc(string->length);

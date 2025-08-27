@@ -10,7 +10,7 @@ static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
       args->args[1]->point_type != CARG_INSTANCE ||
       args->args[2]->point_type != CARG_POINTER ||
       (args->args[0]->pointer != NULL &&
-       Xen_TYPE(args->args[2]->pointer) != &Xen_Run_Frame)) {
+       Xen_TYPE(args->args[0]->pointer) != &Xen_Run_Frame)) {
     return 0;
   }
   struct RunContext *ctx_new = (struct RunContext *)self;
@@ -48,6 +48,7 @@ struct __Implement Xen_Run_Frame = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "RunFrame",
     .__inst_size = sizeof(struct RunContext),
+    .__inst_default_flags = 0x00,
     .__props = NULL,
     .__alloc = frame_alloc,
     .__destroy = frame_destroy,

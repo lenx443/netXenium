@@ -26,6 +26,7 @@ struct __Implement Xen_Number_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
     .__inst_size = sizeof(struct Xen_Number_Instance),
+    .__inst_default_flags = 0x00,
     .__props = NULL,
     .__alloc = number_alloc,
     .__destroy = number_destroy,

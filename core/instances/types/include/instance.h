@@ -6,6 +6,8 @@
 
 #include "call_args.h"
 
+typedef uint8_t Xen_Instance_Flag;
+
 #define Xen_TYPE(inst) (((struct __Instance *)inst)->__impl)
 
 #define Xen_ADD_REF(inst)                                                                \
@@ -24,7 +26,7 @@
 #define Xen_INSTANCE_HEAD                                                                \
   size_t __refers;                                                                       \
   struct __Implement *__impl;                                                            \
-  uint8_t __flags;
+  Xen_Instance_Flag __flags;
 
 #define Xen_INSTANCE_MAPPED_HEAD                                                         \
   Xen_INSTANCE_HEAD;                                                                     \
@@ -46,7 +48,7 @@
 Xen_INSTANCE{Xen_INSTANCE_HEAD};
 Xen_INSTANCE_MAPPED{Xen_INSTANCE_MAPPED_HEAD};
 
-Xen_INSTANCE *__instance_new(struct __Implement *, CallArgs *);
+Xen_INSTANCE *__instance_new(struct __Implement *, CallArgs *, Xen_Instance_Flag);
 void __instance_free(Xen_INSTANCE *);
 
 #endif

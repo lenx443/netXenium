@@ -28,7 +28,7 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
   if (!cstring) { return NULL; }
 
   /* Crear la instancia primero (sin usar helpers adicionales) */
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL);
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
   if (!z) { return NULL; }
 
   /* Inicializar a cero (por si el alloc no lo deja así) */
@@ -164,6 +164,396 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
 
   /* Saltar espacios finales (si quisieras devolver dónde terminó, aquí ‘end’) */
   /* while (*end && isspace((unsigned char)*end)) end++; */
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_Int32(int32_t value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Signo y magnitud */
+  int8_t sign = 1;
+  uint32_t mag;
+  if (value < 0) {
+    sign = -1;
+    /* cuidado con INT32_MIN, donde -value desbordaría */
+    mag = (uint32_t)(-(int64_t)value);
+  } else {
+    mag = (uint32_t)value;
+  }
+
+  /* Reservar un limb (máximo 32 bits) */
+  z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  z->digits[0] = mag;
+  z->size = 1;
+  z->sign = sign;
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_Int64(int64_t value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Manejar el caso cero explícitamente */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Signo */
+  int8_t sign = 1;
+  uint64_t mag; /* magnitud absoluta */
+  if (value < 0) {
+    sign = -1;
+    mag = (uint64_t)(-value);
+  } else {
+    mag = (uint64_t)value;
+  }
+
+  /* Reservar suficiente espacio: un entero de 64 bits cabe en como mucho 2 limbs de 32
+   * bits */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = sign;
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_Int(int value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Signo y magnitud */
+  int8_t sign = 1;
+  uint64_t mag; /* usamos 64 bits para cubrir cualquier rango de int */
+  if (value < 0) {
+    sign = -1;
+    mag = (uint64_t)(-(int64_t)value); /* cuidado con INT_MIN */
+  } else {
+    mag = (uint64_t)value;
+  }
+
+  /* Reservar espacio: un int puede ocupar hasta 64 bits en teoría,
+     por lo que máximo necesitamos 2 limbs de 32 bits */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = sign;
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_UInt(unsigned int value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* magnitud: como es unsigned, no hay signo que procesar */
+  uint64_t mag = (uint64_t)value;
+
+  /* Un unsigned int ocupa hasta 32 bits en la práctica,
+     pero usamos 64 bits para portabilidad y manejamos hasta 2 limbs */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = +1; /* siempre positivo (a menos que sea 0) */
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_Long(long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Signo y magnitud */
+  int8_t sign = 1;
+  unsigned long long mag; /* usamos 64 bits para cubrir cualquier rango de long */
+  if (value < 0) {
+    sign = -1;
+    mag = (unsigned long long)(-(long long)value); /* cuidado con LONG_MIN */
+  } else {
+    mag = (unsigned long long)value;
+  }
+
+  /* Reservar espacio: un long puede ser 32 o 64 bits según la plataforma.
+     En el peor caso (64 bits) necesitamos como mucho 2 limbs de 32 bits. */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = sign;
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_ULong(unsigned long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Magnitud: como es unsigned long, no hay signo */
+  unsigned long long mag = (unsigned long long)value;
+
+  /* Reservar espacio: un unsigned long puede ser 32 o 64 bits según la plataforma.
+     En el peor caso (64 bits) necesitamos como mucho 2 limbs de 32 bits. */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = 1; /* siempre positivo */
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_LongLong(long long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Signo y magnitud */
+  int8_t sign = 1;
+  unsigned long long mag; /* usamos 64 bits para cubrir cualquier rango de long long */
+  if (value < 0) {
+    sign = -1;
+    mag = (unsigned long long)(-(long long)value); /* cuidado con LLONG_MIN */
+  } else {
+    mag = (unsigned long long)value;
+  }
+
+  /* Reservar espacio: un long long es siempre de 64 bits,
+     por lo que máximo necesitamos 2 limbs de 32 bits */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = sign;
+
+  return z;
+}
+
+Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!z) return NULL;
+
+  z->digits = NULL;
+  z->size = 0;
+  z->sign = 0;
+
+  /* Caso cero explícito */
+  if (value == 0) {
+    z->digits = (uint32_t *)malloc(sizeof(uint32_t));
+    if (!z->digits) {
+      Xen_DEL_REF(z);
+      return NULL;
+    }
+    z->digits[0] = 0;
+    z->size = 1;
+    z->sign = 0;
+    return z;
+  }
+
+  /* Como es unsigned, siempre es positivo */
+  int8_t sign = 1;
+  unsigned long long mag = value;
+
+  /* Reservar espacio: un unsigned long long es siempre de 64 bits,
+     por lo que máximo necesitamos 2 limbs de 32 bits */
+  z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
+  if (!z->digits) {
+    Xen_DEL_REF(z);
+    return NULL;
+  }
+
+  /* Descomponer en base 2^32 */
+  size_t n = 0;
+  while (mag != 0) {
+    z->digits[n++] = (uint32_t)(mag & 0xFFFFFFFFu);
+    mag >>= 32;
+  }
+
+  z->size = n;
+  z->sign = sign;
 
   return z;
 }

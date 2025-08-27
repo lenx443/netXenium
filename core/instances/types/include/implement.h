@@ -13,6 +13,7 @@ struct __Implement {
   Xen_INSTANCE_HEAD;
   char *__impl_name;
   size_t __inst_size;
+  Xen_Instance_Flag __inst_default_flags;
   struct __Instances_Map *__props;
   Xen_Native_Func __alloc;
   Xen_Native_Func __destroy;
