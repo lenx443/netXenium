@@ -1,14 +1,13 @@
 #include <stdlib.h>
 
 #include "basic.h"
-#include "call_args.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
 
-static int number_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
+static int number_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   Xen_Number *num = (Xen_Number *)self;
   num->digits = NULL;
   num->size = 0;
@@ -16,7 +15,7 @@ static int number_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
   return 1;
 }
 
-static int number_destroy(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
+static int number_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   Xen_Number *num = (Xen_Number *)self;
   if (num->digits) free(num->digits);
   return 1;

@@ -8,7 +8,6 @@
 #include "GCPointer.h"
 #include "bc_instruct.h"
 #include "bytecode.h"
-#include "call_args.h"
 #include "callable.h"
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
@@ -27,15 +26,16 @@
 #include "vm_register.h"
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
+#include "xen_nil.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
-RunContext_ptr vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
+Xen_Instance *vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
 
 bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name,
                               Xen_Native_Func fun) {
-  Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, NULL, 0);
-  if (!cmd_inst) { return false; }
+  Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, nil, 0);
+  if_nil_eval(cmd_inst) { return false; }
   struct Xen_Command_Instance *command_inst = (struct Xen_Command_Instance *)cmd_inst;
   command_inst->cmd_callable = callable_new_native(fun);
   if (!command_inst->cmd_callable) {
@@ -49,11 +49,12 @@ bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name
   return true;
 }
 
-bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self, CallArgs *args) {
+bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self,
+                             Xen_Instance *args) {
   if (!run_context_stack_push(&vm->vm_ctx_stack, vm_current_ctx(), self, args)) {
     return false;
   }
-  if (!func(vm_current_ctx()->ctx_id, self, args)) {
+  if (!func(run_ctx_id(vm_current_ctx()), self, args)) {
     run_context_stack_pop_top(&vm->vm_ctx_stack);
     return false;
   }
@@ -89,37 +90,25 @@ bool vm_call_basic_native_function(Xen_Native_Func func, struct __Instance *self
     return false;
   }
   Xen_ADD_REF(self);
-  func(vm_current_ctx()->ctx_id, self, NULL);
+  func(run_ctx_id(vm_current_ctx()), self, NULL);
   Xen_DEL_REF(self);
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   Xen_DEL_REF(self);
   return true;
 }
 
-Xen_INSTANCE *vm_get_prop_register(const char *name, ctx_id_t id) {
-  if (!name || !VM_CHECK_ID(id)) { return NULL; }
-  if ((strcmp(name, "__expose") == 0) || (strncmp(name, "__expose_", 9) == 0)) {
-    Xen_INSTANCE *expose = __instances_map_get(vm->global_props, name);
-    if (!expose) { return NULL; }
-    Xen_ADD_REF(expose);
-    return expose;
-  }
-  Xen_INSTANCE *self = vm_current_ctx()->ctx_self;
-  if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
-    Xen_INSTANCE *prop = __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);
-    if (!prop) {
-      Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
-      if (!impl_prop) { return NULL; }
-      Xen_ADD_REF(impl_prop);
-      return impl_prop;
+Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
+  if (!name || !VM_CHECK_ID(id)) { return nil; }
+  RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
+  while (current) {
+    Xen_Instance *inst = __instances_map_get(current->ctx_instances, name);
+    if_nil_neval(inst) {
+      Xen_ADD_REF(current);
+      return inst;
     }
-    Xen_ADD_REF(prop);
-    return prop;
+    current = (RunContext_ptr)current->ctx_caller;
   }
-  Xen_INSTANCE *impl_prop = __instances_map_get(self->__impl->__props, name);
-  if (!impl_prop) { return NULL; }
-  Xen_ADD_REF(impl_prop);
-  return impl_prop;
+  return nil;
 }
 
 void vm_ctx_clear(RunContext_ptr ctx) {
@@ -129,21 +118,22 @@ void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_running = 0;
 }
 
-int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
+int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self,
+                        Xen_Instance *args) {
   if (!callable) { return 0; }
   if (!run_context_stack_push(
           &vm->vm_ctx_stack, run_context_stack_peek_top(&vm->vm_ctx_stack), self, args)) {
     return 0;
   }
-  RunContext_ptr ctx = run_context_stack_peek_top(&vm->vm_ctx_stack);
+  RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
   ctx->ctx_code = callable;
   return 1;
 }
 
-int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *args) {
+int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, Xen_Instance *args) {
   if (!callable) { return 0; }
   if (!vm_new_ctx_callable(callable, self, args)) { return 0; }
-  vm_run_ctx(run_context_stack_peek_top(&vm->vm_ctx_stack));
+  vm_run_ctx((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack));
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   return 1;
 }
@@ -151,7 +141,7 @@ int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, CallArgs *ar
 void vm_run_ctx(RunContext_ptr ctx) {
   if (ctx->ctx_code->callable_type == CALL_NATIVE_FUNCTIIN) {
     if (ctx->ctx_caller) {
-      ctx->ctx_caller->ctx_reg.reg[1] =
+      ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] =
           ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
     } else {
       ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
@@ -390,7 +380,9 @@ void vm_run_ctx(RunContext_ptr ctx) {
       ctx->ctx_running = 0;
       continue;
     }
-    if (ctx->ctx_caller) { ctx->ctx_caller->ctx_reg.reg[1] = ctx->ctx_reg.reg[1]; }
+    if (ctx->ctx_caller) {
+      ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
+    }
     log_show_and_clear(NULL);
     gc_pointer_list_free(gc_array);
   }

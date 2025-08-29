@@ -4,27 +4,28 @@
 #include "xen_command.h"
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
+#include "xen_nil.h"
 
-Xen_Command *Xen_Command_From_Native(Xen_Native_Func fn_cmd, Xen_INSTANCE *self) {
-  Xen_Command *cmd = (Xen_Command *)__instance_new(&Xen_Command_Implement, NULL, 0);
-  if (!cmd) { return false; }
+Xen_INSTANCE *Xen_Command_From_Native(Xen_Native_Func fn_cmd, Xen_INSTANCE *self) {
+  Xen_Command *cmd = (Xen_Command *)__instance_new(&Xen_Command_Implement, nil, 0);
+  if (!cmd) { return nil; }
   cmd->cmd_callable = callable_new_native(fn_cmd);
   if (!cmd->cmd_callable) {
     Xen_DEL_REF(cmd);
-    return NULL;
+    return nil;
   }
   cmd->self = self;
-  return cmd;
+  return (Xen_INSTANCE *)cmd;
 }
 
-Xen_Command *Xen_Command_From_Program(ProgramCode_t pc_cmd, Xen_INSTANCE *self) {
-  Xen_Command *cmd = (Xen_Command *)__instance_new(&Xen_Command_Implement, NULL, 0);
-  if (!cmd) { return false; }
+Xen_INSTANCE *Xen_Command_From_Program(ProgramCode_t pc_cmd, Xen_INSTANCE *self) {
+  Xen_Command *cmd = (Xen_Command *)__instance_new(&Xen_Command_Implement, nil, 0);
+  if (!cmd) { return nil; }
   cmd->cmd_callable = callable_new_code(pc_cmd);
   if (!cmd->cmd_callable) {
     Xen_DEL_REF(cmd);
-    return NULL;
+    return nil;
   }
   cmd->self = self;
-  return cmd;
+  return (Xen_INSTANCE *)cmd;
 }

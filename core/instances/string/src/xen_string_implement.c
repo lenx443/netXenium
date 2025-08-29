@@ -1,38 +1,38 @@
 #include <stdlib.h>
 
 #include "basic.h"
-#include "call_args.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
 
-static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
+static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   Xen_String *string = (Xen_String *)self;
   string->characters = NULL;
   string->length = 0;
   return 1;
 }
 
-static int string_destroy(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
+static int string_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   Xen_String *string = (Xen_String *)self;
   free(string->characters);
   return 1;
 }
 
-static int string_hash(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
+static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   if (!VM_CHECK_ID(id)) { return 0; }
   Xen_String *string = (Xen_String *)self;
   unsigned long hash = 0x1505;
   int c;
   while ((c = *string->characters++))
     hash = ((hash << 5) + hash) + c;
-  Xen_INSTANCE *hash_inst = (Xen_INSTANCE *)Xen_Number_From_ULong(hash);
-  if (!hash_inst) { return 0; }
+  Xen_INSTANCE *hash_inst = Xen_Number_From_ULong(hash);
+  if_nil_eval(hash_inst) { return 0; }
   if (!xen_register_prop_set("__expose_hash", hash_inst, id)) {
     Xen_DEL_REF(hash_inst);
     return 0;

@@ -3,9 +3,10 @@
 
 #include <stdbool.h>
 
-#include "xen_string_instance.h"
+#include "instance.h"
 
-Xen_String *Xen_String_From_CString(const char *);
-const char *Xen_String_As_CString(Xen_String *);
+Xen_INSTANCE *Xen_String_From_CString(const char *);
+const char *Xen_String_As_CString(Xen_INSTANCE *);
+const char Xen_String_As_Char(Xen_Instance *);
 
 #endif

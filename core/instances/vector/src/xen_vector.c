@@ -1,0 +1,61 @@
+#include <malloc.h>
+#include <stddef.h>
+#include <stdlib.h>
+
+#include "instance.h"
+#include "xen_nil.h"
+#include "xen_vector.h"
+#include "xen_vector_implement.h"
+#include "xen_vector_instance.h"
+
+Xen_Instance *Xen_Vector_From_Array_With_Null(Xen_Instance **array) {
+  if (!array) { return nil; }
+  Xen_INSTANCE *vector = __instance_new(&Xen_Vector_Implement, nil, 0);
+  if_nil_eval(vector) { return nil; }
+  for (Xen_Instance **current = array; *current != NULL; current++) {
+    if (!Xen_Vector_Push(vector, *current)) {
+      Xen_DEL_REF(vector);
+      return nil;
+    }
+  }
+  return vector;
+}
+
+Xen_Instance *Xen_Vector_From_Array_With_Size(size_t size, Xen_Instance **array) {
+  if (!array) { return nil; }
+  Xen_INSTANCE *vector = __instance_new(&Xen_Vector_Implement, nil, 0);
+  if_nil_eval(vector) { return nil; }
+  for (int i = 0; i < size; i++) {
+    if (!Xen_Vector_Push(vector, array[i])) {
+      Xen_DEL_REF(vector);
+      return nil;
+    }
+  }
+  return vector;
+}
+
+int Xen_Vector_Push(Xen_Instance *vector_inst, Xen_Instance *value) {
+  if (!vector_inst || !value) { return 0; };
+  Xen_Vector *vector = (Xen_Vector *)vector_inst;
+  if (vector->size >= vector->capacity) {
+    size_t new_cap = vector->capacity == 0 ? 4 : vector->capacity * 2;
+    Xen_Instance **new_mem =
+        (Xen_INSTANCE **)realloc(vector->values, sizeof(Xen_Instance *) * new_cap);
+    if (!new_mem) { return 0; }
+    vector->values = new_mem;
+    vector->capacity = new_cap;
+  }
+  vector->values[vector->size++] = value;
+  Xen_ADD_REF(value);
+  return 1;
+}
+
+Xen_Instance *Xen_Vector_Get_Index(Xen_Instance *vector, size_t index) {
+  if (!vector || index >= ((Xen_Vector *)vector)->size) { return nil; }
+  return ((Xen_Vector *)vector)->values[index];
+}
+
+size_t Xen_Vector_Size(Xen_Instance *vector) {
+  if (!vector) { return 0; }
+  return ((Xen_Vector *)vector)->size;
+}

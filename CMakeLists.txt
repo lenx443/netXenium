@@ -23,14 +23,12 @@ include_directories(
   core/interpreter/compiler/dynamic/lists/include/
   core/interpreter/compiler/dynamic/vectors/include/
   core/virtual_machine/include/
-  core/virtual_machine/types/header/
   core/virtual_machine/types/include/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/types/include/
   core/instances/dynamic/vectors/include/
   core/instances/callable/types/include/
-  core/instances/callable/dynamic/vectors/include/
   core/instances/basic/include/
   core/instances/command/include/
   core/instances/command/types/header/
@@ -38,6 +36,9 @@ include_directories(
   core/instances/string/types/header/
   core/instances/number/include/
   core/instances/number/types/header/
+  core/instances/vector/include/
+  core/instances/vector/type/header/
+  core/instances/nil/include/
   core/register_enginer/include/
   core/register_enginer/types/header/
   api/include/
@@ -102,6 +103,7 @@ add_executable(ntxenium
   core/virtual_machine/types/src/GCPointer.c
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_register.c
+  core/virtual_machine/types/src/run_ctx.c
   core/virtual_machine/types/src/run_frame.c
 
   # Implementaciones de los codigos
@@ -115,11 +117,6 @@ add_executable(ntxenium
   # de la maquina virtual
   core/virtual_machine/dynamic/lists/src/gc_pointer_list.c
   core/virtual_machine/dynamic/lists/src/run_ctx_stack.c
-
-  # Implementaciones de los codigos
-  # fuente de los vectores de los objetos
-  # Callables
-  core/instances/callable/dynamic/vectors/src/call_args.c
 
   # Implementacion de estructura `Callable`
   core/instances/callable/types/src/callable.c
@@ -147,6 +144,14 @@ add_executable(ntxenium
   # Implementacion del objeto `Number`
   core/instances/number/src/xen_number_implement.c
   core/instances/number/src/xen_number.c
+
+  # Implementacion del objeto `Vector`
+  core/instances/vector/src/xen_vector_implement.c
+  core/instances/vector/src/xen_vector.c
+
+  # Implementacion del objeto `Nil`
+  core/instances/nil/src/xen_nil_implement.c
+  core/instances/nil/src/xen_nil.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c

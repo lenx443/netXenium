@@ -9,6 +9,18 @@
 
 struct __Instance;
 
+#define IMPL_ALLOC(inst, args)                                                           \
+  ((Xen_Instance *)inst)->__impl->__alloc(0, (Xen_Instance *)inst, (Xen_Instance *)args);
+#define IMPL_DESTROY(inst, args)                                                         \
+  ((Xen_Instance *)inst)                                                                 \
+      ->__impl->__destroy(0, (Xen_Instance *)inst, (Xen_Instance *)args);
+#define IMPL_CALLABLE(inst, args)                                                        \
+  vm_call_native_function(((Xen_Instance *)inst)->__impl->__callable,                    \
+                          (Xen_Instance *)inst, (Xen_Instance *)args);
+#define IMPL_HASH(inst, args)                                                            \
+  vm_call_native_function(((Xen_Instance *)inst)->__impl->__hash, (Xen_Instance *)inst,  \
+                          (Xen_Instance *)args);
+
 struct __Implement {
   Xen_INSTANCE_HEAD;
   char *__impl_name;
@@ -20,7 +32,5 @@ struct __Implement {
   Xen_Native_Func __callable;
   Xen_Native_Func __hash;
 };
-
-struct __Implement *__implement_new(char *);
 
 #endif

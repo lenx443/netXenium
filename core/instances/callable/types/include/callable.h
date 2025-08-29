@@ -1,12 +1,11 @@
 #ifndef __CALLABLE_H__
 #define __CALLABLE_H__
 
-#include "call_args.h"
 #include "program_code.h"
 
 struct __Instance;
 
-typedef int (*Xen_Native_Func)(unsigned long, struct __Instance *, CallArgs *);
+typedef int (*Xen_Native_Func)(unsigned long, struct __Instance *, struct __Instance *);
 
 enum Callable_Type {
   CALL_NATIVE_FUNCTIIN,

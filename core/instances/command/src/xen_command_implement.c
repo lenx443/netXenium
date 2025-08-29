@@ -1,5 +1,4 @@
 #include "basic.h"
-#include "call_args.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
@@ -8,20 +7,20 @@
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
 
-static int command_alloc(ctx_id_t id, struct __Instance *self, CallArgs *args) {
+static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   inst->cmd_callable = NULL;
   inst->self = NULL;
   return 1;
 }
 
-static int command_destroy(ctx_id_t id, struct __Instance *self, CallArgs *args) {
+static int command_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) callable_free(inst->cmd_callable);
   return 1;
 }
 
-static int command_callable(ctx_id_t id, struct __Instance *self, CallArgs *args) {
+static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) {
     if (inst->self) Xen_ADD_REF(inst->self);

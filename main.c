@@ -34,39 +34,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define __TEST
-
-#ifdef __TEST
-#include <stdio.h>
-
-#include "call_args.h"
-#include "implement.h"
-#include "instance.h"
-#include "run_ctx.h"
-#include "vm.h"
-#include "xen_command.h"
-#include "xen_command_instance.h"
-#else
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
-#endif
 
 #include "program.h"
+#include "vm_def.h"
 #include "xen_life.h"
-
-#ifdef __TEST
-static int fn_echo(ctx_id_t id, Xen_INSTANCE *self, CallArgs *args) {
-  puts("Hola mundo");
-  return 1;
-}
-#endif
+#include "xen_nil.h"
 
 int main(int argc, char **argv) {
   if (!Xen_Init(argc, argv)) { return 1; }
-#ifdef __TEST
-  Xen_Command *echo = Xen_Command_From_Native(fn_echo, NULL);
-  vm_call_native_function(echo->__impl->__callable, (Xen_INSTANCE *)echo, NULL);
-#else
+  printf("(GContext->Provider == NULL)? = %d", vm->root_context->ctx_caller == NULL);
   if (argc > 1) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);
@@ -75,7 +54,6 @@ int main(int argc, char **argv) {
     signal(SIGINT, SIG_IGN);
     shell_loop(argv[0]);
   }
-#endif
   Xen_Finish();
   return program.exit_code;
 }

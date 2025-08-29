@@ -5,6 +5,7 @@
 
 #include "instance.h"
 #include "instances_map.h"
+#include "xen_nil.h"
 
 static unsigned long hash(const char *str) {
   unsigned long hash = 0x1505;
@@ -75,7 +76,7 @@ bool __instances_map_add(struct __Instances_Map *inst_map, const char *key,
 }
 
 Xen_INSTANCE *__instances_map_get(struct __Instances_Map *inst_map, const char *key) {
-  if (!inst_map || !key) { return NULL; }
+  if (!inst_map || !key) { return nil; }
   int hash_index = hash(key) % inst_map->__buckets_capacity;
   struct __Instances_Hash_Node *current_node = inst_map->__buckets[hash_index];
   while (current_node) {
@@ -83,7 +84,7 @@ Xen_INSTANCE *__instances_map_get(struct __Instances_Map *inst_map, const char *
       return inst_map->__vec_inst[current_node->index];
     current_node = current_node->next;
   }
-  return NULL;
+  return nil;
 }
 
 void __instances_map_free(struct __Instances_Map *inst_map) {

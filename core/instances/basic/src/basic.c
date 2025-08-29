@@ -1,23 +1,41 @@
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "basic.h"
-#include "call_args.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "xen_register.h"
 
-int basic_alloc(ctx_id_t id, struct __Instance *inst, CallArgs *args) { return 1; }
+int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  struct __Implement *impl = (struct __Implement *)self;
+  impl->__impl_name = NULL;
+  impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  if (!impl->__props) {
+    Xen_DEL_REF(impl);
+    return NULL;
+  }
+  impl->__inst_size = sizeof(struct __Instance);
+  impl->__alloc = NULL;
+  impl->__destroy = NULL;
+  impl->__callable = NULL;
+  impl->__hash = NULL;
+  return 1;
+}
 
-int basic_destroy(ctx_id_t id, struct __Instance *inst, CallArgs *args) {
-  struct __Implement *impl = (struct __Implement *)inst;
-  if (!impl) return false;
+int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  struct __Implement *impl = (struct __Implement *)self;
+  if (!impl) return 0;
   if (impl->__props) __instances_map_free(impl->__props);
   if (impl->__impl_name) free(impl->__impl_name);
   return 1;
 }
 
-int basic_callable(ctx_id_t id, struct __Instance *inst, CallArgs *args) { return 1; }
+int basic_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  struct __Implement *impl = (struct __Implement *)self;
+  Xen_INSTANCE *result = __instance_new(impl, args, 0);
+  xen_register_prop_set("__expose", result, id);
+  return 1;
+}
 
 struct __Implement Xen_Basic = {
     Xen_INSTANCE_SET(0, &Xen_Basic, 0),

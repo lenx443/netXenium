@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "instance.h"
+#include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
@@ -24,12 +25,12 @@
    typedef struct Xen_Number_Instance Xen_Number;
 */
 
-Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
-  if (!cstring) { return NULL; }
+Xen_INSTANCE *Xen_Number_From_CString(const char *cstring, int base) {
+  if (!cstring) { return nil; }
 
   /* Crear la instancia primero (sin usar helpers adicionales) */
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) { return NULL; }
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) { return nil; }
 
   /* Inicializar a cero (por si el alloc no lo deja así) */
   z->digits = NULL;
@@ -74,7 +75,7 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
   /* Validar rango de base */
   if (base < 2 || base > 36) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Detectar el rango [start, end) de dígitos válidos según la base */
@@ -90,14 +91,14 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
   /* Debe haber al menos un dígito válido */
   if (end == start) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Reservar arreglo de dígitos inicial: valor 0 con un limb */
   z->digits = (uint32_t *)malloc(sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
   z->digits[0] = 0;
   z->size = 1;
@@ -116,7 +117,7 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
       z->digits = NULL;
       z->size = 0;
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
 
     /* Multiplicar por base y sumar dv con propagación de carry */
@@ -137,7 +138,7 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
         z->digits = NULL;
         z->size = 0;
         Xen_DEL_REF(z);
-        return NULL;
+        return nil;
       }
       z->digits = nd;
       z->digits[z->size] = limb;
@@ -165,12 +166,12 @@ Xen_Number *Xen_Number_From_CString(const char *cstring, int base) {
   /* Saltar espacios finales (si quisieras devolver dónde terminó, aquí ‘end’) */
   /* while (*end && isspace((unsigned char)*end)) end++; */
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_Int32(int32_t value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_Int32(int32_t value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -181,12 +182,12 @@ Xen_Number *Xen_Number_From_Int32(int32_t value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Signo y magnitud */
@@ -204,19 +205,19 @@ Xen_Number *Xen_Number_From_Int32(int32_t value) {
   z->digits = (uint32_t *)malloc(sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   z->digits[0] = mag;
   z->size = 1;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_Int64(int64_t value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_Int64(int64_t value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -227,12 +228,12 @@ Xen_Number *Xen_Number_From_Int64(int64_t value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Signo */
@@ -250,7 +251,7 @@ Xen_Number *Xen_Number_From_Int64(int64_t value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -263,12 +264,12 @@ Xen_Number *Xen_Number_From_Int64(int64_t value) {
   z->size = n;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_Int(int value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_Int(int value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -279,12 +280,12 @@ Xen_Number *Xen_Number_From_Int(int value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Signo y magnitud */
@@ -302,7 +303,7 @@ Xen_Number *Xen_Number_From_Int(int value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -315,12 +316,12 @@ Xen_Number *Xen_Number_From_Int(int value) {
   z->size = n;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_UInt(unsigned int value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_UInt(unsigned int value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -331,12 +332,12 @@ Xen_Number *Xen_Number_From_UInt(unsigned int value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* magnitud: como es unsigned, no hay signo que procesar */
@@ -347,7 +348,7 @@ Xen_Number *Xen_Number_From_UInt(unsigned int value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -360,12 +361,12 @@ Xen_Number *Xen_Number_From_UInt(unsigned int value) {
   z->size = n;
   z->sign = +1; /* siempre positivo (a menos que sea 0) */
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_Long(long value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_Long(long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -376,12 +377,12 @@ Xen_Number *Xen_Number_From_Long(long value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Signo y magnitud */
@@ -399,7 +400,7 @@ Xen_Number *Xen_Number_From_Long(long value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -412,12 +413,12 @@ Xen_Number *Xen_Number_From_Long(long value) {
   z->size = n;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_ULong(unsigned long value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_ULong(unsigned long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -428,12 +429,12 @@ Xen_Number *Xen_Number_From_ULong(unsigned long value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Magnitud: como es unsigned long, no hay signo */
@@ -444,7 +445,7 @@ Xen_Number *Xen_Number_From_ULong(unsigned long value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -457,12 +458,12 @@ Xen_Number *Xen_Number_From_ULong(unsigned long value) {
   z->size = n;
   z->sign = 1; /* siempre positivo */
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_LongLong(long long value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_LongLong(long long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -473,12 +474,12 @@ Xen_Number *Xen_Number_From_LongLong(long long value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Signo y magnitud */
@@ -496,7 +497,7 @@ Xen_Number *Xen_Number_From_LongLong(long long value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -509,12 +510,12 @@ Xen_Number *Xen_Number_From_LongLong(long long value) {
   z->size = n;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
-Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
-  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, NULL, 0);
-  if (!z) return NULL;
+Xen_INSTANCE *Xen_Number_From_ULongLong(unsigned long long value) {
+  Xen_Number *z = (Xen_Number *)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(z) return nil;
 
   z->digits = NULL;
   z->size = 0;
@@ -525,12 +526,12 @@ Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
     z->digits = (uint32_t *)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return NULL;
+      return nil;
     }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
-    return z;
+    return (Xen_INSTANCE *)z;
   }
 
   /* Como es unsigned, siempre es positivo */
@@ -542,7 +543,7 @@ Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
   z->digits = (uint32_t *)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return NULL;
+    return nil;
   }
 
   /* Descomponer en base 2^32 */
@@ -555,11 +556,12 @@ Xen_Number *Xen_Number_From_ULongLong(unsigned long long value) {
   z->size = n;
   z->sign = sign;
 
-  return z;
+  return (Xen_INSTANCE *)z;
 }
 
 // Convierte un Xen_Number_Instance a un C-string decimal
-const char *Xen_Number_As_CString(const Xen_Number *n) {
+const char *Xen_Number_As_CString(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
   if (!n) return NULL;
   if (n->sign == 0 || n->size == 0) {
     char *zero = malloc(2);
