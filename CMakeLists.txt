@@ -41,6 +41,9 @@ include_directories(
   core/instances/nil/include/
   core/register_enginer/include/
   core/register_enginer/types/header/
+  core/modules_enginer/include/
+  core/modules_enginer/types/header/
+  modules/include/
   api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
@@ -155,6 +158,12 @@ add_executable(ntxenium
 
   # motor de registros
   core/register_enginer/src/xen_register.c
+
+  # motor de modulos
+  core/modules_enginer/src/xen_modules_def.c
+
+  # modulos
+  modules/src/m_core.c
 
   # codigo fuente de la la API
   # del Framework.

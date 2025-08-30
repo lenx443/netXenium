@@ -42,7 +42,7 @@ bool vm_create() {
       return 0;
     }
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args)) {
     free(vm);
     Xen_DEL_REF(args);
     return 0;

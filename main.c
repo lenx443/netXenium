@@ -35,17 +35,13 @@
  */
 
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "program.h"
-#include "vm_def.h"
 #include "xen_life.h"
-#include "xen_nil.h"
 
 int main(int argc, char **argv) {
   if (!Xen_Init(argc, argv)) { return 1; }
-  printf("(GContext->Provider == NULL)? = %d", vm->root_context->ctx_caller == NULL);
   if (argc > 1) {
     program.name = strdup(argv[1]);
     load_script(argv[1]);

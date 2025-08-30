@@ -7,21 +7,25 @@
 #include "xen_vector.h"
 
 static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
-  if (!args || Xen_Vector_Size(args) != 3 ||
+  if (!args || Xen_Vector_Size(args) != 4 ||
       (Xen_Nil_NEval(Xen_Vector_Get_Index(args, 0)) &&
-       Xen_TYPE(Xen_Vector_Get_Index(args, 0)) != &Xen_Run_Frame)) {
+       Xen_TYPE(Xen_Vector_Get_Index(args, 0)) != &Xen_Run_Frame) ||
+      (Xen_Nil_NEval(Xen_Vector_Get_Index(args, 1)) &&
+       Xen_TYPE(Xen_Vector_Get_Index(args, 1)) != &Xen_Run_Frame)) {
     return 0;
   }
   struct RunContext *ctx_new = (struct RunContext *)self;
   ctx_new->ctx_flags = CTX_FLAG_PROPS;
   ctx_new->ctx_id = 0;
-  if_nil_eval(Xen_Vector_Get_Index(args, 0)) ctx_new->ctx_caller = NULL;
-  else ctx_new->ctx_caller = Xen_Vector_Get_Index(args, 0);
-  ctx_new->ctx_self = Xen_Vector_Get_Index(args, 1);
+  if_nil_eval(Xen_Vector_Get_Index(args, 0)) ctx_new->ctx_closure = nil;
+  else ctx_new->ctx_closure = Xen_Vector_Get_Index(args, 0);
+  if_nil_eval(Xen_Vector_Get_Index(args, 1)) ctx_new->ctx_caller = NULL;
+  else ctx_new->ctx_caller = Xen_Vector_Get_Index(args, 1);
+  ctx_new->ctx_self = Xen_Vector_Get_Index(args, 2);
   ctx_new->ctx_code = NULL;
   if (!vm_register_new(&ctx_new->ctx_reg)) { return 0; }
-  if_nil_neval(Xen_Vector_Get_Index(args, 2)) {
-    ctx_new->ctx_args = Xen_Vector_Get_Index(args, 2);
+  if_nil_neval(Xen_Vector_Get_Index(args, 3)) {
+    ctx_new->ctx_args = Xen_Vector_Get_Index(args, 3);
     Xen_ADD_REF(ctx_new->ctx_args);
     if (!ctx_new->ctx_args) { return 0; }
   }

@@ -16,8 +16,9 @@ bool vm_call_native_function(Xen_Native_Func, Xen_INSTANCE *, Xen_Instance *);
 bool vm_call_basic_native_function(Xen_Native_Func, Xen_INSTANCE *);
 Xen_INSTANCE *vm_get_instance(const char *, ctx_id_t);
 void vm_ctx_clear(RunContext_ptr);
-int vm_new_ctx_callable(CALLABLE_ptr, struct __Instance *, Xen_Instance *);
-int vm_run_callable(CALLABLE_ptr, struct __Instance *, Xen_Instance *);
+int vm_new_ctx_callable(CALLABLE_ptr, Xen_Instance *, struct __Instance *,
+                        Xen_Instance *);
+int vm_run_callable(CALLABLE_ptr, struct __Instance *, Xen_Instance *, Xen_Instance *);
 void vm_run_ctx(RunContext_ptr);
 
 #endif

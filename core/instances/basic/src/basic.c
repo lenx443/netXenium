@@ -12,7 +12,7 @@ int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
   if (!impl->__props) {
     Xen_DEL_REF(impl);
-    return NULL;
+    return 0;
   }
   impl->__inst_size = sizeof(struct __Instance);
   impl->__alloc = NULL;

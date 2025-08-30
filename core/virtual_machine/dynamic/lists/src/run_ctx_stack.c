@@ -8,13 +8,14 @@
 #include "xen_nil.h"
 #include "xen_vector.h"
 
-int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, Xen_Instance *caller,
-                           struct __Instance *self, Xen_Instance *args) {
+int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, Xen_Instance *closure,
+                           Xen_Instance *caller, struct __Instance *self,
+                           Xen_Instance *args) {
   if (!ctx_stack) { return 0; }
   RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) { return 0; }
   Xen_Instance *alloc_args =
-      Xen_Vector_From_Array_With_Size(3, (Xen_Instance *[]){caller, self, args});
+      Xen_Vector_From_Array_With_Size(4, (Xen_Instance *[]){caller, closure, self, args});
   if (!alloc_args) {
     free(ctx_stack_new);
     return 0;

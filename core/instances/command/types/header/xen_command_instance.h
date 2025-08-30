@@ -8,6 +8,7 @@ struct Xen_Command_Instance {
   Xen_INSTANCE_HEAD;
   CALLABLE_ptr cmd_callable;
   Xen_INSTANCE *self;
+  Xen_Instance *closure;
 };
 
 typedef struct Xen_Command_Instance Xen_Command;

@@ -51,7 +51,8 @@ bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name
 
 bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self,
                              Xen_Instance *args) {
-  if (!run_context_stack_push(&vm->vm_ctx_stack, vm_current_ctx(), self, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, vm_current_ctx(),
+                              (Xen_Instance *)vm->root_context, self, args)) {
     return false;
   }
   if (!func(run_ctx_id(vm_current_ctx()), self, args)) {
@@ -70,6 +71,7 @@ bool vm_call_basic_native_function(Xen_Native_Func func, struct __Instance *self
   struct RunContext run_ctx = {
       Xen_INSTANCE_SET(0, &Xen_Run_Frame, XEN_INSTANCE_FLAG_STATIC),
       .ctx_flags = CTX_FLAG_STATIC,
+      .ctx_closure = (Xen_Instance *)vm->root_context,
       .ctx_caller = vm_current_ctx(),
       .ctx_self = self,
       .ctx_code = NULL,
@@ -118,11 +120,12 @@ void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_running = 0;
 }
 
-int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self,
-                        Xen_Instance *args) {
+int vm_new_ctx_callable(CALLABLE_ptr callable, Xen_Instance *closure,
+                        struct __Instance *self, Xen_Instance *args) {
   if (!callable) { return 0; }
-  if (!run_context_stack_push(
-          &vm->vm_ctx_stack, run_context_stack_peek_top(&vm->vm_ctx_stack), self, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack,
+                              run_context_stack_peek_top(&vm->vm_ctx_stack), closure,
+                              self, args)) {
     return 0;
   }
   RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
@@ -130,9 +133,10 @@ int vm_new_ctx_callable(CALLABLE_ptr callable, struct __Instance *self,
   return 1;
 }
 
-int vm_run_callable(CALLABLE_ptr callable, struct __Instance *self, Xen_Instance *args) {
+int vm_run_callable(CALLABLE_ptr callable, Xen_Instance *closure, struct __Instance *self,
+                    Xen_Instance *args) {
   if (!callable) { return 0; }
-  if (!vm_new_ctx_callable(callable, self, args)) { return 0; }
+  if (!vm_new_ctx_callable(callable, closure, self, args)) { return 0; }
   vm_run_ctx((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack));
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   return 1;
