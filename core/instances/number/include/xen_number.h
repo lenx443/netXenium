@@ -14,6 +14,8 @@ Xen_INSTANCE *Xen_Number_From_LongLong(long long);
 Xen_INSTANCE *Xen_Number_From_ULongLong(unsigned long long);
 
 const char *Xen_Number_As_CString(Xen_INSTANCE *);
+int32_t Xen_Number_As_Int32(Xen_INSTANCE *);
+int64_t Xen_Number_As_Int64(Xen_INSTANCE *);
 
 extern const signed char Xen_Char_Digit_Value[256];
 

@@ -620,6 +620,68 @@ const char *Xen_Number_As_CString(Xen_INSTANCE *inst) {
   return str;
 }
 
+int32_t Xen_Number_As_Int32(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->sign == 0 || n->size == 0) { return 0; }
+
+  // Convertir acumulando en un entero de 64 bits para detectar overflow
+  int64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+
+    // Verificar overflow intermedio (si ya se pasó del rango de int32)
+    if (value > (int64_t)INT32_MAX + 1) {
+      // Si es positivo, ya se pasó
+      if (n->sign > 0) return INT32_MAX;
+      // Si es negativo, permitir hasta INT32_MIN
+      if (value > (uint64_t)INT32_MAX + 1) return INT32_MIN;
+    }
+  }
+
+  if (n->sign < 0) value = -value;
+
+  // Clamp final al rango de int32
+  if (value > INT32_MAX) return INT32_MAX;
+  if (value < INT32_MIN) return INT32_MIN;
+
+  return (int32_t)value;
+}
+
+int64_t Xen_Number_As_Int64(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->sign == 0 || n->size == 0) { return 0; }
+
+  // Si el número ocupa más de 64 bits, no cabe
+  if (n->size > 2) { return (n->sign > 0) ? INT64_MAX : INT64_MIN; }
+
+  // Reconstrucción en uint64_t
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Aplicar signo
+  int64_t signed_value;
+  if (n->sign < 0) {
+    // Si es negativo, hay que asegurarse de no pasarse del límite
+    if (value > (uint64_t)INT64_MAX + 1) {
+      return INT64_MIN; // demasiado pequeño
+    }
+    signed_value = -(int64_t)value;
+  } else {
+    if (value > (uint64_t)INT64_MAX) {
+      return INT64_MAX; // demasiado grande
+    }
+    signed_value = (int64_t)value;
+  }
+
+  return signed_value;
+}
+
 const signed char Xen_Char_Digit_Value[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

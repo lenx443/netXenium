@@ -52,6 +52,12 @@ int Xen_Vector_Push(Xen_Instance *vector_inst, Xen_Instance *value) {
 
 Xen_Instance *Xen_Vector_Get_Index(Xen_Instance *vector, size_t index) {
   if (!vector || index >= ((Xen_Vector *)vector)->size) { return nil; }
+  Xen_ADD_REF(((Xen_Vector *)vector)->values[index]);
+  return ((Xen_Vector *)vector)->values[index];
+}
+
+Xen_Instance *Xen_Vector_Peek_Index(Xen_Instance *vector, size_t index) {
+  if (!vector || index >= ((Xen_Vector *)vector)->size) { return nil; }
   return ((Xen_Vector *)vector)->values[index];
 }
 

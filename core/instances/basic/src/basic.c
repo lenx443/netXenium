@@ -5,8 +5,9 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_register.h"
+#include "xen_string.h"
 
-int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   struct __Implement *impl = (struct __Implement *)self;
   impl->__impl_name = NULL;
   impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
@@ -22,7 +23,7 @@ int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   return 1;
 }
 
-int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   struct __Implement *impl = (struct __Implement *)self;
   if (!impl) return 0;
   if (impl->__props) __instances_map_free(impl->__props);
@@ -30,10 +31,21 @@ int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   return 1;
 }
 
-int basic_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static int basic_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   struct __Implement *impl = (struct __Implement *)self;
   Xen_INSTANCE *result = __instance_new(impl, args, 0);
   xen_register_prop_set("__expose", result, id);
+  return 1;
+}
+
+static int basic_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  Xen_Instance *string = Xen_String_From_CString("<Basic>");
+  if (!string) { return 0; }
+  if (!xen_register_prop_set("__expose_string", string, id)) {
+    Xen_DEL_REF(string);
+    return 0;
+  }
+  Xen_DEL_REF(string);
   return 1;
 }
 

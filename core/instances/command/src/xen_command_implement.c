@@ -7,6 +7,8 @@
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
 #include "xen_nil.h"
+#include "xen_register.h"
+#include "xen_string.h"
 
 static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
@@ -31,6 +33,16 @@ static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *
     }
     if_nil_neval(inst->self) Xen_DEL_REF(inst->self);
   }
+  return 1;
+}
+static int command_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  Xen_Instance *string = Xen_String_From_CString("<Command>");
+  if (!string) { return 0; }
+  if (!xen_register_prop_set("__expose_string", string, id)) {
+    Xen_DEL_REF(string);
+    return 0;
+  }
+  Xen_DEL_REF(string);
   return 1;
 }
 

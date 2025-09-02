@@ -39,10 +39,14 @@ include_directories(
   core/instances/vector/include/
   core/instances/vector/type/header/
   core/instances/nil/include/
+  core/instances/map/include/
+  core/instances/map/types/header/
   core/register_enginer/include/
   core/register_enginer/types/header/
   core/modules_enginer/include/
   core/modules_enginer/types/header/
+  core/modules_enginer/instance/include/
+  core/modules_enginer/instance/types/header/
   modules/include/
   api/include/
   dynamic/lists/include/
@@ -50,10 +54,7 @@ include_directories(
   header/
 )
 
-add_executable(ntxenium
-  # Codigo fuente principal (Funcion main)
-  main.c
-
+set(SOURCES
   # Codigo fuente donde del nucleo
   # del proyecto.
   core/src/xen_life.c
@@ -156,11 +157,18 @@ add_executable(ntxenium
   core/instances/nil/src/xen_nil_implement.c
   core/instances/nil/src/xen_nil.c
 
+  # Implementacion del objeto `Map`
+  core/instances/map/src/xen_map_implement.c
+
   # motor de registros
   core/register_enginer/src/xen_register.c
 
   # motor de modulos
   core/modules_enginer/src/xen_modules_def.c
+
+  # Instanca del motor de modulos
+  core/modules_enginer/instance/src/xen_module_implement.c
+  core/modules_enginer/instance/src/xen_module.c
 
   # modulos
   modules/src/m_core.c
@@ -201,5 +209,27 @@ add_executable(ntxenium
   commands/iface.c
 )
 
+add_executable(ntxenium
+  # Codigo fuente principal (Funcion main)
+  main.c
+  ${SOURCES}
+)
+
 target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(ntxenium PRIVATE ${PCAP_LIBRARIES})
+
+enable_testing()
+
+add_executable(test_number
+  tests/test_number.c ${SOURCES}
+)
+target_include_directories(test_number PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_number PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestNumber COMMAND test_number)
+
+add_executable(test_map
+  tests/test_map.c ${SOURCES}
+)
+target_include_directories(test_map PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_map PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestMap COMMAND test_map   )

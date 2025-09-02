@@ -11,6 +11,8 @@ struct __Implement Xen_Nil_Implement = {
     .__props = NULL,
     .__alloc = NULL,
     .__destroy = NULL,
+    .__string = NULL,
+    .__raw = NULL,
     .__callable = NULL,
     .__hash = NULL,
 };

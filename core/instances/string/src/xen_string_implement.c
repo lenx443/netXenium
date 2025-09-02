@@ -24,6 +24,11 @@ static int string_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   return 1;
 }
 
+static int string_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  if (xen_register_prop_set("__expose_string", self, id)) { return 0; }
+  return 1;
+}
+
 static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   if (!VM_CHECK_ID(id)) { return 0; }
   Xen_String *string = (Xen_String *)self;
@@ -37,6 +42,7 @@ static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
     Xen_DEL_REF(hash_inst);
     return 0;
   }
+  Xen_DEL_REF(hash_inst);
   return 1;
 }
 
@@ -48,6 +54,8 @@ struct __Implement Xen_String_Implement = {
     .__props = NULL,
     .__alloc = string_alloc,
     .__destroy = string_destroy,
+    .__string = string_string,
+    .__raw = string_string,
     .__callable = NULL,
     .__hash = string_hash,
 };
