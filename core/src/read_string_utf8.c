@@ -189,6 +189,7 @@ LIST_ptr read_string_utf8() {
           program.return_code == 0 ? VERDE : ROJO, program.return_code,                  \
           program.argv[0]);
   LIST_ptr cmd = list_new();
+  puts("cmd alloc");
   int i = 0;
   CodeUTF8 c;
 

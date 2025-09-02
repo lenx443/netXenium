@@ -26,6 +26,7 @@ int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, Xen_Instance *closur
     free(ctx_stack_new);
     return 0;
   }
+  Xen_DEL_REF(alloc_args);
   ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
   ctx_stack_new->next = NULL;
   if (*ctx_stack) {

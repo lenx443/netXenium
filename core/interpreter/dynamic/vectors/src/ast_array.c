@@ -40,6 +40,9 @@ int ast_array_add(AST_Array_ptr ast_array, AST_Node_t *ast) {
 
 void ast_array_free(AST_Array_ptr ast_array) {
   if (!ast_array) return;
+  for (int i = 0; i < ast_array->ast_count; i++) {
+    ast_free(ast_array->ast_array[i]);
+  }
   free(ast_array->ast_array);
   free(ast_array);
 }

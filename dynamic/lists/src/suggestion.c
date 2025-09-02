@@ -27,7 +27,8 @@ SUGGEST_ptr suggest_new() {
   return new_suggest;
 }
 
-int suggest_add(SUGGEST_ptr sugg, char *sg_name, char *sg_value, char *sg_desc, suggest_types type) {
+int suggest_add(SUGGEST_ptr sugg, char *sg_name, char *sg_value, char *sg_desc,
+                suggest_types type) {
   if (sugg == NULL || !list_valid(sugg->suggestions)) { return 0; }
   suggest_struct temp_suggest;
   strncpy(temp_suggest.sg_name, sg_name, SUGGEST_NAME_LEN - 1);
@@ -62,10 +63,11 @@ void suggest_show(SUGGEST_ptr sugg, int cursor_index, int position) {
     if (node) {
       suggest_struct *sg_value = (suggest_struct *)node->point;
       if ((i + 1) == position)
-        printf("\r\n" BG_AMARILLO " %-*s " VERDE "%.*s " RESET, padding, sg_value->sg_name, tz.COLS - 5,
-               sg_value->sg_desc);
+        printf("\r\n" BG_AMARILLO " %-*s " VERDE "%.*s " RESET, padding,
+               sg_value->sg_name, tz.COLS - 5, sg_value->sg_desc);
       else
-        printf("\r\n %-*s " VERDE "%.*s " RESET, padding, sg_value->sg_name, tz.COLS - 5, sg_value->sg_desc);
+        printf("\r\n %-*s " VERDE "%.*s " RESET, padding, sg_value->sg_name, tz.COLS - 5,
+               sg_value->sg_desc);
       sugg->suggest_showed++;
     }
   }
@@ -103,6 +105,7 @@ void suggest_clear(SUGGEST_ptr sugg) {
 }
 
 void suggest_free(SUGGEST_ptr sugg) {
+  puts("freed");
   list_free(sugg->suggestions);
   free(sugg);
 }

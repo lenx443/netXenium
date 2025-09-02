@@ -215,6 +215,12 @@ add_executable(ntxenium
   ${SOURCES}
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Enabling Address Sanitizer")
+  target_compile_options(ntxenium PRIVATE -fsanitize=address -g -O1)
+  target_link_libraries(ntxenium PRIVATE -fsanitize=address)
+endif()
+
 target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(ntxenium PRIVATE ${PCAP_LIBRARIES})
 

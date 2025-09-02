@@ -47,6 +47,7 @@ bool vm_create() {
     Xen_DEL_REF(args);
     return 0;
   }
+  Xen_DEL_REF(args);
   vm->root_context = (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
   vm->global_props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
   if (!vm->global_props) {
