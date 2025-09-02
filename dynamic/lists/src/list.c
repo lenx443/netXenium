@@ -381,7 +381,7 @@ void list_clear(LIST_ptr list) {
 }
 
 void list_free(LIST_ptr list) {
-  if (list_empty(list)) return;
+  if (!list_valid(list)) return;
   NODE_ptr current = list->head;
   while (current != NULL) {
     NODE_ptr next = current->next;
@@ -401,7 +401,7 @@ int node_empty(NODE_ptr *node) {
 }
 
 void node_free(NODE_ptr *node) {
-  if (node_empty(node)) { return; }
+  if (node == NULL) { return; }
   free((*node)->point);
   free(*node);
   *node = NULL;

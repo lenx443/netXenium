@@ -340,7 +340,6 @@ void shell_loop(char *name) {
 
   while (1) {
     LIST_ptr cmd = read_string_utf8();
-    puts("cmd freed");
     char *cmd_str = string_utf8_get(cmd);
     list_free(cmd);
     if (!interpreter(cmd_str)) {

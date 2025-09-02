@@ -17,6 +17,7 @@
 #include "vm.h"
 #include "vm_consts.h"
 #include "vm_def.h"
+#include <stdio.h>
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
@@ -35,11 +36,16 @@ int interpreter(const char *text_code) {
   while (parser_stmt(&parser, &current_ast) == 1) {
     if (!ast_array_add(ast_array, current_ast)) {
       ast_array_free(ast_array);
+      ast_free(current_ast);
       return 0;
     }
     current_ast = NULL;
   }
   log_show_and_clear(NULL);
+  if (current_ast) {
+    ast_free(current_ast);
+    current_ast = NULL;
+  }
   if (ast_array->ast_array == NULL) {
     ast_array_free(ast_array);
     return 1;

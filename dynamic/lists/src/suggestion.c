@@ -105,7 +105,6 @@ void suggest_clear(SUGGEST_ptr sugg) {
 }
 
 void suggest_free(SUGGEST_ptr sugg) {
-  puts("freed");
   list_free(sugg->suggestions);
   free(sugg);
 }
