@@ -305,6 +305,7 @@ void test_number_from_long() {
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
     assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
     free((void *)foo_str);
   }
   {
@@ -316,6 +317,73 @@ void test_number_from_long() {
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == -2747282858672828557l);
     assert(Xen_Number_As_Long(foo) == -2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 0l);
+    free((void *)foo_str);
+  }
+}
+
+void test_number_from_ulong() {
+  printf("Testing Number From Unsigned Long");
+  {
+    Xen_INSTANCE *foo = Xen_Number_From_ULong(2747282858672828557l);
+    assert(foo != NULL);
+    const char *foo_str = Xen_Number_As_CString(foo);
+    assert(foo_str != NULL);
+    assert(strcmp(foo_str, "2747282858672828557") == 0);
+    assert(Xen_Number_As_Int32(foo) == INT32_MAX);
+    assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
+    free((void *)foo_str);
+  }
+}
+
+void test_number_from_longlong() {
+  printf("Testing Number From Long Long");
+  {
+    Xen_INSTANCE *foo = Xen_Number_From_LongLong(2747282858672828557l);
+    assert(foo != NULL);
+    const char *foo_str = Xen_Number_As_CString(foo);
+    assert(foo_str != NULL);
+    assert(strcmp(foo_str, "2747282858672828557") == 0);
+    assert(Xen_Number_As_Int32(foo) == INT32_MAX);
+    assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
+    free((void *)foo_str);
+  }
+  {
+    Xen_INSTANCE *foo = Xen_Number_From_LongLong(-2747282858672828557l);
+    assert(foo != NULL);
+    const char *foo_str = Xen_Number_As_CString(foo);
+    assert(foo_str != NULL);
+    assert(strcmp(foo_str, "-2747282858672828557") == 0);
+    assert(Xen_Number_As_Int32(foo) == INT32_MIN);
+    assert(Xen_Number_As_Int64(foo) == -2747282858672828557l);
+    assert(Xen_Number_As_Long(foo) == -2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 0l);
+    assert(Xen_Number_As_LongLong(foo) == -2747282858672828557l);
+    assert(Xen_Number_As_ULongLong(foo) == 0l);
+    free((void *)foo_str);
+  }
+}
+
+void test_number_from_ulonglong() {
+  printf("Testing Number From Unsigned Long Long");
+  {
+    Xen_INSTANCE *foo = Xen_Number_From_ULongLong(2747282858672828557l);
+    assert(foo != NULL);
+    const char *foo_str = Xen_Number_As_CString(foo);
+    assert(foo_str != NULL);
+    assert(strcmp(foo_str, "2747282858672828557") == 0);
+    assert(Xen_Number_As_Int32(foo) == INT32_MAX);
+    assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
+    assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
     free((void *)foo_str);
   }
 }
@@ -328,5 +396,8 @@ int main() {
   test_number_from_int();
   test_number_from_uint();
   test_number_from_long();
+  test_number_from_ulong();
+  test_number_from_longlong();
+  test_number_from_ulonglong();
   return 0;
 }

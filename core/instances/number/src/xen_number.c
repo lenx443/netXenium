@@ -755,6 +755,74 @@ long Xen_Number_As_Long(Xen_INSTANCE *inst) {
   }
 }
 
+unsigned long Xen_Number_As_ULong(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo "grande" (64 bits)
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Si es negativo, lo forzamos a 0 porque no cabe en unsigned
+  if (n->sign < 0) { return 0; }
+
+  // Ajustamos al límite de unsigned long
+  if (value > (uint64_t)ULONG_MAX) { return ULONG_MAX; }
+
+  return (unsigned long)value;
+}
+
+long long Xen_Number_As_LongLong(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->sign == 0 || n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo "grande" (64 bits)
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Aplicar signo respetando los límites de long long
+  if (n->sign < 0) {
+    if (value > (uint64_t)LLONG_MAX + 1ULL) {
+      return LLONG_MIN; // demasiado pequeño
+    }
+    return -(long long)value;
+  } else {
+    if (value > (uint64_t)LLONG_MAX) {
+      return LLONG_MAX; // demasiado grande
+    }
+    return (long long)value;
+  }
+}
+
+unsigned long long Xen_Number_As_ULongLong(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo "grande" (64 bits)
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Si es negativo, lo forzamos a 0 porque no cabe en unsigned
+  if (n->sign < 0) { return 0; }
+
+  // Ajustamos al límite de unsigned long long
+  if (value > (uint64_t)ULLONG_MAX) { return ULLONG_MAX; }
+
+  return (unsigned long long)value;
+}
+
 const signed char Xen_Char_Digit_Value[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
