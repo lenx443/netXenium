@@ -75,4 +75,5 @@ void block_list_free(block_list_ptr blocks) {
   }
   blocks->head = NULL;
   blocks->tail = NULL;
+  free(blocks);
 }

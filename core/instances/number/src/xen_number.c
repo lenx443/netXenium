@@ -682,6 +682,79 @@ int64_t Xen_Number_As_Int64(Xen_INSTANCE *inst) {
   return signed_value;
 }
 
+int Xen_Number_As_Int(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->sign == 0 || n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo "grande" (64 bits) para no perder info
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Aplicar signo respetando los límites de int
+  if (n->sign < 0) {
+    if (value > (uint64_t)INT_MAX + 1ULL) {
+      return INT_MIN; // demasiado pequeño para un int
+    }
+    return -(int)value;
+  } else {
+    if (value > (uint64_t)INT_MAX) {
+      return INT_MAX; // demasiado grande
+    }
+    return (int)value;
+  }
+}
+
+unsigned int Xen_Number_As_UInt(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo grande (64 bits)
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Si es negativo, lo forzamos a 0 porque no cabe en unsigned
+  if (n->sign < 0) { return 0; }
+
+  // Ajustamos al límite de unsigned int
+  if (value > (uint64_t)UINT_MAX) { return UINT_MAX; }
+
+  return (unsigned int)value;
+}
+
+long Xen_Number_As_Long(Xen_INSTANCE *inst) {
+  Xen_Number *n = (Xen_Number *)inst;
+  if (!n) return 0;
+
+  if (n->sign == 0 || n->size == 0) { return 0; }
+
+  // Reconstrucción en un entero sin signo "grande" (64 bits)
+  uint64_t value = 0;
+  for (ssize_t i = n->size - 1; i >= 0; i--) {
+    value = (value << 32) | n->digits[i];
+  }
+
+  // Aplicar signo respetando los límites de long
+  if (n->sign < 0) {
+    if (value > (uint64_t)LONG_MAX + 1ULL) {
+      return LONG_MIN; // demasiado pequeño
+    }
+    return -(long)value;
+  } else {
+    if (value > (uint64_t)LONG_MAX) {
+      return LONG_MAX; // demasiado grande
+    }
+    return (long)value;
+  }
+}
+
 const signed char Xen_Char_Digit_Value[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

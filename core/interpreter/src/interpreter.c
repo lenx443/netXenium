@@ -53,7 +53,11 @@ int interpreter(const char *text_code) {
   block_list_ptr blocks = block_list_new();
   if (!blocks) { ast_array_free(ast_array); }
   block_node_ptr main_block = block_new();
-  if (!main_block) { ast_array_free(ast_array); }
+  if (!main_block) {
+    ast_array_free(ast_array);
+    block_list_free(blocks);
+    return 0;
+  }
   block_list_push_node(blocks, main_block);
   if (!ast_compile(blocks, &main_block, ast_array->ast_array, ast_array->ast_count)) {
     ast_array_free(ast_array);
