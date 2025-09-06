@@ -32,6 +32,9 @@ struct __Implement {
   size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
   struct __Instances_Map *__props;
+  struct {
+    CALLABLE_ptr __eq;
+  } __opr;
   Xen_Native_Func __alloc;
   Xen_Native_Func __destroy;
   Xen_Native_Func __string;
@@ -39,5 +42,8 @@ struct __Implement {
   Xen_Native_Func __callable;
   Xen_Native_Func __hash;
 };
+
+typedef struct __Implement Xen_Implement;
+#define Xen_ImplementDef extern struct __Implement
 
 #endif

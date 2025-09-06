@@ -52,6 +52,7 @@ struct __Implement Xen_String_Implement = {
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
     .__props = NULL,
+    .__opr = {NULL},
     .__alloc = string_alloc,
     .__destroy = string_destroy,
     .__string = string_string,

@@ -9,6 +9,7 @@ struct __Implement Xen_Nil_Implement = {
     .__inst_size = sizeof(Xen_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
+    .__opr = {NULL},
     .__alloc = NULL,
     .__destroy = NULL,
     .__string = NULL,

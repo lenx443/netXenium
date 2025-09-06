@@ -12,7 +12,7 @@ Xen_INSTANCE *Xen_String_From_CString(const char *cstring) {
   if (!cstring) { return nil; }
   Xen_String *string = (Xen_String *)__instance_new(&Xen_String_Implement, nil, 0);
   if_nil_eval(string) { return nil; }
-  string->length = strlen(cstring);
+  string->length = strlen(cstring) + 1;
   string->characters = malloc(string->length);
   if (!string->characters) { return nil; }
   strncpy(string->characters, cstring, string->length);

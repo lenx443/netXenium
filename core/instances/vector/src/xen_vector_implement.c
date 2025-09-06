@@ -43,6 +43,7 @@ struct __Implement Xen_Vector_Implement = {
     .__inst_size = sizeof(struct Xen_Vector_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
+    .__opr = {NULL},
     .__alloc = vector_alloc,
     .__destroy = vector_destroy,
     .__string = vector_string,

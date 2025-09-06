@@ -6,12 +6,17 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -g -O0")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
 
 set(C_STANDARD 99)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Enabling Address Sanitizer")
+  link_libraries(-fsanitize=address)
+endif()
 
 include_directories(
   core/include/
@@ -41,6 +46,8 @@ include_directories(
   core/instances/nil/include/
   core/instances/map/include/
   core/instances/map/types/header/
+  core/instances/boolean/include/
+  core/instances/boolean/types/header/
   core/register_enginer/include/
   core/register_enginer/types/header/
   core/modules_enginer/include/
@@ -160,6 +167,10 @@ set(SOURCES
   # Implementacion del objeto `Map`
   core/instances/map/src/xen_map_implement.c
 
+  # Implementacion del objeto `Boolean`
+  core/instances/boolean/src/xen_boolean_implement.c
+  core/instances/boolean/src/xen_boolean.c
+
   # motor de registros
   core/register_enginer/src/xen_register.c
 
@@ -215,12 +226,6 @@ add_executable(ntxenium
   ${SOURCES}
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message(STATUS "Enabling Address Sanitizer")
-  target_compile_options(ntxenium PRIVATE -fsanitize=address -g -O1)
-  target_link_libraries(ntxenium PRIVATE -fsanitize=address)
-endif()
-
 target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(ntxenium PRIVATE ${PCAP_LIBRARIES})
 
@@ -233,9 +238,23 @@ target_include_directories(test_number PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(test_number PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestNumber COMMAND test_number)
 
+add_executable(test_string
+  tests/test_string.c ${SOURCES}
+)
+target_include_directories(test_string PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_string PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestString COMMAND test_string)
+
 add_executable(test_map
   tests/test_map.c ${SOURCES}
 )
 target_include_directories(test_map PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(test_map PRIVATE ${PCAP_LIBRARIES})
-add_test(NAME TestMap COMMAND test_map   )
+add_test(NAME TestMap COMMAND test_map)
+
+add_executable(test_boolean
+  tests/test_boolean.c ${SOURCES}
+)
+target_include_directories(test_boolean PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_boolean PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestBoolean COMMAND test_boolean)

@@ -60,13 +60,12 @@ Xen_Instance *run_context_stack_peek_top(RunContext_Stack_ptr *ctx_stack) {
   return (Xen_Instance *)(*ctx_stack)->ctx;
 }
 
-RunContext_ptr run_context_stack_pop_top(RunContext_Stack_ptr *ctx_stack) {
-  if (!ctx_stack || !*ctx_stack) { return NULL; }
+void run_context_stack_pop_top(RunContext_Stack_ptr *ctx_stack) {
+  if (!ctx_stack || !*ctx_stack) { return; }
   RunContext_Stack_ptr temp = *ctx_stack;
   *ctx_stack = (*ctx_stack)->next;
-  RunContext_ptr result = temp->ctx;
+  Xen_DEL_REF(temp->ctx);
   free(temp);
-  return result;
 }
 
 void run_context_stack_free(RunContext_Stack_ptr *ctx_stack) {

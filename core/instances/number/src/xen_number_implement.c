@@ -47,6 +47,7 @@ struct __Implement Xen_Number_Implement = {
     .__inst_size = sizeof(struct Xen_Number_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
+    .__opr = {NULL},
     .__alloc = number_alloc,
     .__destroy = number_destroy,
     .__string = number_string,
