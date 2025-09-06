@@ -32,6 +32,8 @@
 
 Xen_Instance *vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_stack); }
 
+Xen_Instance *vm_root_ctx() { return (Xen_Instance *)vm->root_context; }
+
 bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name,
                               Xen_Native_Func fun) {
   Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, nil, 0);
@@ -158,7 +160,6 @@ void vm_run_ctx(RunContext_ptr ctx) {
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
     GCPointer_node_ptr gc_array = NULL;
-    bc_Instruct_t instr;
     while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size && !program.closed) {
       bc_Instruct_t instr = pc.code->bc_array[ctx->ctx_ip++];
       if (instr.bci_opcode > OP_HALT) {

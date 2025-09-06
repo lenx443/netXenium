@@ -52,7 +52,7 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
 
         if (!bc_add_instr(
                 code->code,
-                (bc_Instruct_t){
+                (bc_Instruct_t){{
                     current_block->instr_array->ir_array[instr_iterator].opcode,
                     current_block->instr_array->ir_array[instr_iterator].dst,
                     current_block->instr_array->ir_array[instr_iterator].src1,
@@ -60,7 +60,7 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
                          .jump_block)
                         ->instr_array->ir_array[0]
                         .instr_num,
-                })) {
+                }})) {
           error("Memoria insufciente");
           vm_consts_free(code->consts);
           bc_free(code->code);
@@ -68,12 +68,12 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
         }
       } else {
         if (!bc_add_instr(code->code,
-                          (bc_Instruct_t){
+                          (bc_Instruct_t){{
                               current_block->instr_array->ir_array[instr_iterator].opcode,
                               current_block->instr_array->ir_array[instr_iterator].dst,
                               current_block->instr_array->ir_array[instr_iterator].src1,
                               current_block->instr_array->ir_array[instr_iterator].src2,
-                          })) {
+                          }})) {
           error("Memoria insufciente");
           vm_consts_free(code->consts);
           bc_free(code->code);

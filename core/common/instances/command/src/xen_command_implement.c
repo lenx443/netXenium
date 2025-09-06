@@ -55,6 +55,8 @@ struct __Implement Xen_Command_Implement = {
     .__opr = {NULL},
     .__alloc = command_alloc,
     .__destroy = command_destroy,
+    .__string = command_string,
+    .__raw = command_string,
     .__callable = command_callable,
     .__hash = NULL,
 };

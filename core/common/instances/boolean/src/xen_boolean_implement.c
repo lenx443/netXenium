@@ -10,7 +10,7 @@
 
 static int boolean_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   Xen_Boolean *boolean = (Xen_Boolean *)self;
-  boolean = 0;
+  boolean->value = 0;
   return 1;
 }
 
@@ -55,5 +55,5 @@ Xen_Implement Xen_Boolean_Implement = {
     .__string = boolean_string,
     .__raw = NULL,
     .__callable = NULL,
-    .__hash = NULL,
+    .__hash = boolean_hash,
 };

@@ -57,6 +57,8 @@ struct __Implement Xen_Basic = {
     .__props = NULL,
     .__alloc = basic_alloc,
     .__destroy = basic_destroy,
+    .__string = basic_string,
+    .__raw = basic_string,
     .__callable = basic_callable,
     .__hash = NULL,
 };

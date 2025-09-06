@@ -67,7 +67,6 @@ int interpreter(const char *text_code) {
   ir_add_halt(main_block->instr_array);
   ast_array_free(ast_array);
   blocks_linealizer(blocks);
-  block_node_ptr current = blocks->head;
   ProgramCode_t pc;
   if (!blocks_compiler(&pc, blocks)) {
     block_list_free(blocks);

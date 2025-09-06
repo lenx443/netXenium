@@ -251,7 +251,6 @@ LIST_ptr read_string_utf8() {
           history_position++;
           HISTORY_struct *history_value = history_get(*history, history_position);
           if (history_value == NULL) continue;
-          int previus_size = string_utf8_display_width(cmd);
           list_clear(cmd);
           string_utf8_push_back(cmd, history_value->command);
           cursor_index = string_utf8_display_width(cmd);
@@ -275,7 +274,6 @@ LIST_ptr read_string_utf8() {
         } else {
           history_position--;
           if (history_position < 0) {
-            int previus_size = string_utf8_display_width(cmd);
             list_clear(cmd);
             cursor_index = 0;
             scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
@@ -288,7 +286,6 @@ LIST_ptr read_string_utf8() {
           }
           HISTORY_struct *history_value = history_get(*history, history_position);
           if (history_value == NULL) continue;
-          int previus_size = string_utf8_display_width(cmd);
           list_clear(cmd);
           string_utf8_push_back(cmd, history_value->command);
           cursor_index = string_utf8_display_width(cmd);
@@ -342,7 +339,6 @@ LIST_ptr read_string_utf8() {
         if (tab_pressed && suggest_position > 0) {
           suggest_hide(suggestions, prompt_len + 1 + cursor_index);
           suggest_struct *sg_struct = suggest_get(suggestions, suggest_position);
-          int previus_size = string_utf8_display_width(cmd);
           list_clear(cmd);
           string_utf8_push_back(cmd, sg_struct->sg_value);
           cursor_index = string_utf8_display_width(cmd);

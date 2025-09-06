@@ -1,6 +1,7 @@
 #include <locale.h>
 #include <stdlib.h>
 
+#include "instance_life.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -28,10 +29,18 @@ int Xen_Init(int argc, char **argv) {
   program.argv = argv;
   program.argc = argc;
 
+  if (!Xen_Instance_Init()) {
+    vm_destroy();
+    log_free(NULL);
+    prop_reg_free(prop_register);
+    return 0;
+  }
+
   return 1;
 }
 
 void Xen_Finish() {
+  Xen_Instanse_Finish();
   free(program.name);
   prop_reg_free(prop_register);
   vm_destroy();

@@ -37,13 +37,20 @@ bool __instances_map_add(struct __Instances_Map *inst_map, const char *key,
                          struct __Instance *inst) {
   if (!inst_map || !key || !inst) { return false; }
   int hash_index = hash(key) % inst_map->__buckets_capacity;
+  struct __Instances_Hash_Node *prev_node = NULL;
   struct __Instances_Hash_Node *current_node = inst_map->__buckets[hash_index];
   while (current_node) {
     if (strcmp(current_node->name, key) == 0) {
+      if (prev_node) {
+        prev_node->next = current_node->next;
+      } else {
+        inst_map->__buckets[hash_index] = current_node->next;
+      }
       free(current_node->name);
       free(current_node);
       break;
     }
+    prev_node = current_node;
     current_node = current_node->next;
   }
   struct __Instances_Hash_Node *hash_node = malloc(sizeof(struct __Instances_Hash_Node));

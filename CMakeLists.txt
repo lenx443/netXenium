@@ -6,7 +6,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -g -O0")
+set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -g -O0 -Wall")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
@@ -20,6 +20,21 @@ endif()
 
 include_directories(
   core/include/
+  core/common/include/
+  core/common/instances/basic/include/
+  core/common/instances/command/include/
+  core/common/instances/command/types/header/
+  core/common/instances/string/include/
+  core/common/instances/string/types/header/
+  core/common/instances/number/include/
+  core/common/instances/number/types/header/
+  core/common/instances/vector/include/
+  core/common/instances/vector/type/header/
+  core/common/instances/nil/include/
+  core/common/instances/map/include/
+  core/common/instances/map/types/header/
+  core/common/instances/boolean/include/
+  core/common/instances/boolean/types/header/
   core/interpreter/include/
   core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/
@@ -31,23 +46,10 @@ include_directories(
   core/virtual_machine/types/include/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
+  core/instances/include
   core/instances/types/include/
   core/instances/dynamic/vectors/include/
   core/instances/callable/types/include/
-  core/instances/basic/include/
-  core/instances/command/include/
-  core/instances/command/types/header/
-  core/instances/string/include/
-  core/instances/string/types/header/
-  core/instances/number/include/
-  core/instances/number/types/header/
-  core/instances/vector/include/
-  core/instances/vector/type/header/
-  core/instances/nil/include/
-  core/instances/map/include/
-  core/instances/map/types/header/
-  core/instances/boolean/include/
-  core/instances/boolean/types/header/
   core/register_enginer/include/
   core/register_enginer/types/header/
   core/modules_enginer/include/
@@ -68,6 +70,40 @@ set(SOURCES
   core/src/properties_types.c
   core/src/program.c
   core/src/read_string_utf8.c
+
+  # Codigo Commun
+  core/common/src/operators.c
+  core/common/src/callable.c
+
+  # Implementacion del objeto `Basic`
+  core/common/instances/basic/src/basic.c
+
+  # Implementacion del objeto `Command`
+  core/common/instances/command/src/xen_command_implement.c
+  core/common/instances/command/src/xen_command.c
+
+  # Implementacion del objeto `String`
+  core/common/instances/string/src/xen_string_implement.c
+  core/common/instances/string/src/xen_string.c
+
+  # Implementacion del objeto `Number`
+  core/common/instances/number/src/xen_number_implement.c
+  core/common/instances/number/src/xen_number.c
+
+  # Implementacion del objeto `Vector`
+  core/common/instances/vector/src/xen_vector_implement.c
+  core/common/instances/vector/src/xen_vector.c
+
+  # Implementacion del objeto `Nil`
+  core/common/instances/nil/src/xen_nil_implement.c
+  core/common/instances/nil/src/xen_nil.c
+
+  # Implementacion del objeto `Map`
+  core/common/instances/map/src/xen_map_implement.c
+
+  # Implementacion del objeto `Boolean`
+  core/common/instances/boolean/src/xen_boolean_implement.c
+  core/common/instances/boolean/src/xen_boolean.c
 
   # Codigo que se encarga de procesar
   # e interpretar scripts
@@ -129,47 +165,17 @@ set(SOURCES
   core/virtual_machine/dynamic/lists/src/gc_pointer_list.c
   core/virtual_machine/dynamic/lists/src/run_ctx_stack.c
 
-  # Implementacion de estructura `Callable`
-  core/instances/callable/types/src/callable.c
+  # Codigo de Instancias
+  core/instances/src/instance_life.c
 
   # Implementacion de estaructura `Instance`
   core/instances/types/src/implement.c
   core/instances/types/src/instance.c
 
-  # Implementacion del objeto `Basic`
-  core/instances/basic/src/basic.c
-
-  # Implementacion del objeto `Command`
-  core/instances/command/src/xen_command_implement.c
-  core/instances/command/src/xen_command.c
-
   # Implementaciones de los codigos
   # fuente de los vectores de las
   # Instancias
   core/instances/dynamic/vectors/src/instances_map.c
-
-  # Implementacion del objeto `String`
-  core/instances/string/src/xen_string_implement.c
-  core/instances/string/src/xen_string.c
-
-  # Implementacion del objeto `Number`
-  core/instances/number/src/xen_number_implement.c
-  core/instances/number/src/xen_number.c
-
-  # Implementacion del objeto `Vector`
-  core/instances/vector/src/xen_vector_implement.c
-  core/instances/vector/src/xen_vector.c
-
-  # Implementacion del objeto `Nil`
-  core/instances/nil/src/xen_nil_implement.c
-  core/instances/nil/src/xen_nil.c
-
-  # Implementacion del objeto `Map`
-  core/instances/map/src/xen_map_implement.c
-
-  # Implementacion del objeto `Boolean`
-  core/instances/boolean/src/xen_boolean_implement.c
-  core/instances/boolean/src/xen_boolean.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c

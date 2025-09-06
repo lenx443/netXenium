@@ -77,7 +77,6 @@ HISTORY_ptr history_new(const char *filename) {
     line[strcspn(line, "\n")] = '\0';
     HISTORY_struct history_line;
 
-    char str_command[CMDSIZ];
     strncpy(history_line.command, line, sizeof(history_line.command));
     history_line.command[sizeof(history_line.command) - 1] = '\0';
 

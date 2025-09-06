@@ -15,11 +15,8 @@
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "suggestion.h"
-#include "terminal.h"
 
 #define NAME "shell"
-
-static term_size current_term_size = {0};
 
 static int is_special_char(char c) { return c == '\'' || c == '"' || c == '$'; }
 
