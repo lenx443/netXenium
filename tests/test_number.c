@@ -4,6 +4,10 @@
 #include <string.h>
 
 #include "instance.h"
+#include "operators.h"
+#include "xen_boolean.h"
+#include "xen_life.h"
+#include "xen_nil.h"
 #include "xen_number.h"
 
 static void test_number_from_cstring() {
@@ -411,7 +415,96 @@ void test_number_from_ulonglong() {
   }
 }
 
-int main() {
+void test_number_opr_eq() {
+  printf("Testing Number Equal Operator\n");
+  {
+    Xen_Instance *a = Xen_Number_From_Int(1234);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_Int(1234);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_True);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_Int(1234);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_Int(4321);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_False);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_Int(1234);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_Int(-1234);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_False);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_Int(0);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_Int(0);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_True);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_True);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_CString("-FFDD11AA66CCBB99", 16);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_False);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance *a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
+    assert(a != nil);
+    Xen_Instance *b = Xen_Number_From_CString("FFDD11AA66CCBB993FF", 16);
+    assert(b != nil);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    assert(result != nil);
+    assert(result == Xen_False);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+}
+
+int main(int argc, char **argv) {
+  if (!Xen_Init(argc, argv)) { return 1; }
   test_number_from_cstring();
   test_number_from_cstring_base();
   test_number_from_int32();
@@ -422,5 +515,7 @@ int main() {
   test_number_from_ulong();
   test_number_from_longlong();
   test_number_from_ulonglong();
+  test_number_opr_eq();
+  Xen_Finish();
   return 0;
 }

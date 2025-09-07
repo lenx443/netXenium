@@ -1,14 +1,17 @@
 #include <stdlib.h>
 
 #include "basic.h"
+#include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "xen_boolean.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_vector.h"
 
 static int number_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   Xen_Number *num = (Xen_Number *)self;
@@ -41,6 +44,57 @@ static int number_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   return 1;
 }
 
+static int number_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  if (Xen_Vector_Size(args) < 1) return 0;
+
+  Xen_Number *a = (Xen_Number *)self;
+  Xen_Number *b = (Xen_Number *)Xen_Vector_Get_Index(args, 0);
+  // Normalizar tamaño (ignorar ceros a la izquierda)
+  size_t size_a = a->size;
+  while (size_a > 0 && a->digits[size_a - 1] == 0) {
+    size_a--;
+  }
+
+  size_t size_b = b->size;
+  while (size_b > 0 && b->digits[size_b - 1] == 0) {
+    size_b--;
+  }
+
+  // Si ambos son cero → iguales sin importar el signo
+  if (size_a == 0 && size_b == 0) {
+    Xen_DEL_REF(b);
+    if (!xen_register_prop_set("__expose_opr_eq", Xen_True, id)) { return 0; }
+    return 1;
+  }
+
+  // Signos distintos → no son iguales
+  if (a->sign != b->sign) {
+    Xen_DEL_REF(b);
+    if (!xen_register_prop_set("__expose_opr_eq", Xen_False, id)) { return 0; }
+    return 1;
+  }
+
+  // Diferente número de dígitos → no son iguales
+  if (size_a != size_b) {
+    Xen_DEL_REF(b);
+    if (!xen_register_prop_set("__expose_opr_eq", Xen_False, id)) { return 0; }
+    return 1;
+  }
+
+  // Comparar dígitos uno a uno
+  for (size_t i = 0; i < size_a; i++) {
+    if (a->digits[i] != b->digits[i]) {
+      Xen_DEL_REF(b);
+      if (!xen_register_prop_set("__expose_opr_eq", Xen_False, id)) { return 0; }
+      return 1;
+    }
+  }
+
+  Xen_DEL_REF(b);
+  if (!xen_register_prop_set("__expose_opr_eq", Xen_True, id)) { return 0; }
+  return 1;
+}
+
 struct __Implement Xen_Number_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
@@ -55,3 +109,12 @@ struct __Implement Xen_Number_Implement = {
     .__callable = NULL,
     .__hash = NULL,
 };
+
+int Xen_Number_Init() {
+  if ((Xen_Number_Implement.__opr.__eq = callable_new_native(number_opr_eq)) == NULL) {
+    return 0;
+  }
+  return 1;
+}
+
+void Xen_Number_Finish() { callable_free(Xen_Number_Implement.__opr.__eq); }

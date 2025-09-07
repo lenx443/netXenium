@@ -5,4 +5,7 @@
 
 extern struct __Implement Xen_Number_Implement;
 
+int Xen_Number_Init();
+void Xen_Number_Finish();
+
 #endif
