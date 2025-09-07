@@ -7,7 +7,6 @@
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_vector.h"
-#include <stdio.h>
 
 Xen_Instance *Xen_Operator_Eval_Pair(Xen_Instance *first, Xen_Instance *second,
                                      Xen_Opr op) {
@@ -23,7 +22,6 @@ Xen_Instance *Xen_Operator_Eval_Pair(Xen_Instance *first, Xen_Instance *second,
     Xen_DEL_REF(args);
     Xen_Instance *result = xen_register_prop_get("__expose_opr_eq", 0);
     if (!result) { return nil; }
-    puts("pase");
     if (Xen_TYPE(result) != &Xen_Boolean_Implement) { return nil; }
     if (result == Xen_True)
       return Xen_True;
