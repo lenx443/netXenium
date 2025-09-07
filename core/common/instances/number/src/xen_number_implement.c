@@ -45,10 +45,13 @@ static int number_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int number_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
-  if (Xen_Vector_Size(args) < 1) return 0;
+  if (Xen_Vector_Size(args) < 1 ||
+      Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
+    return 0;
 
   Xen_Number *a = (Xen_Number *)self;
   Xen_Number *b = (Xen_Number *)Xen_Vector_Get_Index(args, 0);
+
   // Normalizar tamaño (ignorar ceros a la izquierda)
   size_t size_a = a->size;
   while (size_a > 0 && a->digits[size_a - 1] == 0) {
