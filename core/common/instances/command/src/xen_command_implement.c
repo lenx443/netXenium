@@ -20,7 +20,9 @@ static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *arg
 
 static int command_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
-  if_nil_neval(inst->cmd_callable) callable_free(inst->cmd_callable);
+  if (!inst->cmd_callable) callable_free(inst->cmd_callable);
+  if_nil_neval(inst->self) Xen_DEL_REF(inst->self);
+  if_nil_neval(inst->closure) Xen_DEL_REF(inst->closure);
   return 1;
 }
 

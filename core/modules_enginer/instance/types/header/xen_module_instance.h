@@ -6,7 +6,7 @@
 
 struct Xen_Module_Instance {
   Xen_INSTANCE_HEAD;
-  struct __Instances_Map *mod_map;
+  Xen_Instance *mod_map;
   Xen_Instance *mod_context;
 };
 

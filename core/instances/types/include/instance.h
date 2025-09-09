@@ -3,15 +3,15 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef uint8_t Xen_Instance_Flag;
 
 #define Xen_TYPE(inst) (((struct __Instance *)inst)->__impl)
 
+#ifndef XEN_DEBUG_REFERS
 #define Xen_ADD_REF(inst)                                                                \
-  do {                                                                                   \
-    if (inst) ((struct __Instance *)inst)->__refers++;                                   \
-  } while (0)
+  ((inst) ? (((struct __Instance *)(inst))->__refers++, (inst)) : (inst))
 
 #define Xen_DEL_REF(inst)                                                                \
   do {                                                                                   \
@@ -20,6 +20,25 @@ typedef uint8_t Xen_Instance_Flag;
         __instance_free((struct __Instance *)(inst));                                    \
     }                                                                                    \
   } while (0)
+#else
+#define Xen_ADD_REF(inst)                                                                \
+  ((inst) ? (((struct __Instance *)(inst))->__refers++,                                  \
+             printf("[ADD_REF] %s=%p ref=%zd at %s:%d\n", #inst, inst,                   \
+                    ((struct __Instance *)(inst))->__refers, __FILE__, __LINE__),        \
+             (inst))                                                                     \
+          : (inst))
+
+#define Xen_DEL_REF(inst)                                                                \
+  do {                                                                                   \
+    if (inst) {                                                                          \
+      printf("[DEL_REF] %s=%p ref=%zd at %s:%d\n", #inst, inst,                          \
+             ((struct __Instance *)(inst))->__refers, __FILE__, __LINE__);               \
+      ((struct __Instance *)(inst))->__refers--;                                         \
+      if (((struct __Instance *)(inst))->__refers <= 0)                                  \
+        __instance_free((struct __Instance *)(inst));                                    \
+    }                                                                                    \
+  } while (0)
+#endif
 
 #define Xen_INSTANCE_HEAD                                                                \
   size_t __refers;                                                                       \

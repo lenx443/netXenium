@@ -6,6 +6,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_boolean.h"
+#include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
@@ -45,7 +46,7 @@ static int number_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int number_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
-  if (Xen_Vector_Size(args) < 1 ||
+  if (Xen_Nil_Eval(args) || Xen_Vector_Size(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return 0;
 

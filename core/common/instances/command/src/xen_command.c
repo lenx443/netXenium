@@ -15,8 +15,8 @@ Xen_INSTANCE *Xen_Command_From_Native(Xen_Native_Func fn_cmd, Xen_INSTANCE *self
     Xen_DEL_REF(cmd);
     return nil;
   }
-  cmd->self = self;
-  cmd->closure = closure;
+  if_nil_neval(self) cmd->self = Xen_ADD_REF(self);
+  if_nil_neval(closure) cmd->closure = Xen_ADD_REF(closure);
   return (Xen_INSTANCE *)cmd;
 }
 
@@ -29,7 +29,7 @@ Xen_INSTANCE *Xen_Command_From_Program(ProgramCode_t pc_cmd, Xen_INSTANCE *self,
     Xen_DEL_REF(cmd);
     return nil;
   }
-  cmd->self = self;
-  cmd->closure = closure;
+  if_nil_neval(self) cmd->self = Xen_ADD_REF(self);
+  if_nil_neval(closure) cmd->closure = Xen_ADD_REF(closure);
   return (Xen_INSTANCE *)cmd;
 }

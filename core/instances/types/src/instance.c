@@ -1,3 +1,4 @@
+#include <execinfo.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -5,6 +6,8 @@
 #include "implement.h"
 #include "instance.h"
 #include "instances_map.h"
+#include "xen_map_implement.h"
+#include "xen_map_instance.h"
 #include "xen_nil.h"
 
 struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
@@ -12,7 +15,8 @@ struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
   if (!impl) { return nil; }
   struct __Instance *inst = malloc(impl->__inst_size);
   if (!inst) { return nil; }
-  inst->__refers = 1;
+  inst->__refers = 0;
+  Xen_ADD_REF(inst);
   inst->__impl = impl;
   inst->__flags = inst->__impl->__inst_default_flags;
   inst->__flags |= flags;

@@ -1,7 +1,6 @@
 #include "basic.h"
 #include "implement.h"
 #include "instance.h"
-#include "instances_map.h"
 #include "run_ctx.h"
 #include "xen_module_implement.h"
 #include "xen_module_instance.h"
@@ -11,14 +10,14 @@
 
 static int module_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   Xen_Module *module = (Xen_Module *)self;
-  module->mod_map = NULL;
+  module->mod_map = nil;
   module->mod_context = nil;
   return 1;
 }
 
 static int module_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   Xen_Module *module = (Xen_Module *)self;
-  if (module->mod_map) __instances_map_free(module->mod_map);
+  if_nil_neval(module->mod_map) Xen_DEL_REF(module->mod_map);
   if_nil_neval(module->mod_context) Xen_DEL_REF(module->mod_context);
   return 1;
 }

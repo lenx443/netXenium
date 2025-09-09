@@ -6,7 +6,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -g -O0 -Wall")
+set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -fno-omit-frame-pointer -g -O0 -Wall")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
@@ -100,6 +100,7 @@ set(SOURCES
 
   # Implementacion del objeto `Map`
   core/common/instances/map/src/xen_map_implement.c
+  core/common/instances/map/src/xen_map.c
 
   # Implementacion del objeto `Boolean`
   core/common/instances/boolean/src/xen_boolean_implement.c
