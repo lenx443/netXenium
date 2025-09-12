@@ -183,6 +183,7 @@ set(SOURCES
 
   # motor de modulos
   core/modules_enginer/src/xen_modules_def.c
+  core/modules_enginer/src/xen_module_load.c
 
   # Instanca del motor de modulos
   core/modules_enginer/instance/src/xen_module_implement.c
@@ -265,3 +266,11 @@ add_executable(test_boolean
 target_include_directories(test_boolean PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(test_boolean PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestBoolean COMMAND test_boolean)
+
+add_executable(test_modules
+  tests/test_modules.c ${SOURCES}
+)
+target_include_directories(test_modules
+PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_modules  PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestModules COMMAND test_modules) 

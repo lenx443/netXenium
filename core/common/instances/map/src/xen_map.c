@@ -13,6 +13,8 @@
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_vector.h"
+#include "xen_vector_implement.h"
 
 Xen_Instance *Xen_Map_New(size_t capacity) {
   Xen_Map *map = (Xen_Map *)__instance_new(&Xen_Map_Implement, nil, 0);
@@ -21,6 +23,11 @@ Xen_Instance *Xen_Map_New(size_t capacity) {
   if (!map->map_buckets) { return nil; }
   for (int i = 0; i < capacity; i++) {
     map->map_buckets[i] = NULL;
+  }
+  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, 0);
+  if_nil_eval(map->map_keys) {
+    free(map->map_buckets);
+    return nil;
   }
   map->map_capacity = capacity;
   return (Xen_Instance *)map;
@@ -53,6 +60,9 @@ Xen_Instance *Xen_Map_From_Pairs_Str_With_Size(size_t size, Xen_Map_Pair_Str *pa
 int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
   if (!pair.key || !pair.value || !Xen_TYPE(pair.key)->__hash) { return 0; }
   Xen_Map *map = (Xen_Map *)map_inst;
+
+  Xen_Vector_Push(map->map_keys, pair.key);
+
   if (!vm_call_native_function(pair.key->__impl->__hash, pair.key, nil)) { return 0; }
   Xen_Instance *hash_inst = xen_register_prop_get("__expose_hash", 0);
   if_nil_eval(hash_inst) { return 0; }
@@ -118,4 +128,9 @@ Xen_Instance *Xen_Map_Get_Str(Xen_Instance *map, char *key) {
   Xen_Instance *result = Xen_Map_Get(map, key_inst);
   Xen_DEL_REF(key_inst);
   return result;
+}
+
+Xen_Instance *Xen_Map_Keys(Xen_Instance *map) {
+  if (!map || Xen_Nil_Eval(map)) { return nil; }
+  return Xen_ADD_REF(((Xen_Map *)map)->map_keys);
 }

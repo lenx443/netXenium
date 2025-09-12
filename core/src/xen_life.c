@@ -8,6 +8,7 @@
 #include "properties.h"
 #include "vm_def.h"
 #include "xen_life.h"
+#include "xen_module_load.h"
 
 int Xen_Init(int argc, char **argv) {
   global_logs = list_new();
@@ -30,6 +31,14 @@ int Xen_Init(int argc, char **argv) {
   program.argc = argc;
 
   if (!Xen_Instance_Init()) {
+    vm_destroy();
+    log_free(NULL);
+    prop_reg_free(prop_register);
+    return 0;
+  }
+
+  if (!Xen_Module_Load_Startup()) {
+    Xen_Instanse_Finish();
     vm_destroy();
     log_free(NULL);
     prop_reg_free(prop_register);

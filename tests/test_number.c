@@ -3,12 +3,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "implement.h"
 #include "instance.h"
 #include "operators.h"
+#include "vm.h"
 #include "xen_boolean.h"
 #include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_register.h"
+#include "xen_string.h"
 
 static void test_number_from_cstring() {
   printf("Testing Number From Strinig\n");
@@ -415,6 +419,20 @@ void test_number_from_ulonglong() {
   }
 }
 
+void test_number_string() {
+  printf("Testing Number String\n");
+  {
+    Xen_Instance *foo = Xen_Number_From_Int(27447);
+    assert(Xen_Nil_NEval(foo));
+    assert(vm_call_native_function(Xen_TYPE(foo)->__string, foo, nil) == 1);
+    Xen_Instance *foo_str = xen_register_prop_get("__expose_string", 0);
+    assert(Xen_Nil_NEval(foo_str));
+    assert(strcmp(Xen_String_As_CString(foo_str), "27447") == 0);
+    Xen_DEL_REF(foo_str);
+    Xen_DEL_REF(foo);
+  }
+}
+
 void test_number_opr_eq() {
   printf("Testing Number Equal Operator\n");
   {
@@ -515,6 +533,7 @@ int main(int argc, char **argv) {
   test_number_from_ulong();
   test_number_from_longlong();
   test_number_from_ulonglong();
+  test_number_string();
   test_number_opr_eq();
   Xen_Finish();
   return 0;

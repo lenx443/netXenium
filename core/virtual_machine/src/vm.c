@@ -106,10 +106,7 @@ Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
   while (current) {
     Xen_Instance *inst = __instances_map_get(current->ctx_instances, name);
-    if_nil_neval(inst) {
-      Xen_ADD_REF(current);
-      return inst;
-    }
+    if_nil_neval(inst) { return inst; }
     current = (RunContext_ptr)current->ctx_caller;
   }
   return nil;
@@ -145,12 +142,12 @@ int vm_run_callable(CALLABLE_ptr callable, Xen_Instance *closure, struct __Insta
 }
 
 void vm_run_ctx(RunContext_ptr ctx) {
+  if (!ctx || !ctx->ctx_code) return;
   if (ctx->ctx_code->callable_type == CALL_NATIVE_FUNCTIIN) {
+    ctx->ctx_reg.reg[1] =
+        ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
     if (ctx->ctx_caller) {
-      ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] =
-          ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
-    } else {
-      ctx->ctx_code->native_callable(ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
+      ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
     }
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,

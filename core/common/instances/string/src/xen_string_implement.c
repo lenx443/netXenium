@@ -29,7 +29,7 @@ static int string_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
 }
 
 static int string_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
-  if (xen_register_prop_set("__expose_string", self, id)) { return 0; }
+  if (!xen_register_prop_set("__expose_string", self, id)) { return 0; }
   return 1;
 }
 

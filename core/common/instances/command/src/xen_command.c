@@ -33,3 +33,9 @@ Xen_INSTANCE *Xen_Command_From_Program(ProgramCode_t pc_cmd, Xen_INSTANCE *self,
   if_nil_neval(closure) cmd->closure = Xen_ADD_REF(closure);
   return (Xen_INSTANCE *)cmd;
 }
+
+int Xen_Command_Call(Xen_Instance *cmd, Xen_Instance *args) {
+  if (Xen_TYPE(cmd) != &Xen_Command_Implement) { return 0; }
+  if (!Xen_Command_Implement.__callable(0, cmd, args)) { return 0; }
+  return 1;
+}

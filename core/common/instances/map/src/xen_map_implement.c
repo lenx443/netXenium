@@ -6,11 +6,13 @@
 #include "run_ctx.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
+#include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
 
 static int map_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   Xen_Map *map = (Xen_Map *)self;
+  map->map_keys = nil;
   map->map_buckets = NULL;
   map->map_capacity = 0;
   return 1;
@@ -18,6 +20,7 @@ static int map_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 
 static int map_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   Xen_Map *map = (Xen_Map *)self;
+  Xen_DEL_REF(map->map_keys);
   if (map->map_buckets) {
     for (int i = 0; i < map->map_capacity; i++) {
       struct __Map_Node *current = map->map_buckets[i];

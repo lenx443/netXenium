@@ -88,7 +88,7 @@ Xen_INSTANCE *__instances_map_get(struct __Instances_Map *inst_map, const char *
   struct __Instances_Hash_Node *current_node = inst_map->__buckets[hash_index];
   while (current_node) {
     if (strcmp(current_node->name, key) == 0)
-      return inst_map->__vec_inst[current_node->index];
+      return Xen_ADD_REF(inst_map->__vec_inst[current_node->index]);
     current_node = current_node->next;
   }
   return nil;

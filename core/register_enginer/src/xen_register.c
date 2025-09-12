@@ -19,7 +19,6 @@ static int __expose_set_handle(const char *name, Xen_INSTANCE *inst) {
 static Xen_INSTANCE *__expose_get_handle(const char *name) {
   Xen_INSTANCE *expose = __instances_map_get(vm->global_props, name);
   if_nil_eval(expose) { return nil; }
-  Xen_ADD_REF(expose);
   return expose;
 }
 
@@ -67,7 +66,6 @@ Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
       Xen_INSTANCE *prop =
           __instances_map_get(((Xen_INSTANCE_MAPPED *)self)->__map, name);
       if_nil_eval(prop) { goto IMPL; }
-      Xen_ADD_REF(prop);
       return prop;
     }
   IMPL:
