@@ -5,9 +5,7 @@
 
 #include "implement.h"
 #include "instance.h"
-#include "instances_map.h"
-#include "xen_map_implement.h"
-#include "xen_map_instance.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 
 struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
@@ -22,7 +20,7 @@ struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
   inst->__flags |= flags;
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED *mapped = (Xen_INSTANCE_MAPPED *)inst;
-    mapped->__map = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+    mapped->__map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
     if (!mapped->__map) {
       free(inst);
       return nil;
@@ -31,7 +29,7 @@ struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
   if (impl->__alloc) {
     if (!impl->__alloc(0, inst, args)) {
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-        __instances_map_free(((Xen_INSTANCE_MAPPED *)inst)->__map);
+        Xen_DEL_REF(((Xen_INSTANCE_MAPPED *)inst)->__map);
       }
       free(inst);
       return nil;
@@ -45,7 +43,7 @@ void __instance_free(struct __Instance *inst) {
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy) inst->__impl->__destroy(0, inst, NULL);
     if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-      __instances_map_free(((Xen_INSTANCE_MAPPED *)inst)->__map);
+      Xen_DEL_REF(((Xen_INSTANCE_MAPPED *)inst)->__map);
     }
     free(inst);
   }

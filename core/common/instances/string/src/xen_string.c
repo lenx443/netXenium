@@ -31,3 +31,13 @@ const char Xen_String_As_Char(Xen_Instance *string) {
   }
   return *((Xen_String *)string)->characters;
 }
+
+unsigned long Xen_String_Hash(Xen_Instance *string_inst) {
+  Xen_String *string = (Xen_String *)string_inst;
+  char *temp = string->characters;
+  unsigned long hash = 0x1505;
+  int c;
+  while ((c = *temp++))
+    hash = ((hash << 5) + hash) + c;
+  return hash;
+}

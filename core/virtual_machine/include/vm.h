@@ -5,14 +5,13 @@
 
 #include "callable.h"
 #include "instance.h"
-#include "instances_map.h"
 #include "run_ctx.h"
 
 #define VM_CHECK_ID(id) ((run_ctx_id(vm_current_ctx())) == (id))
 
 Xen_Instance *vm_current_ctx();
 Xen_Instance *vm_root_ctx();
-bool vm_define_native_command(struct __Instances_Map *, const char *, Xen_Native_Func);
+bool vm_define_native_command(Xen_Instance *, const char *, Xen_Native_Func);
 bool vm_call_native_function(Xen_Native_Func, Xen_INSTANCE *, Xen_Instance *);
 bool vm_call_basic_native_function(Xen_Native_Func, Xen_INSTANCE *);
 Xen_INSTANCE *vm_get_instance(const char *, ctx_id_t);

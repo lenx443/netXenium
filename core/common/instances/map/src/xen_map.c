@@ -13,6 +13,8 @@
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_string_implement.h"
+#include "xen_string_instance.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
 
@@ -63,16 +65,33 @@ int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
 
   Xen_Vector_Push(map->map_keys, pair.key);
 
-  if (!vm_call_native_function(pair.key->__impl->__hash, pair.key, nil)) { return 0; }
-  Xen_Instance *hash_inst = xen_register_prop_get("__expose_hash", 0);
-  if_nil_eval(hash_inst) { return 0; }
+  unsigned long hash_index = 0;
+  if (Xen_TYPE(pair.key) == &Xen_String_Implement) {
+    hash_index = Xen_String_Hash(pair.key);
+  } else {
+    if (!vm_call_native_function(pair.key->__impl->__hash, pair.key, nil)) { return 0; }
+    Xen_Instance *hash_inst = xen_register_prop_get("__expose_hash", 0);
+    if_nil_eval(hash_inst) { return 0; }
 
-  unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
-  Xen_DEL_REF(hash_inst);
+    hash_index = Xen_Number_As_ULong(hash_inst);
+    Xen_DEL_REF(hash_inst);
+  }
+  hash_index = hash_index % map->map_capacity;
   struct __Map_Node *current = map->map_buckets[hash_index];
   while (current) {
-    Xen_Instance *eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_EQ);
-    if_nil_eval(eval) { return 0; }
+    Xen_Instance *eval = nil;
+    if (Xen_TYPE(pair.key) == &Xen_String_Implement) {
+      if (Xen_TYPE(current->key) != &Xen_String_Implement) {
+        eval = Xen_False;
+      } else if (strcmp(((Xen_String *)current->key)->characters,
+                        ((Xen_String *)pair.key)->characters) == 0) {
+        eval = Xen_True;
+      }
+      eval = Xen_False;
+    } else {
+      eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_EQ);
+      if_nil_eval(eval) { return 0; }
+    }
     if (eval == Xen_True) {
       Xen_DEL_REF(current->value);
       current->value = Xen_ADD_REF(pair.value);
@@ -106,22 +125,40 @@ int Xen_Map_Push_Pair_Str(Xen_Instance *map, Xen_Map_Pair_Str pair) {
 
 Xen_Instance *Xen_Map_Get(Xen_Instance *map_inst, Xen_Instance *key) {
   Xen_Map *map = (Xen_Map *)map_inst;
-  if (!vm_call_native_function(Xen_TYPE(key)->__hash, key, nil)) { return nil; }
-  Xen_Instance *hash_inst = xen_register_prop_get("__expose_hash", 0);
-  if_nil_eval(hash_inst) { return nil; }
-  unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
-  Xen_DEL_REF(hash_inst);
+  unsigned long hash_index = 0;
+  if (Xen_TYPE(key) == &Xen_String_Implement) {
+    hash_index = Xen_String_Hash(key);
+  } else {
+    if (!vm_call_native_function(key->__impl->__hash, key, nil)) { return 0; }
+    Xen_Instance *hash_inst = xen_register_prop_get("__expose_hash", 0);
+    if_nil_eval(hash_inst) { return 0; }
+
+    hash_index = Xen_Number_As_ULong(hash_inst);
+    Xen_DEL_REF(hash_inst);
+  }
+  hash_index = hash_index % map->map_capacity;
   struct __Map_Node *current = map->map_buckets[hash_index];
   while (current) {
-    Xen_Instance *eval = Xen_Operator_Eval_Pair(current->key, key, Xen_EQ);
-    if_nil_eval(eval) { return nil; }
+    Xen_Instance *eval = nil;
+    if (Xen_TYPE(key) == &Xen_String_Implement) {
+      if (Xen_TYPE(current->key) != &Xen_String_Implement) {
+        eval = Xen_False;
+      } else if (strcmp(((Xen_String *)current->key)->characters,
+                        ((Xen_String *)key)->characters) == 0) {
+        eval = Xen_True;
+      }
+      eval = Xen_False;
+    } else {
+      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_EQ);
+      if_nil_eval(eval) { return 0; }
+    }
     if (eval == Xen_True) { return Xen_ADD_REF(current->value); }
     current = current->next;
   }
   return nil;
 }
 
-Xen_Instance *Xen_Map_Get_Str(Xen_Instance *map, char *key) {
+Xen_Instance *Xen_Map_Get_Str(Xen_Instance *map, const char *key) {
   if (!key) { return nil; }
   Xen_Instance *key_inst = Xen_String_From_CString(key);
   if_nil_eval(key_inst) { return nil; }

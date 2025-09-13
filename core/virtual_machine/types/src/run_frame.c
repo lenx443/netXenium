@@ -3,6 +3,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_frame.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
@@ -35,7 +36,7 @@ static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
     ctx_new->ctx_args = Xen_Vector_Get_Index(args, 3);
   }
   else ctx_new->ctx_args = NULL;
-  ctx_new->ctx_instances = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  ctx_new->ctx_instances = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!ctx_new->ctx_instances) {
     Xen_DEL_REF(ctx_new->ctx_closure);
     if (ctx_new->ctx_caller) Xen_DEL_REF(ctx_new->ctx_caller);
@@ -51,7 +52,7 @@ static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
 
 static int frame_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_INSTANCE *args) {
   struct RunContext *ctx = (struct RunContext *)self;
-  __instances_map_free(ctx->ctx_instances);
+  Xen_DEL_REF(ctx->ctx_instances);
   Xen_DEL_REF(ctx->ctx_closure);
   if (ctx->ctx_caller) Xen_DEL_REF(ctx->ctx_caller);
   Xen_DEL_REF(ctx->ctx_self);

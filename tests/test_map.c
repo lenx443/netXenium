@@ -5,7 +5,6 @@
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
-#include "xen_map_instance.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
@@ -75,7 +74,7 @@ int main(int argc, char **argv) {
       assert(Xen_Nil_NEval(key_str));
       Xen_Instance *value = Xen_Map_Get(map, key);
       assert(Xen_Nil_NEval(value));
-      assert(vm_call_native_function(Xen_TYPE(value)->__string, key, nil) == 1);
+      assert(vm_call_native_function(Xen_TYPE(value)->__string, value, nil) == 1);
       Xen_Instance *value_str = xen_register_prop_get("__expose_string", 0);
       assert(Xen_Nil_NEval(value_str));
       printf("%s: %s\n", Xen_String_As_CString(key_str),

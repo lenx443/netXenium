@@ -5,7 +5,6 @@
 
 #include "callable.h"
 #include "instance.h"
-#include "instances_map.h"
 
 struct __Instance;
 
@@ -31,7 +30,7 @@ struct __Implement {
   char *__impl_name;
   size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
-  struct __Instances_Map *__props;
+  struct __Instance *__props;
   struct {
     CALLABLE_ptr __eq;
   } __opr;

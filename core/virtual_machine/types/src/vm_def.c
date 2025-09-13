@@ -3,12 +3,12 @@
 #include <stdlib.h>
 
 #include "instance.h"
-#include "instances_map.h"
 #include "logs.h"
 #include "program.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm_def.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_vector.h"
@@ -49,7 +49,7 @@ bool vm_create() {
   }
   Xen_DEL_REF(args);
   vm->root_context = (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
-  vm->global_props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  vm->global_props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!vm->global_props) {
     run_context_stack_free(&vm->vm_ctx_stack);
     free(vm);
@@ -60,7 +60,7 @@ bool vm_create() {
 
 void vm_destroy() {
   if (!vm) return;
-  __instances_map_free(vm->global_props);
+  Xen_DEL_REF(vm->global_props);
   run_context_stack_free(&vm->vm_ctx_stack);
   free(vm);
 }

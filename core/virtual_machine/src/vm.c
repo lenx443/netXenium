@@ -12,7 +12,6 @@
 #include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "instance.h"
-#include "instances_map.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -26,6 +25,7 @@
 #include "vm_register.h"
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
@@ -34,7 +34,7 @@ Xen_Instance *vm_current_ctx() { return run_context_stack_peek_top(&vm->vm_ctx_s
 
 Xen_Instance *vm_root_ctx() { return (Xen_Instance *)vm->root_context; }
 
-bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name,
+bool vm_define_native_command(Xen_Instance *inst_map, const char *name,
                               Xen_Native_Func fun) {
   Xen_INSTANCE *cmd_inst = __instance_new(&Xen_Command_Implement, nil, 0);
   if_nil_eval(cmd_inst) { return false; }
@@ -44,7 +44,7 @@ bool vm_define_native_command(struct __Instances_Map *inst_map, const char *name
     Xen_DEL_REF(cmd_inst);
     return false;
   }
-  if (!__instances_map_add(inst_map, name, cmd_inst)) {
+  if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, cmd_inst})) {
     Xen_DEL_REF(cmd_inst);
     return false;
   }
@@ -105,7 +105,7 @@ Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) { return nil; }
   RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
   while (current) {
-    Xen_Instance *inst = __instances_map_get(current->ctx_instances, name);
+    Xen_Instance *inst = Xen_Map_Get_Str(current->ctx_instances, name);
     if_nil_neval(inst) { return inst; }
     current = (RunContext_ptr)current->ctx_caller;
   }

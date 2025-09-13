@@ -4,13 +4,14 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "xen_map.h"
 #include "xen_register.h"
 #include "xen_string.h"
 
 static int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   struct __Implement *impl = (struct __Implement *)self;
   impl->__impl_name = NULL;
-  impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
+  impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!impl->__props) {
     Xen_DEL_REF(impl);
     return 0;
@@ -26,7 +27,7 @@ static int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args)
 static int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
   struct __Implement *impl = (struct __Implement *)self;
   if (!impl) return 0;
-  if (impl->__props) __instances_map_free(impl->__props);
+  if (impl->__props) Xen_DEL_REF(impl->__props);
   if (impl->__impl_name) free(impl->__impl_name);
   return 1;
 }

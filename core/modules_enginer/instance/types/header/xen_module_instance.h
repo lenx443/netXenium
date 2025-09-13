@@ -2,7 +2,6 @@
 #define __XEN_MODULE_INSTANCE_H__
 
 #include "instance.h"
-#include "instances_map.h"
 
 struct Xen_Module_Instance {
   Xen_INSTANCE_HEAD;

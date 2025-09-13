@@ -4,7 +4,7 @@
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "instances_map.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 
 struct __Implement *__implement_new(char *impl_name) {
@@ -15,8 +15,8 @@ struct __Implement *__implement_new(char *impl_name) {
     free(impl);
     return NULL;
   }
-  impl->__props = __instances_map_new(INSTANCES_MAP_DEFAULT_CAPACITY);
-  if (!impl->__props) {
+  impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if_nil_eval(impl->__props) {
     Xen_DEL_REF(impl);
     return NULL;
   }

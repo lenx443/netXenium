@@ -8,5 +8,6 @@
 Xen_INSTANCE *Xen_String_From_CString(const char *);
 const char *Xen_String_As_CString(Xen_INSTANCE *);
 const char Xen_String_As_Char(Xen_Instance *);
+unsigned long Xen_String_Hash(Xen_Instance *);
 
 #endif
