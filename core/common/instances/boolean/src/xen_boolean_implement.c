@@ -4,6 +4,7 @@
 #include "run_ctx.h"
 #include "xen_boolean_implement.h"
 #include "xen_boolean_instance.h"
+#include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
@@ -48,7 +49,7 @@ Xen_Implement Xen_Boolean_Implement = {
     .__impl_name = "Boolean",
     .__inst_size = sizeof(struct Xen_Boolean_Instance),
     .__inst_default_flags = 0x00,
-    .__props = NULL,
+    .__props = &Xen_Nil_Def,
     .__opr = {NULL},
     .__alloc = boolean_alloc,
     .__destroy = NULL,

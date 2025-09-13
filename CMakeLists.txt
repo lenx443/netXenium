@@ -48,8 +48,6 @@ include_directories(
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
   core/instances/types/include/
-  core/instances/dynamic/vectors/include/
-  core/instances/callable/types/include/
   core/register_enginer/include/
   core/register_enginer/types/header/
   core/modules_enginer/include/
@@ -172,11 +170,6 @@ set(SOURCES
   # Implementacion de estaructura `Instance`
   core/instances/types/src/implement.c
   core/instances/types/src/instance.c
-
-  # Implementaciones de los codigos
-  # fuente de los vectores de las
-  # Instancias
-  core/instances/dynamic/vectors/src/instances_map.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c

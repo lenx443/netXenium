@@ -73,7 +73,7 @@ Xen_INSTANCE *xen_register_prop_get(const char *name, ctx_id_t id) {
       return prop;
     }
   IMPL:
-    if (self->__impl->__props) {
+    if_nil_neval(self->__impl->__props) {
       Xen_INSTANCE *impl_prop = Xen_Map_Get_Str(self->__impl->__props, name);
       if_nil_eval(impl_prop) { return nil; }
       Xen_ADD_REF(impl_prop);

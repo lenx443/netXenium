@@ -35,12 +35,7 @@ static int string_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 
 static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   if (!VM_CHECK_ID(id)) { return 0; }
-  Xen_String *string = (Xen_String *)self;
-  char *temp = string->characters;
-  unsigned long hash = 0x1505;
-  int c;
-  while ((c = *temp++))
-    hash = ((hash << 5) + hash) + c;
+  unsigned long hash = Xen_String_Hash(self);
   Xen_INSTANCE *hash_inst = Xen_Number_From_ULong(hash);
   if_nil_eval(hash_inst) { return 0; }
   if (!xen_register_prop_set("__expose_hash", hash_inst, id)) {
@@ -72,7 +67,7 @@ struct __Implement Xen_String_Implement = {
     .__impl_name = "String",
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
-    .__props = NULL,
+    .__props = &Xen_Nil_Def,
     .__opr = {NULL},
     .__alloc = string_alloc,
     .__destroy = string_destroy,

@@ -5,6 +5,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_map.h"
+#include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
 
@@ -55,7 +56,8 @@ struct __Implement Xen_Basic = {
     .__impl_name = "Basic",
     .__inst_size = sizeof(struct __Implement),
     .__inst_default_flags = 0x00,
-    .__props = NULL,
+    .__props = &Xen_Nil_Def,
+    .__opr = {NULL},
     .__alloc = basic_alloc,
     .__destroy = basic_destroy,
     .__string = basic_string,

@@ -1,6 +1,7 @@
 #include "basic.h"
 #include "implement.h"
 #include "instance.h"
+#include "xen_nil.h"
 #include "xen_nil_implement.h"
 
 struct __Implement Xen_Nil_Implement = {
@@ -8,7 +9,7 @@ struct __Implement Xen_Nil_Implement = {
     .__impl_name = "Nil",
     .__inst_size = sizeof(Xen_Instance),
     .__inst_default_flags = 0x00,
-    .__props = NULL,
+    .__props = &Xen_Nil_Def,
     .__opr = {NULL},
     .__alloc = NULL,
     .__destroy = NULL,
