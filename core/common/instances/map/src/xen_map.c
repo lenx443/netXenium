@@ -81,13 +81,13 @@ int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
   while (current) {
     Xen_Instance *eval = nil;
     if (Xen_TYPE(pair.key) == &Xen_String_Implement) {
-      if (Xen_TYPE(current->key) != &Xen_String_Implement) {
-        eval = Xen_False;
-      } else if (strcmp(((Xen_String *)current->key)->characters,
-                        ((Xen_String *)pair.key)->characters) == 0) {
+      if (Xen_TYPE(current->key) == &Xen_String_Implement &&
+          strcmp(((Xen_String *)current->key)->characters,
+                 ((Xen_String *)pair.key)->characters) == 0) {
         eval = Xen_True;
+      } else {
+        eval = Xen_False;
       }
-      eval = Xen_False;
     } else {
       eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_EQ);
       if_nil_eval(eval) { return 0; }
@@ -141,13 +141,13 @@ Xen_Instance *Xen_Map_Get(Xen_Instance *map_inst, Xen_Instance *key) {
   while (current) {
     Xen_Instance *eval = nil;
     if (Xen_TYPE(key) == &Xen_String_Implement) {
-      if (Xen_TYPE(current->key) != &Xen_String_Implement) {
-        eval = Xen_False;
-      } else if (strcmp(((Xen_String *)current->key)->characters,
-                        ((Xen_String *)key)->characters) == 0) {
+      if (Xen_TYPE(current->key) == &Xen_String_Implement &&
+          strcmp(((Xen_String *)current->key)->characters,
+                 ((Xen_String *)key)->characters) == 0) {
         eval = Xen_True;
+      } else {
+        eval = Xen_False;
       }
-      eval = Xen_False;
     } else {
       eval = Xen_Operator_Eval_Pair(current->key, key, Xen_EQ);
       if_nil_eval(eval) { return 0; }
