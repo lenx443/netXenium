@@ -7,6 +7,7 @@
 #include "ir_bytecode.h"
 #include "logs.h"
 #include "vm_consts.h"
+#include "xen_vector.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "AST Compiler", msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, "AST Compiler", msg, ##__VA_ARGS__)
@@ -16,7 +17,6 @@ static int compile_cmd(block_list_ptr, block_node_ptr, AST_Node_t *);
 
 static int store_arg_literal(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
 static int store_arg_property(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
-static int store_arg_concat(block_list_ptr, block_node_ptr, ArgExpr_t *, int);
 
 int ast_compile(block_list_ptr block_result, block_node_ptr *block, AST_Node_t **ast,
                 size_t ast_count) {
@@ -39,14 +39,14 @@ static int compile_if(block_list_ptr blocks, block_node_ptr *block, AST_Node_t *
     error("No se pudo compilar la condional");
     return 0;
   }
-  int b1_n = blocks->consts->c_names_size;
+  int b1_n = Xen_Vector_Size(blocks->consts->c_names);
   vm_consts_push_name(blocks->consts, ast->if_conditional.condition->pair.c1->content);
   if (ast->if_conditional.condition->pair.c1->type == BOOL_LITERAL) {
     ir_add_load_string((*block)->instr_array, 1, b1_n);
   } else if (ast->if_conditional.condition->pair.c1->type == BOOL_PROPERTY) {
     ir_add_load_prop((*block)->instr_array, 1, b1_n);
   }
-  int b2_n = blocks->consts->c_names_size;
+  int b2_n = Xen_Vector_Size(blocks->consts->c_names);
   vm_consts_push_name(blocks->consts, ast->if_conditional.condition->pair.c2->content);
   if (ast->if_conditional.condition->pair.c2->type == BOOL_LITERAL) {
     ir_add_load_string((*block)->instr_array, 2, b2_n);
@@ -78,7 +78,7 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
     error("No se pudo compilar el commndo");
     return 0;
   }
-  int cmd_name_index = blocks->consts->c_names_size;
+  int cmd_name_index = Xen_Vector_Size(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, ast->cmd.cmd_name)) return 0;
   if (!ir_add_load_string(block->instr_array, 0, cmd_name_index)) return 0;
   for (int arg_iterator = 0; arg_iterator < ast->cmd.arg_count; arg_iterator++) {
@@ -90,9 +90,6 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
     case ARG_PROPERTY:
       if (!store_arg_property(blocks, block, arg, arg_iterator + 1)) return 0;
       break;
-    case ARG_CONCAT:
-      if (!store_arg_concat(blocks, block, arg, arg_iterator + 1)) return 0;
-      break;
     }
   }
   if (!ir_add_fun_call(block->instr_array, ast->cmd.arg_count)) return 0;
@@ -101,7 +98,7 @@ int compile_cmd(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
 
 int store_arg_literal(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                       int reg) {
-  int literal_index = blocks->consts->c_names_size;
+  int literal_index = Xen_Vector_Size(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, arg->literal)) return 0;
   if (!ir_add_load_string(block->instr_array, reg, literal_index)) return 0;
   return 1;
@@ -109,36 +106,8 @@ int store_arg_literal(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *ar
 
 int store_arg_property(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
                        int reg) {
-  int prop_name_index = blocks->consts->c_names_size;
+  int prop_name_index = Xen_Vector_Size(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, arg->property)) return 0;
   if (!ir_add_load_prop(block->instr_array, reg, prop_name_index)) return 0;
-  return 1;
-}
-
-int store_arg_concat(block_list_ptr blocks, block_node_ptr block, ArgExpr_t *arg,
-                     int reg) {
-  if (arg->concat.count <= 0) return 1;
-  switch (arg->concat.parts[0]->arg_type) {
-  case ARG_LITERAL:
-    if (!store_arg_literal(blocks, block, arg->concat.parts[0], reg)) return 0;
-    break;
-  case ARG_PROPERTY:
-    if (!store_arg_property(blocks, block, arg->concat.parts[0], reg)) return 0;
-    break;
-  default: return 0;
-  }
-  for (int i = 1; i < arg->concat.count; i++) {
-    ArgExpr_t *current_arg = arg->concat.parts[i];
-    switch (current_arg->arg_type) {
-    case ARG_LITERAL:
-      if (!store_arg_literal(blocks, block, current_arg, reg + 1)) return 0;
-      break;
-    case ARG_PROPERTY:
-      if (!store_arg_property(blocks, block, current_arg, reg + 1)) return 0;
-      break;
-    default: return 0;
-    }
-    if (!ir_add_reg_concat(block->instr_array, reg, reg, reg + 1)) return 0;
-  }
   return 1;
 }

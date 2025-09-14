@@ -12,7 +12,8 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
     error("lista de bloques nula");
     return 0;
   }
-  code->consts = vm_consts_new();
+  code->consts =
+      vm_consts_from_values(blocks->consts->c_names, blocks->consts->c_instances);
   if (!code->consts) {
     error("Memoria insufciente");
     return 0;
@@ -22,21 +23,6 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
     error("Memoria insufciente");
     vm_consts_free(code->consts);
     return 0;
-  }
-  for (int name_iterator = 0; name_iterator < blocks->consts->c_names_size;
-       name_iterator++) {
-    if (!vm_consts_push_name(code->consts, blocks->consts->c_names[name_iterator])) {
-      error("Memoria insufciente");
-      vm_consts_free(code->consts);
-      bc_free(code->code);
-      return 0;
-    }
-  }
-  for (int instance_iterator = 0; instance_iterator < blocks->consts->c_instances_size;
-       instance_iterator++) {
-    if (!vm_consts_push_instance(code->consts,
-                                 blocks->consts->c_instances[instance_iterator], true))
-      ;
   }
   block_node_ptr current_block = blocks->head;
   while (current_block) {

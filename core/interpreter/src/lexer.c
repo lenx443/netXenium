@@ -85,19 +85,6 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_text[len] = '\0';
     token.tkn_type = TKN_STRING;
     lexer->pos++;
-  } else if (c == '@') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '@') {
-      lexer->pos++;
-      token.tkn_type = TKN_CONCAT;
-      strcpy(token.tkn_text, "@@");
-    } else {
-      token.tkn_text[0] = '@';
-      token.tkn_text[1] = lexer->src[lexer->pos];
-      token.tkn_text[2] = '\0';
-      lexer->pos++;
-      token.tkn_type = TKN_UNDEFINED;
-    }
   } else if (c == '{') {
     lexer->pos++;
     token.tkn_type = TKN_LBRACE;

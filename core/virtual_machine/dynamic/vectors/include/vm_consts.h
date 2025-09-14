@@ -7,18 +7,14 @@
 struct __Instance;
 
 typedef struct {
-  const char **c_names;
-  size_t c_names_size;
-  size_t c_names_capacity;
-
-  struct __Instance **c_instances;
-  size_t c_instances_size;
-  size_t c_instances_capacity;
+  struct __Instance *c_names;
+  struct __Instance *c_instances;
 } vm_Consts;
 
 typedef vm_Consts *vm_Consts_ptr;
 
 vm_Consts_ptr vm_consts_new();
+vm_Consts_ptr vm_consts_from_values(struct __Instance *, struct __Instance *);
 bool vm_consts_push_name(vm_Consts_ptr, const char *);
 bool vm_consts_push_instance(vm_Consts_ptr, struct __Instance *, bool);
 void vm_consts_free(vm_Consts_ptr);

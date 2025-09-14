@@ -5,6 +5,7 @@
 
 #include "instance.h"
 
+Xen_Instance *Xen_Vector_New();
 Xen_Instance *Xen_Vector_From_Array_With_Null(Xen_Instance **);
 Xen_Instance *Xen_Vector_From_Array_With_Size(size_t, Xen_Instance **);
 int Xen_Vector_Push(Xen_Instance *, Xen_Instance *);

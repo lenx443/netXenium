@@ -25,7 +25,6 @@ typedef struct BoolExpr_s BoolExpr_t;
 typedef enum {
   ARG_LITERAL = 0,
   ARG_PROPERTY,
-  ARG_CONCAT,
 } ArgExprType;
 
 struct ArgExpr_s {
@@ -33,10 +32,6 @@ struct ArgExpr_s {
   union {
     const char *literal;
     const char *property;
-    struct {
-      struct ArgExpr_s **parts;
-      int count;
-    } concat;
   };
 };
 
@@ -78,7 +73,6 @@ BoolExpr_t *ast_make_bool_pair(BoolExpr_t *, BoolExpr_t *);
 
 ArgExpr_t *ast_make_arg_literal(const char *);
 ArgExpr_t *ast_make_arg_property(const char *);
-ArgExpr_t *ast_make_arg_concat(ArgExpr_t **, int count);
 
 void ast_free(AST_Node_t *);
 void ast_free_block(AST_Node_t **, size_t);

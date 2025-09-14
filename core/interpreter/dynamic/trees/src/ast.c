@@ -63,14 +63,6 @@ ArgExpr_t *ast_make_arg_property(const char *property) {
   return node;
 }
 
-ArgExpr_t *ast_make_arg_concat(ArgExpr_t **parts, int count) {
-  ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
-  node->arg_type = ARG_CONCAT;
-  node->concat.parts = parts;
-  node->concat.count = count;
-  return node;
-}
-
 void ast_free(AST_Node_t *ast) {
   if (!ast) return;
   if (ast->ast_type == AST_IF) {
@@ -108,11 +100,6 @@ void ast_free_arg(ArgExpr_t *arg) {
   switch (arg->arg_type) {
   case ARG_LITERAL: free((void *)arg->literal); break;
   case ARG_PROPERTY: free((void *)arg->property); break;
-  case ARG_CONCAT:
-    for (int i = 0; i < arg->concat.count; ++i)
-      ast_free_arg(arg->concat.parts[i]);
-    free(arg->concat.parts);
-    break;
   }
   free(arg);
 }
@@ -163,13 +150,6 @@ static void print_arg_expr(const ArgExpr_t *arg, int indent) {
   case ARG_PROPERTY:
     print_indent(indent);
     printf("ArgProperty: \"%s\"\n", arg->property ? arg->property : "NULL");
-    break;
-  case ARG_CONCAT:
-    print_indent(indent);
-    printf("ArgConcat:\n");
-    for (int i = 0; i < arg->concat.count; ++i) {
-      print_arg_expr(arg->concat.parts[i], indent + 1);
-    }
     break;
   default: print_indent(indent); printf("ArgExpr: Unknown type\n");
   }

@@ -9,7 +9,6 @@
 #include "bc_instruct.h"
 #include "bytecode.h"
 #include "callable.h"
-#include "garbage_collector.h"
 #include "gc_pointer_list.h"
 #include "instance.h"
 #include "list.h"
@@ -27,6 +26,8 @@
 #include "xen_command_instance.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_string.h"
+#include "xen_vector.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
@@ -152,8 +153,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
                                      &&JUMP,        &&JUMP_IF_SQUAD, &&LOAD_IMM,
-                                     &&LOAD_STRING, &&LOAD_PROP,     &&STRING_CONCAT,
-                                     &&REG_CONCAT,  &&HALT};
+                                     &&LOAD_STRING, &&LOAD_PROP,     &&HALT};
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
     GCPointer_node_ptr gc_array = NULL;
@@ -182,6 +182,10 @@ void vm_run_ctx(RunContext_ptr ctx) {
       continue;
     }
     FUN_CALL: {
+      if (!ctx->ctx_reg.point_flag[0]) {
+        ctx->ctx_running = 0;
+        continue;
+      }
       char *fun_name = (char *)ctx->ctx_reg.reg[0];
       const Command *cmd = NULL;
       for (int i = 0; cmds_table[i] != NULL; i++) {
@@ -262,23 +266,32 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= pc.consts->c_names_size) {
+      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
         ctx->ctx_running = 0;
         continue;
       }
-      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] =
-          (reg_t)pc.consts->c_names[instr.bci_src2];
+      if (ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_src2)]) {
+        Xen_DEL_REF(ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_src2)]);
+      }
+      Xen_Instance *c_name = Xen_Vector_Get_Index(pc.consts->c_names, instr.bci_src2);
+      if_nil_eval(c_name) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)c_name;
+      ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
       continue;
     LOAD_PROP:
       if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= pc.consts->c_names_size) {
+      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
         ctx->ctx_running = 0;
         continue;
       }
-      const char *prop_key = pc.consts->c_names[instr.bci_src2];
+      const char *prop_key = Xen_String_As_CString(
+          Xen_Vector_Peek_Index(pc.consts->c_names, instr.bci_src2));
       prop_struct *prop = prop_reg_value(prop_key, *prop_register, 1);
       if (!prop) {
         error("No se encontro la propiedad '%s' no se encontro", prop_key);
@@ -287,97 +300,6 @@ void vm_run_ctx(RunContext_ptr ctx) {
       }
       ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)prop->value;
       continue;
-    STRING_CONCAT: {
-      if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      if (BC_REG_GET_VALUE(instr.bci_src1) >= ctx->ctx_reg.capacity) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      if (instr.bci_src2 >= pc.consts->c_names_size) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      uint8_t src_reg = BC_REG_GET_VALUE(instr.bci_src1);
-      char *reg1_value;
-      if (ctx->ctx_reg.point_flag[src_reg]) {
-        reg1_value = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[src_reg])->gc_ptr;
-      } else {
-        reg1_value = (char *)ctx->ctx_reg.reg[src_reg];
-      }
-      const char *reg2_value = pc.consts->c_names[instr.bci_src2];
-      int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
-      char buffer[str_size];
-      strcpy(buffer, reg1_value);
-      strcat(buffer, reg2_value);
-      buffer[str_size - 1] = '\0';
-      GCPointer_ptr temp = gc_pointer_list_append(&gc_array, buffer, str_size);
-      if (!temp) {
-        garbage_collector_run_as_registers(&gc_array, ctx);
-        temp = gc_pointer_list_append(&gc_array, buffer, str_size);
-        if (!temp) {
-          error("Memoria insuficiente");
-          ctx->ctx_running = 0;
-          continue;
-        }
-      }
-      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)temp;
-      ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
-      continue;
-    }
-    REG_CONCAT: {
-      if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      if (BC_REG_GET_VALUE(instr.bci_src1) >= ctx->ctx_reg.capacity) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      if (BC_REG_GET_VALUE(instr.bci_src2) >= ctx->ctx_reg.capacity) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      uint8_t src1_reg = BC_REG_GET_VALUE(instr.bci_src1);
-      uint8_t src2_reg = BC_REG_GET_VALUE(instr.bci_src2);
-      char *reg1_value;
-      if (ctx->ctx_reg.point_flag[src1_reg]) {
-        reg1_value = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[src1_reg])->gc_ptr;
-      } else {
-        reg1_value = (char *)ctx->ctx_reg.reg[src1_reg];
-      }
-      char *reg2_value;
-      if (ctx->ctx_reg.point_flag[src2_reg]) {
-        reg2_value = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[src2_reg])->gc_ptr;
-      } else {
-        reg2_value = (char *)ctx->ctx_reg.reg[src2_reg];
-      }
-      int str_size = strlen(reg1_value) + strlen(reg2_value) + 1;
-      char *buffer = malloc(str_size);
-      if (!buffer) {
-        error("memoria insuficiente");
-        ctx->ctx_running = 0;
-        continue;
-      }
-      strcpy(buffer, reg1_value);
-      strcat(buffer, reg2_value);
-      buffer[str_size - 1] = '\0';
-      GCPointer_ptr temp = gc_pointer_list_append(&gc_array, buffer, str_size);
-      if (!temp) {
-        garbage_collector_run_as_registers(&gc_array, ctx);
-        temp = gc_pointer_list_append(&gc_array, buffer, str_size);
-        if (!temp) {
-          error("Memoria insuficiente");
-          ctx->ctx_running = 0;
-          continue;
-        }
-      }
-      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)temp;
-      ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
-      continue;
-    }
     HALT:
       ctx->ctx_running = 0;
       continue;

@@ -8,6 +8,12 @@
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
+Xen_Instance *Xen_Vector_New() {
+  Xen_Instance *vector = __instance_new(&Xen_Vector_Implement, nil, 0);
+  if_nil_eval(vector) return nil;
+  return vector;
+}
+
 Xen_Instance *Xen_Vector_From_Array_With_Null(Xen_Instance **array) {
   if (!array) { return nil; }
   Xen_INSTANCE *vector = __instance_new(&Xen_Vector_Implement, nil, 0);

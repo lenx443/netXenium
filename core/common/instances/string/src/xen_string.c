@@ -19,6 +19,23 @@ Xen_INSTANCE *Xen_String_From_CString(const char *cstring) {
   return (Xen_INSTANCE *)string;
 }
 
+Xen_Instance *Xen_String_From_Concat(Xen_Instance *s1, Xen_Instance *s2) {
+  if (!s1 || !s2) { return nil; }
+  size_t length = ((Xen_String *)s1)->length + ((Xen_String *)s2)->length + 1;
+  char *buf = malloc(length);
+  if (!buf) { return nil; }
+  strcpy(buf, ((Xen_String *)s1)->characters);
+  strcat(buf, ((Xen_String *)s2)->characters);
+  buf[length - 1] = '\0';
+  Xen_Instance *string = Xen_String_From_CString(buf);
+  if_nil_eval(string) {
+    free(buf);
+    return nil;
+  }
+  free(buf);
+  return string;
+}
+
 const char *Xen_String_As_CString(Xen_INSTANCE *string) {
   if (!string) { return NULL; }
   return ((Xen_String *)string)->characters;

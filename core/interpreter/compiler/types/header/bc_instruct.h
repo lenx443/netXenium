@@ -12,8 +12,6 @@ typedef enum {
   OP_LOAD_IMM,
   OP_LOAD_STRING,
   OP_LOAD_PROP,
-  OP_STRING_CONCAT,
-  OP_REG_CONCAT,
   OP_HALT,
 } bc_opcode;
 

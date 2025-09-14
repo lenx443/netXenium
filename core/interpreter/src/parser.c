@@ -24,7 +24,7 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
         parser_next(p);
         return 1;
       }
-      ArgExpr_t *arg = parser_concat(p);
+      ArgExpr_t *arg = parser_arg(p);
       if (!arg) {
         free(identifier_name);
         return 0;
@@ -133,29 +133,6 @@ int parser_if_cindional(Parser *p, AST_Node_t **ast) {
   }
   *ast = ast_make_if_conditional(ast_make_bool_pair(b1, b2), body, count);
   return 1;
-}
-
-ArgExpr_t *parser_concat(Parser *p) {
-  ArgExpr_t **parts = NULL;
-  int count = 0, cap = 0;
-  do {
-    ArgExpr_t *part = parser_arg(p);
-    if (!part) break;
-    if (count == cap) {
-      cap = cap ? cap * 2 : 4;
-      parts = realloc(parts, sizeof(ArgExpr_t *) * cap);
-    }
-    parts[count++] = part;
-    if (p->token.tkn_type == TKN_CONCAT)
-      parser_next(p);
-    else { break; }
-  } while (1);
-  if (count == 1) {
-    ArgExpr_t *single = parts[0];
-    free(parts);
-    return single;
-  }
-  return ast_make_arg_concat(parts, count);
 }
 
 ArgExpr_t *parser_arg(Parser *p) {

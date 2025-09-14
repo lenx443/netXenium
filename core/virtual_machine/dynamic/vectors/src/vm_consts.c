@@ -4,62 +4,52 @@
 
 #include "instance.h"
 #include "vm_consts.h"
+#include "xen_nil.h"
+#include "xen_string.h"
+#include "xen_vector.h"
 
 vm_Consts_ptr vm_consts_new() {
   vm_Consts_ptr consts = malloc(sizeof(vm_Consts));
   if (!consts) { return NULL; }
-  consts->c_names = NULL;
-  consts->c_names_size = 0;
-  consts->c_names_capacity = 0;
-  consts->c_instances = NULL;
-  consts->c_instances_size = 0;
-  consts->c_instances_capacity = 0;
+  consts->c_names = Xen_Vector_New();
+  if_nil_eval(consts->c_names) { return NULL; }
+  consts->c_instances = Xen_Vector_New();
+  if_nil_eval(consts->c_instances) { return NULL; }
+  return consts;
+}
+
+vm_Consts_ptr vm_consts_from_values(struct __Instance *c_names,
+                                    struct __Instance *c_instances) {
+  vm_Consts_ptr consts = malloc(sizeof(vm_Consts));
+  if (!consts) { return NULL; }
+  consts->c_names = Xen_ADD_REF(c_names);
+  consts->c_instances = Xen_ADD_REF(c_instances);
   return consts;
 }
 
 bool vm_consts_push_name(vm_Consts_ptr consts, const char *c_name) {
   if (!consts || !c_name) { return false; }
-  if (consts->c_names_size >= consts->c_names_capacity) {
-    size_t new_capacity =
-        consts->c_names_capacity == 0 ? 4 : consts->c_names_capacity * 2;
-    const char **new_mem = realloc(consts->c_names, sizeof(char *) * new_capacity);
-    if (!new_mem) { return false; }
-    consts->c_names = new_mem;
-    consts->c_names_capacity = new_capacity;
+  Xen_Instance *c_name_inst = Xen_String_From_CString(c_name);
+  if_nil_eval(c_name_inst) { return false; }
+  if (!Xen_Vector_Push(consts->c_names, c_name_inst)) {
+    Xen_DEL_REF(c_name_inst);
+    return false;
   }
-  consts->c_names[consts->c_names_size] = strdup(c_name);
-  if (!consts->c_names[consts->c_names_size]) { return false; }
-  consts->c_names_size++;
+  Xen_DEL_REF(c_name_inst);
   return true;
 }
 
 bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance,
                              bool ref) {
   if (!consts || !c_instance) { return false; };
-  if (consts->c_instances_size >= consts->c_instances_capacity) {
-    size_t new_capacity =
-        consts->c_instances_capacity == 0 ? 4 : consts->c_instances_capacity * 2;
-    struct __Instance **new_mem =
-        realloc(consts->c_instances, sizeof(struct __Instance *) * new_capacity);
-    if (!new_mem) { return false; }
-    consts->c_instances = new_mem;
-    consts->c_instances_capacity = new_capacity;
-  }
-  if (ref) Xen_ADD_REF(c_instance);
-  consts->c_instances[consts->c_instances_size++] = c_instance;
+  if (!Xen_Vector_Push(consts->c_instances, c_instance)) { return NULL; }
   return true;
 }
 
 void vm_consts_free(vm_Consts_ptr consts) {
   if (!consts) { return; }
-  for (int i = 0; i < consts->c_names_size; i++) {
-    free((void *)consts->c_names[i]);
-  }
-  for (int i = 0; i < consts->c_instances_size; i++) {
-    Xen_DEL_REF(consts->c_instances[i]);
-  }
-  free(consts->c_names);
-  free(consts->c_instances);
+  Xen_DEL_REF(consts->c_names);
+  Xen_DEL_REF(consts->c_instances);
   free(consts);
   consts = NULL;
 }
