@@ -186,43 +186,36 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      char *fun_name = (char *)ctx->ctx_reg.reg[0];
-      const Command *cmd = NULL;
-      for (int i = 0; cmds_table[i] != NULL; i++) {
-        if (strcmp(cmds_table[i]->name, fun_name) == 0) {
-          cmd = cmds_table[i];
-          break;
-        }
-      }
-      if (cmd == NULL) {
-        error("No se encontro el commando '%s'", fun_name);
+      Xen_Instance *fun_name = (Xen_Instance *)ctx->ctx_reg.reg[0];
+      Xen_Instance *cmd = Xen_Map_Get(ctx->ctx_instances, fun_name);
+      if_nil_eval(cmd) {
         ctx->ctx_running = 0;
         continue;
       }
       int arg_num = instr.bci_src2;
-      if (arg_num < cmd->args_len[0] || arg_num > cmd->args_len[1]) {
-        error("Numero de argumentos invalido");
+      Xen_Instance *args = Xen_Vector_New();
+      if_nil_eval(args) {
+        Xen_DEL_REF(cmd);
         ctx->ctx_running = 0;
         continue;
       }
-      LIST_ptr args = list_new();
-      if (!list_push_back_string_node(args, fun_name)) {
-        error("Memoria insuficiente");
-        ctx->ctx_running = 0;
-        continue;
-      }
+      bool success = true;
       for (int i = 1; i <= arg_num; i++) {
-        char *arg_val;
-        if (ctx->ctx_reg.point_flag[i]) {
-          arg_val = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[i])->gc_ptr;
-        } else {
-          arg_val = (char *)ctx->ctx_reg.reg[i];
+        if (!ctx->ctx_reg.point_flag[i]) {
+          success = false;
+          break;
         }
-        if (!list_push_back_string_node(args, arg_val)) {
-          error("Memoria insuficiente");
-          ctx->ctx_running = 0;
-          continue;
+        Xen_Instance *arg_val = (Xen_Instance *)ctx->ctx_reg.reg[i];
+        if (!Xen_Vector_Push(args, arg_val)) {
+          success = false;
+          break;
         }
+      }
+      if (!success) {
+        Xen_DEL_REF(args);
+        Xen_DEL_REF(cmd);
+        ctx->ctx_running = 0;
+        continue;
       }
       int ret = ctx->ctx_reg.reg[1] = cmd->func(args);
       if (ret != EXIT_SUCCESS) {
@@ -298,7 +291,13 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)prop->value;
+      Xen_Instance *prop_name = Xen_String_From_CString(prop->value);
+      if_nil_eval(prop_name) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = (reg_t)prop_name;
+      ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 1;
       continue;
     HALT:
       ctx->ctx_running = 0;
