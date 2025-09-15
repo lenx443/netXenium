@@ -53,15 +53,6 @@ int ir_add_nop(IR_Bytecode_Array_ptr ir) {
                               NULL,
                           });
 }
-int ir_add_syscall(IR_Bytecode_Array_ptr ir) {
-  return ir_add_instr(ir, (IR_Instruct_t){
-                              OP_SYSCALL,
-                              0,
-                              0,
-                              0,
-                              NULL,
-                          });
-}
 int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
   return ir_add_instr(ir, (IR_Instruct_t){
                               OP_FUN_CALL,

@@ -56,6 +56,14 @@ int Xen_Vector_Push(Xen_Instance *vector_inst, Xen_Instance *value) {
   return 1;
 }
 
+int Xen_Vector_Push_Vector(Xen_Instance *vector_dst, Xen_Instance *vector_src) {
+  if (!vector_dst || !vector_dst) { return 0; }
+  for (int i = 0; i < Xen_Vector_Size(vector_src); i++) {
+    if (!Xen_Vector_Push(vector_dst, Xen_Vector_Peek_Index(vector_src, i))) { return 0; }
+  }
+  return 1;
+}
+
 Xen_Instance *Xen_Vector_Get_Index(Xen_Instance *vector, size_t index) {
   if (!vector || index >= ((Xen_Vector *)vector)->size) { return nil; }
   Xen_ADD_REF(((Xen_Vector *)vector)->values[index]);

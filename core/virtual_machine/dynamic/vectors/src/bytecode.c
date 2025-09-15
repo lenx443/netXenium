@@ -58,14 +58,6 @@ int bc_add_nop(Bytecode_Array_ptr bc) {
                               0,
                           }});
 }
-int bc_add_syscall(Bytecode_Array_ptr bc) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_SYSCALL,
-                              0,
-                              0,
-                              0,
-                          }});
-}
 int bc_add_fun_call(Bytecode_Array_ptr bc, int args) {
   return bc_add_instr(bc, (bc_Instruct_t){{
                               OP_FUN_CALL,

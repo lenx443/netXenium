@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "instance.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "xen_command.h"
 #include "xen_life.h"
@@ -12,9 +13,12 @@
 
 int main(int argc, char **argv) {
   assert(Xen_Init(argc, argv) == 1);
-  Xen_Instance *core_mod = Xen_Map_Get_Str(vm->root_context->ctx_instances, "core");
-  assert(Xen_Nil_NEval(core_mod));
-  Xen_Instance *echo_cmd = Xen_Map_Get_Str(((Xen_Module *)core_mod)->mod_map, "echo");
+  printf("root id = %zd, root = %p\n", vm->root_context->ctx_id, vm->root_context);
+  printf("current id = %zd, current = %p\n", vm->vm_ctx_stack->ctx->ctx_id,
+         vm->vm_ctx_stack->ctx);
+  Xen_Instance *echo_cmd = vm_get_instance(
+      "echo", vm->vm_ctx_stack->ctx
+                  ->ctx_id); // Xen_Map_Get_Str(vm->root_context->ctx_instances, "echo");
   assert(Xen_Nil_NEval(echo_cmd));
   Xen_Instance *text = Xen_String_From_CString("Hola Mundo\n");
   assert(Xen_Nil_NEval(text));
@@ -24,7 +28,6 @@ int main(int argc, char **argv) {
   Xen_Command_Call(echo_cmd, args);
   Xen_DEL_REF(args);
   Xen_DEL_REF(echo_cmd);
-  Xen_DEL_REF(core_mod);
   Xen_Finish();
   return 0;
 }

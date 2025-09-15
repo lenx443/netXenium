@@ -24,7 +24,6 @@ void bc_clear(Bytecode_Array_ptr);
 void bc_free(const Bytecode_Array_ptr);
 int bc_add_instr(Bytecode_Array_ptr, bc_Instruct_t);
 int bc_add_nop(Bytecode_Array_ptr);
-int bc_add_syscall(Bytecode_Array_ptr);
 int bc_add_fun_call(Bytecode_Array_ptr, int);
 int bc_add_load_imm(Bytecode_Array_ptr, int, int);
 int bc_add_load_string(Bytecode_Array_ptr, int, int);

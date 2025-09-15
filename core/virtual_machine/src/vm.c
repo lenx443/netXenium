@@ -1,17 +1,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "GCPointer.h"
 #include "bc_instruct.h"
 #include "bytecode.h"
 #include "callable.h"
-#include "gc_pointer_list.h"
 #include "instance.h"
-#include "list.h"
 #include "logs.h"
 #include "program.h"
 #include "program_code.h"
@@ -105,9 +102,11 @@ bool vm_call_basic_native_function(Xen_Native_Func func, struct __Instance *self
 Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) { return nil; }
   RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
+  printf("c = %p\n", current);
   while (current) {
     Xen_Instance *inst = Xen_Map_Get_Str(current->ctx_instances, name);
     if_nil_neval(inst) { return inst; }
+    printf("pase");
     current = (RunContext_ptr)current->ctx_closure;
   }
   return nil;
@@ -151,11 +150,10 @@ void vm_run_ctx(RunContext_ptr ctx) {
       ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
     }
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
-    static void *dispatch_table[] = {&&NOP,      &&SYSCALL,     &&FUN_CALL,  &&JUMP,
-                                     &&LOAD_IMM, &&LOAD_STRING, &&LOAD_PROP, &&HALT};
+    static void *dispatch_table[] = {&&NOP,         &&FUN_CALL,  &&JUMP, &&LOAD_IMM,
+                                     &&LOAD_STRING, &&LOAD_PROP, &&HALT};
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
-    GCPointer_node_ptr gc_array = NULL;
     while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size && !program.closed) {
       bc_Instruct_t instr = pc.code->bc_array[ctx->ctx_ip++];
       if (instr.bci_opcode > OP_HALT) {
@@ -166,20 +164,6 @@ void vm_run_ctx(RunContext_ptr ctx) {
       goto *dispatch_table[instr.bci_opcode];
     NOP:
       continue;
-    SYSCALL: {
-      reg_t syscall_num = ctx->ctx_reg.reg[0];
-      reg_t args[6];
-      for (int i = 1; i <= 6; i++) {
-        if (ctx->ctx_reg.point_flag[i]) {
-          args[i - 1] = (reg_t)((GCPointer_ptr)ctx->ctx_reg.reg[i])->gc_ptr;
-        } else {
-          args[i - 1] = ctx->ctx_reg.reg[i];
-        }
-      }
-      ctx->ctx_reg.reg[1] =
-          syscall(syscall_num, args[0], args[1], args[2], args[3], args[4], args[5]);
-      continue;
-    }
     FUN_CALL: {
       if (!ctx->ctx_reg.point_flag[0]) {
         ctx->ctx_running = 0;
@@ -302,6 +286,5 @@ void vm_run_ctx(RunContext_ptr ctx) {
       if (ctx->ctx_reg.point_flag[i]) Xen_DEL_REF(ctx->ctx_reg.reg[i]);
     }
     log_show_and_clear(NULL);
-    gc_pointer_list_free(gc_array);
   }
 }

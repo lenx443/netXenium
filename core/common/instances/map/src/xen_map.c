@@ -123,6 +123,24 @@ int Xen_Map_Push_Pair_Str(Xen_Instance *map, Xen_Map_Pair_Str pair) {
   return 1;
 }
 
+int Xen_Map_Push_Map(Xen_Instance *map_dst, Xen_Instance *map_src) {
+  if (!map_dst || !map_src) { return 0; }
+  Xen_Instance *src_keys = Xen_Map_Keys(map_src);
+  for (int i = 0; i < Xen_Vector_Size(src_keys); i++) {
+    Xen_Instance *key = Xen_Vector_Get_Index(src_keys, i);
+    Xen_Instance *value = Xen_Map_Get(map_src, key);
+    if (!Xen_Map_Push_Pair(map_dst, (Xen_Map_Pair){key, value})) {
+      Xen_DEL_REF(value);
+      Xen_DEL_REF(key);
+      return 0;
+    }
+    Xen_DEL_REF(value);
+    Xen_DEL_REF(key);
+  }
+  Xen_DEL_REF(src_keys);
+  return 1;
+}
+
 Xen_Instance *Xen_Map_Get(Xen_Instance *map_inst, Xen_Instance *key) {
   Xen_Map *map = (Xen_Map *)map_inst;
   unsigned long hash_index = 0;

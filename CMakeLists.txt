@@ -143,10 +143,8 @@ set(SOURCES
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
   core/virtual_machine/src/vm.c
-  core/virtual_machine/src/garbage_collector.c
 
   # Tipos definidos en la maquina virtual
-  core/virtual_machine/types/src/GCPointer.c
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_register.c
   core/virtual_machine/types/src/run_ctx.c
@@ -161,7 +159,6 @@ set(SOURCES
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   # de la maquina virtual
-  core/virtual_machine/dynamic/lists/src/gc_pointer_list.c
   core/virtual_machine/dynamic/lists/src/run_ctx_stack.c
 
   # Codigo de Instancias
