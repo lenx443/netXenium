@@ -56,6 +56,7 @@ bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self,
     return false;
   }
   if (!func(run_ctx_id(vm_current_ctx()), self, args)) {
+    puts("pase");
     run_context_stack_pop_top(&vm->vm_ctx_stack);
     return false;
   }
@@ -102,7 +103,6 @@ bool vm_call_basic_native_function(Xen_Native_Func func, struct __Instance *self
 Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) { return nil; }
   RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
-  printf("c = %p\n", current);
   while (current) {
     Xen_Instance *inst = Xen_Map_Get_Str(current->ctx_instances, name);
     if_nil_neval(inst) { return inst; }
@@ -210,6 +210,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
       int ret = ctx->ctx_reg.reg[1] =
           vm_call_native_function(Xen_TYPE(cmd)->__callable, cmd, args);
       if (!ret) {
+        printf("ret = %d\n", ret);
         Xen_DEL_REF(args);
         Xen_DEL_REF(cmd);
         ctx->ctx_running = 0;

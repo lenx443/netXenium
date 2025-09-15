@@ -13,9 +13,6 @@
 
 int main(int argc, char **argv) {
   assert(Xen_Init(argc, argv) == 1);
-  printf("root id = %zd, root = %p\n", vm->root_context->ctx_id, vm->root_context);
-  printf("current id = %zd, current = %p\n", vm->vm_ctx_stack->ctx->ctx_id,
-         vm->vm_ctx_stack->ctx);
   Xen_Instance *echo_cmd = vm_get_instance(
       "echo", vm->vm_ctx_stack->ctx
                   ->ctx_id); // Xen_Map_Get_Str(vm->root_context->ctx_instances, "echo");

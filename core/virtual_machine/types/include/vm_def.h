@@ -9,6 +9,7 @@
 typedef struct {
   RunContext_Stack_ptr vm_ctx_stack;
   RunContext_ptr root_context;
+  Xen_Instance *modules_contexts;
   Xen_Instance *global_props;
   ctx_id_t ctx_id_count;
 } VM;

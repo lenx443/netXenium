@@ -31,7 +31,7 @@ typedef uint8_t Xen_Instance_Flag;
 #define Xen_DEL_REF(inst)                                                                \
   do {                                                                                   \
     if (inst) {                                                                          \
-      printf("[DEL_REF] %s=%p ref=%zd at %s:%d\n", #inst, inst,                          \
+      printf("[DEL_REF] %s=%p ref=%zd at %s:%d\n", #inst, (Xen_Instance *)inst,          \
              ((struct __Instance *)(inst))->__refers, __FILE__, __LINE__);               \
       ((struct __Instance *)(inst))->__refers--;                                         \
       if (((struct __Instance *)(inst))->__refers <= 0)                                  \

@@ -23,6 +23,7 @@ bool vm_create() {
     error("No hay memoria disponible");
     return 0;
   }
+  vm->ctx_id_count = 0;
   vm->vm_ctx_stack = NULL;
   Xen_Instance *args = __instance_new(&Xen_Vector_Implement, nil, 0);
   if_nil_eval(args) {
@@ -49,17 +50,23 @@ bool vm_create() {
   }
   Xen_DEL_REF(args);
   vm->root_context = (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
-  vm->global_props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
-  if (!vm->global_props) {
+  vm->modules_contexts = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if_nil_eval(vm->modules_contexts) {
     run_context_stack_free(&vm->vm_ctx_stack);
     free(vm);
   }
-  vm->ctx_id_count = 0;
+  vm->global_props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!vm->global_props) {
+    Xen_DEL_REF(vm->modules_contexts);
+    run_context_stack_free(&vm->vm_ctx_stack);
+    free(vm);
+  }
   return 1;
 }
 
 void vm_destroy() {
   if (!vm) return;
+  Xen_DEL_REF(vm->modules_contexts);
   Xen_DEL_REF(vm->global_props);
   run_context_stack_free(&vm->vm_ctx_stack);
   free(vm);
