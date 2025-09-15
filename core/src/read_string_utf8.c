@@ -438,9 +438,8 @@ LIST_ptr read_string_utf8() {
                     cursor_of_i);
             continue;
           }
+          cursor_index -= char_utf8_display_with(*(CharUTF8 *)node_ch->point);
           list_erase_at_index(cmd, cursor_of_i);
-          CharUTF8 *ch = (CharUTF8 *)node_ch->point;
-          cursor_index -= char_utf8_display_with(*ch);
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
 
           if (tab_pressed) {
