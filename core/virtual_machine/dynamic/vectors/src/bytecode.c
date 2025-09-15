@@ -98,22 +98,6 @@ int bc_add_load_prop(Bytecode_Array_ptr bc, int reg, int prop_key) {
                               prop_key,
                           }});
 }
-int bc_add_string_concat(Bytecode_Array_ptr bc, int reg, int src, int str) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_STRING_CONCAT,
-                              BC_REG_PACK(reg, 1),
-                              BC_REG_PACK(src, 0),
-                              str,
-                          }});
-}
-int bc_add_reg_concat(Bytecode_Array_ptr bc, int reg, int src1, int src2) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_REG_CONCAT,
-                              BC_REG_PACK(reg, 1),
-                              BC_REG_PACK(src1, 0),
-                              BC_REG_PACK(src2, 0),
-                          }});
-}
 int bc_add_halt(Bytecode_Array_ptr bc) {
   return bc_add_instr(bc, (bc_Instruct_t){{
                               OP_HALT,

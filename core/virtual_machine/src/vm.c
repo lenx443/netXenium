@@ -108,7 +108,7 @@ Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   while (current) {
     Xen_Instance *inst = Xen_Map_Get_Str(current->ctx_instances, name);
     if_nil_neval(inst) { return inst; }
-    current = (RunContext_ptr)current->ctx_caller;
+    current = (RunContext_ptr)current->ctx_closure;
   }
   return nil;
 }
@@ -151,9 +151,8 @@ void vm_run_ctx(RunContext_ptr ctx) {
       ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
     }
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
-    static void *dispatch_table[] = {&&NOP,         &&SYSCALL,       &&FUN_CALL,
-                                     &&JUMP,        &&JUMP_IF_SQUAD, &&LOAD_IMM,
-                                     &&LOAD_STRING, &&LOAD_PROP,     &&HALT};
+    static void *dispatch_table[] = {&&NOP,      &&SYSCALL,     &&FUN_CALL,  &&JUMP,
+                                     &&LOAD_IMM, &&LOAD_STRING, &&LOAD_PROP, &&HALT};
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
     GCPointer_node_ptr gc_array = NULL;
@@ -187,8 +186,9 @@ void vm_run_ctx(RunContext_ptr ctx) {
         continue;
       }
       Xen_Instance *fun_name = (Xen_Instance *)ctx->ctx_reg.reg[0];
-      Xen_Instance *cmd = Xen_Map_Get(ctx->ctx_instances, fun_name);
+      Xen_Instance *cmd = vm_get_instance(Xen_String_As_CString(fun_name), ctx->ctx_id);
       if_nil_eval(cmd) {
+        error("Instancia no encontrada");
         ctx->ctx_running = 0;
         continue;
       }
@@ -217,34 +217,26 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      int ret = ctx->ctx_reg.reg[1] = cmd->func(args);
-      if (ret != EXIT_SUCCESS) {
-        if (ret == 153) error("Error interno en '%s'", fun_name);
-        list_free(args);
+      if (!Xen_TYPE(cmd)->__callable) {
+        Xen_DEL_REF(args);
+        Xen_DEL_REF(cmd);
         ctx->ctx_running = 0;
         continue;
       }
-      list_free(args);
+      int ret = ctx->ctx_reg.reg[1] =
+          vm_call_native_function(Xen_TYPE(cmd)->__callable, cmd, args);
+      if (!ret) {
+        Xen_DEL_REF(args);
+        Xen_DEL_REF(cmd);
+        ctx->ctx_running = 0;
+        continue;
+      }
+      Xen_DEL_REF(args);
+      Xen_DEL_REF(cmd);
       continue;
     }
     JUMP: {
       ctx->ctx_ip = instr.bci_src2;
-      continue;
-    }
-    JUMP_IF_SQUAD: {
-      char *reg1_value;
-      if (ctx->ctx_reg.point_flag[1]) {
-        reg1_value = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[1])->gc_ptr;
-      } else {
-        reg1_value = (char *)ctx->ctx_reg.reg[1];
-      }
-      char *reg2_value;
-      if (ctx->ctx_reg.point_flag[2]) {
-        reg2_value = (char *)((GCPointer_ptr)ctx->ctx_reg.reg[2])->gc_ptr;
-      } else {
-        reg2_value = (char *)ctx->ctx_reg.reg[2];
-      }
-      if (strcmp(reg1_value, reg2_value) == 0) { ctx->ctx_ip = instr.bci_src2; }
       continue;
     }
     LOAD_IMM:
@@ -305,6 +297,9 @@ void vm_run_ctx(RunContext_ptr ctx) {
     }
     if (ctx->ctx_caller) {
       ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
+    }
+    for (int i = 0; i < ctx->ctx_reg.capacity; i++) {
+      if (ctx->ctx_reg.point_flag[i]) Xen_DEL_REF(ctx->ctx_reg.reg[i]);
     }
     log_show_and_clear(NULL);
     gc_pointer_list_free(gc_array);

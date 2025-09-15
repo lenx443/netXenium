@@ -8,7 +8,6 @@ typedef enum {
   OP_SYSCALL,
   OP_FUN_CALL,
   OP_JUMP,
-  OP_JUMP_IF_SQUAD,
   OP_LOAD_IMM,
   OP_LOAD_STRING,
   OP_LOAD_PROP,

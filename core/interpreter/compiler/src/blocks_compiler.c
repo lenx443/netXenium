@@ -32,10 +32,7 @@ int blocks_compiler(ProgramCode_t *code, block_list_ptr blocks) {
     }
     for (int instr_iterator = 0; instr_iterator < current_block->instr_array->ir_size;
          instr_iterator++) {
-      if (current_block->instr_array->ir_array[instr_iterator].opcode ==
-              OP_JUMP_IF_SQUAD ||
-          current_block->instr_array->ir_array[instr_iterator].opcode == OP_JUMP) {
-
+      if (current_block->instr_array->ir_array[instr_iterator].opcode == OP_JUMP) {
         if (!bc_add_instr(
                 code->code,
                 (bc_Instruct_t){{

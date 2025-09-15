@@ -13,7 +13,6 @@ void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     char *identifier_name = strdup(p->token.tkn_text);
-    if (strcmp(identifier_name, "if") == 0) { return parser_if_cindional(p, ast); }
     parser_next(p);
     ArgExpr_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
@@ -103,35 +102,6 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
     b_count = 1;
   }
   *block_count = b_count;
-  return 1;
-}
-
-int parser_if_cindional(Parser *p, AST_Node_t **ast) {
-  parser_next(p);
-  BoolExpr_t *b1;
-  BoolExpr_t *b2;
-  switch (p->token.tkn_type) {
-  case TKN_STRING: b1 = ast_make_bool_literal(p->token.tkn_text); break;
-  case TKN_PROPERTY: b1 = ast_make_bool_property(p->token.tkn_text); break;
-  default: error("Invalid token"); return 0;
-  }
-  parser_next(p);
-  switch (p->token.tkn_type) {
-  case TKN_STRING: b2 = ast_make_bool_literal(p->token.tkn_text); break;
-  case TKN_PROPERTY: b2 = ast_make_bool_property(p->token.tkn_text); break;
-  default:
-    error("Invalid token");
-    ast_free_bool(b1);
-    return 0;
-  }
-  size_t count;
-  AST_Node_t **body;
-  if (!parser_block(p, &body, &count)) {
-    ast_free_bool(b1);
-    ast_free_bool(b2);
-    return 0;
-  }
-  *ast = ast_make_if_conditional(ast_make_bool_pair(b1, b2), body, count);
   return 1;
 }
 

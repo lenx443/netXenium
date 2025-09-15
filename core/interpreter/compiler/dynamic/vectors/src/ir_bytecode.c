@@ -82,16 +82,6 @@ int ir_add_jump(IR_Bytecode_Array_ptr ir, void *block_ptr) {
                           });
 }
 
-int ir_add_jump_if_squad(IR_Bytecode_Array_ptr ir, void *block_ptr) {
-  return ir_add_instr(ir, (IR_Instruct_t){
-                              OP_JUMP_IF_SQUAD,
-                              0,
-                              0,
-                              0,
-                              block_ptr,
-                          });
-}
-
 int ir_add_load_imm(IR_Bytecode_Array_ptr ir, int reg, int imm) {
   return ir_add_instr(ir, (IR_Instruct_t){
                               OP_LOAD_IMM,
@@ -116,24 +106,6 @@ int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
                               BC_REG_PACK(reg, 0),
                               0,
                               prop_key,
-                              NULL,
-                          });
-}
-int ir_add_string_concat(IR_Bytecode_Array_ptr ir, int reg, int src, int str) {
-  return ir_add_instr(ir, (IR_Instruct_t){
-                              OP_STRING_CONCAT,
-                              BC_REG_PACK(reg, 1),
-                              BC_REG_PACK(src, 0),
-                              str,
-                              NULL,
-                          });
-}
-int ir_add_reg_concat(IR_Bytecode_Array_ptr ir, int reg, int src1, int src2) {
-  return ir_add_instr(ir, (IR_Instruct_t){
-                              OP_REG_CONCAT,
-                              BC_REG_PACK(reg, 1),
-                              BC_REG_PACK(src1, 0),
-                              BC_REG_PACK(src2, 0),
                               NULL,
                           });
 }
