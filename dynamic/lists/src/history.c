@@ -153,6 +153,8 @@ int history_save(HISTORY hist) {
     HISTORY_struct *hist_struct = (HISTORY_struct *)node->point;
     fputs(hist_struct->command, fp);
     fputc('\n', fp);
+    free(node->point);
+    free(node);
     node = list_pop_back(hist.local_history);
   }
   fclose(fp);
