@@ -263,4 +263,12 @@ add_executable(test_modules
 target_include_directories(test_modules
 PRIVATE ${PCAP_INCLUDE_DIRS})
 target_link_libraries(test_modules  PRIVATE ${PCAP_LIBRARIES})
-add_test(NAME TestModules COMMAND test_modules) 
+add_test(NAME TestModules COMMAND test_modules)
+
+add_executable(test_load_script
+  tests/test_load_script.c ${SOURCES}
+)
+target_include_directories(test_load_script
+PRIVATE ${PCAP_INCLUDE_DIRS})
+target_link_libraries(test_load_script  PRIVATE ${PCAP_LIBRARIES})
+add_test(NAME TestLoadScript COMMAND test_load_script)

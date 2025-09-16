@@ -30,7 +30,7 @@ static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) {
     if_nil_neval(inst->self) Xen_ADD_REF(inst->self);
-    if (vm_run_callable(inst->cmd_callable, inst->closure, inst->self, args)) {
+    if (!vm_run_callable(inst->cmd_callable, inst->closure, inst->self, args)) {
       return 0;
     }
     if_nil_neval(inst->self) Xen_DEL_REF(inst->self);

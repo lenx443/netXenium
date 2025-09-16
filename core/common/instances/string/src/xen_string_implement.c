@@ -66,7 +66,7 @@ struct __Implement Xen_String_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
     .__inst_size = sizeof(struct Xen_String_Instance),
-    .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
+    .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
     .__opr = {NULL},
     .__alloc = string_alloc,

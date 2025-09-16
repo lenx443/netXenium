@@ -56,7 +56,6 @@ bool vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE *self,
     return false;
   }
   if (!func(run_ctx_id(vm_current_ctx()), self, args)) {
-    puts("pase");
     run_context_stack_pop_top(&vm->vm_ctx_stack);
     return false;
   }
@@ -106,7 +105,6 @@ Xen_INSTANCE *vm_get_instance(const char *name, ctx_id_t id) {
   while (current) {
     Xen_Instance *inst = Xen_Map_Get_Str(current->ctx_instances, name);
     if_nil_neval(inst) { return inst; }
-    printf("pase");
     current = (RunContext_ptr)current->ctx_closure;
   }
   return nil;
@@ -207,10 +205,13 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
+      if (ctx->ctx_reg.point_flag[1]) {
+        Xen_DEL_REF(ctx->ctx_reg.reg[1]);
+        ctx->ctx_reg.point_flag[1] = 0;
+      }
       int ret = ctx->ctx_reg.reg[1] =
           vm_call_native_function(Xen_TYPE(cmd)->__callable, cmd, args);
       if (!ret) {
-        printf("ret = %d\n", ret);
         Xen_DEL_REF(args);
         Xen_DEL_REF(cmd);
         ctx->ctx_running = 0;
@@ -229,6 +230,10 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
+      if (ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)]) {
+        Xen_DEL_REF(ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)]);
+        ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)] = 0;
+      }
       ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)] = instr.bci_src2;
       continue;
     LOAD_STRING:
@@ -240,8 +245,8 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_src2)]) {
-        Xen_DEL_REF(ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_src2)]);
+      if (ctx->ctx_reg.point_flag[BC_REG_GET_VALUE(instr.bci_dst)]) {
+        Xen_DEL_REF(ctx->ctx_reg.reg[BC_REG_GET_VALUE(instr.bci_dst)]);
       }
       Xen_Instance *c_name = Xen_Vector_Get_Index(pc.consts->c_names, instr.bci_src2);
       if_nil_eval(c_name) {

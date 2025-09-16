@@ -13,7 +13,6 @@
 #include "xen_vector.h"
 
 static int fn_echo(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
-  printf("args len = %zd\n", Xen_Vector_Size(args));
   if (Xen_Vector_Size(args) > 1) { return 0; }
   if (Xen_Vector_Size(args) == 1) {
     Xen_Instance *inst = Xen_Vector_Get_Index(args, 0);

@@ -17,7 +17,6 @@
 #include "vm.h"
 #include "vm_consts.h"
 #include "vm_def.h"
-#include <stdio.h>
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
