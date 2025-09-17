@@ -19,6 +19,5 @@ void vm_ctx_clear(RunContext_ptr);
 int vm_new_ctx_callable(CALLABLE_ptr, Xen_Instance *, struct __Instance *,
                         Xen_Instance *);
 int vm_run_callable(CALLABLE_ptr, struct __Instance *, Xen_Instance *, Xen_Instance *);
-void vm_run_ctx(RunContext_ptr);
 
 #endif

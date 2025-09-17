@@ -1,10 +1,22 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "ast.h"
+#include "operators.h"
 
 AST_Node_t *ast_make_empty() {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_EMPTY;
+  return node;
+}
+
+AST_Node_t *ast_make_assignment_string(const char *name, const char *value) {
+  AST_Node_t *node = malloc(sizeof(AST_Node_t));
+  node->ast_type = AST_ASSIGNMENT;
+  node->assignment.operator= Xen_Assignment;
+  node->assignment.lhs.name = strdup(name);
+  node->assignment.rhs.type = ASSIGN_STRING;
+  node->assignment.rhs.string.value = strdup(value);
   return node;
 }
 
@@ -33,7 +45,11 @@ ArgExpr_t *ast_make_arg_property(const char *property) {
 
 void ast_free(AST_Node_t *ast) {
   if (!ast) return;
-  if (ast->ast_type == AST_CMD) {
+  if (ast->ast_type == AST_ASSIGNMENT) {
+    free((void *)ast->assignment.lhs.name);
+    if (ast->assignment.rhs.type == ASSIGN_STRING)
+      free((void *)ast->assignment.rhs.string.value);
+  } else if (ast->ast_type == AST_CMD) {
     free((void *)ast->cmd.cmd_name);
     for (int i = 0; i < ast->cmd.arg_count; ++i)
       ast_free_arg(ast->cmd.cmd_args[i]);

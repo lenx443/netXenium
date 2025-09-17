@@ -5,6 +5,7 @@
 
 typedef enum {
   Xen_EQ = 0,
+  Xen_Assignment,
 } Xen_Opr;
 
 Xen_Instance *Xen_Operator_Eval_Pair(Xen_Instance *, Xen_Instance *, Xen_Opr);

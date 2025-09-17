@@ -313,14 +313,13 @@ void load_script(char *filename) {
   }
   fclose(fp);
   char *file_content = string_utf8_get(buffer);
+  list_free(buffer);
   if (!file_content) {
-    list_free(buffer);
     program.exit_code = EXIT_FAILURE;
     return;
   }
   if (!interpreter(file_content)) { log_show_and_clear(NULL); }
   free(file_content);
-  list_free(buffer);
 }
 
 void shell_loop(char *name) {

@@ -143,6 +143,7 @@ set(SOURCES
   # Entorno de maquina virtual para la
   # ejecucion de bytecode.
   core/virtual_machine/src/vm.c
+  core/virtual_machine/src/vm_run.c
 
   # Tipos definidos en la maquina virtual
   core/virtual_machine/types/src/vm_def.c

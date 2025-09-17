@@ -5,6 +5,7 @@
 #include "run_frame.h"
 #include "vm.h"
 #include "vm_def.h"
+#include "vm_run.h"
 #include "xen_command.h"
 #include "xen_map.h"
 #include "xen_module.h"
