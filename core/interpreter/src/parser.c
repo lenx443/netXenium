@@ -14,6 +14,15 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     char *identifier_name = strdup(p->token.tkn_text);
     parser_next(p);
+    if (p->token.tkn_type == TKN_ASSIGNMENT) {
+      parser_next(p);
+      if (!parser_assignment_rhs(identifier_name, p, ast)) {
+        free(identifier_name);
+        return 0;
+      }
+      free(identifier_name);
+      return 1;
+    }
     ArgExpr_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
     while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
@@ -46,6 +55,16 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   }
   error("El token '%s' es invalido. Use `help` para mas información", p->token.tkn_text);
   *ast = ast_make_empty();
+  return 0;
+}
+
+int parser_assignment_rhs(const char *name, Parser *p, AST_Node_t **ast) {
+  if (p->token.tkn_type == TKN_STRING) {
+    *ast = ast_make_assignment_string(name, p->token.tkn_text);
+    parser_next(p);
+    if (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_EOF) { return 0; }
+    return 1;
+  }
   return 0;
 }
 
@@ -106,7 +125,12 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
 }
 
 ArgExpr_t *parser_arg(Parser *p) {
-  if (p->token.tkn_type == TKN_IDENTIFIER || p->token.tkn_type == TKN_STRING) {
+  if (p->token.tkn_type == TKN_STRING) {
+    ArgExpr_t *node = ast_make_arg_string(p->token.tkn_text);
+    parser_next(p);
+    return node;
+  }
+  if (p->token.tkn_type == TKN_IDENTIFIER) {
     ArgExpr_t *node = ast_make_arg_literal(p->token.tkn_text);
     parser_next(p);
     return node;

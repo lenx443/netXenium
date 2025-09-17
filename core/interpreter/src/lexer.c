@@ -276,9 +276,9 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_type = TKN_BLOCK;
       token.tkn_text[0] = '=';
       token.tkn_text[1] = '>';
-      token.tkn_text[2] = '\n';
+      token.tkn_text[2] = '\0';
     } else {
-      token.tkn_type = TKN_EQUAL;
+      token.tkn_type = TKN_ASSIGNMENT;
       token.tkn_text[0] = '=';
       token.tkn_text[1] = '\0';
     }

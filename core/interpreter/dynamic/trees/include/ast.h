@@ -25,13 +25,15 @@ struct AssignmentExpession {
 typedef struct AssignmentExpession AssignmentExpession_t;
 
 typedef enum {
-  ARG_LITERAL = 0,
+  ARG_STRING = 0,
+  ARG_LITERAL,
   ARG_PROPERTY,
 } ArgExprType;
 
 struct ArgExpr_s {
   ArgExprType arg_type;
   union {
+    const char *string;
     const char *literal;
     const char *property;
   };
@@ -63,6 +65,7 @@ AST_Node_t *ast_make_empty();
 AST_Node_t *ast_make_assignment_string(const char *, const char *);
 AST_Node_t *ast_make_cmd(const char *, ArgExpr_t **, int);
 
+ArgExpr_t *ast_make_arg_string(const char *);
 ArgExpr_t *ast_make_arg_literal(const char *);
 ArgExpr_t *ast_make_arg_property(const char *);
 

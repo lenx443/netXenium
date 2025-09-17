@@ -8,8 +8,10 @@ typedef enum {
   OP_FUN_CALL,
   OP_JUMP,
   OP_LOAD_IMM,
-  OP_LOAD_STRING,
+  OP_LOAD_INSTANCE,
+  OP_LOAD_NAME,
   OP_LOAD_PROP,
+  OP_MAKE_INSTANCE,
   OP_HALT,
 } bc_opcode;
 

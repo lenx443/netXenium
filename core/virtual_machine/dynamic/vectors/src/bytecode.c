@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include "bc_instruct.h"
 #include "bytecode.h"
 #include "logs.h"
 
@@ -48,53 +47,4 @@ int bc_add_instr(Bytecode_Array_ptr bc, bc_Instruct_t instr) {
   }
   bc->bc_array[bc->bc_size++] = instr;
   return 1;
-}
-
-int bc_add_nop(Bytecode_Array_ptr bc) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_NOP,
-                              0,
-                              0,
-                              0,
-                          }});
-}
-int bc_add_fun_call(Bytecode_Array_ptr bc, int args) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_FUN_CALL,
-                              0,
-                              0,
-                              args,
-                          }});
-}
-int bc_add_load_imm(Bytecode_Array_ptr bc, int reg, int imm) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_LOAD_IMM,
-                              BC_REG_PACK(reg, 0),
-                              0,
-                              imm,
-                          }});
-}
-int bc_add_load_string(Bytecode_Array_ptr bc, int reg, int string) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_LOAD_STRING,
-                              BC_REG_PACK(reg, 0),
-                              0,
-                              string,
-                          }});
-}
-int bc_add_load_prop(Bytecode_Array_ptr bc, int reg, int prop_key) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_LOAD_PROP,
-                              BC_REG_PACK(reg, 0),
-                              0,
-                              prop_key,
-                          }});
-}
-int bc_add_halt(Bytecode_Array_ptr bc) {
-  return bc_add_instr(bc, (bc_Instruct_t){{
-                              OP_HALT,
-                              0,
-                              0,
-                              0,
-                          }});
 }

@@ -29,6 +29,13 @@ AST_Node_t *ast_make_cmd(const char *cmd_name, ArgExpr_t **cmd_args, int arg_cou
   return node;
 }
 
+ArgExpr_t *ast_make_arg_string(const char *literal) {
+  ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
+  node->arg_type = ARG_STRING;
+  node->string = strdup(literal);
+  return node;
+}
+
 ArgExpr_t *ast_make_arg_literal(const char *literal) {
   ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
   node->arg_type = ARG_LITERAL;
@@ -68,6 +75,7 @@ void ast_free_block(AST_Node_t **block, size_t b_count) {
 void ast_free_arg(ArgExpr_t *arg) {
   if (!arg) return;
   switch (arg->arg_type) {
+  case ARG_STRING: free((void *)arg->string); break;
   case ARG_LITERAL: free((void *)arg->literal); break;
   case ARG_PROPERTY: free((void *)arg->property); break;
   }

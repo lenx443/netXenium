@@ -30,6 +30,7 @@ Xen_Instance *Xen_Operator_Eval_Pair(Xen_Instance *first, Xen_Instance *second,
     else
       return nil;
   }
+  case Xen_Assignment: break;
   }
   return nil;
 }

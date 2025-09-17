@@ -14,6 +14,7 @@ typedef enum {
   TKN_BLOCK,
   TKN_LBRACE,
   TKN_RBRACE,
+  TKN_ASSIGNMENT,
   TKN_EQUAL,
   TKN_UNDEFINED,
 } Lexer_Token_Type;

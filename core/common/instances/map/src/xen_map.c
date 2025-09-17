@@ -63,8 +63,6 @@ int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
   if (!pair.key || !pair.value || !Xen_TYPE(pair.key)->__hash) { return 0; }
   Xen_Map *map = (Xen_Map *)map_inst;
 
-  Xen_Vector_Push(map->map_keys, pair.key);
-
   unsigned long hash_index = 0;
   if (Xen_TYPE(pair.key) == &Xen_String_Implement) {
     hash_index = Xen_String_Hash(pair.key);
@@ -101,6 +99,10 @@ int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
   }
   struct __Map_Node *new_node = malloc(sizeof(struct __Map_Node));
   if (!new_node) { return 0; }
+  if (!Xen_Vector_Push(map->map_keys, pair.key)) {
+    free(new_node);
+    return 0;
+  }
   new_node->key = pair.key;
   new_node->value = pair.value;
   Xen_ADD_REF(pair.key);
