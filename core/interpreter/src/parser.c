@@ -10,6 +10,13 @@
 
 void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 
+Lexer_Token_Type parser_peek(Parser *p) {
+  int start = p->lexer->pos;
+  Lexer_Token_Type token = lexer_next_token(p->lexer).tkn_type;
+  p->lexer->pos = start;
+  return token;
+}
+
 int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     char *identifier_name = strdup(p->token.tkn_text);
@@ -23,7 +30,7 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
       free(identifier_name);
       return 1;
     }
-    ArgExpr_t **args = NULL;
+    AST_Node_t **args = NULL;
     int arg_count = 0, arg_cap = 0;
     while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
       if (p->token.tkn_type == TKN_NEWLINE) {
@@ -32,14 +39,14 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
         parser_next(p);
         return 1;
       }
-      ArgExpr_t *arg = parser_arg(p);
+      AST_Node_t *arg = parser_arg(p);
       if (!arg) {
         free(identifier_name);
         return 0;
       }
       if (arg_count == arg_cap) {
         arg_cap = arg_cap ? arg_cap * 2 : 4;
-        args = realloc(args, sizeof(ArgExpr_t *) * arg_cap);
+        args = realloc(args, sizeof(AST_Node_t *) * arg_cap);
       }
       args[arg_count++] = arg;
     }
@@ -55,6 +62,30 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
   }
   error("El token '%s' es invalido. Use `help` para mas información", p->token.tkn_text);
   *ast = ast_make_empty();
+  return 0;
+}
+
+int parser_string(Parser *p, AST_Node_t **ast) {
+  if (p->token.tkn_type == TKN_STRING) {
+    *ast = ast_make_string(p->token.tkn_text);
+    return 1;
+  }
+  return 0;
+}
+
+int parser_literal(Parser *p, AST_Node_t **ast) {
+  if (p->token.tkn_type == TKN_IDENTIFIER) {
+    *ast = ast_make_literal(p->token.tkn_text);
+    return 1;
+  }
+  return 0;
+}
+
+int parser_property(Parser *p, AST_Node_t **ast) {
+  if (p->token.tkn_type == TKN_PROPERTY) {
+    *ast = ast_make_property(p->token.tkn_text);
+    return 1;
+  }
   return 0;
 }
 
@@ -124,19 +155,19 @@ int parser_block(Parser *p, AST_Node_t ***ast_array, size_t *block_count) {
   return 1;
 }
 
-ArgExpr_t *parser_arg(Parser *p) {
+AST_Node_t *parser_arg(Parser *p) {
   if (p->token.tkn_type == TKN_STRING) {
-    ArgExpr_t *node = ast_make_arg_string(p->token.tkn_text);
+    AST_Node_t *node = ast_make_string(p->token.tkn_text);
     parser_next(p);
     return node;
   }
   if (p->token.tkn_type == TKN_IDENTIFIER) {
-    ArgExpr_t *node = ast_make_arg_literal(p->token.tkn_text);
+    AST_Node_t *node = ast_make_literal(p->token.tkn_text);
     parser_next(p);
     return node;
   }
   if (p->token.tkn_type == TKN_PROPERTY) {
-    ArgExpr_t *node = ast_make_arg_property(p->token.tkn_text);
+    AST_Node_t *node = ast_make_property(p->token.tkn_text);
     parser_next(p);
     return node;
   }

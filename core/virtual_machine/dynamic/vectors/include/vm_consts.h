@@ -16,7 +16,7 @@ typedef vm_Consts *vm_Consts_ptr;
 vm_Consts_ptr vm_consts_new();
 vm_Consts_ptr vm_consts_from_values(struct __Instance *, struct __Instance *);
 bool vm_consts_push_name(vm_Consts_ptr, const char *);
-bool vm_consts_push_instance(vm_Consts_ptr, struct __Instance *, bool);
+bool vm_consts_push_instance(vm_Consts_ptr, struct __Instance *);
 void vm_consts_free(vm_Consts_ptr);
 
 #endif

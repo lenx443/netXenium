@@ -100,6 +100,15 @@ int ir_add_load_name(IR_Bytecode_Array_ptr ir, int reg, int string) {
                               NULL,
                           });
 }
+int ir_add_load_const(IR_Bytecode_Array_ptr ir, int reg, int constn) {
+  return ir_add_instr(ir, (IR_Instruct_t){
+                              OP_LOAD_CONST,
+                              BC_REG_PACK(reg, 0),
+                              0,
+                              constn,
+                              NULL,
+                          });
+}
 int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
   return ir_add_instr(ir, (IR_Instruct_t){
                               OP_LOAD_PROP,

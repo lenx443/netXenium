@@ -38,9 +38,9 @@ void vm_run_ctx(RunContext_ptr ctx) {
       ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
     }
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
-    static void *dispatch_table[] = {&&NOP,       &&FUN_CALL,      &&JUMP,
-                                     &&LOAD_IMM,  &&LOAD_INSTANCE, &&LOAD_NAME,
-                                     &&LOAD_PROP, &&MAKE_INSTANCE, &&HALT};
+    static void *dispatch_table[] = {
+        &&NOP,       &&FUN_CALL,   &&JUMP,      &&LOAD_IMM,      &&LOAD_INSTANCE,
+        &&LOAD_NAME, &&LOAD_CONST, &&LOAD_PROP, &&MAKE_INSTANCE, &&HALT};
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
     while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size && !program.closed) {
@@ -121,6 +121,27 @@ void vm_run_ctx(RunContext_ptr ctx) {
       REG_SET(instr.bci_dst, instr.bci_src2);
       continue;
     LOAD_INSTANCE:
+      if (instr.bci_dst >= ctx->ctx_reg.capacity) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      Xen_Instance *inst_name = Xen_Vector_Peek_Index(pc.consts->c_names, instr.bci_src2);
+      if_nil_eval(inst_name) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      Xen_Instance *inst = vm_get_instance(Xen_String_As_CString(inst_name), ctx->ctx_id);
+      if_nil_eval(inst) {
+        error("Instancia no encontrada");
+        ctx->ctx_running = 0;
+        continue;
+      }
+      REG_SET_INST(instr.bci_dst, inst);
+      Xen_DEL_REF(inst);
       continue;
     LOAD_NAME:
       if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
@@ -138,6 +159,23 @@ void vm_run_ctx(RunContext_ptr ctx) {
       }
       REG_SET_INST(instr.bci_dst, c_name);
       Xen_DEL_REF(c_name);
+      continue;
+    LOAD_CONST:
+      if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_instances)) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      Xen_Instance *c_inst = Xen_Vector_Get_Index(pc.consts->c_instances, instr.bci_src2);
+      if_nil_eval(c_inst) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      REG_SET_INST(instr.bci_dst, c_inst);
+      Xen_DEL_REF(c_inst);
       continue;
     LOAD_PROP:
       if (BC_REG_GET_VALUE(instr.bci_dst) >= ctx->ctx_reg.capacity) {

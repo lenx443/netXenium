@@ -27,6 +27,7 @@ int ir_add_jump(IR_Bytecode_Array_ptr, void *);
 int ir_add_load_imm(IR_Bytecode_Array_ptr, int, int);
 int ir_add_load_instance(IR_Bytecode_Array_ptr, int, int);
 int ir_add_load_name(IR_Bytecode_Array_ptr, int, int);
+int ir_add_load_const(IR_Bytecode_Array_ptr, int, int);
 int ir_add_load_prop(IR_Bytecode_Array_ptr, int, int);
 int ir_add_make_instance(IR_Bytecode_Array_ptr, int, int);
 int ir_add_halt(IR_Bytecode_Array_ptr);

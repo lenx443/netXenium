@@ -10,6 +10,27 @@ AST_Node_t *ast_make_empty() {
   return node;
 }
 
+AST_Node_t *ast_make_string(const char *value) {
+  AST_Node_t *node = malloc(sizeof(AST_Node_t));
+  node->ast_type = AST_STRING;
+  node->string.value = strdup(value);
+  return node;
+}
+
+AST_Node_t *ast_make_literal(const char *value) {
+  AST_Node_t *node = malloc(sizeof(AST_Node_t));
+  node->ast_type = AST_LITERAL;
+  node->literal.value = strdup(value);
+  return node;
+}
+
+AST_Node_t *ast_make_property(const char *value) {
+  AST_Node_t *node = malloc(sizeof(AST_Node_t));
+  node->ast_type = AST_PROPERTY;
+  node->property.value = strdup(value);
+  return node;
+}
+
 AST_Node_t *ast_make_assignment_string(const char *name, const char *value) {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_ASSIGNMENT;
@@ -20,7 +41,7 @@ AST_Node_t *ast_make_assignment_string(const char *name, const char *value) {
   return node;
 }
 
-AST_Node_t *ast_make_cmd(const char *cmd_name, ArgExpr_t **cmd_args, int arg_count) {
+AST_Node_t *ast_make_cmd(const char *cmd_name, AST_Node_t **cmd_args, int arg_count) {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_CMD;
   node->cmd.cmd_name = strdup(cmd_name);
@@ -29,38 +50,24 @@ AST_Node_t *ast_make_cmd(const char *cmd_name, ArgExpr_t **cmd_args, int arg_cou
   return node;
 }
 
-ArgExpr_t *ast_make_arg_string(const char *literal) {
-  ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
-  node->arg_type = ARG_STRING;
-  node->string = strdup(literal);
-  return node;
-}
-
-ArgExpr_t *ast_make_arg_literal(const char *literal) {
-  ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
-  node->arg_type = ARG_LITERAL;
-  node->literal = strdup(literal);
-  return node;
-}
-
-ArgExpr_t *ast_make_arg_property(const char *property) {
-  ArgExpr_t *node = malloc(sizeof(ArgExpr_t));
-  node->arg_type = ARG_PROPERTY;
-  node->property = strdup(property);
-  return node;
-}
-
 void ast_free(AST_Node_t *ast) {
   if (!ast) return;
-  if (ast->ast_type == AST_ASSIGNMENT) {
+  switch (ast->ast_type) {
+  case AST_EMPTY: break;
+  case AST_STRING: free((void *)ast->string.value);
+  case AST_LITERAL: free((void *)ast->literal.value);
+  case AST_PROPERTY: free((void *)ast->property.value);
+  case AST_ASSIGNMENT:
     free((void *)ast->assignment.lhs.name);
     if (ast->assignment.rhs.type == ASSIGN_STRING)
       free((void *)ast->assignment.rhs.string.value);
-  } else if (ast->ast_type == AST_CMD) {
+    break;
+  case AST_CMD:
     free((void *)ast->cmd.cmd_name);
     for (int i = 0; i < ast->cmd.arg_count; ++i)
-      ast_free_arg(ast->cmd.cmd_args[i]);
+      ast_free(ast->cmd.cmd_args[i]);
     free(ast->cmd.cmd_args);
+    break;
   }
   free(ast);
 }
@@ -72,38 +79,9 @@ void ast_free_block(AST_Node_t **block, size_t b_count) {
   free(block);
 }
 
-void ast_free_arg(ArgExpr_t *arg) {
-  if (!arg) return;
-  switch (arg->arg_type) {
-  case ARG_STRING: free((void *)arg->string); break;
-  case ARG_LITERAL: free((void *)arg->literal); break;
-  case ARG_PROPERTY: free((void *)arg->property); break;
-  }
-  free(arg);
-}
-
 static void print_indent(int indent) {
   for (int i = 0; i < indent; ++i)
     printf("  ");
-}
-
-static void print_arg_expr(const ArgExpr_t *arg, int indent) {
-  if (!arg) {
-    print_indent(indent);
-    printf("ArgExpr: NULL\n");
-    return;
-  }
-  switch (arg->arg_type) {
-  case ARG_LITERAL:
-    print_indent(indent);
-    printf("ArgLiteral: \"%s\"\n", arg->literal ? arg->literal : "NULL");
-    break;
-  case ARG_PROPERTY:
-    print_indent(indent);
-    printf("ArgProperty: \"%s\"\n", arg->property ? arg->property : "NULL");
-    break;
-  default: print_indent(indent); printf("ArgExpr: Unknown type\n");
-  }
 }
 
 static void print_ast_node(const AST_Node_t *node, int indent);
@@ -123,7 +101,7 @@ static void print_ast_node(const AST_Node_t *node, int indent) {
     print_indent(indent);
     printf("AST_CMD: \"%s\"\n", node->cmd.cmd_name ? node->cmd.cmd_name : "NULL");
     for (int i = 0; i < node->cmd.arg_count; ++i) {
-      print_arg_expr(node->cmd.cmd_args[i], indent + 1);
+      print_ast_node(node->cmd.cmd_args[i], indent + 1);
     }
     break;
   default: print_indent(indent); printf("AST_Node: Unknown type\n");

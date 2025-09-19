@@ -11,8 +11,11 @@ typedef struct {
 
 void parser_next(Parser *);
 int parser_stmt(Parser *, AST_Node_t **);
+int parser_string(Parser *, AST_Node_t **);
+int parser_literal(Parser *, AST_Node_t **);
+int parser_property(Parser *, AST_Node_t **);
 int parser_assignment_rhs(const char *, Parser *, AST_Node_t **);
 int parser_block(Parser *, AST_Node_t ***, size_t *);
-ArgExpr_t *parser_arg(Parser *);
+AST_Node_t *parser_arg(Parser *);
 
 #endif

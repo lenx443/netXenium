@@ -39,8 +39,7 @@ bool vm_consts_push_name(vm_Consts_ptr consts, const char *c_name) {
   return true;
 }
 
-bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance,
-                             bool ref) {
+bool vm_consts_push_instance(vm_Consts_ptr consts, struct __Instance *c_instance) {
   if (!consts || !c_instance) { return false; };
   if (!Xen_Vector_Push(consts->c_instances, c_instance)) { return NULL; }
   return true;
