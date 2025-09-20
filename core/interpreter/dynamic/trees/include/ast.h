@@ -32,17 +32,8 @@ struct AST_Node_s {
     } property;
     struct {
       Xen_Opr operator;
-      struct {
-        const char *name;
-      } lhs;
-      struct {
-        AssignmentExpession_RHS_Type type;
-        union {
-          struct {
-            const char *value;
-          } string;
-        };
-      } rhs;
+      const char *lhs;
+      struct AST_Node_s *rhs;
     } assignment;
     struct {
       const char *cmd_name;
@@ -58,7 +49,7 @@ AST_Node_t *ast_make_empty();
 AST_Node_t *ast_make_string(const char *);
 AST_Node_t *ast_make_literal(const char *);
 AST_Node_t *ast_make_property(const char *);
-AST_Node_t *ast_make_assignment_string(const char *, const char *);
+AST_Node_t *ast_make_assignment(const char *, AST_Node_t *);
 AST_Node_t *ast_make_cmd(const char *, AST_Node_t **, int);
 
 void ast_free(AST_Node_t *);

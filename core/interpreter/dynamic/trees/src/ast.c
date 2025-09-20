@@ -31,13 +31,12 @@ AST_Node_t *ast_make_property(const char *value) {
   return node;
 }
 
-AST_Node_t *ast_make_assignment_string(const char *name, const char *value) {
+AST_Node_t *ast_make_assignment(const char *name, AST_Node_t *rhs) {
   AST_Node_t *node = malloc(sizeof(AST_Node_t));
   node->ast_type = AST_ASSIGNMENT;
   node->assignment.operator= Xen_Assignment;
-  node->assignment.lhs.name = strdup(name);
-  node->assignment.rhs.type = ASSIGN_STRING;
-  node->assignment.rhs.string.value = strdup(value);
+  node->assignment.lhs = strdup(name);
+  node->assignment.rhs = rhs;
   return node;
 }
 
@@ -58,9 +57,8 @@ void ast_free(AST_Node_t *ast) {
   case AST_LITERAL: free((void *)ast->literal.value); break;
   case AST_PROPERTY: free((void *)ast->property.value); break;
   case AST_ASSIGNMENT:
-    free((void *)ast->assignment.lhs.name);
-    if (ast->assignment.rhs.type == ASSIGN_STRING)
-      free((void *)ast->assignment.rhs.string.value);
+    free((void *)ast->assignment.lhs);
+    ast_free(ast->assignment.rhs);
     break;
   case AST_CMD:
     free((void *)ast->cmd.cmd_name);

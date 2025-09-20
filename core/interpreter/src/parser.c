@@ -71,6 +71,7 @@ int parser_stmt(Parser *p, AST_Node_t **ast) {
 int parser_string(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_STRING) {
     *ast = ast_make_string(p->token.tkn_text);
+    parser_next(p);
     return 1;
   }
   return 0;
@@ -79,6 +80,7 @@ int parser_string(Parser *p, AST_Node_t **ast) {
 int parser_literal(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     *ast = ast_make_literal(p->token.tkn_text);
+    parser_next(p);
     return 1;
   }
   return 0;
@@ -87,6 +89,7 @@ int parser_literal(Parser *p, AST_Node_t **ast) {
 int parser_property(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_PROPERTY) {
     *ast = ast_make_property(p->token.tkn_text);
+    parser_next(p);
     return 1;
   }
   return 0;
@@ -98,9 +101,14 @@ int parser_assignment(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
     parser_next(p);
     if (p->token.tkn_type == TKN_STRING) {
-      *ast = ast_make_assignment_string(name, p->token.tkn_text);
+      AST_Node_t *string;
+      parser_string(p, &string);
+      *ast = ast_make_assignment(name, string);
       parser_next(p);
-      if (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_EOF) { return 0; }
+      if (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_EOF) {
+        free((void *)name);
+        return 0;
+      }
       free((void *)name);
       return 1;
     }

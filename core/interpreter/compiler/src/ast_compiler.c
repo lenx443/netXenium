@@ -84,14 +84,10 @@ int compile_property(int out_reg, block_list_ptr blocks, block_node_ptr block,
 int compile_assignment(block_list_ptr blocks, block_node_ptr block, AST_Node_t *ast) {
   if (ast->assignment.operator== Xen_Assignment) {
     int name_index = Xen_Vector_Size(blocks->consts->c_names);
-    if (!vm_consts_push_name(blocks->consts, ast->assignment.lhs.name)) { return 0; }
+    if (!vm_consts_push_name(blocks->consts, ast->assignment.lhs)) { return 0; }
     if (!ir_add_load_name(block->instr_array, 0, name_index)) { return 0; }
-    if (ast->assignment.rhs.type == ASSIGN_STRING) {
-      int value_index = Xen_Vector_Size(blocks->consts->c_names);
-      if (!vm_consts_push_name(blocks->consts, ast->assignment.rhs.string.value)) {
-        return 0;
-      }
-      if (!ir_add_load_name(block->instr_array, 1, value_index)) { return 0; }
+    if (ast->assignment.rhs->ast_type == AST_STRING) {
+      if (!compile_string(1, blocks, block, ast->assignment.rhs)) { return 0; }
     } else {
       return 0;
     }
