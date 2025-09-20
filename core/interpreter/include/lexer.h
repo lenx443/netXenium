@@ -17,6 +17,8 @@ typedef enum {
   TKN_ASSIGNMENT,
   TKN_EQUAL,
   TKN_UNDEFINED,
+  TKN_LPARENT,
+  TKN_RPARENT
 } Lexer_Token_Type;
 
 typedef struct {

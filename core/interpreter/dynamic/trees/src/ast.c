@@ -54,9 +54,9 @@ void ast_free(AST_Node_t *ast) {
   if (!ast) return;
   switch (ast->ast_type) {
   case AST_EMPTY: break;
-  case AST_STRING: free((void *)ast->string.value);
-  case AST_LITERAL: free((void *)ast->literal.value);
-  case AST_PROPERTY: free((void *)ast->property.value);
+  case AST_STRING: free((void *)ast->string.value); break;
+  case AST_LITERAL: free((void *)ast->literal.value); break;
+  case AST_PROPERTY: free((void *)ast->property.value); break;
   case AST_ASSIGNMENT:
     free((void *)ast->assignment.lhs.name);
     if (ast->assignment.rhs.type == ASSIGN_STRING)
@@ -64,8 +64,9 @@ void ast_free(AST_Node_t *ast) {
     break;
   case AST_CMD:
     free((void *)ast->cmd.cmd_name);
-    for (int i = 0; i < ast->cmd.arg_count; ++i)
+    for (int i = 0; i < ast->cmd.arg_count; i++) {
       ast_free(ast->cmd.cmd_args[i]);
+    }
     free(ast->cmd.cmd_args);
     break;
   }

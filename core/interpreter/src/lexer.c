@@ -1,6 +1,5 @@
 #include <ctype.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "lexer.h"
@@ -282,6 +281,16 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[0] = '=';
       token.tkn_text[1] = '\0';
     }
+  } else if (lexer->src[lexer->pos] == '(') {
+    lexer->pos++;
+    token.tkn_type = TKN_LPARENT;
+    token.tkn_text[0] = '(';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == ')') {
+    lexer->pos++;
+    token.tkn_type = TKN_RPARENT;
+    token.tkn_text[0] = ')';
+    token.tkn_text[1] = '\0';
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
     token.tkn_text[1] = '\0';

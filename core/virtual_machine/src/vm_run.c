@@ -11,6 +11,7 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_vector.h"
+#include <stdio.h>
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM RUN", msg, ##__VA_ARGS__)
 

@@ -20,39 +20,42 @@ Lexer_Token_Type parser_peek(Parser *p) {
 int parser_stmt(Parser *p, AST_Node_t **ast) {
   if (p->token.tkn_type == TKN_IDENTIFIER) {
     char *identifier_name = strdup(p->token.tkn_text);
-    parser_next(p);
-    if (p->token.tkn_type == TKN_ASSIGNMENT) {
-      parser_next(p);
-      if (!parser_assignment_rhs(identifier_name, p, ast)) {
+    if (parser_peek(p) == TKN_ASSIGNMENT) {
+      if (!parser_assignment(p, ast)) {
         free(identifier_name);
         return 0;
       }
       free(identifier_name);
       return 1;
     }
-    AST_Node_t **args = NULL;
-    int arg_count = 0, arg_cap = 0;
-    while (p->token.tkn_type != TKN_UNDEFINED && p->token.tkn_type != TKN_EOF) {
-      if (p->token.tkn_type == TKN_NEWLINE) {
-        *ast = ast_make_cmd(identifier_name, args, arg_count);
-        free(identifier_name);
-        parser_next(p);
-        return 1;
+    parser_next(p);
+    if (p->token.tkn_type == TKN_LPARENT) {
+      AST_Node_t **args = NULL;
+      int arg_count = 0, arg_cap = 0;
+      parser_next(p);
+      while (p->token.tkn_type != TKN_RPARENT) {
+        if (p->token.tkn_type == TKN_UNDEFINED || p->token.tkn_type == TKN_EOF ||
+            p->token.tkn_type == TKN_NEWLINE) {
+          free(identifier_name);
+          return 0;
+        }
+        AST_Node_t *arg = parser_arg(p);
+        if (!arg) {
+          free(identifier_name);
+          return 0;
+        }
+        if (arg_count == arg_cap) {
+          arg_cap = arg_cap ? arg_cap * 2 : 4;
+          args = realloc(args, sizeof(AST_Node_t *) * arg_cap);
+        }
+        args[arg_count++] = arg;
       }
-      AST_Node_t *arg = parser_arg(p);
-      if (!arg) {
-        free(identifier_name);
-        return 0;
-      }
-      if (arg_count == arg_cap) {
-        arg_cap = arg_cap ? arg_cap * 2 : 4;
-        args = realloc(args, sizeof(AST_Node_t *) * arg_cap);
-      }
-      args[arg_count++] = arg;
+      *ast = ast_make_cmd(identifier_name, args, arg_count);
+      free(identifier_name);
+      parser_next(p);
+      return 1;
     }
-    *ast = ast_make_cmd(identifier_name, args, arg_count);
     free(identifier_name);
-    return 1;
   } else if (p->token.tkn_type == TKN_NEWLINE) {
     parser_next(p);
     return parser_stmt(p, ast);
@@ -89,13 +92,20 @@ int parser_property(Parser *p, AST_Node_t **ast) {
   return 0;
 }
 
-int parser_assignment_rhs(const char *name, Parser *p, AST_Node_t **ast) {
-  if (p->token.tkn_type == TKN_STRING) {
-    *ast = ast_make_assignment_string(name, p->token.tkn_text);
+int parser_assignment(Parser *p, AST_Node_t **ast) {
+  const char *name = strdup(p->token.tkn_text);
+  parser_next(p);
+  if (p->token.tkn_type == TKN_ASSIGNMENT) {
     parser_next(p);
-    if (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_EOF) { return 0; }
-    return 1;
+    if (p->token.tkn_type == TKN_STRING) {
+      *ast = ast_make_assignment_string(name, p->token.tkn_text);
+      parser_next(p);
+      if (p->token.tkn_type != TKN_NEWLINE && p->token.tkn_type != TKN_EOF) { return 0; }
+      free((void *)name);
+      return 1;
+    }
   }
+  free((void *)name);
   return 0;
 }
 
