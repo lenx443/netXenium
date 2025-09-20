@@ -10,7 +10,6 @@
 #include <time.h>
 
 #include "colors.h"
-#include "functions.h"
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
@@ -31,6 +30,23 @@ static char *__log_type_color(log_types type) {
   case INFO: return VERDE;
   default: return RESET;
   }
+}
+
+static void strip_ansi_escape(char *str) {
+  char *src = str;
+  char *dst = str;
+  while (*src) {
+    if (*src == '\x1B' && *(src + 1) == '[') {
+      src += 2;
+      while (*src && !((*src >= '@' && *src <= '~'))) {
+        src++;
+      }
+      if (*src) src++;
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst = '\0';
 }
 
 int is_loged(LIST_ptr object, char *match) {

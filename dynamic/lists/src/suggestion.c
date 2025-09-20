@@ -1,13 +1,30 @@
+#include <asm-generic/ioctls.h>
+#include <asm-generic/termios.h>
+#include <bits/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "colors.h"
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
+#include "read_string_utf8.h"
 #include "suggestion.h"
-#include "terminal.h"
+
+static int get_terminal_size(term_size *tz) {
+  struct winsize w;
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) < 0) {
+    log_add(NULL, ERROR, "GetTerminalSize", "{ioctl}(fd, op, ...)");
+    log_add(NULL, ERROR, "GetTerminalSize", "Error al obtener el tamaño de la terminal");
+    log_add_errno(NULL, ERROR, "GetTerminalSize");
+    return 0;
+  }
+  tz->COLS = w.ws_col;
+  tz->ROWS = w.ws_row;
+  return 1;
+}
 
 SUGGEST_ptr suggest_new() {
   SUGGEST_ptr new_suggest = malloc(sizeof(SUGGEST));
@@ -27,8 +44,8 @@ SUGGEST_ptr suggest_new() {
   return new_suggest;
 }
 
-int suggest_add(SUGGEST_ptr sugg, char *sg_name, char *sg_value, char *sg_desc,
-                suggest_types type) {
+int suggest_add(SUGGEST_ptr sugg, const char *sg_name, const char *sg_value,
+                const char *sg_desc, suggest_types type) {
   if (sugg == NULL || !list_valid(sugg->suggestions)) { return 0; }
   suggest_struct temp_suggest;
   strncpy(temp_suggest.sg_name, sg_name, SUGGEST_NAME_LEN - 1);

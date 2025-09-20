@@ -1,11 +1,11 @@
-#include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "colors.h"
-#include "commands.h"
 #include "history.h"
+#include "instance.h"
 #include "interpreter.h"
 #include "list.h"
 #include "logs.h"
@@ -15,121 +15,16 @@
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "suggestion.h"
+#include "vm_def.h"
+#include "xen_map.h"
+#include "xen_string.h"
+#include "xen_string_implement.h"
+#include "xen_vector.h"
 
 #define NAME "shell"
 
-static int is_special_char(char c) { return c == '\'' || c == '"' || c == '$'; }
-
-static int is_escaped(const char *cmd, int pos) {
-  int backslashes = 0;
-  while (pos > 0 && cmd[--pos] == '\\')
-    backslashes++;
-  return (backslashes % 2) != 0;
-}
-
-static int extract_money_token(const char *cmd, int start, char money, char **out) {
-  int i = start + 1;
-  char prop_name[PROP_NAME_LEN];
-  int j = 0;
-
-  while (isalnum(cmd[i]) || cmd[i] == '_') {
-    if (j < PROP_NAME_LEN - 1) prop_name[j++] = cmd[i];
-    i++;
-  }
-  prop_name[j] = '\0';
-  prop_struct *prop_value = prop_reg_value(prop_name, *prop_register, 1);
-  if (!prop_value) {
-    log_add(NULL, ERROR, "Command Parser",
-            "Error al obtener el valor de la propiedad " AZUL "%s" RESET, prop_name);
-    log_show_and_clear(NULL);
-    *out = malloc(1);
-    (*out)[0] = '\0';
-    return i;
-  }
-
-  int out_size = strlen(prop_value->value) + 1;
-  *out = malloc(out_size);
-  strncpy(*out, prop_value->value, out_size - 1);
-  (*out)[out_size - 1] = '\0';
-  return i;
-};
-
-static int extract_quoted_token(const char *cmd, int start, char quote, char **out) {
-  int i = start + 1;
-  char buffer[1024];
-  int j = 0;
-
-  while (cmd[i] != '\0') {
-    if (cmd[i] == quote && !is_escaped(cmd, i)) {
-      buffer[j] = '\0';
-      *out = malloc(j + 1);
-      strncpy(*out, buffer, j);
-      (*out)[j] = '\0';
-
-      return i + 1;
-    }
-
-    if (cmd[i] == '\\' && is_special_char(cmd[i + 1])) {
-      buffer[j++] = cmd[i + 1];
-      i += 2;
-    } else if (cmd[i] == '$' && !is_escaped(cmd, i)) {
-      char *money;
-      int new_pos = extract_money_token(cmd, i, cmd[i], &money);
-      for (int k = 0; money[k]; k++) {
-        buffer[j++] = money[k];
-      }
-      free(money);
-      i = new_pos;
-    } else {
-      buffer[j++] = cmd[i++];
-    }
-  }
-
-  *out = NULL;
-  return start + 1;
-}
-
-static int extract_normal_token(const char *cmd, int start, char **out) {
-  int i = start;
-  char buffer[1024];
-  int j = 0;
-  while (cmd[i] != '\0' && cmd[i] != ' ') {
-    if (cmd[i] == '\\' && is_special_char(cmd[i + 1])) {
-      buffer[j++] = cmd[i + 1];
-      i += 2;
-    } else if ((cmd[i] == '\'' || cmd[i] == '"') && !is_escaped(cmd, i)) {
-      char *quoted;
-      i = extract_quoted_token(cmd, i, cmd[i], &quoted);
-      if (!quoted) {
-        log_add(NULL, ERROR, "Command Parser", "Comilla sin cerrar detectada");
-        log_add(NULL, ERROR, "Command Parser", "{%s} <- Exprecion invalida", cmd);
-        log_show_and_clear(NULL);
-        free(*out);
-        *out = NULL;
-        program.closed = 1;
-        return strlen(cmd);
-      }
-      for (int k = 0; quoted[k]; k++)
-        buffer[j++] = quoted[k];
-      free(quoted);
-    } else if (cmd[i] == '$' && !is_escaped(cmd, i)) {
-      char *money;
-      i = extract_money_token(cmd, i, cmd[i], &money);
-      for (int k = 0; money[k]; k++)
-        buffer[j++] = money[k];
-      free(money);
-    } else {
-      buffer[j++] = cmd[i++];
-    }
-  }
-  buffer[j] = '\0';
-  *out = strdup(buffer);
-  return i;
-}
-
 int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
 #define IF_SUGGEST if (mode == SUGGEST_MODE)
-#define IF_EXEC if (mode == EXEC_MODE)
 #define push_string(list, string)                                                        \
   if (!list_push_back_string_node(list, string)) {                                       \
     IF_SUGGEST {                                                                         \
@@ -188,15 +83,23 @@ int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
         }
       }
     } else if (is_first_token) {
-      for (int i = 0; cmds_table[i] != NULL; i++) {
-        if (strncmp(cmds_table[i]->name, partial, strlen(partial)) == 0) {
+      Xen_Instance *keys = Xen_Map_Keys(vm->root_context->ctx_instances);
+      for (size_t i = 0; i < Xen_Vector_Size(keys); i++) {
+        Xen_Instance *key = Xen_Vector_Get_Index(keys, i);
+        if (Xen_TYPE(key) != &Xen_String_Implement) {
+          Xen_DEL_REF(key);
+          break;
+        }
+        if (strncmp(Xen_String_As_CString(key), partial, strlen(partial)) == 0) {
           char suggestion_cmd[CMDSIZ];
           snprintf(suggestion_cmd, sizeof(suggestion_cmd), "%.*s%s%s", start, cmd,
-                   cmds_table[i]->name, cmd + end);
-          suggest_add(*sugg, cmds_table[i]->name, suggestion_cmd,
-                      cmds_table[i]->short_desc, COMMAND);
+                   Xen_String_As_CString(key), cmd + end);
+          suggest_add(*sugg, Xen_String_As_CString(key), suggestion_cmd, "instance",
+                      COMMAND);
         }
+        Xen_DEL_REF(key);
       }
+      Xen_DEL_REF(keys);
     }
     free(partial);
     return 1;
@@ -225,19 +128,6 @@ int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
     }
     cmd[len] = '\0';
   }
-  int cmd_offset = 0;
-
-  IF_EXEC while (cmd[cmd_offset] != '\0') {
-    while (cmd[cmd_offset] == ' ')
-      cmd_offset++;
-
-    if (cmd[cmd_offset] == '\0') break;
-
-    char *token = NULL;
-    cmd_offset = extract_normal_token(cmd, cmd_offset, &token);
-    if (token && token[0] != '\0') { push_string(args, token); }
-    free(token);
-  }
 
   int args_size = list_size(*args);
   if (args_size == 0) {
@@ -249,43 +139,7 @@ int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
     list_free(args);
     return 0;
   }
-  char *cmd_str = (char *)cmd_node->point;
-  int matched = 0;
-  for (int i = 0; cmds_table[i] != NULL; i++) {
-    if (strcmp(cmds_table[i]->name, cmd_str) == 0) {
-      IF_EXEC {
-        if ((args_size - 1) < cmds_table[i]->args_len[0] ||
-            (args_size - 1) > cmds_table[i]->args_len[1]) {
-          log_add(NULL, ERROR, "Command Parser", "\"{%s}\" <- Exprecion incorrecta", cmd);
-          log_show_and_clear(NULL);
-          program.return_code = 153;
-          free(args);
-          return 0;
-        }
-        program.return_code = cmds_table[i]->func(args);
-        if (program.return_code == 153) {
-          log_add(NULL, ERROR, "Command Parser", "\"{%s}\" <- Exprecion incorrecta", cmd);
-          log_show_and_clear(NULL);
-          free(args);
-          return 0;
-        }
-      }
-      matched = 1;
-      break;
-    }
-  }
-  IF_EXEC if (!matched) {
-    log_add(NULL, ERROR, "Command Parser",
-            "\"|%d>%s\" <- " AMARILLO "\'%s\'" RESET " no encontrado", strlen(cmd_str),
-            cmd, cmd_str);
-
-    log_show(NULL);
-    log_clear(NULL);
-    program.return_code = EXIT_FAILURE;
-  }
-
   list_free(args);
-  IF_EXEC return matched;
   return 1;
 }
 
@@ -352,10 +206,5 @@ void shell_loop(char *name) {
 
 Program_State program = {
     NULL, 0, NULL, 0, EXIT_SUCCESS, EXIT_SUCCESS,
-};
-const Command *cmds_table[] = {
-    &cmd_help,      &cmd_exit,  &cmd_new,   &cmd_del,           &cmd_get,
-    &cmd_set,       &cmd_echo,  &cmd_input, &cmd_clear_history, &cmd_resolve,
-    &cmd_arp_spoof, &cmd_iface, NULL,
 };
 HISTORY_ptr history = NULL;

@@ -23,7 +23,7 @@ typedef struct {
 typedef SUGGEST *SUGGEST_ptr;
 
 SUGGEST_ptr suggest_new();
-int suggest_add(SUGGEST_ptr, char *, char *, char *, suggest_types);
+int suggest_add(SUGGEST_ptr, const char *, const char *, const char *, suggest_types);
 void suggest_show(SUGGEST_ptr, int, int);
 void suggest_hide(SUGGEST_ptr, int);
 suggest_struct *suggest_get(SUGGEST_ptr, int);

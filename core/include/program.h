@@ -1,7 +1,6 @@
 #ifndef __PROGRAM_H__
 #define __PROGRAM_H__
 
-#include "commands.h"
 #include "history.h"
 #include "suggestion.h"
 
@@ -24,7 +23,6 @@ void load_script(char *);
 void shell_loop(char *);
 
 extern Program_State program;
-extern const Command *cmds_table[];
 extern HISTORY_ptr history;
 
 #endif

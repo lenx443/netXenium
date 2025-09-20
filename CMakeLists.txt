@@ -55,7 +55,6 @@ include_directories(
   core/modules_enginer/instance/include/
   core/modules_enginer/instance/types/header/
   modules/include/
-  api/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
   header/
@@ -183,12 +182,6 @@ set(SOURCES
   # modulos
   modules/src/m_core.c
 
-  # codigo fuente de la la API
-  # del Framework.
-  api/src/functions.c
-  api/src/pcap_wrapper.c
-  api/src/terminal.c
-
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   dynamic/lists/src/list.c
@@ -201,22 +194,6 @@ set(SOURCES
   # Implementaciones de los codigos
   # fuente de las tablas hash
   dynamic/hash_tables/src/string_hash_table.c
-
-  # Implementaciones de los codigo fuente
-  # de los comandos definidos en
-  # core/include/commands.h
-  commands/help.c
-  commands/exit.c
-  commands/new.c
-  commands/del.c
-  commands/set.c
-  commands/get.c
-  commands/echo.c
-  commands/input.c
-  commands/clear_history.c
-  commands/resolve.c
-  commands/arp_spoof.c
-  commands/iface.c
 )
 
 add_executable(ntxenium
@@ -225,51 +202,34 @@ add_executable(ntxenium
   ${SOURCES}
 )
 
-target_include_directories(ntxenium PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(ntxenium PRIVATE ${PCAP_LIBRARIES})
-
 enable_testing()
 
 add_executable(test_number
   tests/test_number.c ${SOURCES}
 )
-target_include_directories(test_number PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_number PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestNumber COMMAND test_number)
 
 add_executable(test_string
   tests/test_string.c ${SOURCES}
 )
-target_include_directories(test_string PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_string PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestString COMMAND test_string)
 
 add_executable(test_map
   tests/test_map.c ${SOURCES}
 )
-target_include_directories(test_map PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_map PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestMap COMMAND test_map)
 
 add_executable(test_boolean
   tests/test_boolean.c ${SOURCES}
 )
-target_include_directories(test_boolean PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_boolean PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestBoolean COMMAND test_boolean)
 
 add_executable(test_modules
   tests/test_modules.c ${SOURCES}
 )
-target_include_directories(test_modules
-PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_modules  PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestModules COMMAND test_modules)
 
 add_executable(test_load_script
   tests/test_load_script.c ${SOURCES}
 )
-target_include_directories(test_load_script
-PRIVATE ${PCAP_INCLUDE_DIRS})
-target_link_libraries(test_load_script  PRIVATE ${PCAP_LIBRARIES})
 add_test(NAME TestLoadScript COMMAND test_load_script)

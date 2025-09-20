@@ -24,7 +24,6 @@
 - Sistema operativo **Linux**
 - Entorno Posix (glibc requerido)
 - **Permisos de superusuario** (root)
-- **libpcap** instalada
 
 ## Instalación
 
