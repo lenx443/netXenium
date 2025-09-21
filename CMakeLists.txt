@@ -35,6 +35,7 @@ include_directories(
   core/common/instances/map/types/header/
   core/common/instances/boolean/include/
   core/common/instances/boolean/types/header/
+  core/interpreter/parser/
   core/interpreter/include/
   core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/

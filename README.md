@@ -23,7 +23,6 @@
 - Herramientas de construcción: CMake y Make
 - Sistema operativo **Linux**
 - Entorno Posix (glibc requerido)
-- **Permisos de superusuario** (root)
 
 ## Instalación
 
