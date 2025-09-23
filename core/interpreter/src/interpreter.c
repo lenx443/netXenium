@@ -59,11 +59,14 @@ int interpreter(const char *text_code) {
     return 0;
   }
   block_list_push_node(blocks, main_block);
-  if (!ast_compile(blocks, &main_block, ast_array->ast_array, ast_array->ast_count)) {
+  AST_Node_t *ast_program =
+      ast_node_make("program", NULL, ast_array->ast_count, ast_array->ast_array);
+  if (!ast_compile(blocks, &main_block, ast_program)) {
     ast_array_free(ast_array);
     block_list_free(blocks);
     return 0;
   }
+  free(ast_program);
   ir_add_halt(main_block->instr_array);
   ast_array_free(ast_array);
   blocks_linealizer(blocks);

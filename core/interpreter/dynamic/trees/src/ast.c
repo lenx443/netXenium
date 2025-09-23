@@ -1,118 +1,56 @@
 #include <stdlib.h>
-#include <string.h>
 
 #include "ast.h"
-#include "operators.h"
 
-AST_Node_t *ast_make_empty() {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_EMPTY;
-  return node;
+AST_Node_t *ast_node_make(const char *name, const char *value, int child_count,
+                          AST_Node_t **children) {
+  AST_Node_t *ast = malloc(sizeof(AST_Node_t));
+  ast->name = name;
+  ast->value = value;
+  ast->child_count = child_count;
+  ast->children = children;
+  return ast;
 }
 
-AST_Node_t *ast_make_string(const char *value) {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_STRING;
-  node->string.value = strdup(value);
-  return node;
-}
-
-AST_Node_t *ast_make_literal(const char *value) {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_LITERAL;
-  node->literal.value = strdup(value);
-  return node;
-}
-
-AST_Node_t *ast_make_property(const char *value) {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_PROPERTY;
-  node->property.value = strdup(value);
-  return node;
-}
-
-AST_Node_t *ast_make_assignment(const char *name, AST_Node_t *rhs) {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_ASSIGNMENT;
-  node->assignment.operator= Xen_Assignment;
-  node->assignment.lhs = strdup(name);
-  node->assignment.rhs = rhs;
-  return node;
-}
-
-AST_Node_t *ast_make_cmd(const char *cmd_name, AST_Node_t **cmd_args, int arg_count) {
-  AST_Node_t *node = malloc(sizeof(AST_Node_t));
-  node->ast_type = AST_CMD;
-  node->cmd.cmd_name = strdup(cmd_name);
-  node->cmd.cmd_args = cmd_args;
-  node->cmd.arg_count = arg_count;
-  return node;
+int ast_node_push(AST_Node_t *ast, AST_Node_t *child) {
+  ast->children = realloc(ast->children, sizeof(AST_Node_t *) * (ast->child_count + 1));
+  ast->children[ast->child_count++] = child;
+  return 1;
 }
 
 void ast_free(AST_Node_t *ast) {
   if (!ast) return;
-  switch (ast->ast_type) {
-  case AST_EMPTY: break;
-  case AST_STRING: free((void *)ast->string.value); break;
-  case AST_LITERAL: free((void *)ast->literal.value); break;
-  case AST_PROPERTY: free((void *)ast->property.value); break;
-  case AST_ASSIGNMENT:
-    free((void *)ast->assignment.lhs);
-    ast_free(ast->assignment.rhs);
-    break;
-  case AST_CMD:
-    free((void *)ast->cmd.cmd_name);
-    for (int i = 0; i < ast->cmd.arg_count; i++) {
-      ast_free(ast->cmd.cmd_args[i]);
+  if (ast->name) free((void *)ast->name);
+  if (ast->value) free((void *)ast->value);
+  if (ast->children) {
+    for (int i = 0; i < ast->child_count; i++) {
+      ast_free(ast->children[i]);
     }
-    free(ast->cmd.cmd_args);
-    break;
+    free(ast->children);
   }
   free(ast);
 }
 
-void ast_free_block(AST_Node_t **block, size_t b_count) {
-  for (int i = 0; i < b_count; i++) {
-    ast_free(block[i]);
+#ifndef NDEBUG
+static void __print_ast(AST_Node_t *node, int level) {
+  if (!node) return;
+
+  // Imprimir sangría según el nivel
+  for (int i = 0; i < level; i++) {
+    printf("  "); // dos espacios por nivel
   }
-  free(block);
-}
 
-static void print_indent(int indent) {
-  for (int i = 0; i < indent; ++i)
-    printf("  ");
-}
+  // Imprimir el nodo
+  if (node->value)
+    printf("%s: %s\n", node->name, node->value);
+  else
+    printf("%s\n", node->name);
 
-static void print_ast_node(const AST_Node_t *node, int indent);
-
-static void print_ast_node(const AST_Node_t *node, int indent) {
-  if (!node) {
-    print_indent(indent);
-    printf("AST_Node: NULL\n");
-    return;
-  }
-  switch (node->ast_type) {
-  case AST_EMPTY:
-    print_indent(indent);
-    printf("AST_EMPTY\n");
-    break;
-  case AST_CMD:
-    print_indent(indent);
-    printf("AST_CMD: \"%s\"\n", node->cmd.cmd_name ? node->cmd.cmd_name : "NULL");
-    for (int i = 0; i < node->cmd.arg_count; ++i) {
-      print_ast_node(node->cmd.cmd_args[i], indent + 1);
-    }
-    break;
-  default: print_indent(indent); printf("AST_Node: Unknown type\n");
+  // Llamada recursiva para los hijos
+  for (int i = 0; i < node->child_count; i++) {
+    __print_ast(node->children[i], level + 1);
   }
 }
 
-void ast_print(const AST_Node_t *node) { print_ast_node(node, 0); }
-
-void ast_print_block(AST_Node_t **nodes, size_t count) {
-  for (size_t i = 0; i < count; ++i) {
-    printf("Node %zu:\n", i);
-    ast_print(nodes[i]);
-    printf("\n");
-  }
-}
+void ast_print(AST_Node_t *node) { __print_ast(node, 0); }
+#endif
