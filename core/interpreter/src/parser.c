@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ast.h"
 #include "instance.h"
 #include "lexer.h"
 #include "logs.h"
@@ -12,14 +11,12 @@
 
 #define error(msg, ...) log_add(NULL, ERROR, "Parser", msg, ##__VA_ARGS__)
 
-static int parser_string(Parser *, AST_Node_t **);
-static int parser_literal(Parser *, AST_Node_t **);
-static int parser_property(Parser *, AST_Node_t **);
+static Xen_Instance *parser_string(Parser *);
+static Xen_Instance *parser_literal(Parser *);
+static Xen_Instance *parser_property(Parser *);
 static Xen_Instance *parser_expr(Parser *);
-static int parser_primary(Parser *, AST_Node_t **);
+static Xen_Instance *parser_primary(Parser *);
 static Xen_Instance *parser_assignment(Parser *);
-static int parser_block(Parser *, AST_Node_t ***, size_t *);
-static AST_Node_t *parser_arg(Parser *);
 
 void parser_next(Parser *p) { p->token = lexer_next_token(p->lexer); }
 
@@ -60,124 +57,141 @@ Xen_Instance *parser_stmt(Parser *p) {
           free(identifier_name);
           return nil;
         }
-        if (!Xen_AST_Node_Push_Child(cmd, arg)) {}
+        if (!Xen_AST_Node_Push_Child(cmd, arg)) {
+          Xen_DEL_REF(cmd);
+          Xen_DEL_REF(arg);
+          free(identifier_name);
+          return nil;
+        }
+        Xen_DEL_REF(arg);
       }
 
-      *ast = ast_node_make(strdup("cmd"), strdup(identifier_name), arg_count, args);
       free(identifier_name);
       parser_next(p);
-      return 1;
+      return cmd;
     }
 
     free(identifier_name);
   } else if (p->token.tkn_type == TKN_NEWLINE) {
     parser_next(p);
-    return parser_stmt(p, ast);
+    return parser_stmt(p);
   } else if (p->token.tkn_type == TKN_EOF) {
-    *ast = ast_node_make(strdup("empty"), NULL, 0, NULL);
-    return 0;
+    return Xen_AST_Node_New("empty", NULL);
   }
 
   error("El token '%s' es invalido. Use `help` para mas información", p->token.tkn_text);
-  *ast = ast_node_make(strdup("empty"), NULL, 0, NULL);
-  return 0;
+  return Xen_AST_Node_New("empty", NULL);
 }
 
-int parser_string(Parser *p, AST_Node_t **ast) {
+Xen_Instance *parser_string(Parser *p) {
   if (p->token.tkn_type != TKN_STRING) return 0;
-  *ast = ast_node_make(strdup("string"), strdup(p->token.tkn_text), 0, NULL);
+  Xen_Instance *string = Xen_AST_Node_New("string", p->token.tkn_text);
+  if_nil_eval(string) { return nil; }
   parser_next(p);
-  return 1;
+  return string;
 }
 
-int parser_literal(Parser *p, AST_Node_t **ast) {
+Xen_Instance *parser_literal(Parser *p) {
   if (p->token.tkn_type != TKN_IDENTIFIER) return 0;
-  *ast = ast_node_make(strdup("literal"), strdup(p->token.tkn_text), 0, NULL);
+  Xen_Instance *literal = Xen_AST_Node_New("literal", p->token.tkn_text);
+  if_nil_eval(literal) { return nil; }
   parser_next(p);
-  return 1;
+  return literal;
 }
 
-int parser_property(Parser *p, AST_Node_t **ast) {
+Xen_Instance *parser_property(Parser *p) {
   if (p->token.tkn_type != TKN_PROPERTY) return 0;
-  *ast = ast_node_make(strdup("property"), strdup(p->token.tkn_text), 0, NULL);
+  Xen_Instance *property = Xen_AST_Node_New("property", p->token.tkn_text);
+  if_nil_eval(property) { return nil; }
   parser_next(p);
-  return 1;
+  return property;
 }
 
-int parser_expr(Parser *p, AST_Node_t **ast) {
-  AST_Node_t *primary = NULL;
-  if (!parser_primary(p, &primary)) return 0;
-  AST_Node_t **children = malloc(sizeof(AST_Node_t *));
-  children[0] = primary;
-  *ast = ast_node_make(strdup("expr"), NULL, 1, children);
-  return 1;
-}
-
-int parser_primary(Parser *p, AST_Node_t **ast) {
-  AST_Node_t *value = NULL;
-  if (p->token.tkn_type == TKN_STRING) {
-    if (!parser_string(p, &value)) { return 0; }
-  } else if (p->token.tkn_type == TKN_IDENTIFIER) {
-    if (!parser_literal(p, &value)) { return 0; }
-  } else if (p->token.tkn_type == TKN_PROPERTY) {
-    if (parser_property(p, &value)) { return 0; }
-  } else {
-    return 0;
+Xen_Instance *parser_expr(Parser *p) {
+  Xen_Instance *expr = Xen_AST_Node_New("expr", NULL);
+  if_nil_eval(expr) { return nil; }
+  Xen_Instance *primary = parser_primary(p);
+  if_nil_eval(primary) {
+    Xen_DEL_REF(parser_expr);
+    return nil;
   }
-  AST_Node_t **children = malloc(sizeof(AST_Node_t *));
-  children[0] = value;
-  *ast = ast_node_make(strdup("primary"), NULL, 1, children);
-  return 1;
+  if (!Xen_AST_Node_Push_Child(expr, primary)) {
+    Xen_DEL_REF(expr);
+    Xen_DEL_REF(primary);
+    return nil;
+  }
+  Xen_DEL_REF(primary);
+  return expr;
 }
 
-int parser_assignment(Parser *p, AST_Node_t **ast) {
-  AST_Node_t *lhs =
-      ast_node_make(strdup("literal"), strdup(p->token.tkn_text), 0, NULL); // LHS
+Xen_Instance *parser_primary(Parser *p) {
+  Xen_Instance *value = nil;
+  if (p->token.tkn_type == TKN_STRING) {
+    value = parser_string(p);
+  } else if (p->token.tkn_type == TKN_IDENTIFIER) {
+    value = parser_literal(p);
+  } else if (p->token.tkn_type == TKN_PROPERTY) {
+    value = parser_property(p);
+  }
+  if_nil_eval(value) { return nil; }
+  Xen_Instance *primary = Xen_AST_Node_New("primary", NULL);
+  if_nil_eval(primary) {
+    Xen_DEL_REF(value);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(primary, value)) {
+    Xen_DEL_REF(primary);
+    Xen_DEL_REF(value);
+    return nil;
+  }
+  Xen_DEL_REF(primary);
+  return primary;
+}
+
+Xen_Instance *parser_assignment(Parser *p) {
+  Xen_Instance *lhs = Xen_AST_Node_New("literal", p->token.tkn_text); // LHS
+  if_nil_eval(lhs) { return nil; }
   parser_next(p);
 
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
     const char *operator= "="; // por defecto
     parser_next(p);
 
-    AST_Node_t *rhs = NULL;
+    Xen_Instance *rhs = nil;
     if (p->token.tkn_type == TKN_STRING) {
-      parser_string(p, &rhs);
+      rhs = parser_string(p);
     } else if (p->token.tkn_type == TKN_IDENTIFIER) {
-      parser_literal(p, &rhs);
+      rhs = parser_literal(p);
     } else if (p->token.tkn_type == TKN_PROPERTY) {
-      parser_property(p, &rhs);
-    } else {
-      ast_free(lhs);
-      return 0;
+      rhs = parser_property(p);
+    }
+    if_nil_eval(rhs) {
+      Xen_DEL_REF(lhs);
+      return nil;
     }
 
-    // Crear nodo assignment con operador implícito
-    AST_Node_t **children = malloc(sizeof(AST_Node_t *) * 2);
-    children[0] = lhs;
-    children[1] = rhs; // RHS
-    *ast = ast_node_make(strdup("assignment"), strdup(operator), 2, children);
+    Xen_Instance *assignm = Xen_AST_Node_New("assignment", operator);
+    if_nil_eval(assignm) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      return nil;
+    }
+
+    if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      return nil;
+    }
 
     parser_next(p);
-    return 1;
+    return assignm;
   }
 
-  ast_free(lhs);
-  return 0;
-}
-
-AST_Node_t *parser_arg(Parser *p) {
-  AST_Node_t *node = NULL;
-
-  if (p->token.tkn_type == TKN_STRING) {
-    parser_string(p, &node);
-  } else if (p->token.tkn_type == TKN_IDENTIFIER) {
-    parser_literal(p, &node);
-  } else if (p->token.tkn_type == TKN_PROPERTY) {
-    parser_property(p, &node);
-  } else {
-    parser_next(p);
-    return NULL;
-  }
-
-  return node;
+  Xen_DEL_REF(lhs);
+  return nil;
 }

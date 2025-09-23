@@ -6,7 +6,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address -fno-omit-frame-pointer -g -O0 -Wall")
+set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address,undefined,leak,thread -fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
@@ -15,7 +15,7 @@ set(C_STANDARD 99)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "Enabling Address Sanitizer")
-  link_libraries(-fsanitize=address)
+  link_libraries(-fsanitize=address,undefined)
 endif()
 
 include_directories(

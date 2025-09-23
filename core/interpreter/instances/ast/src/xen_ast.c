@@ -9,15 +9,19 @@
 Xen_Instance *Xen_AST_Node_New(const char *name, const char *value) {
   Xen_AST_Node *ast = (Xen_AST_Node *)__instance_new(&Xen_AST_Implement, nil, 0);
   if_nil_eval(ast) { return nil; }
-  ast->name = strdup(name);
-  if (!ast->name) {
-    Xen_DEL_REF(ast);
-    return nil;
+  if (name) {
+    ast->name = strdup(name);
+    if (!ast->name) {
+      Xen_DEL_REF(ast);
+      return nil;
+    }
   }
-  ast->value = strdup(value);
-  if (!ast->value) {
-    Xen_DEL_REF(ast);
-    return nil;
+  if (value) {
+    ast->value = strdup(value);
+    if (!ast->value) {
+      Xen_DEL_REF(ast);
+      return nil;
+    }
   }
   return (Xen_Instance *)ast;
 }
