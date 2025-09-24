@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 
 project(NetXenium)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PCAP REQUIRED libpcap)
-
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address,leak -fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
 
