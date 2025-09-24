@@ -6,7 +6,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(PCAP REQUIRED libpcap)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address,undefined,leak,thread -fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
+set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address,leak -fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
@@ -104,6 +104,9 @@ set(SOURCES
   # Implementacion del objeto `Boolean`
   core/common/instances/boolean/src/xen_boolean_implement.c
   core/common/instances/boolean/src/xen_boolean.c
+
+  core/interpreter/instances/ast/src/xen_ast.c
+  core/interpreter/instances/ast/src/xen_ast_implement.c
 
   # Codigo que se encarga de procesar
   # e interpretar scripts

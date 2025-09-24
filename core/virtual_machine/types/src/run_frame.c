@@ -10,6 +10,7 @@
 #include "xen_vector.h"
 
 static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   if (!args || Xen_Vector_Size(args) != 4 ||
       (Xen_Nil_NEval(Xen_Vector_Peek_Index(args, 0)) &&
        Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
@@ -51,6 +52,7 @@ static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
 }
 
 static int frame_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_INSTANCE *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   struct RunContext *ctx = (struct RunContext *)self;
   Xen_DEL_REF(ctx->ctx_instances);
   Xen_DEL_REF(ctx->ctx_closure);
@@ -62,6 +64,7 @@ static int frame_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_INSTANCE *args) {
 }
 
 static int frame_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance *string = Xen_String_From_CString("<Context-Frame>");
   if (!string) { return 0; }
   if (!xen_register_prop_set("__expose_string", string, id)) {

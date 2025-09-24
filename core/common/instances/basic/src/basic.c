@@ -10,6 +10,7 @@
 #include "xen_string.h"
 
 static int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement *impl = (struct __Implement *)self;
   impl->__impl_name = NULL;
   impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
@@ -26,6 +27,7 @@ static int basic_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args)
 }
 
 static int basic_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement *impl = (struct __Implement *)self;
   if (!impl) return 0;
   if (impl->__props) Xen_DEL_REF(impl->__props);
@@ -41,6 +43,7 @@ static int basic_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *ar
 }
 
 static int basic_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance *string = Xen_String_From_CString("<Basic>");
   if (!string) { return 0; }
   if (!xen_register_prop_set("__expose_string", string, id)) {

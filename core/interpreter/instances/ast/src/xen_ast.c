@@ -27,6 +27,7 @@ Xen_Instance *Xen_AST_Node_New(const char *name, const char *value) {
 }
 
 int Xen_AST_Node_Push_Child(Xen_Instance *ast_inst, Xen_Instance *child) {
+  if (Xen_TYPE(child) != &Xen_AST_Implement) { return 0; }
   Xen_AST_Node *ast = (Xen_AST_Node *)ast_inst;
   return Xen_Vector_Push(ast->children, child);
 }
@@ -37,4 +38,9 @@ const char *Xen_AST_Node_Value(Xen_Instance *ast) { return ((Xen_AST_Node *)ast)
 
 Xen_Instance *Xen_AST_Node_Children(Xen_Instance *ast) {
   return Xen_ADD_REF(((Xen_AST_Node *)ast)->children);
+}
+
+Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *ast_inst, size_t index) {
+  Xen_AST_Node *ast = (Xen_AST_Node *)ast_inst;
+  return Xen_Vector_Get_Index(ast->children, index);
 }

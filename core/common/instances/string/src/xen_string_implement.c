@@ -16,6 +16,7 @@
 #include "xen_vector.h"
 
 static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String *string = (Xen_String *)self;
   string->characters = NULL;
   string->length = 0;
@@ -23,17 +24,20 @@ static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
 }
 
 static int string_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String *string = (Xen_String *)self;
   free(string->characters);
   return 1;
 }
 
 static int string_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   if (!xen_register_prop_set("__expose_string", self, id)) { return 0; }
   return 1;
 }
 
 static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   if (!VM_CHECK_ID(id)) { return 0; }
   unsigned long hash = Xen_String_Hash(self);
   Xen_INSTANCE *hash_inst = Xen_Number_From_ULong(hash);

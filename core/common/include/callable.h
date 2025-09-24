@@ -5,6 +5,7 @@
 
 struct __Instance;
 
+#define NATIVE_CLEAR_ARG_NEVER_USE (void)(id, self, args);
 typedef int (*Xen_Native_Func)(unsigned long, struct __Instance *, struct __Instance *);
 
 enum Callable_Type {

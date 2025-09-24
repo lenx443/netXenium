@@ -41,7 +41,7 @@ const char *Xen_String_As_CString(Xen_INSTANCE *string) {
   return ((Xen_String *)string)->characters;
 }
 
-const char Xen_String_As_Char(Xen_Instance *string) {
+char Xen_String_As_Char(Xen_Instance *string) {
   if (!string || !((Xen_String *)string)->characters ||
       ((Xen_String *)string)->length <= 0) {
     return '\0';

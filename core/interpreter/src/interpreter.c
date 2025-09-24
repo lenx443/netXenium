@@ -1,11 +1,10 @@
-#include "ast.h"
-#include "ast_array.h"
 #include "ast_compiler.h"
 #include "block_list.h"
 #include "blocks_compiler.h"
 #include "blocks_linealizer.h"
 #include "bytecode.h"
 #include "callable.h"
+#include "instance.h"
 #include "interpreter.h"
 #include "ir_bytecode.h"
 #include "lexer.h"
@@ -18,6 +17,8 @@
 #include "vm_consts.h"
 #include "vm_def.h"
 #include "vm_run.h"
+#include "xen_ast.h"
+#include "xen_nil.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
@@ -28,47 +29,36 @@ int interpreter(const char *text_code) {
     return 0;
   }
   Lexer lexer = {text_code, 0};
-  Parser parser = {&lexer};
+  Parser parser = {&lexer, {0, "\0"}};
   parser_next(&parser);
-  AST_Array_ptr ast_array = ast_array_new();
-  if (!ast_array) return 0;
-  AST_Node_t *current_ast = NULL;
-  while (parser_stmt(&parser, &current_ast) == 1) {
-    if (!ast_array_add(ast_array, current_ast)) {
-      ast_array_free(ast_array);
-      ast_free(current_ast);
+  Xen_Instance *ast_program = Xen_AST_Node_New("program", NULL);
+  if_nil_eval(ast_program) return 0;
+  Xen_Instance *current_ast = nil;
+  while ((current_ast = parser_stmt(&parser)) != nil) {
+    if (!Xen_AST_Node_Push_Child(ast_program, current_ast)) {
+      Xen_DEL_REF(ast_program);
+      Xen_DEL_REF(current_ast);
       return 0;
     }
-    current_ast = NULL;
+    Xen_DEL_REF(current_ast);
   }
   log_show_and_clear(NULL);
-  if (current_ast) {
-    ast_free(current_ast);
-    current_ast = NULL;
-  }
-  if (ast_array->ast_array == NULL) {
-    ast_array_free(ast_array);
-    return 1;
-  }
   block_list_ptr blocks = block_list_new();
-  if (!blocks) { ast_array_free(ast_array); }
+  if (!blocks) { Xen_DEL_REF(ast_program); }
   block_node_ptr main_block = block_new();
   if (!main_block) {
-    ast_array_free(ast_array);
+    Xen_DEL_REF(ast_program);
     block_list_free(blocks);
     return 0;
   }
   block_list_push_node(blocks, main_block);
-  AST_Node_t *ast_program =
-      ast_node_make("program", NULL, ast_array->ast_count, ast_array->ast_array);
   if (!ast_compile(blocks, &main_block, ast_program)) {
-    ast_array_free(ast_array);
+    Xen_DEL_REF(ast_program);
     block_list_free(blocks);
     return 0;
   }
-  free(ast_program);
+  Xen_DEL_REF(ast_program);
   ir_add_halt(main_block->instr_array);
-  ast_array_free(ast_array);
   blocks_linealizer(blocks);
   ProgramCode_t pc;
   if (!blocks_compiler(&pc, blocks)) {

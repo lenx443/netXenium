@@ -76,7 +76,7 @@ Xen_Instance *parser_stmt(Parser *p) {
     parser_next(p);
     return parser_stmt(p);
   } else if (p->token.tkn_type == TKN_EOF) {
-    return Xen_AST_Node_New("empty", NULL);
+    return nil;
   }
 
   error("El token '%s' es invalido. Use `help` para mas información", p->token.tkn_text);
@@ -144,7 +144,6 @@ Xen_Instance *parser_primary(Parser *p) {
     Xen_DEL_REF(value);
     return nil;
   }
-  Xen_DEL_REF(primary);
   return primary;
 }
 
@@ -187,6 +186,7 @@ Xen_Instance *parser_assignment(Parser *p) {
       Xen_DEL_REF(rhs);
       return nil;
     }
+    Xen_DEL_REF(rhs);
 
     parser_next(p);
     return assignm;

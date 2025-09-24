@@ -1,3 +1,4 @@
+#include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -9,6 +10,7 @@
 #include "xen_vector.h"
 
 static int ast_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node *ast = (Xen_AST_Node *)self;
   ast->name = NULL;
   ast->value = NULL;
@@ -18,14 +20,16 @@ static int ast_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int ast_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node *ast = (Xen_AST_Node *)self;
-  free((void *)ast->name);
-  free((void *)ast->value);
+  if (ast->name) free((void *)ast->name);
+  if (ast->name) free((void *)ast->value);
   Xen_DEL_REF(ast->children);
   return 1;
 }
 
 static int ast_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance *string = Xen_String_From_CString("<AST>");
   if (!string) { return 0; }
   if (!xen_register_prop_set("__expose_string", string, id)) {

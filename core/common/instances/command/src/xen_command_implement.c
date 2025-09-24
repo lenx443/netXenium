@@ -11,6 +11,7 @@
 #include "xen_string.h"
 
 static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   inst->cmd_callable = NULL;
   inst->self = nil;
@@ -19,6 +20,7 @@ static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *arg
 }
 
 static int command_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) callable_free(inst->cmd_callable);
   if_nil_neval(inst->self) Xen_DEL_REF(inst->self);
@@ -27,6 +29,7 @@ static int command_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *a
 }
 
 static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) {
     if_nil_neval(inst->self) Xen_ADD_REF(inst->self);
@@ -38,6 +41,7 @@ static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *
   return 1;
 }
 static int command_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Instance *string = Xen_String_From_CString("<Command>");
   if (!string) { return 0; }
   if (!xen_register_prop_set("__expose_string", string, id)) {
