@@ -58,8 +58,8 @@ int ast_compile(block_list_ptr block_result, block_node_ptr *block, Xen_Instance
       Xen_DEL_REF(ast_children);
       return 0; // nodo desconocido
     }
-    Xen_DEL_REF(ast_children);
   }
+  Xen_DEL_REF(ast_children);
   return 1;
 }
 
@@ -101,19 +101,35 @@ static int compile_assignment(block_list_ptr blocks, block_node_ptr block,
 
   // Push LHS name
   int lhs_index = Xen_Vector_Size(blocks->consts->c_names);
-  if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(lhs))) return 0;
-  if (!ir_add_load_name(block->instr_array, 0, lhs_index)) return 0;
+  if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(lhs))) {
+    Xen_DEL_REF(children);
+    return 0;
+  }
+  if (!ir_add_load_name(block->instr_array, 0, lhs_index)) {
+    Xen_DEL_REF(children);
+    return 0;
+  }
 
   // Compilar RHS
   if (strcmp(Xen_AST_Node_Name(rhs), "string") == 0) {
-    if (!compile_string(1, blocks, block, rhs)) return 0;
+    if (!compile_string(1, blocks, block, rhs)) {
+      Xen_DEL_REF(children);
+      return 0;
+    }
   } else if (strcmp(Xen_AST_Node_Name(rhs), "literal") == 0) {
-    if (!compile_literal(1, blocks, block, rhs)) return 0;
+    if (!compile_literal(1, blocks, block, rhs)) {
+      Xen_DEL_REF(children);
+      return 0;
+    }
   } else if (strcmp(Xen_AST_Node_Name(rhs), "property") == 0) {
-    if (!compile_property(1, blocks, block, rhs)) return 0;
+    if (!compile_property(1, blocks, block, rhs)) {
+      Xen_DEL_REF(children);
+      return 0;
+    }
   } else {
     return 0; // tipo no soportado
   }
+  Xen_DEL_REF(children);
 
   // Aquí puedes manejar distintos operadores
   if (strcmp(Xen_AST_Node_Value(ast), "=") == 0) {

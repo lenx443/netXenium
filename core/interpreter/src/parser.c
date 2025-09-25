@@ -144,6 +144,7 @@ Xen_Instance *parser_primary(Parser *p) {
     Xen_DEL_REF(value);
     return nil;
   }
+  Xen_DEL_REF(value);
   return primary;
 }
 
@@ -186,6 +187,7 @@ Xen_Instance *parser_assignment(Parser *p) {
       Xen_DEL_REF(rhs);
       return nil;
     }
+    Xen_DEL_REF(lhs);
     Xen_DEL_REF(rhs);
 
     parser_next(p);
