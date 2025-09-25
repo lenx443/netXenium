@@ -20,7 +20,7 @@ typedef enum {
 
 int command_parser(char *, ExecMode, SUGGEST_ptr *, int);
 void load_script(char *);
-void shell_loop(char *);
+void shell_loop();
 
 extern Program_State program;
 extern HISTORY_ptr history;

@@ -1,6 +1,5 @@
-#include <stdlib.h>
-
 #include "basic.h"
+#include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -11,6 +10,7 @@
 #include "xen_string.h"
 
 static int map_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map *map = (Xen_Map *)self;
   map->map_keys = nil;
   map->map_buckets = NULL;
@@ -19,10 +19,11 @@ static int map_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int map_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map *map = (Xen_Map *)self;
   Xen_DEL_REF(map->map_keys);
   if (map->map_buckets) {
-    for (int i = 0; i < map->map_capacity; i++) {
+    for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node *current = map->map_buckets[i];
       while (current) {
         struct __Map_Node *temp = current;
@@ -38,6 +39,7 @@ static int map_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int map_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance *string = Xen_String_From_CString("<Map>");
   if (!string) { return 0; }
   if (!xen_register_prop_set("__expose_string", string, id)) {

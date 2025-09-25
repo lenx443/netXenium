@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   } else {
     program.name = strdup(argv[0]);
     signal(SIGINT, SIG_IGN);
-    shell_loop(argv[0]);
+    shell_loop();
   }
   Xen_Finish();
   return program.exit_code;

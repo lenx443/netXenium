@@ -5,7 +5,6 @@
 #include "list.h"
 #include "logs.h"
 #include "program.h"
-#include "properties.h"
 #include "vm_def.h"
 #include "xen_life.h"
 #include "xen_module_load.h"
@@ -17,14 +16,6 @@ int Xen_Init(int argc, char **argv) {
     log_free(NULL);
     return 0;
   }
-  prop_register = prop_reg_new();
-  if (prop_register == NULL) {
-    log_add(NULL, ERROR, argv[0], "No se pudo iniciar la configuracion");
-    log_show_and_clear(NULL);
-    vm_destroy();
-    log_free(NULL);
-    return 0;
-  }
   setlocale(LC_CTYPE, "");
 
   program.argv = argv;
@@ -33,7 +24,6 @@ int Xen_Init(int argc, char **argv) {
   if (!Xen_Instance_Init()) {
     vm_destroy();
     log_free(NULL);
-    prop_reg_free(prop_register);
     return 0;
   }
 
@@ -41,7 +31,6 @@ int Xen_Init(int argc, char **argv) {
     Xen_Instanse_Finish();
     vm_destroy();
     log_free(NULL);
-    prop_reg_free(prop_register);
     return 0;
   }
 
@@ -51,7 +40,6 @@ int Xen_Init(int argc, char **argv) {
 void Xen_Finish() {
   Xen_Instanse_Finish();
   free(program.name);
-  prop_reg_free(prop_register);
   vm_destroy();
   log_free(NULL);
 }

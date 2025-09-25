@@ -1,7 +1,5 @@
 #include <arpa/inet.h>
-#include <bits/in_addr.h>
 #include <ctype.h>
-#include <errno.h>
 #include <ifaddrs.h>
 #include <linux/in.h>
 #include <stddef.h>
@@ -24,7 +22,8 @@ int is_ip(char *addr) {
 int to_ip(void *out_addr, char *in_addr) {
   struct in_addr addr;
   if (!inet_aton(in_addr, &addr)) {
-    log_add(NULL, ERROR, "IP", "No se puedo convertir {%s} a una IP (Big-endian)", in_addr);
+    log_add(NULL, ERROR, "IP", "No se puedo convertir {%s} a una IP (Big-endian)",
+            in_addr);
     return 0;
   }
   memcpy(out_addr, &addr.s_addr, 4);
@@ -83,8 +82,9 @@ int to_mac(void *out_hwaddr, char *in_hwaddr) {
 }
 
 int from_mac(char *str, void *hwaddr, size_t size) {
-  int result = snprintf(str, size, "%02X:%02X:%02X:%02X:%02X:%02X", ((char *)hwaddr)[0], ((char *)hwaddr)[1],
-                        ((char *)hwaddr)[2], ((char *)hwaddr)[3], ((char *)hwaddr)[4], ((char *)hwaddr)[5]);
+  int result = snprintf(str, size, "%02X:%02X:%02X:%02X:%02X:%02X", ((char *)hwaddr)[0],
+                        ((char *)hwaddr)[1], ((char *)hwaddr)[2], ((char *)hwaddr)[3],
+                        ((char *)hwaddr)[4], ((char *)hwaddr)[5]);
   return (result >= 0) && (result < size);
 }
 
@@ -92,7 +92,8 @@ int is_iface(char *iface) {
   struct ifaddrs *ifaddr, *ifa;
   int matched = 0;
   if (getifaddrs(&ifaddr) == -1) {
-    log_add(NULL, ERROR, "IFACE", "No se pudieron alistar las interfaces red red disponibles");
+    log_add(NULL, ERROR, "IFACE",
+            "No se pudieron alistar las interfaces red red disponibles");
     log_add_errno(NULL, ERROR, "Properties-types");
     return 0;
   }
@@ -103,7 +104,9 @@ int is_iface(char *iface) {
     }
   }
   freeifaddrs(ifaddr);
-  if (!matched) { log_add(NULL, ERROR, "IFACE", CIAN "{%s}" RESET " no es una interfaz valida", iface); }
+  if (!matched) {
+    log_add(NULL, ERROR, "IFACE", CIAN "{%s}" RESET " no es una interfaz valida", iface);
+  }
   return matched;
 }
 
@@ -201,13 +204,13 @@ int from_string(char *str, void *str_out, size_t size) {
   return 1;
 }
 
-#define is_prop(name, type, code)                                                                                      \
-  int name(prop_types prop) {                                                                                          \
-    if (prop != type) {                                                                                                \
-      log_add(NULL, WARNING, "Properties-Types", "la propiedad no es del tipo " code);                                 \
-      return 0;                                                                                                        \
-    }                                                                                                                  \
-    return 1;                                                                                                          \
+#define is_prop(name, type, code)                                                        \
+  int name(prop_types prop) {                                                            \
+    if (prop != type) {                                                                  \
+      log_add(NULL, WARNING, "Properties-Types", "la propiedad no es del tipo " code);   \
+      return 0;                                                                          \
+    }                                                                                    \
+    return 1;                                                                            \
   }
 
 is_prop(is_prop_ip, IP, "IP");

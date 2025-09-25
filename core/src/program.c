@@ -11,7 +11,6 @@
 #include "logs.h"
 #include "macros.h"
 #include "program.h"
-#include "properties.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "suggestion.h"
@@ -61,28 +60,7 @@ int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
 
     int is_first_token = (start == 0);
 
-    char *money = strchr(partial, '$');
-    if (money != NULL) {
-      int money_pos = money - partial;
-      NODE_ptr node = NULL;
-      FOR_EACH(&node, *prop_register) {
-        prop_struct *reg_val = (prop_struct *)node->point;
-        if (strncmp(reg_val->key, money + 1, strlen(money) - 1) == 0) {
-          char suggestion_cmd[CMDSIZ];
-          snprintf(suggestion_cmd, sizeof(suggestion_cmd), "%.*s%.*s$%s%s", start, cmd,
-                   money_pos, partial, reg_val->key, cmd + end);
-          char *type = strdup("");
-          for (int i = 0; map_types[i].key != OTHER; i++) {
-            if (map_types[i].key == reg_val->type) {
-              free(type);
-              type = strdup(map_types[i].key_str);
-            }
-          }
-          suggest_add(*sugg, reg_val->key, suggestion_cmd, type, COMMAND);
-          free(type);
-        }
-      }
-    } else if (is_first_token) {
+    if (is_first_token) {
       Xen_Instance *keys = Xen_Map_Keys(vm->root_context->ctx_instances);
       for (size_t i = 0; i < Xen_Vector_Size(keys); i++) {
         Xen_Instance *key = Xen_Vector_Get_Index(keys, i);
@@ -176,7 +154,7 @@ void load_script(char *filename) {
   free(file_content);
 }
 
-void shell_loop(char *name) {
+void shell_loop() {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2025" RESET "\n"
               "Type " VERDE "help" RESET " for more info\n");
   const char *home = getenv("HOME");

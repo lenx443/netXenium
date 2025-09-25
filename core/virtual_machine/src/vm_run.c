@@ -3,7 +3,6 @@
 #include "instance.h"
 #include "logs.h"
 #include "program.h"
-#include "properties.h"
 #include "vm.h"
 #include "vm_register.h"
 #include "vm_run.h"
@@ -186,21 +185,6 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      const char *prop_key = Xen_String_As_CString(
-          Xen_Vector_Peek_Index(pc.consts->c_names, instr.bci_src2));
-      prop_struct *prop = prop_reg_value(prop_key, *prop_register, 1);
-      if (!prop) {
-        error("No se encontro la propiedad '%s' no se encontro", prop_key);
-        ctx->ctx_running = 0;
-        continue;
-      }
-      Xen_Instance *prop_name = Xen_String_From_CString(prop->value);
-      if_nil_eval(prop_name) {
-        ctx->ctx_running = 0;
-        continue;
-      }
-      REG_SET_INST(instr.bci_dst, prop_name);
-      Xen_DEL_REF(prop_name);
       continue;
     MAKE_INSTANCE:
       if (instr.bci_src1 >= ctx->ctx_reg.capacity ||
@@ -222,7 +206,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
     if (ctx->ctx_caller) {
       ((RunContext_ptr)ctx->ctx_caller)->ctx_reg.reg[1] = ctx->ctx_reg.reg[1];
     }
-    for (int i = 0; i < ctx->ctx_reg.capacity; i++) {
+    for (size_t i = 0; i < ctx->ctx_reg.capacity; i++) {
       if (ctx->ctx_reg.point_flag[i]) Xen_DEL_REF(ctx->ctx_reg.reg[i]);
     }
     log_show_and_clear(NULL);

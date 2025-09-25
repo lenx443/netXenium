@@ -63,7 +63,6 @@ set(SOURCES
   # Codigo fuente donde del nucleo
   # del proyecto.
   core/src/xen_life.c
-  core/src/properties_types.c
   core/src/program.c
   core/src/read_string_utf8.c
 
@@ -187,7 +186,6 @@ set(SOURCES
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   dynamic/lists/src/list.c
-  dynamic/lists/src/properties.c
   dynamic/lists/src/history.c
   dynamic/lists/src/suggestion.c
   dynamic/lists/src/logs.c

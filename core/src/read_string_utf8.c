@@ -1,11 +1,10 @@
-#include <asm-generic/signal-defs.h>
-#include <asm-generic/signal.h>
-#include <bits/termios_inlines.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/select.h>
 #include <sys/types.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include "colors.h"
@@ -57,7 +56,7 @@ static term_size get_cursor_position() {
   term_size out = {0};
   char ch;
   char buf[32];
-  int i = 0;
+  size_t i = 0;
 
   write(STDOUT_FILENO, "\033[6n", 4);
   fsync(STDOUT_FILENO);
@@ -89,6 +88,7 @@ static int get_terminal_size(term_size *tz) {
 }
 
 static void handle_winch(int sig) {
+  (void)(sig);
   if (!get_terminal_size(&current_term_size)) {
     log_add(NULL, ERROR, "SHELL",
             "Ocurrio un problema al obtener el tamaño de la terminal");
@@ -185,7 +185,7 @@ CodeUTF8 read_raw_char_utf8() {
   char c;
   size_t n;
   while ((n = read(STDIN_FILENO, &c, 1)) != 1)
-    if (n == -1) return make_code_utf8_code(KEY_NULL);
+    if (n == (size_t)-1) return make_code_utf8_code(KEY_NULL);
 
   if ((unsigned char)c == 4) return make_code_utf8_code(KEY_EOF);
   if ((unsigned char)c == 127) return make_code_utf8_code(KEY_BACKSPACE);
@@ -260,18 +260,7 @@ LIST_ptr read_string_utf8() {
   CodeUTF8 c;
 
   char prompt[100] = "\0";
-  int prompt_position = prop_reg_search_key("PROMPT", *prop_register, 0);
-  if (prompt_position == -1) {
-    default_promp(prompt);
-  } else {
-    prop_struct *prompt_prop = prop_reg_value("PROMPT", *prop_register, 0);
-    if (prompt_prop->type != STRING) {
-      default_promp(prompt);
-    } else {
-      to_string(prompt, prompt_prop->value);
-      prompt[99] = '\0';
-    }
-  }
+  default_promp(prompt);
   printf("%s", prompt);
   fflush(stdout);
 
