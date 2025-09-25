@@ -1,4 +1,3 @@
-#include <__stdarg_va_list.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
