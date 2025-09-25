@@ -190,10 +190,6 @@ set(SOURCES
   dynamic/lists/src/suggestion.c
   dynamic/lists/src/logs.c
   dynamic/lists/src/string_utf8.c
-
-  # Implementaciones de los codigos
-  # fuente de las tablas hash
-  dynamic/hash_tables/src/string_hash_table.c
 )
 
 add_executable(ntxenium
