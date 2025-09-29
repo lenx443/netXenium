@@ -1,3 +1,4 @@
+#include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
@@ -41,6 +42,7 @@ static int ast_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 Xen_Implement Xen_AST_Implement = {
+    Xen_INSTANCE_SET(0, &Xen_Basic, 0x00),
     .__impl_name = "AST",
     .__inst_size = sizeof(struct Xen_AST_Node_Instance),
     .__inst_default_flags = 0x00,

@@ -18,6 +18,7 @@ struct __Instance *__instance_new(struct __Implement *impl, Xen_INSTANCE *args,
   inst->__impl = impl;
   inst->__flags = inst->__impl->__inst_default_flags;
   inst->__flags |= flags;
+  inst->__size = 0;
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED *mapped = (Xen_INSTANCE_MAPPED *)inst;
     mapped->__map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);

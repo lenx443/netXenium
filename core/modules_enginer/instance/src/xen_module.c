@@ -1,9 +1,7 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
-#include "run_ctx_stack.h"
 #include "run_frame.h"
-#include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_command.h"
@@ -25,7 +23,7 @@ Xen_Instance *Xen_Module_New(Xen_Instance *mod_map, Xen_Instance *mod_context) {
 
 Xen_Instance *Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
   Xen_Instance *ctx_args =
-      Xen_Vector_From_Array_With_Size(4, (Xen_Instance *[]){nil, nil, nil, nil});
+      Xen_Vector_From_Array(4, (Xen_Instance *[]){nil, nil, nil, nil});
   if_nil_eval(ctx_args) { return nil; }
   Xen_Instance *mod_ctx = __instance_new(&Xen_Run_Frame, ctx_args, 0);
   if_nil_eval(mod_ctx) {

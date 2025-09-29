@@ -32,6 +32,8 @@ include_directories(
   core/common/instances/map/types/header/
   core/common/instances/boolean/include/
   core/common/instances/boolean/types/header/
+  core/common/instances/tuple/include/
+  core/common/instances/tuple/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -101,6 +103,11 @@ set(SOURCES
   core/common/instances/boolean/src/xen_boolean_implement.c
   core/common/instances/boolean/src/xen_boolean.c
 
+  # Implementacion del objeto `Tuple`
+  core/common/instances/tuple/src/xen_tuple_implement.c
+  core/common/instances/tuple/src/xen_tuple.c
+
+  # Implementacion del objeto `AST`
   core/interpreter/instances/ast/src/xen_ast.c
   core/interpreter/instances/ast/src/xen_ast_implement.c
 
@@ -109,16 +116,6 @@ set(SOURCES
   core/interpreter/src/interpreter.c
   core/interpreter/src/lexer.c
   core/interpreter/src/parser.c
-
-  # Implementaciones de los codigos
-  # fuente de los arboles dinamicos
-  # del interpreter
-  core/interpreter/dynamic/trees/src/ast.c
-
-  # Implementaciones de los codigos
-  # fuente de los vectores del
-  # interpreter
-  core/interpreter/dynamic/vectors/src/ast_array.c
 
   # Compilador a bytecode.
   # [AST Tree]
@@ -229,3 +226,13 @@ add_executable(test_load_script
   tests/test_load_script.c ${SOURCES}
 )
 add_test(NAME TestLoadScript COMMAND test_load_script)
+
+add_executable(test_vector
+  tests/test_vector.c ${SOURCES}
+)
+add_test(NAME TestVector COMMAND test_vector)
+
+add_executable(test_tuple
+  tests/test_tuple.c ${SOURCES}
+)
+add_test(NAME TestTuple COMMAND test_tuple)

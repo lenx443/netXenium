@@ -8,7 +8,6 @@
 struct Xen_Vector_Instance {
   Xen_INSTANCE_HEAD;
   Xen_Instance **values;
-  size_t size;
   size_t capacity;
 };
 

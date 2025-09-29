@@ -440,7 +440,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_Int(1234);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
     Xen_DEL_REF(result);
@@ -452,7 +452,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_Int(4321);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
     Xen_DEL_REF(result);
@@ -464,7 +464,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_Int(-1234);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
     Xen_DEL_REF(result);
@@ -476,7 +476,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_Int(0);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
     Xen_DEL_REF(result);
@@ -488,7 +488,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
     Xen_DEL_REF(result);
@@ -500,7 +500,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_CString("-FFDD11AA66CCBB99", 16);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
     Xen_DEL_REF(result);
@@ -512,7 +512,7 @@ void test_number_opr_eq() {
     assert(a != nil);
     Xen_Instance *b = Xen_Number_From_CString("FFDD11AA66CCBB993FF", 16);
     assert(b != nil);
-    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_EQ);
+    Xen_Instance *result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
     Xen_DEL_REF(result);

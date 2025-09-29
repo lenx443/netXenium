@@ -1,8 +1,10 @@
 #include "instance.h"
+#include "operators.h"
 #include "xen_ast.h"
 #include "xen_ast_implement.h"
 #include "xen_ast_instance.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_vector.h"
 #include <string.h>
 
@@ -42,5 +44,6 @@ Xen_Instance *Xen_AST_Node_Children(Xen_Instance *ast) {
 
 Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *ast_inst, size_t index) {
   Xen_AST_Node *ast = (Xen_AST_Node *)ast_inst;
-  return Xen_Vector_Get_Index(ast->children, index);
+  return Xen_Operator_Eval_Pair_Steal2(ast->children, Xen_Number_From_ULong(index),
+                                       Xen_OPR_GET_INDEX);
 }

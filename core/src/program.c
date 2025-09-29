@@ -16,6 +16,7 @@
 #include "suggestion.h"
 #include "vm_def.h"
 #include "xen_map.h"
+#include "xen_number.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_vector.h"
@@ -62,8 +63,9 @@ int command_parser(char *cmd, ExecMode mode, SUGGEST_ptr *sugg, int sugg_pos) {
 
     if (is_first_token) {
       Xen_Instance *keys = Xen_Map_Keys(vm->root_context->ctx_instances);
-      for (size_t i = 0; i < Xen_Vector_Size(keys); i++) {
-        Xen_Instance *key = Xen_Vector_Get_Index(keys, i);
+      for (size_t i = 0; i < Xen_SIZE(keys); i++) {
+        Xen_Instance *key = Xen_Operator_Eval_Pair_Steal2(keys, Xen_Number_From_ULong(i),
+                                                          Xen_OPR_GET_INDEX);
         if (Xen_TYPE(key) != &Xen_String_Implement) {
           Xen_DEL_REF(key);
           break;

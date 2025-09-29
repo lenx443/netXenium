@@ -1,9 +1,11 @@
+#include <malloc.h>
 #include <stdlib.h>
 
 #include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
@@ -19,7 +21,6 @@ static int string_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String *string = (Xen_String *)self;
   string->characters = NULL;
-  string->length = 0;
   return 1;
 }
 
@@ -51,18 +52,19 @@ static int string_hash(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
 }
 
 static int string_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
-  if (Xen_Nil_Eval(args) || Xen_Vector_Size(args) < 1 ||
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
     return 0;
 
-  Xen_Instance *val = Xen_Vector_Get_Index(args, 0);
+  Xen_Instance *val =
+      Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) == 0) {
     Xen_DEL_REF(val);
-    if (!xen_register_prop_set("__expose_opr_eq", Xen_True, id)) { return 0; }
+    if (!xen_register_prop_set("__expose_opr", Xen_True, id)) { return 0; }
     return 1;
   }
   Xen_DEL_REF(val);
-  if (!xen_register_prop_set("__expose_opr_eq", Xen_False, id)) { return 0; }
+  if (!xen_register_prop_set("__expose_opr", Xen_False, id)) { return 0; }
   return 1;
 }
 
@@ -82,8 +84,10 @@ struct __Implement Xen_String_Implement = {
 };
 
 int Xen_String_Init() {
-  Xen_String_Implement.__opr.__eq = callable_new_native(string_opr_eq);
+  if (!(Xen_String_Implement.__opr[Xen_OPR_EQ] = callable_new_native(string_opr_eq))) {
+    return 0;
+  }
   return 1;
 }
 
-void Xen_String_Finish() {}
+void Xen_String_Finish() { callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]); }

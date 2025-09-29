@@ -23,7 +23,7 @@ Xen_Instance *Xen_Map_New(size_t capacity) {
   if_nil_eval(map) { return nil; }
   map->map_buckets = malloc(capacity * sizeof(struct __Map_Node *));
   if (!map->map_buckets) { return nil; }
-  for (int i = 0; i < capacity; i++) {
+  for (size_t i = 0; i < capacity; i++) {
     map->map_buckets[i] = NULL;
   }
   map->map_keys = __instance_new(&Xen_Vector_Implement, nil, 0);
@@ -38,7 +38,7 @@ Xen_Instance *Xen_Map_New(size_t capacity) {
 Xen_Instance *Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair *pairs,
                                            size_t capacity) {
   Xen_Instance *map = Xen_Map_New(capacity);
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair(map, pairs[i])) {
       Xen_DEL_REF(map);
       return nil;
@@ -50,7 +50,7 @@ Xen_Instance *Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair *pairs,
 Xen_Instance *Xen_Map_From_Pairs_Str_With_Size(size_t size, Xen_Map_Pair_Str *pairs,
                                                size_t capacity) {
   Xen_Instance *map = Xen_Map_New(capacity);
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair_Str((Xen_Instance *)map, pairs[i])) {
       Xen_DEL_REF(map);
       return nil;
@@ -87,7 +87,7 @@ int Xen_Map_Push_Pair(Xen_Instance *map_inst, Xen_Map_Pair pair) {
         eval = Xen_False;
       }
     } else {
-      eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_EQ);
+      eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_OPR_EQ);
       if_nil_eval(eval) { return 0; }
     }
     if (eval == Xen_True) {
@@ -128,8 +128,9 @@ int Xen_Map_Push_Pair_Str(Xen_Instance *map, Xen_Map_Pair_Str pair) {
 int Xen_Map_Push_Map(Xen_Instance *map_dst, Xen_Instance *map_src) {
   if (!map_dst || !map_src) { return 0; }
   Xen_Instance *src_keys = Xen_Map_Keys(map_src);
-  for (int i = 0; i < Xen_Vector_Size(src_keys); i++) {
-    Xen_Instance *key = Xen_Vector_Get_Index(src_keys, i);
+  for (size_t i = 0; i < Xen_SIZE(src_keys); i++) {
+    Xen_Instance *key = Xen_Operator_Eval_Pair_Steal2(src_keys, Xen_Number_From_ULong(i),
+                                                      Xen_OPR_GET_INDEX);
     Xen_Instance *value = Xen_Map_Get(map_src, key);
     if (!Xen_Map_Push_Pair(map_dst, (Xen_Map_Pair){key, value})) {
       Xen_DEL_REF(value);
@@ -169,7 +170,7 @@ Xen_Instance *Xen_Map_Get(Xen_Instance *map_inst, Xen_Instance *key) {
         eval = Xen_False;
       }
     } else {
-      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_EQ);
+      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
       if_nil_eval(eval) { return 0; }
     }
     if (eval == Xen_True) { return Xen_ADD_REF(current->value); }

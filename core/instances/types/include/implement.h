@@ -5,6 +5,7 @@
 
 #include "callable.h"
 #include "instance.h"
+#include "operators.h"
 
 struct __Instance;
 
@@ -31,9 +32,7 @@ struct __Implement {
   size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
   struct __Instance *__props;
-  struct {
-    CALLABLE_ptr __eq;
-  } __opr;
+  CALLABLE_ptr __opr[Xen_OPR_END];
   Xen_Native_Func __alloc;
   Xen_Native_Func __destroy;
   Xen_Native_Func __string;

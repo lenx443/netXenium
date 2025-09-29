@@ -4,20 +4,22 @@
 #include "implement.h"
 #include "instance.h"
 #include "m_core.h"
+#include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
-#include "xen_vector.h"
 
 static int fn_echo(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (Xen_Vector_Size(args) > 1) { return 0; }
-  if (Xen_Vector_Size(args) == 1) {
-    Xen_Instance *inst = Xen_Vector_Get_Index(args, 0);
+  if (Xen_SIZE(args) > 1) { return 0; }
+  if (Xen_SIZE(args) == 1) {
+    Xen_Instance *inst =
+        Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
     if (!Xen_TYPE(inst)->__string) {
       Xen_DEL_REF(inst);
       return 0;

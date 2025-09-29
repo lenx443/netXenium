@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   assert(Xen_Nil_NEval(echo_cmd));
   Xen_Instance *text = Xen_String_From_CString("Hola Mundo\n");
   assert(Xen_Nil_NEval(text));
-  Xen_Instance *args = Xen_Vector_From_Array_With_Size(1, &text);
+  Xen_Instance *args = Xen_Vector_From_Array(1, &text);
   assert(Xen_Nil_NEval(args));
   Xen_DEL_REF(text);
   assert(Xen_Command_Call(echo_cmd, args) == 1);

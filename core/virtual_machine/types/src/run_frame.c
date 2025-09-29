@@ -11,7 +11,7 @@
 
 static int frame_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (!args || Xen_Vector_Size(args) != 4 ||
+  if (!args || Xen_SIZE(args) != 4 ||
       (Xen_Nil_NEval(Xen_Vector_Peek_Index(args, 0)) &&
        Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
       (Xen_Nil_NEval(Xen_Vector_Peek_Index(args, 1)) &&

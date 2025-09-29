@@ -15,7 +15,7 @@ int run_context_stack_push(RunContext_Stack_ptr *ctx_stack, Xen_Instance *closur
   RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) { return 0; }
   Xen_Instance *alloc_args =
-      Xen_Vector_From_Array_With_Size(4, (Xen_Instance *[]){caller, closure, self, args});
+      Xen_Vector_From_Array(4, (Xen_Instance *[]){caller, closure, self, args});
   if (!alloc_args) {
     free(ctx_stack_new);
     return 0;

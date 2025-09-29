@@ -1,6 +1,8 @@
 #include <assert.h>
+#include <stddef.h>
 
 #include "instance.h"
+#include "operators.h"
 #include "vm.h"
 #include "xen_life.h"
 #include "xen_map.h"
@@ -9,7 +11,6 @@
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
-#include "xen_vector.h"
 
 int main(int argc, char **argv) {
   assert(Xen_Init(argc, argv) == 1);
@@ -66,8 +67,9 @@ int main(int argc, char **argv) {
     Xen_DEL_REF(age3);
     Xen_Instance *keys = Xen_Map_Keys(map);
     assert(Xen_Nil_NEval(keys));
-    for (int i = 0; i < Xen_Vector_Size(keys); i++) {
-      Xen_Instance *key = Xen_Vector_Get_Index(keys, i);
+    for (size_t i = 0; i < Xen_SIZE(keys); i++) {
+      Xen_Instance *key = Xen_Operator_Eval_Pair_Steal2(keys, Xen_Number_From_ULong(i),
+                                                        Xen_OPR_GET_INDEX);
       assert(Xen_Nil_NEval(key));
       assert(vm_call_native_function(Xen_TYPE(key)->__string, key, nil) == 1);
       Xen_Instance *key_str = xen_register_prop_get("__expose_string", 0);

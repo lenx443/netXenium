@@ -5,4 +5,7 @@
 
 extern struct __Implement Xen_Vector_Implement;
 
+int Xen_Vector_Init();
+void Xen_Vector_Finish();
+
 #endif

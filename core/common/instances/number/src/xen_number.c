@@ -636,7 +636,7 @@ int32_t Xen_Number_As_Int32(Xen_INSTANCE *inst) {
       // Si es positivo, ya se pasó
       if (n->sign > 0) return INT32_MAX;
       // Si es negativo, permitir hasta INT32_MIN
-      if (value > (uint64_t)INT32_MAX + 1) return INT32_MIN;
+      if (value > (int64_t)INT32_MAX + 1) return INT32_MIN;
     }
   }
 

@@ -51,6 +51,7 @@ int ir_add_nop(IR_Bytecode_Array_ptr ir) {
                               0,
                               0,
                               NULL,
+                              0,
                           });
 }
 int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
@@ -60,6 +61,7 @@ int ir_add_fun_call(IR_Bytecode_Array_ptr ir, int args) {
                               0,
                               args,
                               NULL,
+                              0,
                           });
 }
 
@@ -70,6 +72,7 @@ int ir_add_jump(IR_Bytecode_Array_ptr ir, void *block_ptr) {
                               0,
                               0,
                               block_ptr,
+                              0,
                           });
 }
 
@@ -80,6 +83,7 @@ int ir_add_load_imm(IR_Bytecode_Array_ptr ir, int reg, int imm) {
                               0,
                               imm,
                               NULL,
+                              0,
                           });
 }
 int ir_add_load_instance(IR_Bytecode_Array_ptr ir, int reg, int inst) {
@@ -89,6 +93,7 @@ int ir_add_load_instance(IR_Bytecode_Array_ptr ir, int reg, int inst) {
                               0,
                               inst,
                               NULL,
+                              0,
                           });
 }
 int ir_add_load_name(IR_Bytecode_Array_ptr ir, int reg, int string) {
@@ -98,6 +103,7 @@ int ir_add_load_name(IR_Bytecode_Array_ptr ir, int reg, int string) {
                               0,
                               string,
                               NULL,
+                              0,
                           });
 }
 int ir_add_load_const(IR_Bytecode_Array_ptr ir, int reg, int constn) {
@@ -107,6 +113,7 @@ int ir_add_load_const(IR_Bytecode_Array_ptr ir, int reg, int constn) {
                               0,
                               constn,
                               NULL,
+                              0,
                           });
 }
 int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
@@ -116,6 +123,7 @@ int ir_add_load_prop(IR_Bytecode_Array_ptr ir, int reg, int prop_key) {
                               0,
                               prop_key,
                               NULL,
+                              0,
                           });
 }
 
@@ -126,6 +134,7 @@ int ir_add_make_instance(IR_Bytecode_Array_ptr ir, int name, int value) {
                               name,
                               value,
                               NULL,
+                              0,
                           });
 }
 
@@ -136,5 +145,6 @@ int ir_add_halt(IR_Bytecode_Array_ptr ir) {
                               0,
                               0,
                               NULL,
+                              0,
                           });
 }

@@ -1,4 +1,5 @@
 #include "basic.h"
+#include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -10,12 +11,14 @@
 #include "xen_string.h"
 
 static int boolean_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean *boolean = (Xen_Boolean *)self;
   boolean->value = 0;
   return 1;
 }
 
 static int boolean_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean *boolean = (Xen_Boolean *)self;
   Xen_Instance *string = NULL;
   if (boolean->value == 0) {
@@ -34,6 +37,7 @@ static int boolean_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
 }
 
 static int boolean_hash(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
   unsigned long hash = (unsigned long)((Xen_Boolean *)self)->value;
   Xen_Instance *hash_number = Xen_Number_From_ULong(hash);
   if (!hash_number) { return 0; }

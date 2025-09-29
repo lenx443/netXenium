@@ -2,12 +2,15 @@
 #include "implement.h"
 #include "instance.h"
 #include "logs.h"
+#include "operators.h"
 #include "program.h"
 #include "vm.h"
 #include "vm_register.h"
 #include "vm_run.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_number.h"
+#include "xen_register.h"
 #include "xen_string.h"
 #include "xen_vector.h"
 
@@ -124,7 +127,7 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
+      if (instr.bci_src2 >= Xen_SIZE(pc.consts->c_names)) {
         ctx->ctx_running = 0;
         continue;
       }
@@ -147,11 +150,12 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
+      if (instr.bci_src2 >= Xen_SIZE(pc.consts->c_names)) {
         ctx->ctx_running = 0;
         continue;
       }
-      Xen_Instance *c_name = Xen_Vector_Get_Index(pc.consts->c_names, instr.bci_src2);
+      Xen_Instance *c_name = Xen_Operator_Eval_Pair_Steal2(
+          pc.consts->c_names, Xen_Number_From_Int(instr.bci_src2), Xen_OPR_GET_INDEX);
       if_nil_eval(c_name) {
         ctx->ctx_running = 0;
         continue;
@@ -164,11 +168,12 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_instances)) {
+      if (instr.bci_src2 >= Xen_SIZE(pc.consts->c_instances)) {
         ctx->ctx_running = 0;
         continue;
       }
-      Xen_Instance *c_inst = Xen_Vector_Get_Index(pc.consts->c_instances, instr.bci_src2);
+      Xen_Instance *c_inst = Xen_Operator_Eval_Pair_Steal2(
+          pc.consts->c_instances, Xen_Number_From_Int(instr.bci_src2), Xen_OPR_GET_INDEX);
       if_nil_eval(c_inst) {
         ctx->ctx_running = 0;
         continue;
@@ -181,10 +186,24 @@ void vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_running = 0;
         continue;
       }
-      if (instr.bci_src2 >= Xen_Vector_Size(pc.consts->c_names)) {
+      if (instr.bci_src2 >= Xen_SIZE(pc.consts->c_names)) {
         ctx->ctx_running = 0;
         continue;
       }
+      Xen_Instance *prop_name = Xen_Vector_Peek_Index(pc.consts->c_names, instr.bci_src2);
+      if_nil_eval(prop_name) {
+        ctx->ctx_running = 0;
+        continue;
+      }
+      Xen_Instance *prop =
+          xen_register_prop_get(Xen_String_As_CString(prop_name), ctx->ctx_id);
+      if_nil_eval(prop) {
+        error("Registro no encontrada");
+        ctx->ctx_running = 0;
+        continue;
+      }
+      REG_SET_INST(instr.bci_dst, prop);
+      Xen_DEL_REF(prop);
       continue;
     MAKE_INSTANCE:
       if (instr.bci_src1 >= ctx->ctx_reg.capacity ||

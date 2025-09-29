@@ -24,7 +24,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr *block, Xen_Instance
   if (!ast) return 0;
 
   Xen_Instance *ast_children = Xen_AST_Node_Children(ast);
-  for (size_t i = 0; i < Xen_Vector_Size(ast_children); i++) {
+  for (size_t i = 0; i < Xen_SIZE(ast_children); i++) {
     Xen_Instance *node = Xen_Vector_Peek_Index(ast_children, i);
 
     if (strcmp(Xen_AST_Node_Name(node), "empty") == 0)
@@ -68,7 +68,7 @@ static int compile_string(int out_reg, block_list_ptr blocks, block_node_ptr blo
   Xen_Instance *string = Xen_String_From_CString(Xen_AST_Node_Value(ast));
   if_nil_eval(string) return 0;
 
-  size_t string_index = Xen_Vector_Size(blocks->consts->c_instances);
+  size_t string_index = Xen_SIZE(blocks->consts->c_instances);
   if (!vm_consts_push_instance(blocks->consts, string)) {
     Xen_DEL_REF(string);
     return 0;
@@ -79,14 +79,14 @@ static int compile_string(int out_reg, block_list_ptr blocks, block_node_ptr blo
 
 static int compile_literal(int out_reg, block_list_ptr blocks, block_node_ptr block,
                            Xen_Instance *ast) {
-  int literal_index = Xen_Vector_Size(blocks->consts->c_names);
+  int literal_index = Xen_SIZE(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(ast))) return 0;
   return ir_add_load_instance(block->instr_array, out_reg, literal_index);
 }
 
 static int compile_property(int out_reg, block_list_ptr blocks, block_node_ptr block,
                             Xen_Instance *ast) {
-  int prop_index = Xen_Vector_Size(blocks->consts->c_names);
+  int prop_index = Xen_SIZE(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(ast))) return 0;
   return ir_add_load_prop(block->instr_array, out_reg, prop_index);
 }
@@ -94,18 +94,23 @@ static int compile_property(int out_reg, block_list_ptr blocks, block_node_ptr b
 static int compile_assignment(block_list_ptr blocks, block_node_ptr block,
                               Xen_Instance *ast) {
   Xen_Instance *children = Xen_AST_Node_Children(ast);
-  if (Xen_Vector_Size(children) != 2) return 0;
+  if (Xen_SIZE(children) != 2) return 0;
 
   Xen_Instance *lhs = Xen_Vector_Peek_Index(children, 0);
   Xen_Instance *rhs = Xen_Vector_Peek_Index(children, 1);
 
   // Push LHS name
-  int lhs_index = Xen_Vector_Size(blocks->consts->c_names);
-  if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(lhs))) {
-    Xen_DEL_REF(children);
-    return 0;
-  }
-  if (!ir_add_load_name(block->instr_array, 0, lhs_index)) {
+  int lhs_index = Xen_SIZE(blocks->consts->c_names);
+  if (strcmp(Xen_AST_Node_Name(lhs), "literal") == 0) {
+    if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(lhs))) {
+      Xen_DEL_REF(children);
+      return 0;
+    }
+    if (!ir_add_load_name(block->instr_array, 0, lhs_index)) {
+      Xen_DEL_REF(children);
+      return 0;
+    }
+  } else {
     Xen_DEL_REF(children);
     return 0;
   }
@@ -127,6 +132,7 @@ static int compile_assignment(block_list_ptr blocks, block_node_ptr block,
       return 0;
     }
   } else {
+    Xen_DEL_REF(children);
     return 0; // tipo no soportado
   }
   Xen_DEL_REF(children);
@@ -142,12 +148,12 @@ static int compile_cmd(block_list_ptr blocks, block_node_ptr block, Xen_Instance
   if (!block || !ast) return 0;
 
   // Nombre del comando en ast->value
-  int cmd_name_index = Xen_Vector_Size(blocks->consts->c_names);
+  int cmd_name_index = Xen_SIZE(blocks->consts->c_names);
   if (!vm_consts_push_name(blocks->consts, Xen_AST_Node_Value(ast))) return 0;
   if (!ir_add_load_name(block->instr_array, 0, cmd_name_index)) return 0;
 
   Xen_Instance *children = Xen_AST_Node_Children(ast);
-  for (size_t i = 0; i < Xen_Vector_Size(children); i++) {
+  for (size_t i = 0; i < Xen_SIZE(children); i++) {
     Xen_Instance *arg = Xen_Vector_Peek_Index(children, i);
     if (strcmp(Xen_AST_Node_Name(arg), "expr") == 0) {
       Xen_Instance *expr = Xen_AST_Node_Get_Child(arg, 0);
@@ -192,7 +198,7 @@ static int compile_cmd(block_list_ptr blocks, block_node_ptr block, Xen_Instance
       return 0;
     }
   }
-  if (!ir_add_fun_call(block->instr_array, Xen_Vector_Size(children))) {
+  if (!ir_add_fun_call(block->instr_array, Xen_SIZE(children))) {
     Xen_DEL_REF(children);
     return 0;
   }
