@@ -43,6 +43,9 @@ int interpreter(const char *text_code) {
     Xen_DEL_REF(current_ast);
   }
   log_show_and_clear(NULL);
+  Xen_AST_Node_Print(ast_program);
+  Xen_DEL_REF(ast_program);
+  return 1;
   block_list_ptr blocks = block_list_new();
   if (!blocks) { Xen_DEL_REF(ast_program); }
   block_node_ptr main_block = block_new();

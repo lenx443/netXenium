@@ -11,6 +11,7 @@ typedef enum {
   TKN_IDENTIFIER,
   TKN_PROPERTY,
   TKN_STRING,
+  TKN_NUMBER,
   TKN_BLOCK,
   TKN_LBRACE,
   TKN_RBRACE,
@@ -18,7 +19,8 @@ typedef enum {
   TKN_EQUAL,
   TKN_UNDEFINED,
   TKN_LPARENT,
-  TKN_RPARENT
+  TKN_RPARENT,
+  TKN_COMMA,
 } Lexer_Token_Type;
 
 typedef struct {

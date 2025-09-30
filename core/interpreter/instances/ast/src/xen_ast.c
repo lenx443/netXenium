@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <string.h>
+
 #include "instance.h"
 #include "operators.h"
 #include "xen_ast.h"
@@ -6,7 +9,6 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_vector.h"
-#include <string.h>
 
 Xen_Instance *Xen_AST_Node_New(const char *name, const char *value) {
   Xen_AST_Node *ast = (Xen_AST_Node *)__instance_new(&Xen_AST_Implement, nil, 0);
@@ -47,3 +49,28 @@ Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *ast_inst, size_t index) {
   return Xen_Operator_Eval_Pair_Steal2(ast->children, Xen_Number_From_ULong(index),
                                        Xen_OPR_GET_INDEX);
 }
+
+#ifndef NDEBUG
+static void __AST_Node_Print(Xen_Instance *ast, int indent) {
+  if (!ast || Xen_TYPE(ast) != &Xen_AST_Implement) { return; }
+  for (int i = 0; i < indent; i++) {
+    printf(" ");
+  }
+  printf("%s", Xen_AST_Node_Name(ast) ? Xen_AST_Node_Name(ast) : "node");
+  if (Xen_AST_Node_Value(ast))
+    printf("='%s'\n", Xen_AST_Node_Value(ast));
+  else
+    printf("\n");
+
+  Xen_Instance *children = Xen_AST_Node_Children(ast);
+  for (size_t i = 0; i < Xen_SIZE(children); i++) {
+    Xen_Instance *child = Xen_Operator_Eval_Pair_Steal2(
+        children, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
+    __AST_Node_Print(child, indent + 1);
+    Xen_DEL_REF(child);
+  }
+  Xen_DEL_REF(children);
+}
+
+void Xen_AST_Node_Print(Xen_Instance *ast) { __AST_Node_Print(ast, 0); }
+#endif

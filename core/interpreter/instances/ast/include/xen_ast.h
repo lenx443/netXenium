@@ -11,4 +11,8 @@ const char *Xen_AST_Node_Value(Xen_Instance *);
 Xen_Instance *Xen_AST_Node_Children(Xen_Instance *);
 Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *, size_t);
 
+#ifndef NDEBUG
+void Xen_AST_Node_Print(Xen_Instance *);
+#endif
+
 #endif

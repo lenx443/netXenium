@@ -33,7 +33,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     lexer->pos++;
     token.tkn_type = TKN_NEWLINE;
     strcpy(token.tkn_text, "<New-Line>");
-  } else if (isalnum(c) || c == '_') {
+  } else if (isalpha(c) || c == '_') {
     size_t start = lexer->pos;
     while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
       lexer->pos++;
@@ -258,6 +258,71 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     strcpy(token.tkn_text, buffer);
     token.tkn_type = TKN_STRING;
     lexer->pos++;
+  } else if (isdigit(c)) {
+    if (c == '0') {
+      lexer->pos++;
+      if (lexer->src[lexer->pos] == 'x' || lexer->src[lexer->pos] == 'X') {
+        lexer->pos++;
+        size_t start = lexer->pos;
+        while (isxdigit(lexer->src[lexer->pos])) {
+          lexer->pos++;
+        }
+        size_t len = lexer->pos - start;
+        token.tkn_text[0] = '0';
+        token.tkn_text[1] = 'x';
+        strncpy(token.tkn_text + 2, lexer->src + start, len);
+        token.tkn_text[len + 2] = '\0';
+        token.tkn_type = TKN_NUMBER;
+      } else if (lexer->src[lexer->pos] == 'b' || lexer->src[lexer->pos] == 'B') {
+        lexer->pos++;
+        size_t start = lexer->pos;
+        while (lexer->src[lexer->pos] == '0' || lexer->src[lexer->pos] == '1') {
+          lexer->pos++;
+        }
+        size_t len = lexer->pos - start;
+        token.tkn_text[0] = '0';
+        token.tkn_text[1] = 'b';
+        strncpy(token.tkn_text + 2, lexer->src + start, len);
+        token.tkn_text[len + 2] = '\0';
+        token.tkn_type = TKN_NUMBER;
+      } else if (lexer->src[lexer->pos] == 'o' || lexer->src[lexer->pos] == 'O') {
+        lexer->pos++;
+        size_t start = lexer->pos;
+        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+          lexer->pos++;
+        }
+        size_t len = lexer->pos - start;
+        token.tkn_text[0] = '0';
+        token.tkn_text[1] = 'b';
+        strncpy(token.tkn_text + 2, lexer->src + start, len);
+        token.tkn_text[len + 2] = '\0';
+        token.tkn_type = TKN_NUMBER;
+      } else if (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+        size_t start = lexer->pos;
+        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+          lexer->pos++;
+        }
+        size_t len = lexer->pos - start;
+        token.tkn_text[0] = '0';
+        strncpy(token.tkn_text + 1, lexer->src + start, len);
+        token.tkn_text[len + 1] = '\0';
+        token.tkn_type = TKN_NUMBER;
+      } else {
+        lexer->pos++;
+        token.tkn_text[0] = '0';
+        token.tkn_text[1] = '\0';
+        token.tkn_type = TKN_NUMBER;
+      }
+    } else {
+      size_t start = lexer->pos;
+      while (isdigit(lexer->src[lexer->pos])) {
+        lexer->pos++;
+      }
+      size_t len = lexer->pos - start;
+      strncpy(token.tkn_text, lexer->src + start, len);
+      token.tkn_text[len] = '\0';
+      token.tkn_type = TKN_NUMBER;
+    }
   } else if (c == '{') {
     lexer->pos++;
     token.tkn_type = TKN_LBRACE;
@@ -290,6 +355,11 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     lexer->pos++;
     token.tkn_type = TKN_RPARENT;
     token.tkn_text[0] = ')';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == ',') {
+    lexer->pos++;
+    token.tkn_type = TKN_COMMA;
+    token.tkn_text[0] = ',';
     token.tkn_text[1] = '\0';
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
