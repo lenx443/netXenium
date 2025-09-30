@@ -361,6 +361,31 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_type = TKN_COMMA;
     token.tkn_text[0] = ',';
     token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '+') {
+    lexer->pos++;
+    token.tkn_type = TKN_ADD;
+    token.tkn_text[0] = '+';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '-') {
+    lexer->pos++;
+    token.tkn_type = TKN_MINUS;
+    token.tkn_text[0] = '-';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '*') {
+    lexer->pos++;
+    token.tkn_type = TKN_MUL;
+    token.tkn_text[0] = '*';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '/') {
+    lexer->pos++;
+    token.tkn_type = TKN_DIV;
+    token.tkn_text[0] = '/';
+    token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '%') {
+    lexer->pos++;
+    token.tkn_type = TKN_MOD;
+    token.tkn_text[0] = '%';
+    token.tkn_text[1] = '\0';
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
     token.tkn_text[1] = '\0';

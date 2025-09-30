@@ -21,6 +21,11 @@ typedef enum {
   TKN_LPARENT,
   TKN_RPARENT,
   TKN_COMMA,
+  TKN_ADD,
+  TKN_MINUS,
+  TKN_MUL,
+  TKN_DIV,
+  TKN_MOD,
 } Lexer_Token_Type;
 
 typedef struct {
