@@ -51,26 +51,38 @@ Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *ast_inst, size_t index) {
 }
 
 #ifndef NDEBUG
-static void __AST_Node_Print(Xen_Instance *ast, int indent) {
-  if (!ast || Xen_TYPE(ast) != &Xen_AST_Implement) { return; }
-  for (int i = 0; i < indent; i++) {
-    printf(" ");
-  }
-  printf("%s", Xen_AST_Node_Name(ast) ? Xen_AST_Node_Name(ast) : "node");
-  if (Xen_AST_Node_Value(ast))
-    printf("='%s'\n", Xen_AST_Node_Value(ast));
+static void __AST_Node_Print(Xen_Instance *ast, const char *prefix, int is_last) {
+  if (!ast || Xen_TYPE(ast) != &Xen_AST_Implement) return;
+
+  printf("%s", prefix);
+  if (is_last)
+    printf("└─");
+  else
+    printf("├─");
+
+  const char *name = Xen_AST_Node_Name(ast);
+  const char *value = Xen_AST_Node_Value(ast);
+  printf("%s", name ? name : "node");
+  if (value)
+    printf("='%s'\n", value);
   else
     printf("\n");
 
   Xen_Instance *children = Xen_AST_Node_Children(ast);
-  for (size_t i = 0; i < Xen_SIZE(children); i++) {
+  size_t n = Xen_SIZE(children);
+
+  char new_prefix[256];
+  snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, is_last ? "  " : "│ ");
+
+  for (size_t i = 0; i < n; i++) {
     Xen_Instance *child = Xen_Operator_Eval_Pair_Steal2(
         children, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
-    __AST_Node_Print(child, indent + 1);
+    __AST_Node_Print(child, new_prefix, i == n - 1);
     Xen_DEL_REF(child);
   }
+
   Xen_DEL_REF(children);
 }
 
-void Xen_AST_Node_Print(Xen_Instance *ast) { __AST_Node_Print(ast, 0); }
+void Xen_AST_Node_Print(Xen_Instance *ast) { __AST_Node_Print(ast, "", 0); }
 #endif

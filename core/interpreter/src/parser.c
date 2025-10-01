@@ -25,8 +25,12 @@ static Xen_Instance *parser_parent(Parser *);
 static Xen_Instance *parser_expr(Parser *);
 static Xen_Instance *parser_primary(Parser *);
 static Xen_Instance *parser_factor(Parser *);
+static Xen_Instance *parser_unary(Parser *);
 static Xen_Instance *parser_term(Parser *);
 static Xen_Instance *parser_add(Parser *);
+static Xen_Instance *parser_relational(Parser *);
+static Xen_Instance *parser_and(Parser *);
+static Xen_Instance *parser_or(Parser *);
 static Xen_Instance *parser_suffix(Parser *);
 static Xen_Instance *parser_assignment(Parser *);
 static Xen_Instance *parser_call(Parser *);
@@ -147,7 +151,7 @@ Xen_Instance *parser_parent(Parser *p) {
 Xen_Instance *parser_expr(Parser *p) {
   Xen_Instance *expr = Xen_AST_Node_New("expr", NULL);
   if_nil_eval(expr) { return nil; }
-  Xen_Instance *value = parser_add(p);
+  Xen_Instance *value = parser_or(p);
   if_nil_eval(value) {
     Xen_DEL_REF(expr);
     return nil;
@@ -203,44 +207,102 @@ Xen_Instance *parser_primary(Parser *p) {
 }
 
 Xen_Instance *parser_factor(Parser *p) {
-  if (is_factor(p)) { return parser_primary(p); }
+  if (is_factor(p)) {
+    if (parser_peek(p) == TKN_POW) {
+      Xen_Instance *lhs = parser_primary(p);
+      if_nil_eval(lhs) { return nil; }
+      Xen_Instance *binary = Xen_AST_Node_New("binary", p->token.tkn_text);
+      if_nil_eval(binary) {
+        Xen_DEL_REF(lhs);
+        return nil;
+      }
+      parser_next(p);
+      Xen_Instance *rhs = parser_primary(p);
+      if_nil_eval(rhs) {
+        Xen_DEL_REF(lhs);
+        Xen_DEL_REF(binary);
+        return nil;
+      }
+      if (!Xen_AST_Node_Push_Child(binary, lhs)) {
+        Xen_DEL_REF(rhs);
+        Xen_DEL_REF(lhs);
+        Xen_DEL_REF(binary);
+        return nil;
+      }
+      if (!Xen_AST_Node_Push_Child(binary, rhs)) {
+        Xen_DEL_REF(rhs);
+        Xen_DEL_REF(lhs);
+        Xen_DEL_REF(binary);
+        return nil;
+      }
+      Xen_DEL_REF(rhs);
+      Xen_DEL_REF(lhs);
+      return binary;
+    }
+    return parser_primary(p);
+  }
   return nil;
 }
 
+Xen_Instance *parser_unary(Parser *p) {
+  if (p->token.tkn_type != TKN_ADD && p->token.tkn_type != TKN_MINUS &&
+      p->token.tkn_type != TKN_NOT) {
+    return parser_factor(p);
+  }
+  Xen_Instance *unary = Xen_AST_Node_New("unary", p->token.tkn_text);
+  if_nil_eval(unary) { return nil; }
+  parser_next(p);
+  Xen_Instance *factor = parser_factor(p);
+  if_nil_eval(factor) {
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(unary, factor)) {
+    Xen_DEL_REF(factor);
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  Xen_DEL_REF(factor);
+  return unary;
+}
+
 Xen_Instance *parser_term(Parser *p) {
-  Xen_Instance *left = parser_factor(p);
+  Xen_Instance *left = parser_unary(p);
   if_nil_eval(left) { return nil; }
   while (p->token.tkn_type == TKN_MUL || p->token.tkn_type == TKN_DIV ||
          p->token.tkn_type == TKN_MOD) {
-    char op[2];
-    op[0] = p->token.tkn_text[0];
-    op[1] = '\0';
+    char *op = strdup(p->token.tkn_text);
     parser_next(p);
-    Xen_Instance *right = parser_factor(p);
+    Xen_Instance *right = parser_unary(p);
     if_nil_eval(right) {
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     Xen_Instance *binary = Xen_AST_Node_New("binary", op);
     if_nil_eval(binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
+    free(op);
     left = binary;
   }
   return left;
@@ -250,35 +312,163 @@ Xen_Instance *parser_add(Parser *p) {
   Xen_Instance *left = parser_term(p);
   if_nil_eval(left) { return nil; }
   while (p->token.tkn_type == TKN_ADD || p->token.tkn_type == TKN_MINUS) {
-    char op[2];
-    op[0] = p->token.tkn_text[0];
-    op[1] = '\0';
+    char *op = strdup(p->token.tkn_text);
     parser_next(p);
     Xen_Instance *right = parser_term(p);
     if_nil_eval(right) {
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     Xen_Instance *binary = Xen_AST_Node_New("binary", op);
     if_nil_eval(binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
+      free(op);
       return nil;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
+    free(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance *parser_relational(Parser *p) {
+  Xen_Instance *left = parser_add(p);
+  if_nil_eval(left) { return nil; }
+  while (p->token.tkn_type == TKN_LT || p->token.tkn_type == TKN_GT ||
+         p->token.tkn_type == TKN_LE || p->token.tkn_type == TKN_GE ||
+         p->token.tkn_type == TKN_EQ || p->token.tkn_type == TKN_NE) {
+    char *op = strdup(p->token.tkn_text);
+    parser_next(p);
+    Xen_Instance *right = parser_add(p);
+    if_nil_eval(right) {
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_Instance *binary = Xen_AST_Node_New("binary", op);
+    if_nil_eval(binary) {
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_DEL_REF(right);
+    Xen_DEL_REF(left);
+    free(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance *parser_and(Parser *p) {
+  Xen_Instance *left = parser_relational(p);
+  if_nil_eval(left) { return nil; }
+  while (p->token.tkn_type == TKN_AND) {
+    char *op = strdup(p->token.tkn_text);
+    parser_next(p);
+    Xen_Instance *right = parser_relational(p);
+    if_nil_eval(right) {
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_Instance *binary = Xen_AST_Node_New("binary", op);
+    if_nil_eval(binary) {
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_DEL_REF(right);
+    Xen_DEL_REF(left);
+    free(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance *parser_or(Parser *p) {
+  Xen_Instance *left = parser_and(p);
+  if_nil_eval(left) { return nil; }
+  while (p->token.tkn_type == TKN_OR) {
+    char *op = strdup(p->token.tkn_text);
+    parser_next(p);
+    Xen_Instance *right = parser_and(p);
+    if_nil_eval(right) {
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_Instance *binary = Xen_AST_Node_New("binary", op);
+    if_nil_eval(binary) {
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_DEL_REF(binary);
+      Xen_DEL_REF(right);
+      Xen_DEL_REF(left);
+      free(op);
+      return nil;
+    }
+    Xen_DEL_REF(right);
+    Xen_DEL_REF(left);
+    free(op);
     left = binary;
   }
   return left;

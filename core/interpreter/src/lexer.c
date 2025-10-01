@@ -23,7 +23,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
 
   Lexer_Token token = {0};
   token.tkn_type = TKN_EOF;
-  token.tkn_text[0] = '\n';
+  token.tkn_text[0] = '\0';
 
   char c = lexer->src[lexer->pos];
   if (c == '\0') {
@@ -40,7 +40,15 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     size_t len = lexer->pos - start;
     strncpy(token.tkn_text, lexer->src + start, len);
     token.tkn_text[len] = '\0';
-    token.tkn_type = TKN_IDENTIFIER;
+    if (strcmp(token.tkn_text, "not") == 0) {
+      token.tkn_type = TKN_NOT;
+    } else if (strcmp(token.tkn_text, "and") == 0) {
+      token.tkn_type = TKN_AND;
+    } else if (strcmp(token.tkn_text, "or") == 0) {
+      token.tkn_type = TKN_OR;
+    } else {
+      token.tkn_type = TKN_IDENTIFIER;
+    }
   } else if (c == '$') {
     lexer->pos++;
     size_t start = lexer->pos;
@@ -335,7 +343,13 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_text[1] = '\0';
   } else if (c == '=') {
     lexer->pos++;
-    if (lexer->src[lexer->pos] == '>') {
+    if (lexer->src[lexer->pos] == '=') {
+      lexer->pos++;
+      token.tkn_type = TKN_EQ;
+      token.tkn_text[0] = '=';
+      token.tkn_text[1] = '=';
+      token.tkn_text[2] = '\0';
+    } else if (lexer->src[lexer->pos] == '>') {
       lexer->pos++;
       token.tkn_type = TKN_BLOCK;
       token.tkn_text[0] = '=';
@@ -373,9 +387,17 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_text[1] = '\0';
   } else if (lexer->src[lexer->pos] == '*') {
     lexer->pos++;
-    token.tkn_type = TKN_MUL;
-    token.tkn_text[0] = '*';
-    token.tkn_text[1] = '\0';
+    if (lexer->src[lexer->pos] == '*') {
+      lexer->pos++;
+      token.tkn_type = TKN_POW;
+      token.tkn_text[0] = '*';
+      token.tkn_text[1] = '*';
+      token.tkn_text[2] = '\0';
+    } else {
+      token.tkn_type = TKN_MUL;
+      token.tkn_text[0] = '*';
+      token.tkn_text[1] = '\0';
+    }
   } else if (lexer->src[lexer->pos] == '/') {
     lexer->pos++;
     token.tkn_type = TKN_DIV;
@@ -386,6 +408,45 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     token.tkn_type = TKN_MOD;
     token.tkn_text[0] = '%';
     token.tkn_text[1] = '\0';
+  } else if (lexer->src[lexer->pos] == '<') {
+    lexer->pos++;
+    if (lexer->src[lexer->pos] == '=') {
+      lexer->pos++;
+      token.tkn_type = TKN_LE;
+      token.tkn_text[0] = '<';
+      token.tkn_text[1] = '=';
+      token.tkn_text[2] = '\0';
+    } else {
+      token.tkn_type = TKN_LT;
+      token.tkn_text[0] = '<';
+      token.tkn_text[1] = '\0';
+    }
+  } else if (lexer->src[lexer->pos] == '>') {
+    lexer->pos++;
+    if (lexer->src[lexer->pos] == '=') {
+      lexer->pos++;
+      token.tkn_type = TKN_GE;
+      token.tkn_text[0] = '>';
+      token.tkn_text[1] = '=';
+      token.tkn_text[2] = '\0';
+    } else {
+      token.tkn_type = TKN_GT;
+      token.tkn_text[0] = '>';
+      token.tkn_text[1] = '\0';
+    }
+  } else if (lexer->src[lexer->pos] == '!') {
+    lexer->pos++;
+    if (lexer->src[lexer->pos] == '=') {
+      lexer->pos++;
+      token.tkn_type = TKN_NE;
+      token.tkn_text[0] = '!';
+      token.tkn_text[1] = '=';
+      token.tkn_text[3] = '\0';
+    } else {
+      token.tkn_type = TKN_UNDEFINED;
+      token.tkn_text[0] = '!';
+      token.tkn_text[1] = '\0';
+    }
   } else {
     token.tkn_text[0] = lexer->src[lexer->pos];
     token.tkn_text[1] = '\0';

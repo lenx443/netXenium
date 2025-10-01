@@ -7,8 +7,12 @@
 
 typedef enum {
   TKN_EOF = 0,
+  TKN_UNDEFINED,
   TKN_NEWLINE,
   TKN_IDENTIFIER,
+  TKN_NOT,
+  TKN_AND,
+  TKN_OR,
   TKN_PROPERTY,
   TKN_STRING,
   TKN_NUMBER,
@@ -16,8 +20,6 @@ typedef enum {
   TKN_LBRACE,
   TKN_RBRACE,
   TKN_ASSIGNMENT,
-  TKN_EQUAL,
-  TKN_UNDEFINED,
   TKN_LPARENT,
   TKN_RPARENT,
   TKN_COMMA,
@@ -26,6 +28,13 @@ typedef enum {
   TKN_MUL,
   TKN_DIV,
   TKN_MOD,
+  TKN_POW,
+  TKN_EQ,
+  TKN_NE,
+  TKN_LT,
+  TKN_GT,
+  TKN_LE,
+  TKN_GE,
 } Lexer_Token_Type;
 
 typedef struct {
