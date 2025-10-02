@@ -316,7 +316,6 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
         token.tkn_text[len + 1] = '\0';
         token.tkn_type = TKN_NUMBER;
       } else {
-        lexer->pos++;
         token.tkn_text[0] = '0';
         token.tkn_text[1] = '\0';
         token.tkn_type = TKN_NUMBER;
@@ -360,32 +359,68 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[0] = '=';
       token.tkn_text[1] = '\0';
     }
-  } else if (lexer->src[lexer->pos] == '(') {
+  } else if (c == '(') {
     lexer->pos++;
     token.tkn_type = TKN_LPARENT;
     token.tkn_text[0] = '(';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == ')') {
+  } else if (c == ')') {
     lexer->pos++;
     token.tkn_type = TKN_RPARENT;
     token.tkn_text[0] = ')';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == ',') {
+  } else if (c == '[') {
+    lexer->pos++;
+    token.tkn_type = TKN_LBRACKET;
+    token.tkn_text[0] = '[';
+    token.tkn_text[1] = '\0';
+  } else if (c == ']') {
+    lexer->pos++;
+    token.tkn_type = TKN_RBRACKET;
+    token.tkn_text[0] = ']';
+    token.tkn_text[1] = '\0';
+  } else if (c == '\\') {
+    lexer->pos++;
+    token.tkn_type = TKN_ATTR;
+    token.tkn_text[0] = '\\';
+    token.tkn_text[1] = '\0';
+  } else if (c == ',') {
     lexer->pos++;
     token.tkn_type = TKN_COMMA;
     token.tkn_text[0] = ',';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == '+') {
+  } else if (c == ':') {
     lexer->pos++;
-    token.tkn_type = TKN_ADD;
-    token.tkn_text[0] = '+';
+    token.tkn_type = TKN_COLON;
+    token.tkn_text[0] = ':';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == '-') {
+  } else if (c == '+') {
     lexer->pos++;
-    token.tkn_type = TKN_MINUS;
-    token.tkn_text[0] = '-';
-    token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == '*') {
+    if (lexer->src[lexer->pos] == '+') {
+      lexer->pos++;
+      token.tkn_type = TKN_INC;
+      token.tkn_text[0] = '+';
+      token.tkn_text[1] = '+';
+      token.tkn_text[2] = '\0';
+    } else {
+      token.tkn_type = TKN_ADD;
+      token.tkn_text[0] = '+';
+      token.tkn_text[1] = '\0';
+    }
+  } else if (c == '-') {
+    lexer->pos++;
+    if (lexer->src[lexer->pos] == '-') {
+      lexer->pos++;
+      token.tkn_type = TKN_DEC;
+      token.tkn_text[0] = '-';
+      token.tkn_text[1] = '-';
+      token.tkn_text[2] = '\0';
+    } else {
+      token.tkn_type = TKN_MINUS;
+      token.tkn_text[0] = '-';
+      token.tkn_text[1] = '\0';
+    }
+  } else if (c == '*') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '*') {
       lexer->pos++;
@@ -398,17 +433,17 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[0] = '*';
       token.tkn_text[1] = '\0';
     }
-  } else if (lexer->src[lexer->pos] == '/') {
+  } else if (c == '/') {
     lexer->pos++;
     token.tkn_type = TKN_DIV;
     token.tkn_text[0] = '/';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == '%') {
+  } else if (c == '%') {
     lexer->pos++;
     token.tkn_type = TKN_MOD;
     token.tkn_text[0] = '%';
     token.tkn_text[1] = '\0';
-  } else if (lexer->src[lexer->pos] == '<') {
+  } else if (c == '<') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '=') {
       lexer->pos++;
@@ -421,7 +456,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[0] = '<';
       token.tkn_text[1] = '\0';
     }
-  } else if (lexer->src[lexer->pos] == '>') {
+  } else if (c == '>') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '=') {
       lexer->pos++;
@@ -434,7 +469,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       token.tkn_text[0] = '>';
       token.tkn_text[1] = '\0';
     }
-  } else if (lexer->src[lexer->pos] == '!') {
+  } else if (c == '!') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '=') {
       lexer->pos++;
