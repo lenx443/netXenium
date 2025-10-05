@@ -1,5 +1,7 @@
 # netXenium
 
+> Este código está en desarrollo: se pueden encontrar errores, bugs o partes incompletas. aquí se pone el código aún en desarrollo sin ninguna garantía de que funcione correctamente.
+
 **netXenium** es un programa en desarrollo que permite automatizar y operar tareas y ataques de red de alto y bajo nivel. Está diseñado para ser una herramienta flexible tanto para administradores como para investigadores de seguridad.
 
 > **Advertencia:** Este software fue desarrollado con fines educativos y de investigación en entornos controlados o laborales. El desarrollador **no se hace responsable** del uso indebido que se le pueda dar.
