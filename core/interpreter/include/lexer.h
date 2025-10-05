@@ -10,6 +10,7 @@ typedef enum {
   TKN_UNDEFINED,
   TKN_NEWLINE,
   TKN_IDENTIFIER,
+  TKN_KEYWORD,
   TKN_NOT,
   TKN_AND,
   TKN_OR,
