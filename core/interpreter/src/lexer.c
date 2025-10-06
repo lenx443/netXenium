@@ -41,7 +41,7 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     strncpy(token.tkn_text, lexer->src + start, len);
     token.tkn_text[len] = '\0';
     if (strcmp(token.tkn_text, "if") == 0) {
-      tomen.tkn_type = TKN_KEYWORD;
+      token.tkn_type = TKN_KEYWORD;
     } else if (strcmp(token.tkn_text, "not") == 0) {
       token.tkn_type = TKN_NOT;
     } else if (strcmp(token.tkn_text, "and") == 0) {
