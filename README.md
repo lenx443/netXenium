@@ -38,7 +38,7 @@ Instala las dependencias necesarias y compila el proyecto:
 
 ```sh
 pkg update
-pkg install clang libpcap cmake make
+pkg install clang cmake make
 git clone https://github.com/lenx443/netXenium.git
 cd netXenium
 mkdir build && cd build
