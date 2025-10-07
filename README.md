@@ -6,6 +6,10 @@
 
 > **Advertencia:** Este software fue desarrollado con fines educativos y de investigación en entornos controlados o laborales. El desarrollador **no se hace responsable** del uso indebido que se le pueda dar.
 
+## Registros:
+
+- [Modelo de programación orientada a registros](https://github.com/lenx443/netXenium/blob/dev/doc/es_registros.md)
+
 ## Características actuales
 
 - Shell interactiva con comandos específicos para operaciones de red.
