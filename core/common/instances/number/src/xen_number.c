@@ -9,22 +9,6 @@
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
 
-/* Se asume que existen estas entidades en tu entorno:
-   - extern const signed char Xen_Char_Digit_Value[256];
-   - void * __instance_new(struct __Implement *impl, void *args);
-   - void Xen_DEL_REF(void *obj);
-   - extern struct __Implement Xen_Number_Implement;
-
-   Estructura:
-   struct Xen_Number_Instance {
-     Xen_INSTANCE_HEAD;
-     uint32_t *digits;
-     size_t size;
-     int8_t sign; // 0 = cero, +1 = positivo, -1 = negativo
-   };
-   typedef struct Xen_Number_Instance Xen_Number;
-*/
-
 Xen_INSTANCE *Xen_Number_From_CString(const char *cstring, int base) {
   if (!cstring) { return nil; }
 
