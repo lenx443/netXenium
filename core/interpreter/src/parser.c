@@ -10,6 +10,7 @@
 
 static bool is_expr(Parser *);
 static bool is_primary(Parser *);
+static bool is_unary(Parser *);
 static bool is_factor(Parser *);
 static bool is_suffix(Parser *);
 
@@ -59,7 +60,17 @@ bool is_primary(Parser *p) {
   return false;
 }
 
-bool is_factor(Parser *p) { return is_primary(p); }
+bool is_unary(Parser *p) {
+  Lexer_Token_Type token = p->token.tkn_type;
+  if (token == TKN_ADD || token == TKN_MINUS ||
+      token == TKN_NOT || token == TKN_INC ||
+      token == TKN_DEC) {
+    return true;
+  }
+  return false;
+}
+
+bool is_factor(Parser *p) { return is_unary(p) || is_primary(p); }
 
 bool is_suffix(Parser *p) {
   Lexer_Token_Type token = p->token.tkn_type;
@@ -190,9 +201,7 @@ Xen_Instance *parser_primary(Parser *p) {
 }
 
 Xen_Instance *parser_unary(Parser *p) {
-  if (p->token.tkn_type != TKN_ADD && p->token.tkn_type != TKN_MINUS &&
-      p->token.tkn_type != TKN_NOT && p->token.tkn_type != TKN_INC &&
-      p->token.tkn_type != TKN_DEC) {
+  if (!is_unary(p)) {
     return parser_primary(p);
   }
   Xen_Instance *unary = Xen_AST_Node_New("unary", p->token.tkn_text);
