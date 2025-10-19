@@ -22,8 +22,8 @@ static Xen_Instance *parser_property(Parser *);
 static Xen_Instance *parser_parent(Parser *);
 static Xen_Instance *parser_expr(Parser *);
 static Xen_Instance *parser_primary(Parser *);
-static Xen_Instance *parser_factor(Parser *);
 static Xen_Instance *parser_unary(Parser *);
+static Xen_Instance *parser_factor(Parser *);
 static Xen_Instance *parser_term(Parser *);
 static Xen_Instance *parser_add(Parser *);
 static Xen_Instance *parser_relational(Parser *);
@@ -189,9 +189,32 @@ Xen_Instance *parser_primary(Parser *p) {
   return primary;
 }
 
+Xen_Instance *parser_unary(Parser *p) {
+  if (p->token.tkn_type != TKN_ADD && p->token.tkn_type != TKN_MINUS &&
+      p->token.tkn_type != TKN_NOT && p->token.tkn_type != TKN_INC &&
+      p->token.tkn_type != TKN_DEC) {
+    return parser_primary(p);
+  }
+  Xen_Instance *unary = Xen_AST_Node_New("unary", p->token.tkn_text);
+  if_nil_eval(unary) { return nil; }
+  parser_next(p);
+  Xen_Instance *primary = parser_primary(p);
+  if_nil_eval(primary) {
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(unary, primary)) {
+    Xen_DEL_REF(primary);
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  Xen_DEL_REF(primary);
+  return unary;
+}
+
 Xen_Instance *parser_factor(Parser *p) {
   if (is_factor(p)) {
-    Xen_Instance *lhs = parser_primary(p);
+    Xen_Instance *lhs = parser_unary(p);
     if_nil_eval(lhs) { return nil; }
     if (p->token.tkn_type == TKN_POW) {
       Xen_Instance *binary = Xen_AST_Node_New("binary", p->token.tkn_text);
@@ -200,7 +223,7 @@ Xen_Instance *parser_factor(Parser *p) {
         return nil;
       }
       parser_next(p);
-      Xen_Instance *rhs = parser_primary(p);
+      Xen_Instance *rhs = parser_unary(p);
       if_nil_eval(rhs) {
         Xen_DEL_REF(lhs);
         Xen_DEL_REF(binary);
@@ -227,31 +250,8 @@ Xen_Instance *parser_factor(Parser *p) {
   return nil;
 }
 
-Xen_Instance *parser_unary(Parser *p) {
-  if (p->token.tkn_type != TKN_ADD && p->token.tkn_type != TKN_MINUS &&
-      p->token.tkn_type != TKN_NOT && p->token.tkn_type != TKN_INC &&
-      p->token.tkn_type != TKN_DEC) {
-    return parser_factor(p);
-  }
-  Xen_Instance *unary = Xen_AST_Node_New("unary", p->token.tkn_text);
-  if_nil_eval(unary) { return nil; }
-  parser_next(p);
-  Xen_Instance *factor = parser_factor(p);
-  if_nil_eval(factor) {
-    Xen_DEL_REF(unary);
-    return nil;
-  }
-  if (!Xen_AST_Node_Push_Child(unary, factor)) {
-    Xen_DEL_REF(factor);
-    Xen_DEL_REF(unary);
-    return nil;
-  }
-  Xen_DEL_REF(factor);
-  return unary;
-}
-
 Xen_Instance *parser_term(Parser *p) {
-  Xen_Instance *left = parser_unary(p);
+  Xen_Instance *left = parser_factor(p);
   if_nil_eval(left) { return nil; }
   while (p->token.tkn_type == TKN_MUL || p->token.tkn_type == TKN_DIV ||
          p->token.tkn_type == TKN_MOD) {
@@ -261,7 +261,7 @@ Xen_Instance *parser_term(Parser *p) {
       return nil;
     }
     parser_next(p);
-    Xen_Instance *right = parser_unary(p);
+    Xen_Instance *right = parser_factor(p);
     if_nil_eval(right) {
       Xen_DEL_REF(left);
       free(op);
