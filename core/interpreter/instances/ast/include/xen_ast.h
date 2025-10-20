@@ -4,15 +4,16 @@
 #include "instance.h"
 #include <stddef.h>
 
-Xen_Instance *Xen_AST_Node_New(const char *, const char *);
-int Xen_AST_Node_Push_Child(Xen_Instance *, Xen_Instance *);
-const char *Xen_AST_Node_Name(Xen_Instance *);
-const char *Xen_AST_Node_Value(Xen_Instance *);
-Xen_Instance *Xen_AST_Node_Children(Xen_Instance *);
-Xen_Instance *Xen_AST_Node_Get_Child(Xen_Instance *, size_t);
+Xen_Instance* Xen_AST_Node_New(const char*, const char*);
+int Xen_AST_Node_Push_Child(Xen_Instance*, Xen_Instance*);
+const char* Xen_AST_Node_Name(Xen_Instance*);
+const char* Xen_AST_Node_Value(Xen_Instance*);
+Xen_Instance* Xen_AST_Node_Children(Xen_Instance*);
+Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance*, size_t);
+Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance*, const char*);
 
 #ifndef NDEBUG
-void Xen_AST_Node_Print(Xen_Instance *);
+void Xen_AST_Node_Print(Xen_Instance*);
 #endif
 
 #endif

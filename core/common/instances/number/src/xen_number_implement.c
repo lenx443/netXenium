@@ -15,32 +15,35 @@
 #include "xen_string.h"
 #include "xen_vector.h"
 
-static int number_alloc(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+static int number_alloc(ctx_id_t id, Xen_INSTANCE* self, Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Number *num = (Xen_Number *)self;
+  Xen_Number* num = (Xen_Number*)self;
   num->digits = NULL;
   num->size = 0;
   num->sign = 0;
   return 1;
 }
 
-static int number_destroy(ctx_id_t id, Xen_INSTANCE *self, Xen_Instance *args) {
+static int number_destroy(ctx_id_t id, Xen_INSTANCE* self, Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Number *num = (Xen_Number *)self;
-  if (num->digits) free(num->digits);
+  Xen_Number* num = (Xen_Number*)self;
+  if (num->digits)
+    free(num->digits);
   return 1;
 }
 
-static int number_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static int number_string(ctx_id_t id, Xen_Instance* self, Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  const char *cstring = Xen_Number_As_CString(self);
-  if (!cstring) { return 0; }
-  Xen_Instance *string = Xen_String_From_CString(cstring);
-  if (!string) {
-    free((void *)cstring);
+  const char* cstring = Xen_Number_As_CString(self);
+  if (!cstring) {
     return 0;
   }
-  free((void *)cstring);
+  Xen_Instance* string = Xen_String_From_CString(cstring);
+  if (!string) {
+    free((void*)cstring);
+    return 0;
+  }
+  free((void*)cstring);
   if (!xen_register_prop_set("__expose_string", string, id)) {
     Xen_DEL_REF(string);
     return 0;
@@ -49,16 +52,15 @@ static int number_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
   return 1;
 }
 
-static int number_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static int number_opr_eq(ctx_id_t id, Xen_Instance* self, Xen_Instance* args) {
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return 0;
 
-  Xen_Number *a = (Xen_Number *)self;
-  Xen_Number *b = (Xen_Number *)Xen_Operator_Eval_Pair_Steal2(
+  Xen_Number* a = (Xen_Number*)self;
+  Xen_Number* b = (Xen_Number*)Xen_Operator_Eval_Pair_Steal2(
       args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
 
-  // Normalizar tamaño (ignorar ceros a la izquierda)
   size_t size_a = a->size;
   while (size_a > 0 && a->digits[size_a - 1] == 0) {
     size_a--;
@@ -69,38 +71,44 @@ static int number_opr_eq(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
     size_b--;
   }
 
-  // Si ambos son cero → iguales sin importar el signo
   if (size_a == 0 && size_b == 0) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_True, id)) { return 0; }
+    if (!xen_register_prop_set("__expose_opr", Xen_True, id)) {
+      return 0;
+    }
     return 1;
   }
 
-  // Signos distintos → no son iguales
   if (a->sign != b->sign) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) { return 0; }
+    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
+      return 0;
+    }
     return 1;
   }
 
-  // Diferente número de dígitos → no son iguales
   if (size_a != size_b) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) { return 0; }
+    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
+      return 0;
+    }
     return 1;
   }
 
-  // Comparar dígitos uno a uno
   for (size_t i = 0; i < size_a; i++) {
     if (a->digits[i] != b->digits[i]) {
       Xen_DEL_REF(b);
-      if (!xen_register_prop_set("__expose_opr", Xen_False, id)) { return 0; }
+      if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
+        return 0;
+      }
       return 1;
     }
   }
 
   Xen_DEL_REF(b);
-  if (!xen_register_prop_set("__expose_opr", Xen_True, id)) { return 0; }
+  if (!xen_register_prop_set("__expose_opr", Xen_True, id)) {
+    return 0;
+  }
   return 1;
 }
 
@@ -120,11 +128,13 @@ struct __Implement Xen_Number_Implement = {
 };
 
 int Xen_Number_Init() {
-  if ((Xen_Number_Implement.__opr[Xen_OPR_EQ] = callable_new_native(number_opr_eq)) ==
-      NULL) {
+  if ((Xen_Number_Implement.__opr[Xen_OPR_EQ] =
+           callable_new_native(number_opr_eq)) == NULL) {
     return 0;
   }
   return 1;
 }
 
-void Xen_Number_Finish() { callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]); }
+void Xen_Number_Finish() {
+  callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
+}
