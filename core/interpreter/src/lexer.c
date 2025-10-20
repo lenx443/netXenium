@@ -4,7 +4,7 @@
 
 #include "lexer.h"
 
-void skip_whitespace(Lexer *lexer) {
+void skip_whitespace(Lexer* lexer) {
   while (1) {
     char c = lexer->src[lexer->pos];
     if (c == ' ' || c == '\t') {
@@ -18,7 +18,7 @@ void skip_whitespace(Lexer *lexer) {
   }
 }
 
-Lexer_Token lexer_next_token(Lexer *lexer) {
+Lexer_Token lexer_next_token(Lexer* lexer) {
   skip_whitespace(lexer);
 
   Lexer_Token token = {0};
@@ -40,7 +40,9 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
     size_t len = lexer->pos - start;
     strncpy(token.tkn_text, lexer->src + start, len);
     token.tkn_text[len] = '\0';
-    if (strcmp(token.tkn_text, "if") == 0) {
+    if (strcmp(token.tkn_text, "if") == 0 ||
+        strcmp(token.tkn_text, "else") == 0 ||
+        strcmp(token.tkn_text, "elif") == 0) {
       token.tkn_type = TKN_KEYWORD;
     } else if (strcmp(token.tkn_text, "not") == 0) {
       token.tkn_type = TKN_NOT;
@@ -79,19 +81,40 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       if (ch == '\\') { // secuencia de escape
         lexer->pos++;
         ch = lexer->src[lexer->pos];
-        if (ch == '\0') break;
+        if (ch == '\0')
+          break;
 
         switch (ch) {
-        case 'n': buffer[bpos++] = '\n'; break;
-        case 'r': buffer[bpos++] = '\r'; break;
-        case 't': buffer[bpos++] = '\t'; break;
-        case 'v': buffer[bpos++] = '\v'; break;
-        case 'f': buffer[bpos++] = '\f'; break;
-        case 'a': buffer[bpos++] = '\a'; break;
-        case '\\': buffer[bpos++] = '\\'; break;
-        case '\'': buffer[bpos++] = '\''; break;
-        case '\"': buffer[bpos++] = '\"'; break;
-        case '?': buffer[bpos++] = '?'; break;
+        case 'n':
+          buffer[bpos++] = '\n';
+          break;
+        case 'r':
+          buffer[bpos++] = '\r';
+          break;
+        case 't':
+          buffer[bpos++] = '\t';
+          break;
+        case 'v':
+          buffer[bpos++] = '\v';
+          break;
+        case 'f':
+          buffer[bpos++] = '\f';
+          break;
+        case 'a':
+          buffer[bpos++] = '\a';
+          break;
+        case '\\':
+          buffer[bpos++] = '\\';
+          break;
+        case '\'':
+          buffer[bpos++] = '\'';
+          break;
+        case '\"':
+          buffer[bpos++] = '\"';
+          break;
+        case '?':
+          buffer[bpos++] = '?';
+          break;
 
         // octales \ooo
         case '0' ... '7': {
@@ -110,9 +133,9 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
           int val = 0;
           while (isxdigit((unsigned char)lexer->src[lexer->pos + 1])) {
             char c2 = lexer->src[++lexer->pos];
-            val =
-                val * 16 +
-                (isdigit(c2) ? c2 - '0' : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
+            val = val * 16 +
+                  (isdigit(c2) ? c2 - '0'
+                               : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
           }
           buffer[bpos++] = (char)val;
         } break;
@@ -124,11 +147,12 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
           unsigned int code = 0;
           for (int i = 0; i < digits; i++) {
             char c2 = lexer->src[lexer->pos + 1];
-            if (!isxdigit((unsigned char)c2)) break;
+            if (!isxdigit((unsigned char)c2))
+              break;
             lexer->pos++;
-            code =
-                code * 16 +
-                (isdigit(c2) ? c2 - '0' : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
+            code = code * 16 + (isdigit(c2) ? c2 - '0'
+                                            : (isupper(c2) ? c2 - 'A' + 10
+                                                           : c2 - 'a' + 10));
           }
           // aquí debes decidir cómo guardar Unicode.
           // Si tu lenguaje es ASCII/UTF-8 simple:
@@ -183,19 +207,40 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
       if (ch == '\\') { // secuencia de escape
         lexer->pos++;
         ch = lexer->src[lexer->pos];
-        if (ch == '\0') break;
+        if (ch == '\0')
+          break;
 
         switch (ch) {
-        case 'n': buffer[bpos++] = '\n'; break;
-        case 'r': buffer[bpos++] = '\r'; break;
-        case 't': buffer[bpos++] = '\t'; break;
-        case 'v': buffer[bpos++] = '\v'; break;
-        case 'f': buffer[bpos++] = '\f'; break;
-        case 'a': buffer[bpos++] = '\a'; break;
-        case '\\': buffer[bpos++] = '\\'; break;
-        case '\'': buffer[bpos++] = '\''; break;
-        case '\"': buffer[bpos++] = '\"'; break;
-        case '?': buffer[bpos++] = '?'; break;
+        case 'n':
+          buffer[bpos++] = '\n';
+          break;
+        case 'r':
+          buffer[bpos++] = '\r';
+          break;
+        case 't':
+          buffer[bpos++] = '\t';
+          break;
+        case 'v':
+          buffer[bpos++] = '\v';
+          break;
+        case 'f':
+          buffer[bpos++] = '\f';
+          break;
+        case 'a':
+          buffer[bpos++] = '\a';
+          break;
+        case '\\':
+          buffer[bpos++] = '\\';
+          break;
+        case '\'':
+          buffer[bpos++] = '\'';
+          break;
+        case '\"':
+          buffer[bpos++] = '\"';
+          break;
+        case '?':
+          buffer[bpos++] = '?';
+          break;
 
         // octales \ooo
         case '0' ... '7': {
@@ -214,9 +259,9 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
           int val = 0;
           while (isxdigit((unsigned char)lexer->src[lexer->pos + 1])) {
             char c2 = lexer->src[++lexer->pos];
-            val =
-                val * 16 +
-                (isdigit(c2) ? c2 - '0' : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
+            val = val * 16 +
+                  (isdigit(c2) ? c2 - '0'
+                               : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
           }
           buffer[bpos++] = (char)val;
         } break;
@@ -228,11 +273,12 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
           unsigned int code = 0;
           for (int i = 0; i < digits; i++) {
             char c2 = lexer->src[lexer->pos + 1];
-            if (!isxdigit((unsigned char)c2)) break;
+            if (!isxdigit((unsigned char)c2))
+              break;
             lexer->pos++;
-            code =
-                code * 16 +
-                (isdigit(c2) ? c2 - '0' : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
+            code = code * 16 + (isdigit(c2) ? c2 - '0'
+                                            : (isupper(c2) ? c2 - 'A' + 10
+                                                           : c2 - 'a' + 10));
           }
           // aquí debes decidir cómo guardar Unicode.
           // Si tu lenguaje es ASCII/UTF-8 simple:
@@ -283,7 +329,8 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
         strncpy(token.tkn_text + 2, lexer->src + start, len);
         token.tkn_text[len + 2] = '\0';
         token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] == 'b' || lexer->src[lexer->pos] == 'B') {
+      } else if (lexer->src[lexer->pos] == 'b' ||
+                 lexer->src[lexer->pos] == 'B') {
         lexer->pos++;
         size_t start = lexer->pos;
         while (lexer->src[lexer->pos] == '0' || lexer->src[lexer->pos] == '1') {
@@ -295,7 +342,8 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
         strncpy(token.tkn_text + 2, lexer->src + start, len);
         token.tkn_text[len + 2] = '\0';
         token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] == 'o' || lexer->src[lexer->pos] == 'O') {
+      } else if (lexer->src[lexer->pos] == 'o' ||
+                 lexer->src[lexer->pos] == 'O') {
         lexer->pos++;
         size_t start = lexer->pos;
         while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
@@ -307,7 +355,8 @@ Lexer_Token lexer_next_token(Lexer *lexer) {
         strncpy(token.tkn_text + 2, lexer->src + start, len);
         token.tkn_text[len + 2] = '\0';
         token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+      } else if (lexer->src[lexer->pos] >= '0' &&
+                 lexer->src[lexer->pos] <= '8') {
         size_t start = lexer->pos;
         while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
           lexer->pos++;

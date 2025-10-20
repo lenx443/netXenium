@@ -18,6 +18,9 @@ static bool is_suffix(Parser*);
 static bool is_keyword(Parser*);
 
 static Xen_Instance* wrap_expr(Xen_Instance*);
+static Xen_Instance* wrap_if_condition(Xen_Instance*);
+static Xen_Instance* wrap_if_then(Xen_Instance*);
+static Xen_Instance* wrap_if_else(Xen_Instance*);
 
 static Xen_Instance* parser_stmt_list(Parser*);
 static Xen_Instance* parser_stmt(Parser*);
@@ -139,6 +142,42 @@ Xen_Instance* wrap_expr(Xen_Instance* value) {
     return nil;
   }
   return expr;
+}
+
+Xen_Instance* wrap_if_condition(Xen_Instance* value) {
+  Xen_Instance* condition = Xen_AST_Node_New("IfCondition", NULL);
+  if_nil_eval(condition) {
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(condition, value)) {
+    Xen_DEL_REF(condition);
+    return nil;
+  }
+  return condition;
+}
+
+Xen_Instance* wrap_if_then(Xen_Instance* value) {
+  Xen_Instance* then = Xen_AST_Node_New("IfThen", NULL);
+  if_nil_eval(then) {
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(then, value)) {
+    Xen_DEL_REF(then);
+    return nil;
+  }
+  return then;
+}
+
+Xen_Instance* wrap_if_else(Xen_Instance* value) {
+  Xen_Instance* els = Xen_AST_Node_New("IfElse", NULL);
+  if_nil_eval(els) {
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(els, value)) {
+    Xen_DEL_REF(els);
+    return nil;
+  }
+  return els;
 }
 
 Xen_Instance* parser_stmt_list(Parser* p) {
@@ -996,17 +1035,32 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     return nil;
   }
   parser_next(p);
-  Xen_Instance* condition = parser_expr(p);
-  if_nil_eval(condition) {
+  Xen_Instance* condition_node = parser_expr(p);
+  if_nil_eval(condition_node) {
     Xen_DEL_REF(if_stmt);
     return nil;
   }
-  Xen_Instance* then = parser_block(p);
-  if_nil_eval(then) {
+  Xen_Instance* condition = wrap_if_condition(condition_node);
+  if_nil_eval(condition) {
+    Xen_DEL_REF(condition_node);
+    Xen_DEL_REF(if_stmt);
+    return nil;
+  }
+  Xen_DEL_REF(condition_node);
+  Xen_Instance* then_node = parser_block(p);
+  if_nil_eval(then_node) {
     Xen_DEL_REF(condition);
     Xen_DEL_REF(if_stmt);
     return nil;
   }
+  Xen_Instance* then = wrap_if_then(then_node);
+  if_nil_eval(then) {
+    Xen_DEL_REF(then_node);
+    Xen_DEL_REF(condition);
+    Xen_DEL_REF(if_stmt);
+    return nil;
+  }
+  Xen_DEL_REF(then_node);
   if (!Xen_AST_Node_Push_Child(if_stmt, condition)) {
     Xen_DEL_REF(then);
     Xen_DEL_REF(condition);
@@ -1021,6 +1075,89 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   }
   Xen_DEL_REF(then);
   Xen_DEL_REF(condition);
+  while (p->token.tkn_type == TKN_KEYWORD &&
+         strcmp(p->token.tkn_text, "elif") == 0) {
+    parser_next(p);
+    Xen_Instance* elif = Xen_AST_Node_New("IfElseIf", NULL);
+    if_nil_eval(elif) {
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_Instance* elif_condition_node = parser_expr(p);
+    if_nil_eval(elif_condition_node) {
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_Instance* elif_condition = wrap_if_condition(elif_condition_node);
+    if_nil_eval(elif_condition) {
+      Xen_DEL_REF(elif_condition_node);
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(elif_condition_node);
+    Xen_Instance* elif_then_node = parser_block(p);
+    if_nil_eval(elif_then_node) {
+      Xen_DEL_REF(elif_condition);
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_Instance* elif_then = wrap_if_then(elif_then_node);
+    if_nil_eval(elif_then) {
+      Xen_DEL_REF(elif_then_node);
+      Xen_DEL_REF(elif_condition);
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(elif_then_node);
+    if (!Xen_AST_Node_Push_Child(elif, elif_condition)) {
+      Xen_DEL_REF(elif_then);
+      Xen_DEL_REF(elif_condition);
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(elif, elif_then)) {
+      Xen_DEL_REF(elif_then);
+      Xen_DEL_REF(elif_condition);
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(elif_condition);
+    Xen_DEL_REF(elif_then);
+    if (!Xen_AST_Node_Push_Child(if_stmt, elif)) {
+      Xen_DEL_REF(elif);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(elif);
+  }
+  if (p->token.tkn_type == TKN_KEYWORD &&
+      strcmp(p->token.tkn_text, "else") == 0) {
+    parser_next(p);
+    Xen_Instance* else_node = parser_block(p);
+    if_nil_eval(else_node) {
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_Instance* els = wrap_if_else(else_node);
+    if_nil_eval(els) {
+      Xen_DEL_REF(else_node);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(else_node);
+    if (!Xen_AST_Node_Push_Child(if_stmt, els)) {
+      Xen_DEL_REF(els);
+      Xen_DEL_REF(if_stmt);
+      return nil;
+    }
+    Xen_DEL_REF(els);
+  }
   return if_stmt;
 }
 
