@@ -8,14 +8,19 @@
 #include "xen_ast.h"
 #include "xen_nil.h"
 
+static bool is_stmt(Parser*);
 static bool is_expr(Parser*);
 static bool is_primary(Parser*);
 static bool is_unary(Parser*);
 static bool is_factor(Parser*);
+static bool is_assigment(Parser*);
 static bool is_suffix(Parser*);
+static bool is_keyword(Parser*);
 
 static Xen_Instance* wrap_expr(Xen_Instance*);
 
+static Xen_Instance* parser_stmt_list(Parser*);
+static Xen_Instance* parser_stmt(Parser*);
 static Xen_Instance* parser_string(Parser*);
 static Xen_Instance* parser_number(Parser*);
 static Xen_Instance* parser_literal(Parser*);
@@ -48,8 +53,34 @@ void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
 }
 
-Xen_Instance* parser_stmt(Parser* p) {
-  return parser_keyword(p);
+Xen_Instance* parser_program(Parser* p) {
+  Xen_Instance* program = Xen_AST_Node_New("Program", NULL);
+  if_nil_eval(program) {
+    return nil;
+  }
+  Xen_Instance* stmt_list = parser_stmt_list(p);
+  if_nil_eval(stmt_list) {
+    Xen_DEL_REF(program);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(program, stmt_list)) {
+    Xen_DEL_REF(stmt_list);
+    Xen_DEL_REF(program);
+    return nil;
+  }
+  Xen_DEL_REF(stmt_list);
+  if (p->token.tkn_type != TKN_EOF) {
+    Xen_DEL_REF(program);
+    return nil;
+  }
+  return program;
+}
+
+bool is_stmt(Parser* p) {
+  if (is_keyword(p)) {
+    return true;
+  }
+  return false;
 }
 
 bool is_expr(Parser* p) {
@@ -79,11 +110,22 @@ bool is_factor(Parser* p) {
   return is_unary(p) || is_primary(p);
 }
 
+bool is_assigment(Parser* p) {
+  return is_factor(p);
+}
+
 bool is_suffix(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
   if (token == TKN_LPARENT || token == TKN_LBRACKET || token == TKN_ATTR ||
       token == TKN_INC || token == TKN_DEC)
     return true;
+  return false;
+}
+
+bool is_keyword(Parser* p) {
+  if (p->token.tkn_type == TKN_KEYWORD || is_assigment(p)) {
+    return true;
+  }
   return false;
 }
 
@@ -97,6 +139,73 @@ Xen_Instance* wrap_expr(Xen_Instance* value) {
     return nil;
   }
   return expr;
+}
+
+Xen_Instance* parser_stmt_list(Parser* p) {
+  Xen_Instance* stmt_list = Xen_AST_Node_New("StatementList", NULL);
+  if_nil_eval(stmt_list) {
+    return nil;
+  }
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
+  if (!is_stmt(p)) {
+    return stmt_list;
+  }
+  Xen_Instance* stmt_head = parser_stmt(p);
+  if_nil_eval(stmt_head) {
+    Xen_DEL_REF(stmt_list);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(stmt_list, stmt_head)) {
+    Xen_DEL_REF(stmt_head);
+    Xen_DEL_REF(stmt_list);
+    return nil;
+  }
+  Xen_DEL_REF(stmt_head);
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+    while (p->token.tkn_type == TKN_NEWLINE) {
+      parser_next(p);
+    }
+    if (!is_stmt(p)) {
+      return stmt_list;
+    }
+    Xen_Instance* stmt_tail = parser_stmt(p);
+    if_nil_eval(stmt_tail) {
+      Xen_DEL_REF(stmt_list);
+      return nil;
+    }
+    if (!Xen_AST_Node_Push_Child(stmt_list, stmt_tail)) {
+      Xen_DEL_REF(stmt_tail);
+      Xen_DEL_REF(stmt_list);
+      return nil;
+    }
+    Xen_DEL_REF(stmt_tail);
+  }
+  return stmt_list;
+}
+
+Xen_Instance* parser_stmt(Parser* p) {
+  Xen_Instance* stmt = Xen_AST_Node_New("Statement", NULL);
+  if_nil_eval(stmt) {
+    return nil;
+  }
+  if (!is_stmt(p)) {
+    return stmt;
+  }
+  Xen_Instance* stmt_val = parser_keyword(p);
+  if_nil_eval(stmt_val) {
+    Xen_DEL_REF(stmt);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(stmt, stmt_val)) {
+    Xen_DEL_REF(stmt_val);
+    Xen_DEL_REF(stmt);
+    return nil;
+  }
+  Xen_DEL_REF(stmt_val);
+  return stmt;
 }
 
 Xen_Instance* parser_string(Parser* p) {
@@ -916,33 +1025,38 @@ Xen_Instance* parser_if_stmt(Parser* p) {
 }
 
 Xen_Instance* parser_block(Parser* p) {
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
   if (p->token.tkn_type != TKN_BLOCK) {
     return nil;
   }
   parser_next(p);
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
   Xen_Instance* block = Xen_AST_Node_New("block", NULL);
   if_nil_eval(block) {
     return nil;
   }
   if (p->token.tkn_type == TKN_LBRACE) {
     parser_next(p);
-    while (p->token.tkn_type != TKN_RBRACE) {
-      if (p->token.tkn_type == TKN_EOF) {
-        Xen_DEL_REF(block);
-        return nil;
-      }
-      Xen_Instance* stmt = parser_stmt(p);
-      if_nil_eval(stmt) {
-        Xen_DEL_REF(block);
-        return nil;
-      }
-      if (!Xen_AST_Node_Push_Child(block, stmt)) {
-        Xen_DEL_REF(stmt);
-        Xen_DEL_REF(block);
-        return nil;
-      }
-      Xen_DEL_REF(stmt);
+    Xen_Instance* stmt_list = parser_stmt_list(p);
+    if_nil_eval(stmt_list) {
+      Xen_DEL_REF(block);
+      return nil;
     }
+    if (!Xen_AST_Node_Push_Child(block, stmt_list)) {
+      Xen_DEL_REF(stmt_list);
+      Xen_DEL_REF(block);
+      return nil;
+    }
+    Xen_DEL_REF(stmt_list);
+    if (p->token.tkn_type != TKN_RBRACE) {
+      Xen_DEL_REF(block);
+      return nil;
+    }
+    parser_next(p);
   } else {
     Xen_Instance* stmt = parser_stmt(p);
     if_nil_eval(stmt) {

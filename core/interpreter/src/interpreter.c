@@ -1,3 +1,4 @@
+#include "interpreter.h"
 #include "ast_compiler.h"
 #include "block_list.h"
 #include "blocks_compiler.h"
@@ -5,7 +6,6 @@
 #include "bytecode.h"
 #include "callable.h"
 #include "instance.h"
-#include "interpreter.h"
 #include "ir_bytecode.h"
 #include "lexer.h"
 #include "logs.h"
@@ -23,7 +23,7 @@
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
 #define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
 
-int interpreter(const char *text_code) {
+int interpreter(const char* text_code) {
   if (!text_code) {
     error("Codigo invalido");
     return 0;
@@ -31,23 +31,15 @@ int interpreter(const char *text_code) {
   Lexer lexer = {text_code, 0};
   Parser parser = {&lexer, {0, "\0"}};
   parser_next(&parser);
-  Xen_Instance *ast_program = Xen_AST_Node_New("program", NULL);
+  Xen_Instance* ast_program = parser_program(&parser);
   if_nil_eval(ast_program) return 0;
-  Xen_Instance *current_ast = nil;
-  while ((current_ast = parser_stmt(&parser)) != nil) {
-    if (!Xen_AST_Node_Push_Child(ast_program, current_ast)) {
-      Xen_DEL_REF(ast_program);
-      Xen_DEL_REF(current_ast);
-      return 0;
-    }
-    Xen_DEL_REF(current_ast);
-  }
-  log_show_and_clear(NULL);
   Xen_AST_Node_Print(ast_program);
   Xen_DEL_REF(ast_program);
   return 1;
   block_list_ptr blocks = block_list_new();
-  if (!blocks) { Xen_DEL_REF(ast_program); }
+  if (!blocks) {
+    Xen_DEL_REF(ast_program);
+  }
   block_node_ptr main_block = block_new();
   if (!main_block) {
     Xen_DEL_REF(ast_program);

@@ -5,11 +5,11 @@
 #include "lexer.h"
 
 typedef struct {
-  Lexer *lexer;
+  Lexer* lexer;
   Lexer_Token token;
 } Parser;
 
-void parser_next(Parser *);
-Xen_Instance *parser_stmt(Parser *);
+void parser_next(Parser*);
+Xen_Instance* parser_program(Parser*);
 
 #endif
