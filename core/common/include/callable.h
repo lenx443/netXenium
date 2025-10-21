@@ -6,7 +6,8 @@
 struct __Instance;
 
 #define NATIVE_CLEAR_ARG_NEVER_USE (void)(id, self, args);
-typedef int (*Xen_Native_Func)(unsigned long, struct __Instance *, struct __Instance *);
+typedef struct __Instance* (*Xen_Native_Func)(unsigned long, struct __Instance*,
+                                              struct __Instance*);
 
 enum Callable_Type {
   CALL_NATIVE_FUNCTIIN,
@@ -23,7 +24,7 @@ struct Callable {
 
 typedef enum Callable_Type CALLABLE_TYPE;
 typedef struct Callable CALLABLE;
-typedef CALLABLE *CALLABLE_ptr;
+typedef CALLABLE* CALLABLE_ptr;
 
 CALLABLE_ptr callable_new_native(Xen_Native_Func);
 CALLABLE_ptr callable_new_code(ProgramCode_t);

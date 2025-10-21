@@ -1,40 +1,40 @@
+#include "xen_module_implement.h"
 #include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
-#include "xen_module_implement.h"
+#include "xen_boolean.h"
 #include "xen_module_instance.h"
 #include "xen_nil.h"
-#include "xen_register.h"
 #include "xen_string.h"
 
-static int module_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
+                                  Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Module *module = (Xen_Module *)self;
+  Xen_Module* module = (Xen_Module*)self;
   module->mod_map = nil;
   module->mod_context = nil;
-  return 1;
+  return Xen_True;
 }
 
-static int module_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* module_destroy(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Module *module = (Xen_Module *)self;
+  Xen_Module* module = (Xen_Module*)self;
   if_nil_neval(module->mod_map) Xen_DEL_REF(module->mod_map);
   if_nil_neval(module->mod_context) Xen_DEL_REF(module->mod_context);
-  return 1;
+  return nil;
 }
 
-static int module_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance *string = Xen_String_From_CString("<Module>");
-  if (!string) { return 0; }
-  if (!xen_register_prop_set("__expose_string", string, id)) {
-    Xen_DEL_REF(string);
-    return 0;
+  Xen_Instance* string = Xen_String_From_CString("<Module>");
+  if (!string) {
+    return nil;
   }
-  Xen_DEL_REF(string);
-  return 1;
+  return string;
 }
 
 struct __Implement Xen_Module_Implement = {

@@ -14,51 +14,52 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 
-static int fn_echo(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
+                             Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (Xen_SIZE(args) > 1) { return 0; }
+  if (Xen_SIZE(args) > 1) {
+    return nil;
+  }
   if (Xen_SIZE(args) == 1) {
-    Xen_Instance *inst =
-        Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+    Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
+        args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
     if (!Xen_TYPE(inst)->__string) {
       Xen_DEL_REF(inst);
-      return 0;
+      return nil;
     }
-    if (!vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil)) {
-      Xen_DEL_REF(inst);
-      return 0;
+    Xen_Instance* string =
+        vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
+    if (!string || Xen_Nil_Eval(string)) {
+      return nil;
     }
     Xen_DEL_REF(inst);
-    Xen_Instance *string = xen_register_prop_get("__expose_string", id);
-    if_nil_eval(string) { return 0; }
     if (Xen_TYPE(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
-      return 0;
+      return nil;
     }
     fputs(Xen_String_As_CString(string), stdout);
     Xen_DEL_REF(string);
-    return 1;
+    return nil;
   }
-  Xen_Instance *out_reg = xen_register_prop_get("__out", id);
+  Xen_Instance* out_reg = xen_register_prop_get("__out", id);
   if (!Xen_TYPE(out_reg)->__string) {
     Xen_DEL_REF(out_reg);
-    return 0;
+    return nil;
   }
-  if (!vm_call_native_function(Xen_TYPE(out_reg)->__string, out_reg, nil)) {
-    Xen_DEL_REF(out_reg);
-    return 0;
+  Xen_Instance* string =
+      vm_call_native_function(Xen_TYPE(out_reg)->__string, out_reg, nil);
+  if (!string || Xen_Nil_Eval(string)) {
+    return nil;
   }
   Xen_DEL_REF(out_reg);
-  Xen_Instance *string = xen_register_prop_get("__expose_string", id);
-  if_nil_eval(string) { return 0; }
   if (Xen_TYPE(string) != &Xen_String_Implement) {
     Xen_DEL_REF(string);
-    return 0;
+    return nil;
   }
   fputs(Xen_String_As_CString(string), stdout);
   Xen_DEL_REF(string);
   fputs(Xen_String_As_CString(out_reg), stdout);
-  return 1;
+  return nil;
 }
 
 static Xen_Module_Command_Table core_commands = {

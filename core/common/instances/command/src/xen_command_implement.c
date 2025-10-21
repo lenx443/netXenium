@@ -1,55 +1,61 @@
+#include "xen_command_implement.h"
 #include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_command_implement.h"
+#include "xen_boolean.h"
 #include "xen_command_instance.h"
 #include "xen_nil.h"
-#include "xen_register.h"
 #include "xen_string.h"
 
-static int command_alloc(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static Xen_Instance* command_alloc(ctx_id_t id, struct __Instance* self,
+                                   Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   inst->cmd_callable = NULL;
   inst->self = nil;
   inst->closure = nil;
-  return 1;
+  return Xen_True;
 }
 
-static int command_destroy(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static Xen_Instance* command_destroy(ctx_id_t id, struct __Instance* self,
+                                     Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
-  if (inst->cmd_callable) callable_free(inst->cmd_callable);
+  if (inst->cmd_callable)
+    callable_free(inst->cmd_callable);
   if_nil_neval(inst->self) Xen_DEL_REF(inst->self);
   if_nil_neval(inst->closure) Xen_DEL_REF(inst->closure);
-  return 1;
+  return nil;
 }
 
-static int command_callable(ctx_id_t id, struct __Instance *self, Xen_Instance *args) {
+static Xen_Instance* command_callable(ctx_id_t id, struct __Instance* self,
+                                      Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Command_ptr inst = (Xen_Command_ptr)self;
   if (inst->cmd_callable) {
     if_nil_neval(inst->self) Xen_ADD_REF(inst->self);
-    if (!vm_run_callable(inst->cmd_callable, inst->closure, inst->self, args)) {
-      return 0;
+    Xen_Instance* ret =
+        vm_run_callable(inst->cmd_callable, inst->closure, inst->self, args);
+    if (!ret) {
+      return nil;
     }
     if_nil_neval(inst->self) Xen_DEL_REF(inst->self);
+    return ret;
   }
-  return 1;
+  return nil;
 }
-static int command_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+
+static Xen_Instance* command_string(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  Xen_Instance *string = Xen_String_From_CString("<Command>");
-  if (!string) { return 0; }
-  if (!xen_register_prop_set("__expose_string", string, id)) {
-    Xen_DEL_REF(string);
-    return 0;
+  Xen_Instance* string = Xen_String_From_CString("<Command>");
+  if (!string) {
+    return nil;
   }
-  Xen_DEL_REF(string);
-  return 1;
+  return string;
 }
 
 struct __Implement Xen_Command_Implement = {

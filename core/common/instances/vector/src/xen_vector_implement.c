@@ -7,56 +7,58 @@
 #include "instance.h"
 #include "operators.h"
 #include "run_ctx.h"
+#include "xen_boolean.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
-#include "xen_register.h"
 #include "xen_string.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
-static int vector_alloc(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
+                                  Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Vector *vector = (Xen_Vector *)self;
+  Xen_Vector* vector = (Xen_Vector*)self;
   vector->values = NULL;
   vector->capacity = 0;
-  return 1;
+  return Xen_True;
 }
 
-static int vector_destroy(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Vector *vector = (Xen_Vector *)self;
+  Xen_Vector* vector = (Xen_Vector*)self;
   for (size_t i = 0; i < vector->__size; i++) {
     Xen_DEL_REF(vector->values[i]);
   }
   free(vector->values);
-  return 1;
+  return nil;
 }
 
-static int vector_string(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance *string = Xen_String_From_CString("<Vector>");
-  if (!string) { return 0; }
-  if (!xen_register_prop_set("__expose_string", string, id)) {
-    Xen_DEL_REF(string);
-    return 0;
+  Xen_Instance* string = Xen_String_From_CString("<Vector>");
+  if (!string) {
+    return nil;
   }
-  Xen_DEL_REF(string);
-  return 1;
+  return string;
 }
 
-static int vector_opr_get_index(ctx_id_t id, Xen_Instance *self, Xen_Instance *args) {
+static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
+                                          Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (Xen_SIZE(args) != 1) return 0;
-  Xen_Instance *index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(index_inst) != &Xen_Number_Implement) return 0;
+  if (Xen_SIZE(args) != 1)
+    return nil;
+  Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
+  if (Xen_TYPE(index_inst) != &Xen_Number_Implement)
+    return nil;
   size_t index = Xen_Number_As(size_t, index_inst);
-  if (index >= self->__size) { return 0; }
-  if (!xen_register_prop_set("__expose_opr", ((Xen_Vector *)self)->values[index], id)) {
-    return 0;
+  if (index >= self->__size) {
+    return nil;
   }
-  return 1;
+  return Xen_ADD_REF(((Xen_Vector*)self)->values[index]);
 }
 
 struct __Implement Xen_Vector_Implement = {
@@ -82,4 +84,6 @@ int Xen_Vector_Init() {
   return 1;
 }
 
-void Xen_Vector_Finish() { callable_free(Xen_Vector_Implement.__opr[Xen_OPR_GET_INDEX]); }
+void Xen_Vector_Finish() {
+  callable_free(Xen_Vector_Implement.__opr[Xen_OPR_GET_INDEX]);
+}

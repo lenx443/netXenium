@@ -11,48 +11,47 @@
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
-#include "xen_register.h"
 #include "xen_string.h"
 #include "xen_vector.h"
 
-static int number_alloc(ctx_id_t id, Xen_INSTANCE* self, Xen_Instance* args) {
-  NATIVE_CLEAR_ARG_NEVER_USE;
+static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
+                                  Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   num->digits = NULL;
   num->size = 0;
   num->sign = 0;
-  return 1;
+  return Xen_True;
 }
 
-static int number_destroy(ctx_id_t id, Xen_INSTANCE* self, Xen_Instance* args) {
-  NATIVE_CLEAR_ARG_NEVER_USE;
+static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   if (num->digits)
     free(num->digits);
-  return 1;
+  return nil;
 }
 
-static int number_string(ctx_id_t id, Xen_Instance* self, Xen_Instance* args) {
-  NATIVE_CLEAR_ARG_NEVER_USE;
+static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   const char* cstring = Xen_Number_As_CString(self);
   if (!cstring) {
-    return 0;
+    return nil;
   }
   Xen_Instance* string = Xen_String_From_CString(cstring);
   if (!string) {
     free((void*)cstring);
-    return 0;
+    return nil;
   }
   free((void*)cstring);
-  if (!xen_register_prop_set("__expose_string", string, id)) {
-    Xen_DEL_REF(string);
-    return 0;
-  }
-  Xen_DEL_REF(string);
-  return 1;
+  return string;
 }
 
-static int number_opr_eq(ctx_id_t id, Xen_Instance* self, Xen_Instance* args) {
+static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return 0;
@@ -73,43 +72,28 @@ static int number_opr_eq(ctx_id_t id, Xen_Instance* self, Xen_Instance* args) {
 
   if (size_a == 0 && size_b == 0) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_True, id)) {
-      return 0;
-    }
-    return 1;
+    return Xen_True;
   }
 
   if (a->sign != b->sign) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
-      return 0;
-    }
-    return 1;
+    return Xen_False;
   }
 
   if (size_a != size_b) {
     Xen_DEL_REF(b);
-    if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
-      return 0;
-    }
-    return 1;
+    return Xen_False;
   }
 
   for (size_t i = 0; i < size_a; i++) {
     if (a->digits[i] != b->digits[i]) {
       Xen_DEL_REF(b);
-      if (!xen_register_prop_set("__expose_opr", Xen_False, id)) {
-        return 0;
-      }
-      return 1;
+      return Xen_False;
     }
   }
 
   Xen_DEL_REF(b);
-  if (!xen_register_prop_set("__expose_opr", Xen_True, id)) {
-    return 0;
-  }
-  return 1;
+  return Xen_True;
 }
 
 struct __Implement Xen_Number_Implement = {
