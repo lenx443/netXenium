@@ -1,14 +1,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
-#include "run_frame.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_register.h"

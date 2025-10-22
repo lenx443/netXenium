@@ -5,8 +5,10 @@
 #include "instance.h"
 #include "program_code.h"
 
-Xen_INSTANCE *Xen_Command_From_Native(Xen_Native_Func, Xen_INSTANCE *, Xen_Instance *);
-Xen_INSTANCE *Xen_Command_From_Program(ProgramCode_t, Xen_INSTANCE *, Xen_Instance *);
-int Xen_Command_Call(Xen_Instance *, Xen_Instance *);
+Xen_INSTANCE* Xen_Command_From_Native(Xen_Native_Func, Xen_INSTANCE*,
+                                      Xen_Instance*);
+Xen_INSTANCE* Xen_Command_From_Program(ProgramCode_t, Xen_INSTANCE*,
+                                       Xen_Instance*);
+Xen_Instance* Xen_Command_Call(Xen_Instance*, Xen_Instance*);
 
 #endif

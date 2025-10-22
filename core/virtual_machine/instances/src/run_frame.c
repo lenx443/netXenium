@@ -3,6 +3,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "run_ctx_instance.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"

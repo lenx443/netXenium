@@ -1,7 +1,7 @@
 #ifndef __VM_RUN_H__
 #define __VM_RUN_H__
 
-#include "run_ctx.h"
+#include "run_ctx_instance.h"
 
 void vm_run_ctx(RunContext_ptr);
 

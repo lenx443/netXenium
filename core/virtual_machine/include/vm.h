@@ -6,6 +6,7 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "run_ctx_instance.h"
 
 #define VM_CHECK_ID(id) ((run_ctx_id(vm_current_ctx())) == (id))
 

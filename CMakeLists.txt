@@ -45,6 +45,8 @@ include_directories(
   core/interpreter/compiler/dynamic/vectors/include/
   core/virtual_machine/include/
   core/virtual_machine/types/include/
+  core/virtual_machine/instances/include/
+  core/virtual_machine/instances/types/header/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
@@ -145,8 +147,10 @@ set(SOURCES
   # Tipos definidos en la maquina virtual
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_register.c
-  core/virtual_machine/types/src/run_ctx.c
-  core/virtual_machine/types/src/run_frame.c
+
+  # Instancias de la maquina virtual
+  core/virtual_machine/instances/src/run_ctx.c
+  core/virtual_machine/instances/src/run_frame.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de la
