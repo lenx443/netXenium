@@ -147,6 +147,7 @@ set(SOURCES
   # Tipos definidos en la maquina virtual
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_register.c
+  core/virtual_machine/types/src/vm_instructs.c
 
   # Instancias de la maquina virtual
   core/virtual_machine/instances/src/run_ctx.c
