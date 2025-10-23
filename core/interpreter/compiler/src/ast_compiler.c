@@ -9,7 +9,8 @@
 
 int ast_compile(block_list_ptr block_result, block_node_ptr* block,
                 Xen_Instance* ast) {
-  if (!ast)
-    return 0;
+  (void)block_result;
+  (void)block;
+  (void)ast;
   return 0;
 }

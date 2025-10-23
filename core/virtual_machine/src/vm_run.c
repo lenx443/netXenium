@@ -1,12 +1,32 @@
 #include "vm_run.h"
 #include "bytecode.h"
 #include "instance.h"
-#include "logs.h"
+#include "operators.h"
 #include "program.h"
+#include "run_ctx_instance.h"
 #include "vm_instructs.h"
+#include "vm_stack.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 
-#define error(msg, ...) log_add(NULL, ERROR, "VM RUN", msg, ##__VA_ARGS__)
+static void op_push(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
+      ctx->ctx_code->code.consts->c_instances, Xen_Number_From_UInt(oparg),
+      Xen_OPR_GET_INDEX);
+  if_nil_eval(c_inst) {
+    ctx->ctx_running = 0;
+    return;
+  }
+  vm_stack_push(ctx->ctx_stack, c_inst);
+  Xen_DEL_REF(c_inst);
+}
+
+static void op_pop(RunContext_ptr ctx, uint8_t _) {
+  Xen_DEL_REF(vm_stack_pop(ctx->ctx_stack));
+}
+
+static void (*Dispatcher[HALT])(RunContext_ptr,
+                                uint8_t) = {[PUSH] = op_push, [POP] = op_pop};
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   if (!ctx || !ctx->ctx_code)
@@ -18,15 +38,19 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
+    if (!vm_stack_init(&ctx->ctx_stack, pc.stack_depth + 1)) {
+      return NULL;
+    }
     while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size &&
            !program.closed) {
       bc_Instruct_t instr = pc.code->bc_array[ctx->ctx_ip++];
-      if (instr.bci_opcode > HALT) {
+      if (instr.bci_opcode >= HALT) {
         ctx->ctx_running = 0;
         break;
       }
+      Dispatcher[instr.bci_opcode](ctx, instr.bci_oparg);
     }
-    log_show_and_clear(NULL);
+    vm_stack_free(ctx->ctx_stack);
     return nil;
   }
   return NULL;

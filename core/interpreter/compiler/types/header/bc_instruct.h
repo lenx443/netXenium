@@ -7,9 +7,7 @@
 union bc_Instruct {
   struct {
     uint8_t bci_opcode;
-    uint8_t bci_dst;
-    uint8_t bci_src1;
-    uint8_t bci_src2;
+    uint8_t bci_oparg;
   };
   uint32_t bci_word;
 };

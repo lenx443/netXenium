@@ -125,9 +125,8 @@ set(SOURCES
   # [IR bytecode]
   #    |
   # [bytecode]
+  core/interpreter/compiler/src/compiler.c
   core/interpreter/compiler/src/ast_compiler.c
-  core/interpreter/compiler/src/blocks_linealizer.c
-  core/interpreter/compiler/src/blocks_compiler.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
@@ -146,7 +145,6 @@ set(SOURCES
 
   # Tipos definidos en la maquina virtual
   core/virtual_machine/types/src/vm_def.c
-  core/virtual_machine/types/src/vm_register.c
   core/virtual_machine/types/src/vm_instructs.c
   core/virtual_machine/types/src/vm_stack.c
 

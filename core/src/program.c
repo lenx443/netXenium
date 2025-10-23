@@ -177,11 +177,15 @@ void shell_loop() {
 
   while (1) {
     LIST_ptr cmd = read_string_utf8();
+    if (program.closed)
+      break;
     char* cmd_str = string_utf8_get(cmd);
     list_free(cmd);
     if (!interpreter(cmd_str)) {
       log_show_and_clear(NULL);
       free(cmd_str);
+      if (program.closed)
+        break;
       continue;
     }
     free(cmd_str);

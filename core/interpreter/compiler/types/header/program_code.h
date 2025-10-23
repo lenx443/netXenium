@@ -7,6 +7,7 @@
 struct ProgramCode {
   vm_Consts_ptr consts;
   Bytecode_Array_ptr code;
+  size_t stack_depth;
 };
 
 typedef struct ProgramCode ProgramCode_t;
