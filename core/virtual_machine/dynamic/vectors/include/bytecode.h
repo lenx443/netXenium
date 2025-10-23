@@ -7,17 +7,13 @@
 #include "bc_instruct.h"
 
 struct Bytecode_Array {
-  union bc_Instruct *bc_array;
+  union bc_Instruct* bc_array;
   size_t bc_size;
   size_t bc_capacity;
 };
 
-#define BC_REG_PACK(reg, flag) ((flag ? 0x80 : 0) | (reg & 0x7f))
-#define BC_REG_GET_FLAG_BIT(reg) (reg & 0x80) >> 7
-#define BC_REG_GET_VALUE(reg) (reg & 0x7f)
-
 typedef struct Bytecode_Array Bytecode_Array_t;
-typedef Bytecode_Array_t *Bytecode_Array_ptr;
+typedef Bytecode_Array_t* Bytecode_Array_ptr;
 
 Bytecode_Array_ptr bc_new();
 void bc_clear(Bytecode_Array_ptr);

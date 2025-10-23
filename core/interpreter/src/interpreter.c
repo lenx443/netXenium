@@ -12,7 +12,6 @@
 #include "parser.h"
 #include "program.h"
 #include "program_code.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "vm_consts.h"
 #include "vm_def.h"
@@ -53,7 +52,6 @@ int interpreter(const char* text_code) {
     return 0;
   }
   Xen_DEL_REF(ast_program);
-  ir_add_halt(main_block->instr_array);
   blocks_linealizer(blocks);
   ProgramCode_t pc;
   if (!blocks_compiler(&pc, blocks)) {
@@ -69,7 +67,10 @@ int interpreter(const char* text_code) {
     return 0;
   }
   vm->root_context->ctx_code = code;
-  vm_run_ctx(vm->root_context);
+  if (vm_run_ctx(vm->root_context) == NULL) {
+    callable_free(code);
+    return 0;
+  }
   callable_free(code);
   log_show_and_clear(NULL);
   return 1;

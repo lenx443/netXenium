@@ -2,4 +2,10 @@
 
 #include "vm_instructs.h"
 
-size_t Instruct_Stack_Effect_Table[HALT] = {[PUSH] = 1, [POP] = -1};
+static STACK_EFFECT(push_stack_effect, 1);
+static STACK_EFFECT(pop_stack_effect, -1);
+
+size_t (*Instruct_Stack_Effect_Table[HALT])(size_t) = {
+    [PUSH] = push_stack_effect,
+    [POP] = pop_stack_effect,
+};

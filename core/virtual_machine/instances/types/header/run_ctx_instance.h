@@ -8,7 +8,7 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
-#include "vm_register.h"
+#include "vm_stack.h"
 
 struct RunContext {
   Xen_INSTANCE_HEAD;
@@ -18,7 +18,7 @@ struct RunContext {
   Xen_Instance* ctx_caller;
   Xen_Instance* ctx_self;
   CALLABLE_ptr ctx_code;
-  VM_Register ctx_reg;
+  struct vm_Stack ctx_stack;
   Xen_Instance* ctx_args;
   struct __Instance* ctx_instances;
   uint32_t ctx_ip;

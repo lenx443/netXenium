@@ -3,12 +3,18 @@
 
 #include <stddef.h>
 
+#define STACK_EFFECT(fname, ret)                                               \
+  size_t fname(size_t oparg) {                                                 \
+    (void)oparg;                                                               \
+    return ret;                                                                \
+  }
+
 enum vm_Instruct {
   PUSH = 0,
   POP,
   HALT,
 };
 
-extern size_t Instruct_Stack_Effect_Table[HALT];
+extern size_t (*Instruct_Stack_Effect_Table[HALT])(size_t);
 
 #endif

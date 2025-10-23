@@ -4,6 +4,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
+#include "vm_stack.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -29,13 +30,7 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
   else ctx_new->ctx_caller = Xen_Vector_Get_Index(args, 1);
   ctx_new->ctx_self = Xen_Vector_Get_Index(args, 2);
   ctx_new->ctx_code = NULL;
-  if (!vm_register_new(&ctx_new->ctx_reg)) {
-    Xen_DEL_REF(ctx_new->ctx_closure);
-    if (ctx_new->ctx_caller)
-      Xen_DEL_REF(ctx_new->ctx_caller);
-    Xen_DEL_REF(ctx_new->ctx_self);
-    return nil;
-  }
+  vm_stack_start(&ctx_new->ctx_stack);
   if_nil_neval(Xen_Vector_Peek_Index(args, 3)) {
     ctx_new->ctx_args = Xen_Vector_Get_Index(args, 3);
   }
@@ -48,7 +43,6 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
     Xen_DEL_REF(ctx_new->ctx_self);
     if (ctx_new->ctx_args)
       Xen_DEL_REF(ctx_new->ctx_args);
-    vm_register_free(ctx_new->ctx_reg);
     return nil;
   }
   ctx_new->ctx_ip = 0;
@@ -67,7 +61,7 @@ static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
   Xen_DEL_REF(ctx->ctx_self);
   if (ctx->ctx_args)
     Xen_DEL_REF(ctx->ctx_args);
-  vm_register_free(ctx->ctx_reg);
+  vm_stack_free(ctx->ctx_stack);
   return nil;
 }
 

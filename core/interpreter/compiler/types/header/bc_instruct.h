@@ -3,20 +3,6 @@
 
 #include <stdint.h>
 
-typedef enum {
-  OP_NOP = 0,
-  OP_FUN_CALL,
-  OP_JUMP,
-  OP_LOAD_IMM,
-  OP_LOAD_INSTANCE,
-  OP_LOAD_NAME,
-  OP_LOAD_CONST,
-  OP_LOAD_PROP,
-
-  OP_MAKE_INSTANCE,
-  OP_HALT,
-} bc_opcode;
-
 #pragma pack(push, 1)
 union bc_Instruct {
   struct {
@@ -30,6 +16,6 @@ union bc_Instruct {
 #pragma pack(pop)
 
 typedef union bc_Instruct bc_Instruct_t;
-typedef bc_Instruct_t *bc_Instruct_ptr;
+typedef bc_Instruct_t* bc_Instruct_ptr;
 
 #endif

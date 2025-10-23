@@ -3,6 +3,6 @@
 
 #include "run_ctx_instance.h"
 
-void vm_run_ctx(RunContext_ptr);
+Xen_Instance* vm_run_ctx(RunContext_ptr);
 
 #endif

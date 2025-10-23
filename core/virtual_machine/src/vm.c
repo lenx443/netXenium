@@ -10,7 +10,6 @@
 #include "run_ctx_stack.h"
 #include "vm.h"
 #include "vm_def.h"
-#include "vm_register.h"
 #include "vm_run.h"
 #include "xen_command_implement.h"
 #include "xen_command_instance.h"
@@ -79,7 +78,6 @@ Xen_INSTANCE* vm_get_instance(const char* name, ctx_id_t id) {
 
 void vm_ctx_clear(RunContext_ptr ctx) {
   ctx->ctx_code = NULL;
-  vm_register_clear(&ctx->ctx_reg);
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
 }
@@ -108,11 +106,8 @@ Xen_Instance* vm_run_callable(CALLABLE_ptr callable, Xen_Instance* closure,
   if (!vm_new_ctx_callable(callable, closure, self, args)) {
     return NULL;
   }
-  vm_run_ctx((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack));
   Xen_Instance* ret =
-      Xen_ADD_REF((Xen_Instance*)((RunContext_ptr)run_context_stack_peek_top(
-                                      &vm->vm_ctx_stack))
-                      ->ctx_reg.reg[1]);
+      vm_run_ctx((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack));
   if (!ret) {
     run_context_stack_pop_top(&vm->vm_ctx_stack);
     return NULL;
