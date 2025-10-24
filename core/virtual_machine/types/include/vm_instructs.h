@@ -12,6 +12,7 @@
 enum vm_Instruct {
   PUSH = 0,
   POP,
+  LOAD,
   HALT,
 };
 

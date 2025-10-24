@@ -12,7 +12,7 @@ struct vm_Stack {
 };
 
 int vm_stack_init(struct vm_Stack*, size_t);
-void vm_stack_free(struct vm_Stack);
+void vm_stack_free(struct vm_Stack*);
 
 static inline void vm_stack_start(struct vm_Stack* stack) {
   stack->stack_head = NULL;
@@ -20,11 +20,11 @@ static inline void vm_stack_start(struct vm_Stack* stack) {
   stack->stack_capacity = 0;
 }
 
-static inline void vm_stack_push(struct vm_Stack stack, Xen_Instance* val) {
-  *stack.stack_top++ = Xen_ADD_REF(val);
+static inline void vm_stack_push(struct vm_Stack* stack, Xen_Instance* val) {
+  *stack->stack_top++ = Xen_ADD_REF(val);
 }
-static inline Xen_Instance* vm_stack_pop(struct vm_Stack stack) {
-  Xen_Instance* val = *--stack.stack_top;
+static inline Xen_Instance* vm_stack_pop(struct vm_Stack* stack) {
+  Xen_Instance* val = *--stack->stack_top;
   return val;
 }
 

@@ -17,6 +17,7 @@ endif()
 
 include_directories(
   core/include/
+  core/common/header/
   core/common/include/
   core/common/instances/basic/include/
   core/common/instances/command/include/

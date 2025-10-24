@@ -61,7 +61,7 @@ static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
   Xen_DEL_REF(ctx->ctx_self);
   if (ctx->ctx_args)
     Xen_DEL_REF(ctx->ctx_args);
-  vm_stack_free(ctx->ctx_stack);
+  vm_stack_free(&ctx->ctx_stack);
   return nil;
 }
 

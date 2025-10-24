@@ -1,14 +1,21 @@
-#include "compiler.h"
+#include <stdint.h>
+
 #include "bc_instruct.h"
 #include "block_list.h"
+#include "compiler.h"
 #include "instance.h"
+#include "ir_bytecode.h"
 #include "lexer.h"
 #include "parser.h"
 #include "vm.h"
+#include "vm_consts.h"
 #include "vm_def.h"
 #include "vm_instructs.h"
 #include "xen_ast.h"
 #include "xen_nil.h"
+#include "xen_number.h"
+#include "xen_string.h"
+#include "xen_typedefs.h"
 
 CALLABLE_ptr compiler(const char* text_code) {
   if (!text_code) {
@@ -19,6 +26,7 @@ CALLABLE_ptr compiler(const char* text_code) {
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
   if_nil_eval(ast_program) return 0;
+  Xen_AST_Node_Print(ast_program);
   block_list_ptr blocks = block_list_new();
   if (!blocks) {
     Xen_DEL_REF(ast_program);
@@ -59,10 +67,14 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
                 Xen_Instance* ast) {
   (void)block_result;
   (void)block;
+  struct Emit_Value {
+    uint8_t opcode, oparg;
+  } emit_value = {0, 0};
   struct Frame {
     Xen_Instance* node;
     size_t passes;
   } stack[1024];
+  typedef struct Emit_Value Emit_Value;
   typedef struct Frame Frame;
   size_t sp = 0;
   stack[sp++] = (Frame){ast, 0};
@@ -70,15 +82,31 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   if_nil_eval(Error.node) {
     return 0;
   }
+  Frame Emit = (Frame){Xen_AST_Node_New("CompilerEmit", NULL), 0};
+  if_nil_eval(Emit.node) {
+    Xen_DEL_REF(Error.node);
+    return 0;
+  }
   while (sp > 0) {
-    Frame frame = stack[--sp];
-    Xen_Instance* node = frame.node;
+    Frame* frame = &stack[sp - 1];
+    Xen_Instance* node = frame->node;
     if (Xen_AST_Node_Name_Cmp(node, "CompilerError") == 0) {
       Xen_DEL_REF(Error.node);
       return 0;
-    } else if (Xen_AST_Node_Name_Cmp(node, "Program") == 0) {
-      if (frame.passes > 0)
+    } else if (Xen_AST_Node_Name_Cmp(node, "CompilerEmit") == 0) {
+      if (frame->passes > 0) {
         --sp;
+        continue;
+      }
+      ir_add_instr(
+          (*block)->instr_array,
+          (IR_Instruct_t){emit_value.opcode, emit_value.oparg, NULL, 0});
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Program") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
       Xen_Instance* stmts = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(stmts) {
         stack[sp++] = Error;
@@ -92,10 +120,10 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       stack[sp++] = (Frame){stmts, 0};
       Xen_DEL_REF(stmts);
-      frame.passes++;
+      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
-      if (frame.passes < Xen_AST_Node_Children_Size(node)) {
-        Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, frame.passes++);
+      if (frame->passes < Xen_AST_Node_Children_Size(node)) {
+        Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, frame->passes++);
         if (Xen_AST_Node_Name_Cmp(stmt, "Statement") != 0) {
           Xen_DEL_REF(stmt);
           stack[sp++] = Error;
@@ -106,8 +134,10 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       --sp;
     } else if (Xen_AST_Node_Name_Cmp(node, "Statement") == 0) {
-      if (frame.passes > 0)
+      if (frame->passes > 0) {
         --sp;
+        continue;
+      }
       Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(stmt) {
         stack[sp++] = Error;
@@ -124,10 +154,12 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       stack[sp++] = (Frame){stmt, 0};
       Xen_DEL_REF(stmt);
-      frame.passes++;
+      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Expr") == 0) {
-      if (frame.passes > 0)
+      if (frame->passes > 0) {
         --sp;
+        continue;
+      }
       Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(value) {
         stack[sp++] = Error;
@@ -143,10 +175,12 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       stack[sp++] = (Frame){value, 0};
       Xen_DEL_REF(value);
-      frame.passes++;
+      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
-      if (frame.passes > 0)
+      if (frame->passes > 0) {
         --sp;
+        continue;
+      }
       Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(value) {
         stack[sp++] = Error;
@@ -163,7 +197,62 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       stack[sp++] = (Frame){value, 0};
       Xen_DEL_REF(value);
-      frame.passes++;
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "String") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      Xen_Instance* value = Xen_String_From_CString(Xen_AST_Node_Value(node));
+      if_nil_eval(value) {
+        stack[sp++] = Error;
+        continue;
+      }
+      Xen_ssize_t co_idx = vm_consts_push_instance(block_result->consts, value);
+      if (co_idx < 0) {
+        Xen_DEL_REF(value);
+        stack[sp++] = Error;
+        continue;
+      }
+      Xen_DEL_REF(value);
+      emit_value = (Emit_Value){PUSH, (uint8_t)co_idx};
+      stack[sp++] = Emit;
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Number") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      Xen_Instance* value =
+          Xen_Number_From_CString(Xen_AST_Node_Value(node), 0);
+      if_nil_eval(value) {
+        stack[sp++] = Error;
+        continue;
+      }
+      int co_idx = vm_consts_push_instance(block_result->consts, value);
+      if (co_idx < 0) {
+        Xen_DEL_REF(value);
+        stack[sp++] = Error;
+        continue;
+      }
+      Xen_DEL_REF(value);
+      emit_value = (Emit_Value){PUSH, (uint8_t)co_idx};
+      stack[sp++] = Emit;
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Literal") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      int co_idx =
+          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+      if (co_idx < 0) {
+        stack[sp++] = Error;
+        continue;
+      }
+      emit_value = (Emit_Value){LOAD, (uint8_t)co_idx};
+      stack[sp++] = Emit;
+      frame->passes++;
     } else {
       stack[sp++] = Error;
     }
