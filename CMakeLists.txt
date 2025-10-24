@@ -126,7 +126,6 @@ set(SOURCES
   #    |
   # [bytecode]
   core/interpreter/compiler/src/compiler.c
-  core/interpreter/compiler/src/ast_compiler.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

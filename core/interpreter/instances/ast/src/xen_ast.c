@@ -48,6 +48,18 @@ const char* Xen_AST_Node_Value(Xen_Instance* ast) {
   return ((Xen_AST_Node*)ast)->value;
 }
 
+int Xen_AST_Node_Name_Cmp(Xen_Instance* ast, const char* name) {
+  return strcmp(((Xen_AST_Node*)ast)->name, name);
+}
+
+int Xen_AST_Node_Value_Cmp(Xen_Instance* ast, const char* value) {
+  return strcmp(((Xen_AST_Node*)ast)->value, value);
+}
+
+size_t Xen_AST_Node_Children_Size(Xen_Instance* ast) {
+  return Xen_SIZE(((Xen_AST_Node*)ast)->children);
+}
+
 Xen_Instance* Xen_AST_Node_Children(Xen_Instance* ast) {
   return Xen_ADD_REF(((Xen_AST_Node*)ast)->children);
 }
