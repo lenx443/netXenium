@@ -61,7 +61,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   (void)block;
   struct Frame {
     Xen_Instance* node;
-    size_t idx;
+    size_t passes;
   } stack[1024];
   typedef struct Frame Frame;
   size_t sp = 0;
@@ -77,6 +77,8 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       Xen_DEL_REF(Error.node);
       return 0;
     } else if (Xen_AST_Node_Name_Cmp(node, "Program") == 0) {
+      if (frame.passes > 0)
+        --sp;
       Xen_Instance* stmts = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(stmts) {
         stack[sp++] = Error;
@@ -90,9 +92,10 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       stack[sp++] = (Frame){stmts, 0};
       Xen_DEL_REF(stmts);
+      frame.passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
-      if (frame.idx < Xen_AST_Node_Children_Size(node)) {
-        Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, frame.idx++);
+      if (frame.passes < Xen_AST_Node_Children_Size(node)) {
+        Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, frame.passes++);
         if (Xen_AST_Node_Name_Cmp(stmt, "Statement") != 0) {
           Xen_DEL_REF(stmt);
           stack[sp++] = Error;
@@ -101,22 +104,66 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         Xen_DEL_REF(stmt);
         continue;
       }
-      stack[sp++] = Error;
+      --sp;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Statement") == 0) {
+      if (frame.passes > 0)
+        --sp;
+      Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, 0);
+      if_nil_eval(stmt) {
+        stack[sp++] = Error;
+        continue;
+      }
+      if (Xen_AST_Node_Name_Cmp(stmt, "Expr") != 0 &&
+          Xen_AST_Node_Name_Cmp(stmt, "Assigment") != 0 &&
+          Xen_AST_Node_Name_Cmp(stmt, "IfStatement") != 0 &&
+          Xen_AST_Node_Name_Cmp(stmt, "WhileStatement") != 0 &&
+          Xen_AST_Node_Name_Cmp(stmt, "ForStatement") != 0) {
+        Xen_DEL_REF(stmt);
+        stack[sp++] = Error;
+        continue;
+      }
+      stack[sp++] = (Frame){stmt, 0};
+      Xen_DEL_REF(stmt);
+      frame.passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Expr") == 0) {
+      if (frame.passes > 0)
+        --sp;
       Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
       if_nil_eval(value) {
         stack[sp++] = Error;
         continue;
       }
-      if (Xen_AST_Node_Name_Cmp(value, "Primary") == 0 ||
-          Xen_AST_Node_Name_Cmp(value, "Unary") == 0 ||
-          Xen_AST_Node_Name_Cmp(value, "Binary") == 0 ||
-          Xen_AST_Node_Name_Cmp(value, "List") == 0) {
-        stack[sp++] = (Frame){value, 0};
+      if (Xen_AST_Node_Name_Cmp(value, "Primary") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Unary") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Binary") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "List") != 0) {
         Xen_DEL_REF(value);
+        stack[sp++] = Error;
         continue;
       }
-      stack[sp++] = Error;
+      stack[sp++] = (Frame){value, 0};
+      Xen_DEL_REF(value);
+      frame.passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
+      if (frame.passes > 0)
+        --sp;
+      Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+      if_nil_eval(value) {
+        stack[sp++] = Error;
+        continue;
+      }
+      if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
+          Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+        Xen_DEL_REF(value);
+        stack[sp++] = Error;
+        continue;
+      }
+      stack[sp++] = (Frame){value, 0};
+      Xen_DEL_REF(value);
+      frame.passes++;
     } else {
       stack[sp++] = Error;
     }
@@ -152,7 +199,7 @@ int blocks_compiler(ProgramCode_t* code, block_list_ptr blocks) {
               code->code,
               (bc_Instruct_t){{
                   current_block->instr_array->ir_array[instr_iterator].opcode,
-                  current_block->instr_array->ir_array[instr_iterator].opcode,
+                  current_block->instr_array->ir_array[instr_iterator].oparg,
               }})) {
         vm_consts_free(code->consts);
         bc_free(code->code);
