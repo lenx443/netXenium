@@ -7,7 +7,6 @@
 #include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_command.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -15,6 +14,7 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args) {
@@ -25,7 +25,7 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) == 1) {
     Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
         args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
-    if (!Xen_TYPE(inst)->__string) {
+    if (!inst || !Xen_TYPE(inst)->__string) {
       Xen_DEL_REF(inst);
       return nil;
     }
@@ -87,7 +87,10 @@ static Xen_Instance* fn_fun(ctx_id_t id, Xen_Instance* self,
     fputs(Xen_String_As_CString(string), stdout);
     Xen_DEL_REF(string);
   }
-  return nil;
+  return Xen_Vector_From_Array(
+      5, (Xen_Instance*[]){Xen_Number_From_Int(12), Xen_Number_From_Int(1),
+                           Xen_Number_From_Int(6), Xen_Number_From_Int(5),
+                           Xen_Number_From_Int(10)});
 }
 
 static Xen_Module_Command_Table core_commands = {

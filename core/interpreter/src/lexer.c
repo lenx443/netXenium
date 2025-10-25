@@ -440,30 +440,14 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token.tkn_text[1] = '\0';
   } else if (c == '+') {
     lexer->pos++;
-    if (lexer->src[lexer->pos] == '+') {
-      lexer->pos++;
-      token.tkn_type = TKN_INC;
-      token.tkn_text[0] = '+';
-      token.tkn_text[1] = '+';
-      token.tkn_text[2] = '\0';
-    } else {
-      token.tkn_type = TKN_ADD;
-      token.tkn_text[0] = '+';
-      token.tkn_text[1] = '\0';
-    }
+    token.tkn_type = TKN_ADD;
+    token.tkn_text[0] = '+';
+    token.tkn_text[1] = '\0';
   } else if (c == '-') {
     lexer->pos++;
-    if (lexer->src[lexer->pos] == '-') {
-      lexer->pos++;
-      token.tkn_type = TKN_DEC;
-      token.tkn_text[0] = '-';
-      token.tkn_text[1] = '-';
-      token.tkn_text[2] = '\0';
-    } else {
-      token.tkn_type = TKN_MINUS;
-      token.tkn_text[0] = '-';
-      token.tkn_text[1] = '\0';
-    }
+    token.tkn_type = TKN_MINUS;
+    token.tkn_text[0] = '-';
+    token.tkn_text[1] = '\0';
   } else if (c == '*') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '*') {

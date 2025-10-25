@@ -41,8 +41,6 @@ static Xen_Instance* parser_call(Parser*);
 static Xen_Instance* parser_arg_tail(Parser*);
 static Xen_Instance* parser_index(Parser*);
 static Xen_Instance* parser_attr(Parser*);
-static Xen_Instance* parser_inc(Parser*);
-static Xen_Instance* parser_dec(Parser*);
 static Xen_Instance* parser_keyword(Parser*);
 static Xen_Instance* parser_if_stmt(Parser*);
 static Xen_Instance* parser_while_stmt(Parser*);
@@ -99,8 +97,7 @@ bool is_primary(Parser* p) {
 
 bool is_unary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT ||
-      token == TKN_INC || token == TKN_DEC) {
+  if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT) {
     return true;
   }
   return false;
@@ -116,8 +113,7 @@ bool is_assigment(Parser* p) {
 
 bool is_suffix(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_LPARENT || token == TKN_LBRACKET || token == TKN_ATTR ||
-      token == TKN_INC || token == TKN_DEC)
+  if (token == TKN_LPARENT || token == TKN_LBRACKET || token == TKN_ATTR)
     return true;
   return false;
 }
@@ -743,30 +739,6 @@ Xen_Instance* parser_suffix(Parser* p) {
       return nil;
     }
     Xen_DEL_REF(attr);
-  } else if (p->token.tkn_type == TKN_INC) {
-    Xen_Instance* inc = parser_inc(p);
-    if_nil_eval(inc) {
-      Xen_DEL_REF(suffix);
-      return nil;
-    }
-    if (!Xen_AST_Node_Push_Child(suffix, inc)) {
-      Xen_DEL_REF(inc);
-      Xen_DEL_REF(suffix);
-      return nil;
-    }
-    Xen_DEL_REF(inc);
-  } else if (p->token.tkn_type == TKN_DEC) {
-    Xen_Instance* dec = parser_dec(p);
-    if_nil_eval(dec) {
-      Xen_DEL_REF(suffix);
-      return nil;
-    }
-    if (!Xen_AST_Node_Push_Child(suffix, dec)) {
-      Xen_DEL_REF(dec);
-      Xen_DEL_REF(suffix);
-      return nil;
-    }
-    Xen_DEL_REF(dec);
   } else {
     Xen_DEL_REF(suffix);
     return nil;
@@ -947,22 +919,6 @@ Xen_Instance* parser_attr(Parser* p) {
   }
   free((void*)ident);
   return attr;
-}
-
-Xen_Instance* parser_inc(Parser* p) {
-  if (p->token.tkn_type != TKN_INC) {
-    return nil;
-  }
-  parser_next(p);
-  return Xen_AST_Node_New("Inc", NULL);
-}
-
-Xen_Instance* parser_dec(Parser* p) {
-  if (p->token.tkn_type != TKN_DEC) {
-    return nil;
-  }
-  parser_next(p);
-  return Xen_AST_Node_New("Dec", NULL);
 }
 
 Xen_Instance* parser_keyword(Parser* p) {

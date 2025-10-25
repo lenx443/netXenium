@@ -101,8 +101,8 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* first = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* second = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* first = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
   if (!rsult) {
     Xen_DEL_REF(second);

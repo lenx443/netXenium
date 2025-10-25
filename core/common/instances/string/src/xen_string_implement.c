@@ -11,6 +11,7 @@
 #include "xen_boolean.h"
 #include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_number_implement.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
@@ -69,6 +70,26 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
   return Xen_False;
 }
 
+static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
+                                          Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 1)
+    return NULL;
+  Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
+  if (Xen_TYPE(index_inst) != &Xen_Number_Implement)
+    return NULL;
+  size_t index = Xen_Number_As(size_t, index_inst);
+  if (index >= self->__size) {
+    return NULL;
+  }
+  Xen_Instance* character =
+      Xen_String_From_Char(((Xen_String*)self)->characters[index]);
+  if_nil_eval(character) {
+    return NULL;
+  }
+  return character;
+}
+
 struct __Implement Xen_String_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
@@ -89,9 +110,15 @@ int Xen_String_Init() {
             callable_new_native(string_opr_eq))) {
     return 0;
   }
+  if (!(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX] =
+            callable_new_native(string_opr_get_index))) {
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
+    return 0;
+  }
   return 1;
 }
 
 void Xen_String_Finish() {
+  callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
   callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
 }

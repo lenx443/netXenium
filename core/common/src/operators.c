@@ -2,7 +2,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
-#include "xen_nil.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
@@ -19,7 +18,7 @@ Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
   }
   Xen_Instance* result =
       vm_run_callable(Xen_TYPE(first)->__opr[op], vm_root_ctx(), first, args);
-  if (!result || Xen_Nil_Eval(result)) {
+  if (!result) {
     Xen_DEL_REF(args);
     return NULL;
   }

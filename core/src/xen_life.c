@@ -9,9 +9,11 @@
 #include "xen_life.h"
 #include "xen_module_load.h"
 
-int Xen_Init(int argc, char **argv) {
+int Xen_Init(int argc, char** argv) {
   global_logs = list_new();
-  if (!global_logs) { return 0; }
+  if (!global_logs) {
+    return 0;
+  }
   if (!vm_create()) {
     log_free(NULL);
     return 0;
@@ -28,7 +30,7 @@ int Xen_Init(int argc, char **argv) {
   }
 
   if (!Xen_Module_Load_Startup()) {
-    Xen_Instanse_Finish();
+    Xen_Instance_Finish();
     vm_destroy();
     log_free(NULL);
     return 0;
@@ -38,7 +40,7 @@ int Xen_Init(int argc, char **argv) {
 }
 
 void Xen_Finish() {
-  Xen_Instanse_Finish();
+  Xen_Instance_Finish();
   free(program.name);
   vm_destroy();
   log_free(NULL);

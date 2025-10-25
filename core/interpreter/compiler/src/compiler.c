@@ -6,6 +6,7 @@
 #include "instance.h"
 #include "ir_bytecode.h"
 #include "lexer.h"
+#include "operators.h"
 #include "parser.h"
 #include "vm.h"
 #include "vm_consts.h"
@@ -322,9 +323,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         }
         if (Xen_AST_Node_Name_Cmp(value, "Call") != 0 &&
             Xen_AST_Node_Name_Cmp(value, "Index") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Attr") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Inc") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Dec") != 0) {
+            Xen_AST_Node_Name_Cmp(value, "Attr") != 0) {
           Xen_DEL_REF(value);
           stack[sp++] = Error;
           continue;
@@ -376,7 +375,34 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         frame->passes++;
         break;
       case 1:
-        emit_value = (Emit_Value){CALL, Xen_AST_Node_Children_Size(node)};
+        emit_value =
+            (Emit_Value){CALL, (uint8_t)Xen_AST_Node_Children_Size(node)};
+        stack[sp++] = Emit;
+        frame->passes++;
+        break;
+      default:
+        --sp;
+        break;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Index") == 0) {
+      switch (frame->passes) {
+      case 0:
+        if (Xen_AST_Node_Children_Size(node) != 1) {
+          stack[sp++] = Error;
+          break;
+        }
+        Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Name_Cmp(index, "Expr") != 0) {
+          Xen_DEL_REF(index);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = (Frame){index, 0};
+        Xen_DEL_REF(index);
+        frame->passes++;
+        break;
+      case 1:
+        emit_value = (Emit_Value){BINARYOP, (uint8_t)Xen_OPR_GET_INDEX};
         stack[sp++] = Emit;
         frame->passes++;
         break;

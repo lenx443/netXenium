@@ -26,8 +26,6 @@ typedef enum {
   TKN_LBRACKET,
   TKN_RBRACKET,
   TKN_ATTR,
-  TKN_INC,
-  TKN_DEC,
   TKN_COMMA,
   TKN_COLON,
   TKN_ADD,
@@ -50,11 +48,11 @@ typedef struct {
 } Lexer_Token;
 
 typedef struct {
-  const char *src;
+  const char* src;
   size_t pos;
 } Lexer;
 
-void skip_whitespace(Lexer *);
-Lexer_Token lexer_next_token(Lexer *);
+void skip_whitespace(Lexer*);
+Lexer_Token lexer_next_token(Lexer*);
 
 #endif

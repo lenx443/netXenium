@@ -5,7 +5,9 @@
 #include "xen_vector_implement.h"
 
 int Xen_Instance_Init() {
-  if (!Xen_Number_Init()) { return 0; }
+  if (!Xen_Number_Init()) {
+    return 0;
+  }
   if (!Xen_String_Init()) {
     Xen_Number_Finish();
     return 0;
@@ -23,7 +25,7 @@ int Xen_Instance_Init() {
   return 1;
 }
 
-void Xen_Instanse_Finish() {
+void Xen_Instance_Finish() {
   Xen_Tuple_Finish();
   Xen_Vector_Finish();
   Xen_String_Finish();

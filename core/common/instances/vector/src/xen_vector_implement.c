@@ -50,13 +50,13 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
                                           Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1)
-    return nil;
+    return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
   if (Xen_TYPE(index_inst) != &Xen_Number_Implement)
-    return nil;
+    return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
-    return nil;
+    return NULL;
   }
   return Xen_ADD_REF(((Xen_Vector*)self)->values[index]);
 }
