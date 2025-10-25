@@ -1,5 +1,6 @@
 #include "vm_run.h"
 #include "bytecode.h"
+#include "implement.h"
 #include "instance.h"
 #include "operators.h"
 #include "program.h"
@@ -9,7 +10,9 @@
 #include "vm_stack.h"
 #include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_register.h"
 #include "xen_string.h"
+#include "xen_vector.h"
 
 static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
@@ -47,8 +50,62 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
-    [PUSH] = op_push, [POP] = op_pop, [LOAD] = op_load};
+static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
+      ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
+      Xen_OPR_GET_INDEX);
+  if_nil_eval(c_name) {
+    ctx->ctx_running = 0;
+    return;
+  }
+  Xen_Instance* inst =
+      xen_register_prop_get(Xen_String_As_CString(c_name), ctx->ctx_id);
+  if_nil_eval(inst) {
+    Xen_DEL_REF(c_name);
+    ctx->ctx_running = 0;
+    return;
+  }
+  Xen_DEL_REF(c_name);
+  vm_stack_push(&ctx->ctx_stack, inst);
+  Xen_DEL_REF(inst);
+}
+
+static void op_call(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* args = Xen_Vector_New();
+  if_nil_eval(args) {
+    ctx->ctx_running = 0;
+    return;
+  }
+  for (uint8_t idx = 0; idx < oparg; idx++) {
+    Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
+    if (!Xen_Vector_Push(args, arg)) {
+      Xen_DEL_REF(args);
+      ctx->ctx_running = 0;
+      return;
+    }
+    Xen_DEL_REF(arg);
+  }
+  Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* ret =
+      vm_call_native_function(Xen_TYPE(callable)->__callable, callable, args);
+  if (!ret) {
+    Xen_DEL_REF(callable);
+    Xen_DEL_REF(args);
+    ctx->ctx_running = 0;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, ret);
+  Xen_DEL_REF(ret);
+  Xen_DEL_REF(callable);
+  Xen_DEL_REF(args);
+}
+
+static void (*Dispatcher[HALT])(RunContext_ptr,
+                                uint8_t) = {[PUSH] = op_push,
+                                            [POP] = op_pop,
+                                            [LOAD] = op_load,
+                                            [LOAD_PROP] = op_load_prop,
+                                            [CALL] = op_call};
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   if (!ctx || !ctx->ctx_code)

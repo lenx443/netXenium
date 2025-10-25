@@ -91,6 +91,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
     Frame* frame = &stack[sp - 1];
     Xen_Instance* node = frame->node;
     if (Xen_AST_Node_Name_Cmp(node, "CompilerError") == 0) {
+      Xen_DEL_REF(Emit.node);
       Xen_DEL_REF(Error.node);
       return 0;
     } else if (Xen_AST_Node_Name_Cmp(node, "CompilerEmit") == 0) {
@@ -127,6 +128,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         if (Xen_AST_Node_Name_Cmp(stmt, "Statement") != 0) {
           Xen_DEL_REF(stmt);
           stack[sp++] = Error;
+          continue;
         }
         stack[sp++] = (Frame){stmt, 0};
         Xen_DEL_REF(stmt);
@@ -177,27 +179,52 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       Xen_DEL_REF(value);
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
-      if (frame->passes > 0) {
-        --sp;
-        continue;
-      }
-      Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-      if_nil_eval(value) {
-        stack[sp++] = Error;
-        continue;
-      }
-      if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+      switch (frame->passes) {
+      case 0: {
+        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+        if_nil_eval(value) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+          Xen_DEL_REF(value);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = (Frame){value, 0};
         Xen_DEL_REF(value);
-        stack[sp++] = Error;
-        continue;
+        frame->passes++;
+        break;
       }
-      stack[sp++] = (Frame){value, 0};
-      Xen_DEL_REF(value);
-      frame->passes++;
+      case 1: {
+        if (Xen_AST_Node_Children_Size(node) == 2) {
+          Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
+          if_nil_eval(suffix) {
+            stack[sp++] = Error;
+            break;
+          }
+          if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
+            Xen_DEL_REF(suffix);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = (Frame){suffix, 0};
+          Xen_DEL_REF(suffix);
+          frame->passes++;
+          break;
+        } else if (Xen_AST_Node_Children_Size(node) > 2) {
+          stack[sp++] = Error;
+          break;
+        }
+      }
+      default:
+        --sp;
+        break;
+      }
     } else if (Xen_AST_Node_Name_Cmp(node, "String") == 0) {
       if (frame->passes > 0) {
         --sp;
@@ -253,10 +280,115 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       emit_value = (Emit_Value){LOAD, (uint8_t)co_idx};
       stack[sp++] = Emit;
       frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Property") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      int co_idx =
+          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+      if (co_idx < 0) {
+        stack[sp++] = Error;
+        continue;
+      }
+      emit_value = (Emit_Value){LOAD_PROP, (uint8_t)co_idx};
+      stack[sp++] = Emit;
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Parent") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+      if_nil_eval(expr) {
+        stack[sp++] = Error;
+        continue;
+      }
+      if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+        Xen_DEL_REF(expr);
+        stack[sp++] = Error;
+        continue;
+      }
+      stack[sp++] = (Frame){expr, 0};
+      Xen_DEL_REF(expr);
+      frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Suffix") == 0) {
+      switch (frame->passes) {
+      case 0: {
+        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+        if_nil_eval(value) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(value, "Call") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Index") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Attr") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Inc") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Dec") != 0) {
+          Xen_DEL_REF(value);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = (Frame){value, 0};
+        Xen_DEL_REF(value);
+        frame->passes++;
+        break;
+      }
+      case 1: {
+        if (Xen_AST_Node_Children_Size(node) == 2) {
+          Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
+          if_nil_eval(suffix) {
+            stack[sp++] = Error;
+            break;
+          }
+          if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
+            Xen_DEL_REF(suffix);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = (Frame){suffix, 0};
+          Xen_DEL_REF(suffix);
+          frame->passes++;
+          break;
+        } else if (Xen_AST_Node_Children_Size(node) > 2) {
+          stack[sp++] = Error;
+          break;
+        }
+      }
+      default:
+        --sp;
+        break;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Call") == 0) {
+      switch (frame->passes) {
+      case 0:
+        for (Xen_size_t idx = 0; idx < Xen_AST_Node_Children_Size(node);
+             idx++) {
+          Xen_Instance* arg = Xen_AST_Node_Get_Child(node, idx);
+          if (Xen_AST_Node_Name_Cmp(arg, "Expr") != 0) {
+            Xen_DEL_REF(arg);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = (Frame){arg, 0};
+          Xen_DEL_REF(arg);
+        }
+        frame->passes++;
+        break;
+      case 1:
+        emit_value = (Emit_Value){CALL, Xen_AST_Node_Children_Size(node)};
+        stack[sp++] = Emit;
+        frame->passes++;
+        break;
+      default:
+        --sp;
+        break;
+      }
     } else {
       stack[sp++] = Error;
     }
   }
+  Xen_DEL_REF(Emit.node);
   Xen_DEL_REF(Error.node);
   return 1;
 }

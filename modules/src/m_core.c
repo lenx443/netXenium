@@ -7,12 +7,14 @@
 #include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_command.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
+#include "xen_typedefs.h"
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args) {
@@ -62,8 +64,35 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
+static Xen_Instance* fn_fun(ctx_id_t id, Xen_Instance* self,
+                            Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
+    Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
+        args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
+    if (!Xen_TYPE(inst)->__string) {
+      Xen_DEL_REF(inst);
+      return nil;
+    }
+    Xen_Instance* string =
+        vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
+    if (!string || Xen_Nil_Eval(string)) {
+      return nil;
+    }
+    Xen_DEL_REF(inst);
+    if (Xen_TYPE(string) != &Xen_String_Implement) {
+      Xen_DEL_REF(string);
+      return nil;
+    }
+    fputs(Xen_String_As_CString(string), stdout);
+    Xen_DEL_REF(string);
+  }
+  return nil;
+}
+
 static Xen_Module_Command_Table core_commands = {
     {"echo", fn_echo},
+    {"fun", fn_fun},
     {NULL, NULL},
 };
 

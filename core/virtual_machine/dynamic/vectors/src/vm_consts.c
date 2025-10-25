@@ -58,7 +58,7 @@ Xen_ssize_t vm_consts_push_instance(vm_Consts_ptr consts,
   if (!consts || !c_instance) {
     return false;
   };
-  Xen_size_t index = Xen_SIZE(consts->c_names);
+  Xen_size_t index = Xen_SIZE(consts->c_instances);
   if (!Xen_Vector_Push(consts->c_instances, c_instance)) {
     return -1;
   }

@@ -10,6 +10,9 @@ Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
   if (op >= Xen_OPR_END) {
     return nil;
   }
+  if (Xen_TYPE(first)->__opr[op] == NULL) {
+    return nil;
+  }
   Xen_Instance* args = Xen_Vector_From_Array(1, &second);
   if (!args) {
     return nil;
