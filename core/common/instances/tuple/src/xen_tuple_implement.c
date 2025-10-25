@@ -58,7 +58,7 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
   if (index >= self->__size) {
     return nil;
   }
-  return ((Xen_Tuple*)self)->instances[index];
+  return Xen_ADD_REF(((Xen_Tuple*)self)->instances[index]);
 }
 
 Xen_Implement Xen_Tuple_Implement = {

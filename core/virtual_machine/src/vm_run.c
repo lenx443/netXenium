@@ -100,12 +100,25 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(args);
 }
 
-static void (*Dispatcher[HALT])(RunContext_ptr,
-                                uint8_t) = {[PUSH] = op_push,
-                                            [POP] = op_pop,
-                                            [LOAD] = op_load,
-                                            [LOAD_PROP] = op_load_prop,
-                                            [CALL] = op_call};
+static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* first = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* second = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
+  if (!rsult) {
+    Xen_DEL_REF(second);
+    Xen_DEL_REF(first);
+    ctx->ctx_running = 0;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, rsult);
+  Xen_DEL_REF(rsult);
+  Xen_DEL_REF(second);
+  Xen_DEL_REF(first);
+}
+
+static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
+    [PUSH] = op_push,           [POP] = op_pop,   [LOAD] = op_load,
+    [LOAD_PROP] = op_load_prop, [CALL] = op_call, [BINARYOP] = op_binaryop};
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   if (!ctx || !ctx->ctx_code)
