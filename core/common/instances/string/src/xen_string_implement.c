@@ -111,6 +111,26 @@ static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
   return result;
 }
 
+static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
+                                       Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  char* buffer = malloc(Xen_SIZE(self) + 1);
+  if (!buffer) {
+    return NULL;
+  }
+  for (Xen_size_t i = 0; i < Xen_SIZE(self); i++) {
+    buffer[i] = tolower(((Xen_String*)self)->characters[i]);
+  }
+  buffer[Xen_SIZE(self)] = '\0';
+  Xen_Instance* result = Xen_String_From_CString(buffer);
+  if_nil_eval(result) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
+  return result;
+}
+
 struct __Implement Xen_String_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
@@ -144,6 +164,12 @@ int Xen_String_Init() {
     return 0;
   }
   if (!vm_define_native_function(props, "upper", string_prop_upper, nil)) {
+    Xen_DEL_REF(Xen_String_Implement.__props);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);
     callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
     callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);

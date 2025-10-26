@@ -14,13 +14,14 @@
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_vector.h"
+#include <stdint.h>
 
 static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
       ctx->ctx_code->code.consts->c_instances, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
   if_nil_eval(c_inst) {
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   vm_stack_push(&ctx->ctx_stack, c_inst);
@@ -36,14 +37,14 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
       ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
   if_nil_eval(c_name) {
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   Xen_Instance* inst =
       vm_get_instance(Xen_String_As_CString(c_name), ctx->ctx_id);
-  if_nil_eval(inst) {
+  if (!inst) {
     Xen_DEL_REF(c_name);
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   Xen_DEL_REF(c_name);
@@ -56,14 +57,14 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
       ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
   if_nil_eval(c_name) {
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   Xen_Instance* inst =
       xen_register_prop_get(Xen_String_As_CString(c_name), ctx->ctx_id);
   if_nil_eval(inst) {
     Xen_DEL_REF(c_name);
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   Xen_DEL_REF(c_name);
@@ -74,14 +75,14 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* args = Xen_Vector_New();
   if_nil_eval(args) {
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   for (uint8_t idx = 0; idx < oparg; idx++) {
     Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
     if (!Xen_Vector_Push(args, arg)) {
       Xen_DEL_REF(args);
-      ctx->ctx_running = 0;
+      ctx->ctx_error = 1;
       return;
     }
     Xen_DEL_REF(arg);
@@ -92,7 +93,7 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   if (!ret) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   vm_stack_push(&ctx->ctx_stack, ret);
@@ -108,7 +109,7 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
   if (!rsult) {
     Xen_DEL_REF(second);
     Xen_DEL_REF(first);
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   vm_stack_push(&ctx->ctx_stack, rsult);
@@ -126,7 +127,7 @@ static void op_attr_get(RunContext_ptr ctx, uint8_t oparg) {
   if (!result) {
     Xen_DEL_REF(inst);
     Xen_DEL_REF(attr);
-    ctx->ctx_running = 0;
+    ctx->ctx_error = 1;
     return;
   }
   vm_stack_push(&ctx->ctx_stack, result);
@@ -153,15 +154,26 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
     if (!vm_stack_init(&ctx->ctx_stack, pc.stack_depth + 1)) {
       return NULL;
     }
-    while (ctx->ctx_running && ctx->ctx_ip < pc.code->bc_size &&
-           !program.closed) {
+    while (ctx->ctx_running && !ctx->ctx_error &&
+           ctx->ctx_ip < pc.code->bc_size && !program.closed) {
       bc_Instruct_t instr = pc.code->bc_array[ctx->ctx_ip++];
       if (instr.bci_opcode >= HALT) {
-        ctx->ctx_running = 0;
+        ctx->ctx_error = 1;
         break;
       }
       Dispatcher[instr.bci_opcode](ctx, instr.bci_oparg);
     }
+    if (ctx->ctx_error) {
+#ifndef NDEBUG
+      printf("VM Error\n");
+#endif
+      ctx->ctx_running = 0;
+      ctx->ctx_error = 0;
+      vm_stack_free(&ctx->ctx_stack);
+      return NULL;
+    }
+    ctx->ctx_running = 0;
+    ctx->ctx_error = 0;
     vm_stack_free(&ctx->ctx_stack);
     return nil;
   }

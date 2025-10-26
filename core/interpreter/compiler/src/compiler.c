@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "bc_instruct.h"
 #include "block_list.h"
@@ -26,8 +27,15 @@ CALLABLE_ptr compiler(const char* text_code) {
   Parser parser = {&lexer, {0, "\0"}};
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
-  if_nil_eval(ast_program) return 0;
+  if_nil_eval(ast_program) {
+#ifndef NDEBUG
+    printf("Parser Error\n");
+#endif
+    return 0;
+  }
+#ifndef NDEBUG
   Xen_AST_Node_Print(ast_program);
+#endif
   block_list_ptr blocks = block_list_new();
   if (!blocks) {
     Xen_DEL_REF(ast_program);
@@ -185,7 +193,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
         if_nil_eval(value) {
           stack[sp++] = Error;
-          continue;
+          break;
         }
         if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
             Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
@@ -194,7 +202,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
             Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
           Xen_DEL_REF(value);
           stack[sp++] = Error;
-          continue;
+          break;
         }
         stack[sp++] = (Frame){value, 0};
         Xen_DEL_REF(value);
@@ -221,6 +229,8 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
+        frame->passes++;
+        break;
       }
       default:
         --sp;
@@ -425,6 +435,9 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       stack[sp++] = Emit;
       frame->passes++;
     } else {
+#ifndef NDEBUG
+      printf("Invalid Node '%s'\n", Xen_AST_Node_Name(node));
+#endif
       stack[sp++] = Error;
     }
   }

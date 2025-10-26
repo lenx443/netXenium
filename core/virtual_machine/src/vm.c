@@ -62,17 +62,17 @@ Xen_Instance* vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE* self,
 
 Xen_INSTANCE* vm_get_instance(const char* name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) {
-    return nil;
+    return NULL;
   }
   RunContext_ptr current = (RunContext_ptr)vm_current_ctx();
   while (current && Xen_Nil_NEval((Xen_Instance*)current)) {
     Xen_Instance* inst = Xen_Map_Get_Str(current->ctx_instances, name);
-    if_nil_neval(inst) {
+    if (inst != NULL) {
       return inst;
     }
     current = (RunContext_ptr)current->ctx_closure;
   }
-  return nil;
+  return NULL;
 }
 
 void vm_ctx_clear(RunContext_ptr ctx) {

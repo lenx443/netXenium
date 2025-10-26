@@ -1,4 +1,3 @@
-
 #ifndef __RUN_CTX_INSTANCE_H__
 #define __RUN_CTX_INSTANCE_H__
 
@@ -23,6 +22,7 @@ struct RunContext {
   struct __Instance* ctx_instances;
   uint32_t ctx_ip;
   bool ctx_running;
+  bool ctx_error;
 };
 
 typedef struct RunContext* RunContext_ptr;
