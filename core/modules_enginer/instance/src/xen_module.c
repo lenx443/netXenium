@@ -1,11 +1,10 @@
 #include "xen_module.h"
 #include "callable.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "run_frame.h"
 #include "vm_def.h"
 #include "vm_run.h"
-#include "xen_command.h"
+#include "xen_function.h"
 #include "xen_map.h"
 #include "xen_module_implement.h"
 #include "xen_module_instance.h"
@@ -50,10 +49,10 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
     Xen_DEL_REF(mod_ctx);
     return nil;
   }
-  for (int i = 0; mod_def.mod_commands[i].cmd_name != NULL; i++) {
-    Xen_Instance* cmd =
-        Xen_Command_From_Native(mod_def.mod_commands[i].cmd_func, nil, mod_ctx);
-    if_nil_eval(cmd) {
+  for (int i = 0; mod_def.mod_functions[i].fun_name != NULL; i++) {
+    Xen_Instance* fun =
+        Xen_Function_From_Native(mod_def.mod_functions[i].fun_func, mod_ctx);
+    if_nil_eval(fun) {
       Xen_DEL_REF(mod_map);
       callable_free(ctx->ctx_code);
       Xen_DEL_REF(mod_ctx);
@@ -61,14 +60,14 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
     }
     if (!Xen_Map_Push_Pair_Str(
             mod_map,
-            (Xen_Map_Pair_Str){mod_def.mod_commands[i].cmd_name, cmd})) {
-      Xen_DEL_REF(cmd);
+            (Xen_Map_Pair_Str){mod_def.mod_functions[i].fun_name, fun})) {
+      Xen_DEL_REF(fun);
       Xen_DEL_REF(mod_map);
       callable_free(ctx->ctx_code);
       Xen_DEL_REF(mod_ctx);
       return nil;
     }
-    Xen_DEL_REF(cmd);
+    Xen_DEL_REF(fun);
   }
   Xen_Instance* module = Xen_Module_New(mod_map, mod_ctx);
   if_nil_eval(module) {

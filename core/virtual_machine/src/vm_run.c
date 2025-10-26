@@ -1,4 +1,5 @@
 #include "vm_run.h"
+#include "attrs.h"
 #include "bytecode.h"
 #include "implement.h"
 #include "instance.h"
@@ -116,9 +117,28 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(first);
 }
 
+static void op_attr_get(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* attr = Xen_Operator_Eval_Pair_Steal2(
+      ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
+      Xen_OPR_GET_INDEX);
+  Xen_Instance* result = Xen_Attr_Get(inst, attr);
+  if (!result) {
+    Xen_DEL_REF(inst);
+    Xen_DEL_REF(attr);
+    ctx->ctx_running = 0;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, result);
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(inst);
+  Xen_DEL_REF(attr);
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [PUSH] = op_push,           [POP] = op_pop,   [LOAD] = op_load,
-    [LOAD_PROP] = op_load_prop, [CALL] = op_call, [BINARYOP] = op_binaryop};
+    [LOAD_PROP] = op_load_prop, [CALL] = op_call, [BINARYOP] = op_binaryop,
+    [ATTR_GET] = op_attr_get};
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   if (!ctx || !ctx->ctx_code)

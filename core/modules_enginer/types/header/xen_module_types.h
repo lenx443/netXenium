@@ -3,18 +3,18 @@
 
 #include "callable.h"
 
-struct Xen_Module_Command {
-  char *cmd_name;
-  Xen_Native_Func cmd_func;
+struct Xen_Module_Function {
+  char* fun_name;
+  Xen_Native_Func fun_func;
 };
 
 struct Xen_Module_Def {
-  char *mod_name;
+  char* mod_name;
   Xen_Native_Func mod_init;
-  struct Xen_Module_Command *mod_commands;
+  struct Xen_Module_Function* mod_functions;
 };
 
-typedef struct Xen_Module_Command Xen_Module_Command_Table[];
-typedef struct Xen_Module_Def *Xen_Module_Def_Table[];
+typedef struct Xen_Module_Function Xen_Module_Function_Table[];
+typedef struct Xen_Module_Def* Xen_Module_Def_Table[];
 
 #endif

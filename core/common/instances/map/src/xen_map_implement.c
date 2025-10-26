@@ -3,10 +3,13 @@
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "operators.h"
 #include "run_ctx.h"
 #include "xen_boolean.h"
+#include "xen_map.h"
 #include "xen_map_instance.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_string.h"
 
 static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
@@ -50,6 +53,23 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
+static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
+                                       Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* key = Xen_Operator_Eval_Pair_Steal2(
+      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* value = Xen_Map_Get(self, key);
+  if (!value) {
+    Xen_DEL_REF(key);
+    return NULL;
+  }
+  Xen_DEL_REF(key);
+  return value;
+}
+
 struct __Implement Xen_Map_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Map",
@@ -64,3 +84,15 @@ struct __Implement Xen_Map_Implement = {
     .__callable = NULL,
     .__hash = NULL,
 };
+
+int Xen_Map_Init() {
+  if (!(Xen_Map_Implement.__opr[Xen_OPR_GET_INDEX] =
+            callable_new_native(map_opr_get_index))) {
+    return 0;
+  }
+  return 1;
+}
+
+void Xen_Map_Finish() {
+  callable_free(Xen_Map_Implement.__opr[Xen_OPR_GET_INDEX]);
+}

@@ -11,8 +11,8 @@
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
-#include "xen_command_implement.h"
-#include "xen_command_instance.h"
+#include "xen_function.h"
+#include "xen_function_instance.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -26,21 +26,20 @@ Xen_Instance* vm_root_ctx() {
   return (Xen_Instance*)vm->root_context;
 }
 
-bool vm_define_native_command(Xen_Instance* inst_map, const char* name,
-                              Xen_Native_Func fun) {
-  Xen_INSTANCE* cmd_inst = __instance_new(&Xen_Command_Implement, nil, 0);
-  if_nil_eval(cmd_inst) {
+bool vm_define_native_function(Xen_Instance* inst_map, const char* name,
+                               Xen_Native_Func fun, Xen_Instance* closure) {
+  Xen_INSTANCE* fun_inst = Xen_Function_From_Native(fun, closure);
+  if_nil_eval(fun_inst) {
     return false;
   }
-  struct Xen_Command_Instance* command_inst =
-      (struct Xen_Command_Instance*)cmd_inst;
-  command_inst->cmd_callable = callable_new_native(fun);
-  if (!command_inst->cmd_callable) {
-    Xen_DEL_REF(cmd_inst);
+  Xen_Function* function_inst = (Xen_Function*)fun_inst;
+  function_inst->fun_callable = callable_new_native(fun);
+  if (!function_inst->fun_callable) {
+    Xen_DEL_REF(fun_inst);
     return false;
   }
-  if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, cmd_inst})) {
-    Xen_DEL_REF(cmd_inst);
+  if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, fun_inst})) {
+    Xen_DEL_REF(fun_inst);
     return false;
   }
   return true;

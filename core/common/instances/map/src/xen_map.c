@@ -161,7 +161,7 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   Xen_Instance* hash_inst =
       vm_call_native_function(key->__impl->__hash, key, nil);
   if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
-    return 0;
+    return NULL;
   }
 
   unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
@@ -180,7 +180,7 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
     } else {
       eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
       if_nil_eval(eval) {
-        return 0;
+        return NULL;
       }
     }
     if (eval == Xen_True) {
@@ -188,16 +188,16 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
     }
     current = current->next;
   }
-  return nil;
+  return NULL;
 }
 
 Xen_Instance* Xen_Map_Get_Str(Xen_Instance* map, const char* key) {
   if (!key) {
-    return nil;
+    return NULL;
   }
   Xen_Instance* key_inst = Xen_String_From_CString(key);
-  if_nil_eval(key_inst) {
-    return nil;
+  if (!key_inst) {
+    return NULL;
   }
   Xen_Instance* result = Xen_Map_Get(map, key_inst);
   Xen_DEL_REF(key_inst);

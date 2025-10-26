@@ -410,6 +410,20 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         break;
       }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Attr") == 0) {
+      if (frame->passes > 0) {
+        --sp;
+        continue;
+      }
+      Xen_ssize_t co_idx =
+          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+      if (co_idx < 0) {
+        stack[sp++] = Error;
+        continue;
+      }
+      emit_value = (Emit_Value){ATTR_GET, co_idx};
+      stack[sp++] = Emit;
+      frame->passes++;
     } else {
       stack[sp++] = Error;
     }

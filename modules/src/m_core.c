@@ -93,7 +93,7 @@ static Xen_Instance* fn_fun(ctx_id_t id, Xen_Instance* self,
                            Xen_Number_From_Int(10)});
 }
 
-static Xen_Module_Command_Table core_commands = {
+static Xen_Module_Function_Table core_functions = {
     {"echo", fn_echo},
     {"fun", fn_fun},
     {NULL, NULL},
@@ -102,5 +102,5 @@ static Xen_Module_Command_Table core_commands = {
 struct Xen_Module_Def Module_Core = {
     .mod_name = "core",
     .mod_init = NULL,
-    .mod_commands = core_commands,
+    .mod_functions = core_functions,
 };

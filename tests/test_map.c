@@ -9,7 +9,6 @@
 #include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_register.h"
 #include "xen_string.h"
 
 int main(int argc, char** argv) {
@@ -31,8 +30,9 @@ int main(int argc, char** argv) {
     Xen_DEL_REF(key);
     Xen_Instance* key_access = Xen_String_From_CString("age1");
     assert(Xen_Nil_NEval(key_access));
-    Xen_Instance* result = Xen_Map_Get(map, key_access);
-    assert(Xen_Nil_NEval(result));
+    Xen_Instance* result =
+        Xen_Operator_Eval_Pair(map, key_access, Xen_OPR_GET_INDEX);
+    assert(result != NULL);
     assert(Xen_Number_As_Int(result) == 23);
     Xen_DEL_REF(result);
     Xen_DEL_REF(key_access);

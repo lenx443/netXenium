@@ -1,7 +1,9 @@
+#include <ctype.h>
 #include <malloc.h>
 #include <stdlib.h>
 
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
@@ -9,12 +11,14 @@
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
 
 static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
@@ -42,9 +46,6 @@ static Xen_Instance* string_string(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
                                  Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (!VM_CHECK_ID(id)) {
-    return 0;
-  }
   unsigned long hash = Xen_String_Hash(self);
   Xen_INSTANCE* hash_inst = Xen_Number_From_ULong(hash);
   if_nil_eval(hash_inst) {
@@ -90,6 +91,26 @@ static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return character;
 }
 
+static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
+                                       Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  char* buffer = malloc(Xen_SIZE(self) + 1);
+  if (!buffer) {
+    return NULL;
+  }
+  for (Xen_size_t i = 0; i < Xen_SIZE(self); i++) {
+    buffer[i] = toupper(((Xen_String*)self)->characters[i]);
+  }
+  buffer[Xen_SIZE(self)] = '\0';
+  Xen_Instance* result = Xen_String_From_CString(buffer);
+  if_nil_eval(result) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
+  return result;
+}
+
 struct __Implement Xen_String_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
@@ -103,6 +124,7 @@ struct __Implement Xen_String_Implement = {
     .__raw = string_string,
     .__callable = NULL,
     .__hash = string_hash,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_String_Init() {
@@ -112,13 +134,27 @@ int Xen_String_Init() {
   }
   if (!(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX] =
             callable_new_native(string_opr_get_index))) {
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if_nil_eval(props) {
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "upper", string_prop_upper, nil)) {
+    Xen_DEL_REF(Xen_String_Implement.__props);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
+    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  Xen_String_Implement.__props = props;
   return 1;
 }
 
 void Xen_String_Finish() {
+  Xen_DEL_REF(Xen_String_Implement.__props);
   callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
   callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
 }

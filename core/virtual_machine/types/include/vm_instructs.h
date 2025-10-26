@@ -16,6 +16,7 @@ enum vm_Instruct {
   LOAD_PROP,
   CALL,
   BINARYOP,
+  ATTR_GET,
   HALT,
 };
 

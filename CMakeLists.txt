@@ -20,8 +20,8 @@ include_directories(
   core/common/header/
   core/common/include/
   core/common/instances/basic/include/
-  core/common/instances/command/include/
-  core/common/instances/command/types/header/
+  core/common/instances/function/include/
+  core/common/instances/function/types/header/
   core/common/instances/string/include/
   core/common/instances/string/types/header/
   core/common/instances/number/include/
@@ -35,6 +35,8 @@ include_directories(
   core/common/instances/boolean/types/header/
   core/common/instances/tuple/include/
   core/common/instances/tuple/types/header/
+  core/common/instances/method/include/
+  core/common/instances/method/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -74,13 +76,15 @@ set(SOURCES
   # Codigo Commun
   core/common/src/operators.c
   core/common/src/callable.c
+  core/common/src/attrs.c
 
   # Implementacion del objeto `Basic`
   core/common/instances/basic/src/basic.c
+  core/common/instances/basic/src/basic_templates.c
 
-  # Implementacion del objeto `Command`
-  core/common/instances/command/src/xen_command_implement.c
-  core/common/instances/command/src/xen_command.c
+  # Implementacion del objeto `Function`
+  core/common/instances/function/src/xen_function_implement.c
+  core/common/instances/function/src/xen_function.c
 
   # Implementacion del objeto `String`
   core/common/instances/string/src/xen_string_implement.c
@@ -109,6 +113,10 @@ set(SOURCES
   # Implementacion del objeto `Tuple`
   core/common/instances/tuple/src/xen_tuple_implement.c
   core/common/instances/tuple/src/xen_tuple.c
+
+  # Implementacion del objeto `Method`
+  core/common/instances/method/src/xen_method_implement.c
+  core/common/instances/method/src/xen_method.c
 
   # Implementacion del objeto `AST`
   core/interpreter/instances/ast/src/xen_ast.c
