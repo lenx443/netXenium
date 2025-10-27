@@ -20,4 +20,9 @@ void bc_clear(Bytecode_Array_ptr);
 void bc_free(const Bytecode_Array_ptr);
 int bc_add_instr(Bytecode_Array_ptr, bc_Instruct_t);
 
+#ifndef NDEBUG
+struct ProgramCode;
+void bc_print(struct ProgramCode);
+#endif
+
 #endif

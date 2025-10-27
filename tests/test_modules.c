@@ -11,17 +11,17 @@
 
 int main(int argc, char** argv) {
   assert(Xen_Init(argc, argv) == 1);
-  Xen_Instance* echo_cmd =
+  Xen_Instance* echo_fun =
       vm_get_instance("echo", vm->vm_ctx_stack->ctx->ctx_id);
-  assert(echo_cmd != NULL);
+  assert(echo_fun != NULL);
   Xen_Instance* text = Xen_String_From_CString("Hola Mundo\n");
   assert(Xen_Nil_NEval(text));
   Xen_Instance* args = Xen_Vector_From_Array(1, &text);
   assert(Xen_Nil_NEval(args));
   Xen_DEL_REF(text);
-  assert(Xen_Function_Call(echo_cmd, args) != NULL);
+  assert(Xen_Function_Call(echo_fun, args) != NULL);
   Xen_DEL_REF(args);
-  Xen_DEL_REF(echo_cmd);
+  Xen_DEL_REF(echo_fun);
   Xen_Finish();
   return 0;
 }

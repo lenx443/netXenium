@@ -21,3 +21,14 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   method->self = Xen_ADD_REF(self);
   return (Xen_Instance*)method;
 }
+
+Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args) {
+  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+    return NULL;
+  }
+  Xen_Instance* ret = Xen_Method_Implement.__callable(0, method, args);
+  if (!ret) {
+    return NULL;
+  }
+  return ret;
+}

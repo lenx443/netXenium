@@ -14,6 +14,9 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   if (Xen_TYPE(attr) != &Xen_String_Implement) {
     return NULL;
   }
+  if (!Xen_TYPE(inst)->__get_attr) {
+    return NULL;
+  }
   Xen_Instance* args = Xen_Vector_From_Array(1, &attr);
   if_nil_eval(args) {
     return NULL;

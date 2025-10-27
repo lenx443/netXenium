@@ -61,6 +61,9 @@ CALLABLE_ptr compiler(const char* text_code) {
     return 0;
   }
   block_list_free(blocks);
+#ifndef NDEBUG
+  bc_print(pc);
+#endif
   vm_ctx_clear(vm->root_context);
   program_stack_depth(&pc);
   CALLABLE_ptr code = callable_new_code(pc);
@@ -155,7 +158,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       if (Xen_AST_Node_Name_Cmp(stmt, "Expr") != 0 &&
-          Xen_AST_Node_Name_Cmp(stmt, "Assigment") != 0 &&
+          Xen_AST_Node_Name_Cmp(stmt, "Assignment") != 0 &&
           Xen_AST_Node_Name_Cmp(stmt, "IfStatement") != 0 &&
           Xen_AST_Node_Name_Cmp(stmt, "WhileStatement") != 0 &&
           Xen_AST_Node_Name_Cmp(stmt, "ForStatement") != 0) {
@@ -434,6 +437,42 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       emit_value = (Emit_Value){ATTR_GET, co_idx};
       stack[sp++] = Emit;
       frame->passes++;
+    } else if (Xen_AST_Node_Name_Cmp(node, "Unary") == 0) {
+      switch (frame->passes) {
+      case 0:
+        if (Xen_AST_Node_Children_Size(node) != 1) {
+          stack[sp++] = Error;
+          break;
+        }
+        Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Name_Cmp(primary, "Primary") != 0) {
+          Xen_DEL_REF(primary);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = (Frame){primary, 0};
+        Xen_DEL_REF(primary);
+        frame->passes++;
+        break;
+      case 1:
+        if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
+          emit_value = (Emit_Value){UNARY_POSITIVE, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
+          emit_value = (Emit_Value){UNARY_NEGATIVE, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
+          frame->passes++;
+        } else {
+          stack[sp++] = Error;
+        }
+        break;
+      default:
+        --sp;
+        break;
+      }
     } else {
 #ifndef NDEBUG
       printf("Invalid Node '%s'\n", Xen_AST_Node_Name(node));
@@ -503,7 +542,7 @@ void program_stack_depth(ProgramCode_t* pc) {
   size_t effect = 0;
   for (size_t i = 0; i < pc->code->bc_size; i++) {
     bc_Instruct_t inst = pc->code->bc_array[i];
-    effect += Instruct_Stack_Effect_Table[inst.bci_opcode](inst.bci_oparg);
+    effect += Instruct_Info_Table[inst.bci_opcode].stack_effect(inst.bci_oparg);
     if (effect > depth)
       depth = effect;
   }

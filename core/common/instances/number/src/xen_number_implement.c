@@ -1,12 +1,15 @@
 #include <stdlib.h>
 
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
 #include "run_ctx.h"
+#include "vm.h"
 #include "xen_boolean.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
@@ -96,6 +99,12 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
   return Xen_True;
 }
 
+static Xen_Instance* number_prop_positive(ctx_id_t id, Xen_Instance* self,
+                                          Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_ADD_REF(self);
+}
+
 struct __Implement Xen_Number_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
@@ -109,6 +118,7 @@ struct __Implement Xen_Number_Implement = {
     .__raw = number_string,
     .__callable = NULL,
     .__hash = NULL,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Number_Init() {
@@ -116,6 +126,17 @@ int Xen_Number_Init() {
            callable_new_native(number_opr_eq)) == NULL) {
     return 0;
   }
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if_nil_eval(props) {
+    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__positive", number_prop_positive,
+                                 nil)) {
+    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  Xen_Number_Implement.__props = props;
   return 1;
 }
 

@@ -9,10 +9,13 @@
 #include "vm.h"
 #include "vm_instructs.h"
 #include "vm_stack.h"
+#include "xen_method.h"
+#include "xen_method_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
 #include <stdint.h>
 
@@ -136,10 +139,71 @@ static void op_attr_get(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(attr);
 }
 
+static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
+  if (!method) {
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* result = Xen_Method_Call(method, nil);
+  if (!result) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, result);
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(method);
+  Xen_DEL_REF(inst);
+}
+
+static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
+  if (!method) {
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* result = Xen_Method_Call(method, nil);
+  if (!result) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, result);
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(method);
+  Xen_DEL_REF(inst);
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
-    [PUSH] = op_push,           [POP] = op_pop,   [LOAD] = op_load,
-    [LOAD_PROP] = op_load_prop, [CALL] = op_call, [BINARYOP] = op_binaryop,
-    [ATTR_GET] = op_attr_get};
+    [PUSH] = op_push,
+    [POP] = op_pop,
+    [LOAD] = op_load,
+    [LOAD_PROP] = op_load_prop,
+    [CALL] = op_call,
+    [BINARYOP] = op_binaryop,
+    [ATTR_GET] = op_attr_get,
+    [UNARY_POSITIVE] = op_unary_positive,
+    [UNARY_NEGATIVE] = op_unary_negative,
+};
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   if (!ctx || !ctx->ctx_code)
@@ -154,6 +218,10 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
     if (!vm_stack_init(&ctx->ctx_stack, pc.stack_depth + 1)) {
       return NULL;
     }
+#ifndef NDEBUG
+    const char* previous_op = "No-OP";
+    Xen_ssize_t previous_offset = -1;
+#endif
     while (ctx->ctx_running && !ctx->ctx_error &&
            ctx->ctx_ip < pc.code->bc_size && !program.closed) {
       bc_Instruct_t instr = pc.code->bc_array[ctx->ctx_ip++];
@@ -161,11 +229,16 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
         ctx->ctx_error = 1;
         break;
       }
+#ifndef NDEBUG
+      previous_op = Instruct_Info_Table[instr.bci_opcode].name;
+      previous_offset = ctx->ctx_ip - 1;
+#endif
       Dispatcher[instr.bci_opcode](ctx, instr.bci_oparg);
     }
     if (ctx->ctx_error) {
 #ifndef NDEBUG
-      printf("VM Error\n");
+      printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
+             previous_offset);
 #endif
       ctx->ctx_running = 0;
       ctx->ctx_error = 0;
