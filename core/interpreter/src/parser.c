@@ -31,6 +31,7 @@ static Xen_Instance* parser_factor(Parser*);
 static Xen_Instance* parser_term(Parser*);
 static Xen_Instance* parser_add(Parser*);
 static Xen_Instance* parser_relational(Parser*);
+static Xen_Instance* parser_not(Parser*);
 static Xen_Instance* parser_and(Parser*);
 static Xen_Instance* parser_or(Parser*);
 static Xen_Instance* parser_pair(Parser*);
@@ -528,8 +529,31 @@ Xen_Instance* parser_relational(Parser* p) {
   return left;
 }
 
+Xen_Instance* parser_not(Parser* p) {
+  if (p->token.tkn_type != TKN_NOT) {
+    return parser_relational(p);
+  }
+  Xen_Instance* unary = Xen_AST_Node_New("Unary", p->token.tkn_text);
+  if_nil_eval(unary) {
+    return nil;
+  }
+  parser_next(p);
+  Xen_Instance* relational = parser_relational(p);
+  if_nil_eval(relational) {
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  if (!Xen_AST_Node_Push_Child(unary, relational)) {
+    Xen_DEL_REF(relational);
+    Xen_DEL_REF(unary);
+    return nil;
+  }
+  Xen_DEL_REF(relational);
+  return unary;
+}
+
 Xen_Instance* parser_and(Parser* p) {
-  Xen_Instance* left = parser_relational(p);
+  Xen_Instance* left = parser_not(p);
   if_nil_eval(left) {
     return nil;
   }
@@ -540,7 +564,7 @@ Xen_Instance* parser_and(Parser* p) {
       return nil;
     }
     parser_next(p);
-    Xen_Instance* right = parser_relational(p);
+    Xen_Instance* right = parser_not(p);
     if_nil_eval(right) {
       Xen_DEL_REF(left);
       free(op);

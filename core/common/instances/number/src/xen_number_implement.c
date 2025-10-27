@@ -1,3 +1,5 @@
+#include <iso646.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "basic.h"
@@ -15,6 +17,7 @@
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
 #include "xen_string.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
 
 static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
@@ -105,6 +108,50 @@ static Xen_Instance* number_prop_positive(ctx_id_t id, Xen_Instance* self,
   return Xen_ADD_REF(self);
 }
 
+static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
+                                          Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Number* n = (Xen_Number*)self;
+  Xen_size_t size_n = n->size;
+  while (size_n > 0 && n->digits[size_n - 1] == 0) {
+    size_n--;
+  }
+  if (size_n == 0 || n->sign == 0) {
+    return (Xen_Instance*)Xen_ADD_REF(n);
+  }
+  Xen_Number* r = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  if_nil_eval(r) {
+    return NULL;
+  }
+  r->digits = malloc(size_n * sizeof(uint32_t));
+  if (!r->digits) {
+    Xen_DEL_REF(r->digits);
+    return NULL;
+  }
+  for (Xen_size_t i = 0; i < size_n; i++) {
+    r->digits[i] = n->digits[i];
+  }
+  r->size = size_n;
+  if (n->sign == 1) {
+    r->sign = -1;
+  } else if (n->sign == -1) {
+    r->sign = 1;
+  } else {
+    Xen_DEL_REF(r);
+    return NULL;
+  }
+  return (Xen_Instance*)r;
+}
+
+static Xen_Instance* number_prop_not(ctx_id_t id, Xen_Instance* self,
+                                     Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (((Xen_Number*)self)->sign == 0) {
+    return Xen_True;
+  }
+  return Xen_False;
+}
+
 struct __Implement Xen_Number_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
@@ -133,6 +180,18 @@ int Xen_Number_Init() {
   }
   if (!vm_define_native_function(props, "__positive", number_prop_positive,
                                  nil)) {
+    Xen_DEL_REF(props);
+    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__negative", number_prop_negative,
+                                 nil)) {
+    Xen_DEL_REF(props);
+    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__not", number_prop_not, nil)) {
+    Xen_DEL_REF(props);
     callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
@@ -141,5 +200,6 @@ int Xen_Number_Init() {
 }
 
 void Xen_Number_Finish() {
+  Xen_DEL_REF(Xen_Number_Implement.__props);
   callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
 }

@@ -24,6 +24,7 @@ enum vm_Instruct {
   ATTR_GET,
   UNARY_POSITIVE,
   UNARY_NEGATIVE,
+  UNARY_NOT,
   HALT,
 };
 

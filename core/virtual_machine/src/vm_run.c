@@ -91,6 +91,12 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
     Xen_DEL_REF(arg);
   }
   Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_TYPE(callable)->__callable == NULL) {
+    Xen_DEL_REF(callable);
+    Xen_DEL_REF(args);
+    ctx->ctx_error = 1;
+    return;
+  }
   Xen_Instance* ret =
       vm_call_native_function(Xen_TYPE(callable)->__callable, callable, args);
   if (!ret) {
@@ -193,6 +199,33 @@ static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(inst);
 }
 
+static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
+  if (!method) {
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* result = Xen_Method_Call(method, nil);
+  if (!result) {
+    Xen_DEL_REF(method);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, result);
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(method);
+  Xen_DEL_REF(inst);
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [PUSH] = op_push,
     [POP] = op_pop,
@@ -203,6 +236,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [ATTR_GET] = op_attr_get,
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,
+    [UNARY_NOT] = op_unary_not,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

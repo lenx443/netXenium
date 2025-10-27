@@ -444,14 +444,22 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
-        if (Xen_AST_Node_Name_Cmp(primary, "Primary") != 0) {
-          Xen_DEL_REF(primary);
+        Xen_Instance* val = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
+          if (Xen_AST_Node_Name_Cmp(val, "Primary") != 0 &&
+              Xen_AST_Node_Name_Cmp(val, "Unary") != 0 &&
+              Xen_AST_Node_Name_Cmp(val, "Binary") != 0) {
+            Xen_DEL_REF(val);
+            stack[sp++] = Error;
+            break;
+          }
+        } else if (Xen_AST_Node_Name_Cmp(val, "Primary") != 0) {
+          Xen_DEL_REF(val);
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){primary, 0};
-        Xen_DEL_REF(primary);
+        stack[sp++] = (Frame){val, 0};
+        Xen_DEL_REF(val);
         frame->passes++;
         break;
       case 1:
@@ -464,6 +472,8 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Emit;
           frame->passes++;
         } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
+          emit_value = (Emit_Value){UNARY_NOT, 0};
+          stack[sp++] = Emit;
           frame->passes++;
         } else {
           stack[sp++] = Error;
