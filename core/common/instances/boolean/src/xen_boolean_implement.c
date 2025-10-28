@@ -4,8 +4,10 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "vm_def.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
@@ -56,7 +58,6 @@ Xen_Implement Xen_Boolean_Implement = {
     .__inst_size = sizeof(struct Xen_Boolean_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = boolean_alloc,
     .__destroy = NULL,
     .__string = boolean_string,
@@ -64,3 +65,17 @@ Xen_Implement Xen_Boolean_Implement = {
     .__callable = NULL,
     .__hash = boolean_hash,
 };
+
+int Xen_Boolean_Init() {
+  if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
+                             (Xen_Map_Pair_Str){"true", Xen_True})) {
+    return 0;
+  }
+  if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
+                             (Xen_Map_Pair_Str){"false", Xen_False})) {
+    return 0;
+  }
+  return 1;
+}
+
+void Xen_Boolean_Finish() {}

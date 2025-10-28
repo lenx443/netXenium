@@ -15,7 +15,6 @@
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
-#include "suggestion.h"
 
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
@@ -30,7 +29,7 @@ static void terminal_raw_input_on() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_mode);
 }
 
-static int strip_ansi_escape_strlen(const char *str) {
+static int strip_ansi_escape_strlen(const char* str) {
   int len = 0;
   int in_escape = 0;
 
@@ -40,7 +39,9 @@ static int strip_ansi_escape_strlen(const char *str) {
       continue;
     }
     if (in_escape) {
-      if (str[i] == 'm') { in_escape = 0; }
+      if (str[i] == 'm') {
+        in_escape = 0;
+      }
       continue;
     }
     len++;
@@ -62,9 +63,11 @@ static term_size get_cursor_position() {
   fsync(STDOUT_FILENO);
 
   while (i < sizeof(buf) - 1) {
-    if (read(STDIN_FILENO, &ch, 1) != 1) break;
+    if (read(STDIN_FILENO, &ch, 1) != 1)
+      break;
     buf[i++] = ch;
-    if (ch == 'R') break;
+    if (ch == 'R')
+      break;
   }
   buf[i] = '\0';
 
@@ -74,11 +77,12 @@ static term_size get_cursor_position() {
   return out;
 }
 
-static int get_terminal_size(term_size *tz) {
+static int get_terminal_size(term_size* tz) {
   struct winsize w;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) < 0) {
     log_add(NULL, ERROR, "GetTerminalSize", "{ioctl}(fd, op, ...)");
-    log_add(NULL, ERROR, "GetTerminalSize", "Error al obtener el tamaño de la terminal");
+    log_add(NULL, ERROR, "GetTerminalSize",
+            "Error al obtener el tamaño de la terminal");
     log_add_errno(NULL, ERROR, "GetTerminalSize");
     return 0;
   }
@@ -96,7 +100,7 @@ static void handle_winch(int sig) {
   }
 }
 
-static int get_scroll(int cursor_index, int scroll_offset, const char *prompt) {
+static int get_scroll(int cursor_index, int scroll_offset, const char* prompt) {
   int prompt_len = strip_ansi_escape_strlen(prompt);
   int cols = current_term_size.COLS - prompt_len;
 
@@ -110,7 +114,7 @@ static int get_scroll(int cursor_index, int scroll_offset, const char *prompt) {
 }
 
 static void show_cmd(term_size prompt_end, LIST_ptr cmd, int cursor_index,
-                     int *scroll_offset) {
+                     int* scroll_offset) {
   int visible_cols = current_term_size.COLS - prompt_end.COLS - 2;
   int cmd_len = list_size(*cmd);
 
@@ -127,7 +131,8 @@ static void show_cmd(term_size prompt_end, LIST_ptr cmd, int cursor_index,
   for (; char_start < cmd_len; char_start++) {
     CharUTF8 ch = string_utf8_index_get(cmd, char_start);
     int w = char_utf8_display_with(ch);
-    if (col_accum + w > *scroll_offset) break;
+    if (col_accum + w > *scroll_offset)
+      break;
     col_accum += w;
   }
 
@@ -136,7 +141,8 @@ static void show_cmd(term_size prompt_end, LIST_ptr cmd, int cursor_index,
   for (int i = char_start; i < cmd_len && printed_cols < visible_cols; i++) {
     CharUTF8 ch = string_utf8_index_get(cmd, i);
     int w = char_utf8_display_with(ch);
-    if (printed_cols + w > visible_cols) break;
+    if (printed_cols + w > visible_cols)
+      break;
     fwrite(ch.ch, 1, ch.size, stdout);
     printed_cols += w;
   }
@@ -147,7 +153,7 @@ static void show_cmd(term_size prompt_end, LIST_ptr cmd, int cursor_index,
   fflush(stdout);
 }
 
-static int read_stdin_timed(char *buf, size_t bufsize, int time_ms) {
+static int read_stdin_timed(char* buf, size_t bufsize, int time_ms) {
   fd_set readfds;
   struct timeval timeout;
   FD_ZERO(&readfds);
@@ -185,13 +191,17 @@ CodeUTF8 read_raw_char_utf8() {
   char c;
   size_t n;
   while ((n = read(STDIN_FILENO, &c, 1)) != 1)
-    if (n == (size_t)-1) return make_code_utf8_code(KEY_NULL);
+    if (n == (size_t)-1)
+      return make_code_utf8_code(KEY_NULL);
 
-  if ((unsigned char)c == 4) return make_code_utf8_code(KEY_EOF);
-  if ((unsigned char)c == 127) return make_code_utf8_code(KEY_BACKSPACE);
+  if ((unsigned char)c == 4)
+    return make_code_utf8_code(KEY_EOF);
+  if ((unsigned char)c == 127)
+    return make_code_utf8_code(KEY_BACKSPACE);
   if ((unsigned char)c == '\n' || (unsigned char)c == '\r')
     return make_code_utf8_code(KEY_ENTER);
-  if ((unsigned char)c == '\t') return make_code_utf8_code(KEY_TAB);
+  if ((unsigned char)c == '\t')
+    return make_code_utf8_code(KEY_TAB);
 
   if (c == '\x1b') {
     char seq[3] = {0};
@@ -211,16 +221,24 @@ CodeUTF8 read_raw_char_utf8() {
       switch (seq[1]) {
       case '3': {
         char tilde;
-        if (read(STDIN_FILENO, &tilde, 1) != 1) return make_code_utf8_code(KEY_NULL);
-        if (tilde == '~') return make_code_utf8_code(KEY_DELETE);
+        if (read(STDIN_FILENO, &tilde, 1) != 1)
+          return make_code_utf8_code(KEY_NULL);
+        if (tilde == '~')
+          return make_code_utf8_code(KEY_DELETE);
         break;
       }
-      case 'A': return make_code_utf8_code(KEY_ARROW_UP);
-      case 'B': return make_code_utf8_code(KEY_ARROW_DOWN);
-      case 'C': return make_code_utf8_code(KEY_ARROW_RIGHT);
-      case 'D': return make_code_utf8_code(KEY_ARROW_LEFT);
-      case 'H': return make_code_utf8_code(KEY_HOME);
-      case 'F': return make_code_utf8_code(KEY_END);
+      case 'A':
+        return make_code_utf8_code(KEY_ARROW_UP);
+      case 'B':
+        return make_code_utf8_code(KEY_ARROW_DOWN);
+      case 'C':
+        return make_code_utf8_code(KEY_ARROW_RIGHT);
+      case 'D':
+        return make_code_utf8_code(KEY_ARROW_LEFT);
+      case 'H':
+        return make_code_utf8_code(KEY_HOME);
+      case 'F':
+        return make_code_utf8_code(KEY_END);
       }
     }
     return make_code_utf8_code(KEY_NULL);
@@ -242,18 +260,19 @@ CodeUTF8 read_raw_char_utf8() {
 
   for (int i = 1; i < char_size; i++) {
     int result = read_stdin_timed(&character.ch[i], 1, 30);
-    if (result != 1) return make_code_utf8_code(KEY_NULL);
+    if (result != 1)
+      return make_code_utf8_code(KEY_NULL);
   }
-  if (char_size == 3 && character.ch[0] == '\xEF' && character.ch[1] == '\xB8' &&
-      character.ch[2] == '\x8F')
+  if (char_size == 3 && character.ch[0] == '\xEF' &&
+      character.ch[1] == '\xB8' && character.ch[2] == '\x8F')
     return make_code_utf8_code(KEY_NULL);
   return make_code_utf8_char(character);
 }
 
 LIST_ptr read_string_utf8() {
-#define default_promp(prompt)                                                            \
-  sprintf(prompt, "[%s%d" RESET "] " AMARILLO "%s" RESET " > ",                          \
-          program.return_code == 0 ? VERDE : ROJO, program.return_code,                  \
+#define default_promp(prompt)                                                  \
+  sprintf(prompt, "[%s%d" RESET "] " AMARILLO "%s" RESET " > ",                \
+          program.return_code == 0 ? VERDE : ROJO, program.return_code,        \
           program.argv[0]);
   LIST_ptr cmd = list_new();
   int i = 0;
@@ -265,15 +284,9 @@ LIST_ptr read_string_utf8() {
   fflush(stdout);
 
   int history_position = -1;
-  int tab_pressed = 0;
-
-  int prompt_len = strip_ansi_escape_strlen(prompt);
   int cursor_index = 0;
   int cursor_of_i = 0;
   int scroll_offset = 0;
-
-  SUGGEST_ptr suggestions = suggest_new();
-  int suggest_position = 0;
 
   terminal_raw_input_on();
 
@@ -285,28 +298,23 @@ LIST_ptr read_string_utf8() {
   while (1) {
     c = read_raw_char_utf8();
     if (c.type == SPECIAL_KEY) {
-      if (c.value.code == KEY_NULL) continue;
+      if (c.value.code == KEY_NULL)
+        continue;
 
       if (c.value.code == KEY_EOF) {
-        if (i != 0) continue;
+        if (i != 0)
+          continue;
         program.closed = 1;
         printf("\n");
         break;
       }
       if (c.value.code == KEY_ARROW_UP) {
-        if (tab_pressed) {
-          int suggest_size = list_size(*suggestions->suggestions);
-          if (suggest_size == 0) continue;
-          if (suggest_position == 0)
-            suggest_position = suggest_size;
-          else
-            suggest_position--;
-          suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-          suggest_show(suggestions, prompt_len + 1 + cursor_index, suggest_position);
-        } else if ((history_position + 1) < history_size(*history)) {
+        if ((history_position + 1) < history_size(*history)) {
           history_position++;
-          HISTORY_struct *history_value = history_get(*history, history_position);
-          if (history_value == NULL) continue;
+          HISTORY_struct* history_value =
+              history_get(*history, history_position);
+          if (history_value == NULL)
+            continue;
           list_clear(cmd);
           string_utf8_push_back(cmd, history_value->command);
           cursor_index = string_utf8_display_width(cmd);
@@ -318,46 +326,37 @@ LIST_ptr read_string_utf8() {
         continue;
       }
       if (c.value.code == KEY_ARROW_DOWN) {
-        if (tab_pressed) {
-          int suggest_size = list_size(*suggestions->suggestions);
-          if (suggest_size == 0) continue;
-          if (suggest_position == suggest_size)
-            suggest_position = 0;
-          else
-            suggest_position++;
-          suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-          suggest_show(suggestions, prompt_len + 1 + cursor_index, suggest_position);
-        } else {
-          history_position--;
-          if (history_position < 0) {
-            list_clear(cmd);
-            cursor_index = 0;
-            scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-            i = 0;
-            cursor_of_i = 0;
-
-            show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
-            history_position = -1;
-            continue;
-          }
-          HISTORY_struct *history_value = history_get(*history, history_position);
-          if (history_value == NULL) continue;
+        history_position--;
+        if (history_position < 0) {
           list_clear(cmd);
-          string_utf8_push_back(cmd, history_value->command);
-          cursor_index = string_utf8_display_width(cmd);
+          cursor_index = 0;
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-          i = list_size(*cmd);
-          cursor_of_i = i;
+          i = 0;
+          cursor_of_i = 0;
+
           show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
+          history_position = -1;
+          continue;
         }
+        HISTORY_struct* history_value = history_get(*history, history_position);
+        if (history_value == NULL)
+          continue;
+        list_clear(cmd);
+        string_utf8_push_back(cmd, history_value->command);
+        cursor_index = string_utf8_display_width(cmd);
+        scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
+        i = list_size(*cmd);
+        cursor_of_i = i;
+        show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
         continue;
       }
       if (c.value.code == KEY_ARROW_LEFT) {
         if (cursor_index > 0) {
           cursor_of_i--;
           NODE_ptr node_ch;
-          if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL) continue;
-          CharUTF8 *ch = (CharUTF8 *)node_ch->point;
+          if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL)
+            continue;
+          CharUTF8* ch = (CharUTF8*)node_ch->point;
           cursor_index -= char_utf8_display_with(*ch);
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
           show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
@@ -368,8 +367,9 @@ LIST_ptr read_string_utf8() {
       if (c.value.code == KEY_ARROW_RIGHT) {
         if (cursor_of_i < i) {
           NODE_ptr node_ch = list_index_get(cursor_of_i, *cmd);
-          if (node_ch == NULL) continue;
-          CharUTF8 *ch = (CharUTF8 *)node_ch->point;
+          if (node_ch == NULL)
+            continue;
+          CharUTF8* ch = (CharUTF8*)node_ch->point;
           cursor_index += char_utf8_display_with(*ch);
           cursor_of_i++;
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
@@ -392,28 +392,13 @@ LIST_ptr read_string_utf8() {
         continue;
       }
       if (c.value.code == KEY_ENTER) {
-        if (tab_pressed && suggest_position > 0) {
-          suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-          suggest_struct *sg_struct = suggest_get(suggestions, suggest_position);
-          list_clear(cmd);
-          string_utf8_push_back(cmd, sg_struct->sg_value);
-          cursor_index = string_utf8_display_width(cmd);
-          scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-          i = list_size(*cmd);
-          cursor_of_i = i;
-
-          show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
-          suggest_clear(suggestions);
-          tab_pressed = 0;
-          continue;
-        }
         printf("\n");
         if (cmd->head != NULL) {
-          HISTORY_struct *previus_history = history_get(*history, 0);
+          HISTORY_struct* previus_history = history_get(*history, 0);
           if (previus_history == NULL ||
               string_utf8_strcmp_cstring(cmd, previus_history->command) != 0) {
             HISTORY_struct new_history_line;
-            char *cmd_cstring = string_utf8_get(cmd);
+            char* cmd_cstring = string_utf8_get(cmd);
             if (cmd_cstring == NULL) {
               log_add(NULL, ERROR, "SHELL",
                       "No se pudo gurdar el comando en el hsitorial");
@@ -427,61 +412,10 @@ LIST_ptr read_string_utf8() {
             }
           }
         }
-        tab_pressed = 0;
         history_position = -1;
         break;
       }
       if (c.value.code == KEY_TAB) {
-        if (!tab_pressed) {
-          suggest_position = 0;
-          if (list_size(*cmd) == 0) continue;
-          char *cmd_cstring = string_utf8_get(cmd);
-          if (cmd_cstring == NULL) {
-            log_add(NULL, ERROR, "SHELL", "No se pudo obtener las sugerencias");
-            log_show_and_clear(NULL);
-            continue;
-          }
-          command_parser(cmd_cstring, SUGGEST_MODE, &suggestions, cursor_index);
-          free(cmd_cstring);
-          if (suggestions == NULL) continue;
-
-          int results_size = list_size(*suggestions->suggestions);
-          if (results_size == 0) continue;
-
-          if (results_size == 1) {
-            suggest_struct *sugg = suggest_get(suggestions, 1);
-            if (sugg == NULL) { continue; }
-
-            if (string_utf8_strcmp_cstring(cmd, sugg->sg_value) != 0) {
-              list_clear(cmd);
-              string_utf8_push_back(cmd, sugg->sg_value);
-
-              cursor_index = string_utf8_display_width(cmd);
-              scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-              i = list_size(*cmd);
-              cursor_of_i = i;
-
-              show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
-              tab_pressed = 0;
-              continue;
-            }
-            tab_pressed = 0;
-            continue;
-          }
-          suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-          printf("\r\n");
-          suggest_show(suggestions, prompt_len + 1 + cursor_index, suggest_position);
-          tab_pressed = 1;
-          continue;
-        } else {
-          int suggs_len = list_size(*suggestions->suggestions);
-          if (suggest_position < suggs_len)
-            suggest_position++;
-          else
-            suggest_position = 0;
-          suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-          suggest_show(suggestions, prompt_len + 1 + cursor_index, suggest_position);
-        }
         continue;
       }
       if (c.value.code == KEY_BACKSPACE) {
@@ -490,21 +424,13 @@ LIST_ptr read_string_utf8() {
           cursor_of_i--;
           NODE_ptr node_ch = NULL;
           if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL) {
-            log_add(NULL, ERROR, "SHELL", "no se pudo acceder al indice %d en cmd",
-                    cursor_of_i);
+            log_add(NULL, ERROR, "SHELL",
+                    "no se pudo acceder al indice %d en cmd", cursor_of_i);
             continue;
           }
-          cursor_index -= char_utf8_display_with(*(CharUTF8 *)node_ch->point);
+          cursor_index -= char_utf8_display_with(*(CharUTF8*)node_ch->point);
           list_erase_at_index(cmd, cursor_of_i);
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-
-          if (tab_pressed) {
-            if (list_size(*cmd) == 0) {
-              suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-              suggest_position = 0;
-              tab_pressed = 0;
-            }
-          }
 
           show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
           continue;
@@ -516,22 +442,17 @@ LIST_ptr read_string_utf8() {
           i--;
           scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
 
-          if (tab_pressed) {
-            suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-            suggest_position = 0;
-            tab_pressed = 0;
-          }
-
           show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
           continue;
         }
         continue;
       }
     } else if (c.value.character.ch[0] != '\0' && c.value.character.size != 0) {
-      if (!list_push_at_index(cmd, cursor_of_i, &c.value.character, sizeof(CharUTF8))) {
+      if (!list_push_at_index(cmd, cursor_of_i, &c.value.character,
+                              sizeof(CharUTF8))) {
         DynSetLog(NULL);
-        log_add(NULL, ERROR, "SHELL", "No se pudo agregar el caracter en en indice %d",
-                cursor_of_i);
+        log_add(NULL, ERROR, "SHELL",
+                "No se pudo agregar el caracter en en indice %d", cursor_of_i);
         log_add(NULL, ERROR, "SHELL", "Caracter que cuaso el error: %s",
                 c.value.character.ch);
         log_show_and_clear(NULL);
@@ -544,38 +465,16 @@ LIST_ptr read_string_utf8() {
         int display_size = char_utf8_display_with(c.value.character);
         cursor_index += display_size;
       } else {
-        if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL) continue;
-        CharUTF8 *ch = (CharUTF8 *)node_ch->point;
+        if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL)
+          continue;
+        CharUTF8* ch = (CharUTF8*)node_ch->point;
         cursor_index += char_utf8_display_with(*ch);
       }
       scroll_offset = get_scroll(cursor_index, scroll_offset, prompt);
-
-      if (tab_pressed) {
-        suggest_hide(suggestions, prompt_len + 1 + cursor_index);
-        char *cmd_cstring = string_utf8_get(cmd);
-        if (cmd_cstring == NULL) {
-          log_add(NULL, ERROR, "SHELL", "No se pudo mostar las sugerencias");
-          log_show_and_clear(NULL);
-          suggest_position = 0;
-          tab_pressed = 0;
-        } else {
-          command_parser(cmd_cstring, SUGGEST_MODE, &suggestions, cursor_index);
-          free(cmd_cstring);
-          int suggs_len = list_size(*suggestions->suggestions);
-          if (suggs_len != 0) {
-            if (suggs_len < suggest_position) suggest_position = 0;
-            suggest_show(suggestions, prompt_len + 1 + cursor_index, suggest_position);
-          } else {
-            suggest_position = 0;
-            tab_pressed = 0;
-          }
-        }
-      }
     }
     show_cmd(prompt_end, cmd, cursor_index, &scroll_offset);
   }
   terminal_raw_input_off();
   signal(SIGWINCH, SIG_DFL);
-  suggest_free(suggestions);
   return cmd;
 }

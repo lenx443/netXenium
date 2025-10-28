@@ -81,7 +81,6 @@ struct __Implement Xen_Run_Frame = {
     .__inst_size = sizeof(struct RunContext),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = frame_alloc,
     .__destroy = frame_destroy,
     .__string = frame_string,

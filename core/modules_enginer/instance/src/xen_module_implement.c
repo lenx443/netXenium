@@ -43,7 +43,6 @@ struct __Implement Xen_Module_Implement = {
     .__inst_size = sizeof(struct Xen_Module_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = module_alloc,
     .__destroy = module_destroy,
     .__string = module_string,

@@ -2,12 +2,11 @@
 #define __PROGRAM_H__
 
 #include "history.h"
-#include "suggestion.h"
 
 typedef struct {
-  char **argv;
+  char** argv;
   int argc;
-  char *name;
+  char* name;
   int closed;
   int exit_code;
   int return_code;
@@ -18,8 +17,7 @@ typedef enum {
   SUGGEST_MODE,
 } ExecMode;
 
-int command_parser(char *, ExecMode, SUGGEST_ptr *, int);
-void load_script(char *);
+void load_script(char*);
 void shell_loop();
 
 extern Program_State program;

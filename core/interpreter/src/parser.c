@@ -538,7 +538,7 @@ Xen_Instance* parser_not(Parser* p) {
     return nil;
   }
   parser_next(p);
-  Xen_Instance* relational = parser_relational(p);
+  Xen_Instance* relational = parser_not(p);
   if_nil_eval(relational) {
     Xen_DEL_REF(unary);
     return nil;

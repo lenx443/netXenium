@@ -137,7 +137,6 @@ struct __Implement Xen_String_Implement = {
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = string_alloc,
     .__destroy = string_destroy,
     .__string = string_string,
@@ -148,31 +147,25 @@ struct __Implement Xen_String_Implement = {
 };
 
 int Xen_String_Init() {
-  if (!(Xen_String_Implement.__opr[Xen_OPR_EQ] =
-            callable_new_native(string_opr_eq))) {
-    return 0;
-  }
-  if (!(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX] =
-            callable_new_native(string_opr_get_index))) {
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if_nil_eval(props) {
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__eq", string_opr_eq, nil)) {
+    Xen_DEL_REF(Xen_String_Implement.__props);
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__get_index", string_opr_get_index,
+                                 nil)) {
+    Xen_DEL_REF(Xen_String_Implement.__props);
     return 0;
   }
   if (!vm_define_native_function(props, "upper", string_prop_upper, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
   if (!vm_define_native_function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
-    callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
   Xen_String_Implement.__props = props;
@@ -181,6 +174,4 @@ int Xen_String_Init() {
 
 void Xen_String_Finish() {
   Xen_DEL_REF(Xen_String_Implement.__props);
-  callable_free(Xen_String_Implement.__opr[Xen_OPR_GET_INDEX]);
-  callable_free(Xen_String_Implement.__opr[Xen_OPR_EQ]);
 }

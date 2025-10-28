@@ -520,6 +520,34 @@ void test_number_opr_eq() {
   }
 }
 
+void test_number_mul() {
+  printf("Testing Number multiplication\n");
+  {
+    Xen_Instance* a = Xen_Number_From_Int(1234);
+    assert(a != nil);
+    Xen_Instance* b = Xen_Number_From_Int(1234);
+    assert(b != nil);
+    Xen_Instance* result = Xen_Number_Mul(a, b);
+    assert(result != NULL);
+    assert(Xen_Number_As(int, result) == 1522756);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+  {
+    Xen_Instance* a = Xen_Number_From_Int(1234);
+    assert(a != nil);
+    Xen_Instance* b = Xen_Number_From_Int(4321);
+    assert(b != nil);
+    Xen_Instance* result = Xen_Number_Mul(a, b);
+    assert(result != NULL);
+    assert(Xen_Number_As(int, result) == 5332114);
+    Xen_DEL_REF(result);
+    Xen_DEL_REF(b);
+    Xen_DEL_REF(a);
+  }
+}
+
 int main(int argc, char** argv) {
   if (!Xen_Init(argc, argv)) {
     return 1;
@@ -536,6 +564,7 @@ int main(int argc, char** argv) {
   test_number_from_ulonglong();
   test_number_string();
   test_number_opr_eq();
+  test_number_mul();
   Xen_Finish();
   return 0;
 }

@@ -65,7 +65,6 @@ struct __Implement Xen_Basic = {
     .__inst_size = sizeof(struct __Implement),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = basic_alloc,
     .__destroy = basic_destroy,
     .__string = basic_string,

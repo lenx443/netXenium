@@ -103,6 +103,9 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
     Frame* frame = &stack[sp - 1];
     Xen_Instance* node = frame->node;
     if (Xen_AST_Node_Name_Cmp(node, "CompilerError") == 0) {
+#ifndef NDEBUG
+      printf("Compile Error\n");
+#endif
       Xen_DEL_REF(Emit.node);
       Xen_DEL_REF(Error.node);
       return 0;
@@ -483,9 +486,64 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         break;
       }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Binary") == 0) {
+      switch (frame->passes) {
+      case 0: {
+        if (Xen_AST_Node_Children_Size(node) != 2) {
+          stack[sp++] = Error;
+          break;
+        }
+        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+            Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+            Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+          Xen_DEL_REF(expr);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = (Frame){expr, 0};
+        Xen_DEL_REF(expr);
+        frame->passes++;
+        break;
+      }
+      case 1: {
+        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 1);
+        if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+            Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+            Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+          Xen_DEL_REF(expr);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = (Frame){expr, 0};
+        Xen_DEL_REF(expr);
+        frame->passes++;
+        break;
+      }
+      case 2:
+        if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_POW};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_MUL};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_DIV};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else {
+          stack[sp++] = Error;
+        }
+        break;
+      default:
+        --sp;
+        break;
+      }
     } else {
 #ifndef NDEBUG
-      printf("Invalid Node '%s'\n", Xen_AST_Node_Name(node));
+      printf("Compile Error: Invalid Node '%s'\n", Xen_AST_Node_Name(node));
 #endif
       stack[sp++] = Error;
     }

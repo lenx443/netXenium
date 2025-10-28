@@ -51,7 +51,6 @@ Xen_Implement Xen_AST_Implement = {
     .__inst_size = sizeof(struct Xen_AST_Node_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
-    .__opr = {NULL},
     .__alloc = ast_alloc,
     .__destroy = ast_destroy,
     .__string = ast_string,

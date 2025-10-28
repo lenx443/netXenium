@@ -60,7 +60,6 @@ struct __Implement Xen_Function_Implement = {
     .__inst_size = sizeof(Xen_Function),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = function_alloc,
     .__destroy = function_destroy,
     .__string = function_string,

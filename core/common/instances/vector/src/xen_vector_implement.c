@@ -2,12 +2,14 @@
 #include <stdlib.h>
 
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "operators.h"
 #include "run_ctx.h"
+#include "vm.h"
 #include "xen_boolean.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
@@ -67,23 +69,29 @@ struct __Implement Xen_Vector_Implement = {
     .__inst_size = sizeof(struct Xen_Vector_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = vector_alloc,
     .__destroy = vector_destroy,
     .__string = vector_string,
     .__raw = vector_string,
     .__callable = NULL,
     .__hash = NULL,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Vector_Init() {
-  if (!(Xen_Vector_Implement.__opr[Xen_OPR_GET_INDEX] =
-            callable_new_native(vector_opr_get_index))) {
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!props) {
     return 0;
   }
+  if (!vm_define_native_function(props, "__get_index", vector_opr_get_index,
+                                 nil)) {
+    Xen_DEL_REF(props);
+    return 0;
+  }
+  Xen_Vector_Implement.__props = props;
   return 1;
 }
 
 void Xen_Vector_Finish() {
-  callable_free(Xen_Vector_Implement.__opr[Xen_OPR_GET_INDEX]);
+  Xen_DEL_REF(Xen_Vector_Implement.__props);
 }

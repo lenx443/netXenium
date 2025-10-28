@@ -1,10 +1,12 @@
 #include "xen_map_implement.h"
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
 #include "run_ctx.h"
+#include "vm.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_map_instance.h"
@@ -76,23 +78,29 @@ struct __Implement Xen_Map_Implement = {
     .__inst_size = sizeof(struct Xen_Map_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = map_alloc,
     .__destroy = map_destroy,
     .__string = map_string,
     .__raw = map_string,
     .__callable = NULL,
     .__hash = NULL,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Map_Init() {
-  if (!(Xen_Map_Implement.__opr[Xen_OPR_GET_INDEX] =
-            callable_new_native(map_opr_get_index))) {
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!props) {
     return 0;
   }
+  if (!vm_define_native_function(props, "__get_index", map_opr_get_index,
+                                 nil)) {
+    Xen_DEL_REF(props);
+    return 0;
+  }
+  Xen_Map_Implement.__props = props;
   return 1;
 }
 
 void Xen_Map_Finish() {
-  callable_free(Xen_Map_Implement.__opr[Xen_OPR_GET_INDEX]);
+  Xen_DEL_REF(Xen_Map_Implement.__props);
 }

@@ -60,7 +60,7 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
-    return 0;
+    return NULL;
 
   Xen_Number* a = (Xen_Number*)self;
   Xen_Number* b = (Xen_Number*)Xen_Operator_Eval_Pair_Steal2(
@@ -100,6 +100,59 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
 
   Xen_DEL_REF(b);
   return Xen_True;
+}
+static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
+    return NULL;
+
+  Xen_Instance* exp = Xen_Operator_Eval_Pair_Steal2(
+      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* result = Xen_Number_Pow(self, exp);
+  if (!result) {
+    Xen_DEL_REF(exp);
+    return NULL;
+  }
+  Xen_DEL_REF(exp);
+  return result;
+}
+
+static Xen_Instance* number_opr_mul(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
+    return NULL;
+
+  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
+      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* result = Xen_Number_Mul(self, num);
+  if (!result) {
+    Xen_DEL_REF(num);
+    return NULL;
+  }
+  Xen_DEL_REF(num);
+  return result;
+}
+
+static Xen_Instance* number_opr_div(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
+    return NULL;
+
+  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
+      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* result = Xen_Number_Div(self, num);
+  if (!result) {
+    Xen_DEL_REF(num);
+    return NULL;
+  }
+  Xen_DEL_REF(num);
+  return result;
 }
 
 static Xen_Instance* number_prop_positive(ctx_id_t id, Xen_Instance* self,
@@ -158,7 +211,6 @@ struct __Implement Xen_Number_Implement = {
     .__inst_size = sizeof(struct Xen_Number_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__opr = {NULL},
     .__alloc = number_alloc,
     .__destroy = number_destroy,
     .__string = number_string,
@@ -169,30 +221,20 @@ struct __Implement Xen_Number_Implement = {
 };
 
 int Xen_Number_Init() {
-  if ((Xen_Number_Implement.__opr[Xen_OPR_EQ] =
-           callable_new_native(number_opr_eq)) == NULL) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if_nil_eval(props) {
-    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
-  if (!vm_define_native_function(props, "__positive", number_prop_positive,
-                                 nil)) {
+  if (!vm_define_native_function(props, "__pow", number_opr_pow, nil) ||
+      !vm_define_native_function(props, "__mul", number_opr_mul, nil) ||
+      !vm_define_native_function(props, "__div", number_opr_div, nil) ||
+      !vm_define_native_function(props, "__eq", number_opr_eq, nil) ||
+      !vm_define_native_function(props, "__positive", number_prop_positive,
+                                 nil) ||
+      !vm_define_native_function(props, "__negative", number_prop_negative,
+                                 nil) ||
+      !vm_define_native_function(props, "__not", number_prop_not, nil)) {
     Xen_DEL_REF(props);
-    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
-    return 0;
-  }
-  if (!vm_define_native_function(props, "__negative", number_prop_negative,
-                                 nil)) {
-    Xen_DEL_REF(props);
-    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
-    return 0;
-  }
-  if (!vm_define_native_function(props, "__not", number_prop_not, nil)) {
-    Xen_DEL_REF(props);
-    callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
     return 0;
   }
   Xen_Number_Implement.__props = props;
@@ -201,5 +243,4 @@ int Xen_Number_Init() {
 
 void Xen_Number_Finish() {
   Xen_DEL_REF(Xen_Number_Implement.__props);
-  callable_free(Xen_Number_Implement.__opr[Xen_OPR_EQ]);
 }

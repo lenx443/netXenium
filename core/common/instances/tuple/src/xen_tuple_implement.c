@@ -1,12 +1,14 @@
 #include <stddef.h>
 
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "operators.h"
 #include "run_ctx.h"
+#include "vm.h"
 #include "xen_boolean.h"
+#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
@@ -67,23 +69,29 @@ Xen_Implement Xen_Tuple_Implement = {
     .__inst_size = sizeof(struct Xen_Tuple_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
-    .__opr = {NULL},
     .__alloc = tuple_alloc,
     .__destroy = tuple_destroy,
     .__string = tuple_string,
     .__raw = tuple_string,
     .__callable = NULL,
     .__hash = NULL,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Tuple_Init() {
-  if (!(Xen_Tuple_Implement.__opr[Xen_OPR_GET_INDEX] =
-            callable_new_native(tuple_opr_get_index))) {
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!props) {
     return 0;
   }
+  if (!vm_define_native_function(props, "__get_index", tuple_opr_get_index,
+                                 nil)) {
+    Xen_DEL_REF(props);
+    return 0;
+  }
+  Xen_Tuple_Implement.__props = props;
   return 1;
 }
 
 void Xen_Tuple_Finish() {
-  callable_free(Xen_Tuple_Implement.__opr[Xen_OPR_GET_INDEX]);
+  Xen_DEL_REF(Xen_Tuple_Implement.__props);
 }
