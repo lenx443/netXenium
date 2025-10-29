@@ -8,7 +8,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -24,7 +23,7 @@ static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
   Xen_Vector* vector = (Xen_Vector*)self;
   vector->values = NULL;
   vector->capacity = 0;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
@@ -43,7 +42,7 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Vector>");
   if (!string) {
-    return nil;
+    return NULL;
   }
   return string;
 }

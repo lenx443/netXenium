@@ -7,7 +7,6 @@
 #include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_map_instance.h"
 #include "xen_nil.h"
@@ -25,7 +24,7 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   map->map_keys = nil;
   map->map_buckets = NULL;
   map->map_capacity = 0;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
@@ -133,7 +132,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* string = Xen_String_From_CString(buffer);
   if (!string) {
     free(buffer);
-    return nil;
+    return NULL;
   }
   free(buffer);
   return string;

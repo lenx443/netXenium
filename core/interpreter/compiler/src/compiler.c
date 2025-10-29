@@ -14,7 +14,6 @@
 #include "vm_def.h"
 #include "vm_instructs.h"
 #include "xen_ast.h"
-#include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
@@ -27,7 +26,7 @@ CALLABLE_ptr compiler(const char* text_code) {
   Parser parser = {&lexer, {0, "\0"}};
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
-  if_nil_eval(ast_program) {
+  if (!ast_program) {
 #ifndef NDEBUG
     printf("Parser Error\n");
 #endif
@@ -91,11 +90,11 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   size_t sp = 0;
   stack[sp++] = (Frame){ast, 0};
   Frame Error = (Frame){Xen_AST_Node_New("CompilerError", NULL), 0};
-  if_nil_eval(Error.node) {
+  if (!Error.node) {
     return 0;
   }
   Frame Emit = (Frame){Xen_AST_Node_New("CompilerEmit", NULL), 0};
-  if_nil_eval(Emit.node) {
+  if (!Emit.node) {
     Xen_DEL_REF(Error.node);
     return 0;
   }
@@ -124,7 +123,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       Xen_Instance* stmts = Xen_AST_Node_Get_Child(node, 0);
-      if_nil_eval(stmts) {
+      if (!stmts) {
         stack[sp++] = Error;
         continue;
       }
@@ -156,7 +155,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, 0);
-      if_nil_eval(stmt) {
+      if (!stmt) {
         stack[sp++] = Error;
         continue;
       }
@@ -178,7 +177,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-      if_nil_eval(value) {
+      if (!value) {
         stack[sp++] = Error;
         continue;
       }
@@ -197,7 +196,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       switch (frame->passes) {
       case 0: {
         Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-        if_nil_eval(value) {
+        if (!value) {
           stack[sp++] = Error;
           break;
         }
@@ -218,7 +217,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       case 1: {
         if (Xen_AST_Node_Children_Size(node) == 2) {
           Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
-          if_nil_eval(suffix) {
+          if (!suffix) {
             stack[sp++] = Error;
             break;
           }
@@ -248,7 +247,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       Xen_Instance* value = Xen_String_From_CString(Xen_AST_Node_Value(node));
-      if_nil_eval(value) {
+      if (!value) {
         stack[sp++] = Error;
         continue;
       }
@@ -269,7 +268,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       Xen_Instance* value =
           Xen_Number_From_CString(Xen_AST_Node_Value(node), 0);
-      if_nil_eval(value) {
+      if (!value) {
         stack[sp++] = Error;
         continue;
       }
@@ -317,7 +316,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         continue;
       }
       Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
-      if_nil_eval(expr) {
+      if (!expr) {
         stack[sp++] = Error;
         continue;
       }
@@ -333,7 +332,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       switch (frame->passes) {
       case 0: {
         Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-        if_nil_eval(value) {
+        if (!value) {
           stack[sp++] = Error;
           continue;
         }
@@ -352,7 +351,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       case 1: {
         if (Xen_AST_Node_Children_Size(node) == 2) {
           Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
-          if_nil_eval(suffix) {
+          if (!suffix) {
             stack[sp++] = Error;
             break;
           }

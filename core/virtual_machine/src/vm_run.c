@@ -23,7 +23,7 @@ static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
       ctx->ctx_code->code.consts->c_instances, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
-  if_nil_eval(c_inst) {
+  if (!c_inst) {
     ctx->ctx_error = 1;
     return;
   }
@@ -39,7 +39,7 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
       ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
-  if_nil_eval(c_name) {
+  if (!c_name) {
     ctx->ctx_error = 1;
     return;
   }
@@ -59,13 +59,13 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
       ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
       Xen_OPR_GET_INDEX);
-  if_nil_eval(c_name) {
+  if (!c_name) {
     ctx->ctx_error = 1;
     return;
   }
   Xen_Instance* inst =
       xen_register_prop_get(Xen_String_As_CString(c_name), ctx->ctx_id);
-  if_nil_eval(inst) {
+  if (!inst) {
     Xen_DEL_REF(c_name);
     ctx->ctx_error = 1;
     return;
@@ -77,7 +77,7 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
 
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* args = Xen_Vector_New();
-  if_nil_eval(args) {
+  if (!args) {
     ctx->ctx_error = 1;
     return;
   }

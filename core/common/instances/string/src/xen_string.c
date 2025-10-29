@@ -10,18 +10,18 @@
 
 Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
   if (!cstring) {
-    return nil;
+    return NULL;
   }
   Xen_String* string =
       (Xen_String*)__instance_new(&Xen_String_Implement, nil, 0);
-  if_nil_eval(string) {
-    return nil;
+  if (!string) {
+    return NULL;
   }
   string->__size = strlen(cstring);
   string->characters = malloc(string->__size + 1);
   if (!string->characters) {
     __instance_free((Xen_Instance*)string);
-    return nil;
+    return NULL;
   }
   strncpy(string->characters, cstring, string->__size + 1);
   return (Xen_INSTANCE*)string;
@@ -30,14 +30,14 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
 Xen_Instance* Xen_String_From_Char(char c) {
   Xen_String* string =
       (Xen_String*)__instance_new(&Xen_String_Implement, nil, 0);
-  if_nil_eval(string) {
-    return nil;
+  if (!string) {
+    return NULL;
   }
   string->__size = 1;
   string->characters = malloc(string->__size + 1);
   if (!string->characters) {
     __instance_free((Xen_Instance*)string);
-    return nil;
+    return NULL;
   }
   string->characters[0] = c;
   string->characters[1] = '\0';
@@ -46,20 +46,20 @@ Xen_Instance* Xen_String_From_Char(char c) {
 
 Xen_Instance* Xen_String_From_Concat(Xen_Instance* s1, Xen_Instance* s2) {
   if (!s1 || !s2) {
-    return nil;
+    return NULL;
   }
   size_t length = ((Xen_String*)s1)->__size + ((Xen_String*)s2)->__size + 1;
   char* buf = malloc(length);
   if (!buf) {
-    return nil;
+    return NULL;
   }
   strcpy(buf, ((Xen_String*)s1)->characters);
   strcat(buf, ((Xen_String*)s2)->characters);
   buf[length - 1] = '\0';
   Xen_Instance* string = Xen_String_From_CString(buf);
-  if_nil_eval(string) {
+  if (!string) {
     free(buf);
-    return nil;
+    return NULL;
   }
   free(buf);
   return string;

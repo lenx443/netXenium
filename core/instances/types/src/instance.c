@@ -4,18 +4,16 @@
 
 #include "implement.h"
 #include "instance.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
-#include "xen_nil.h"
 
 struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
                                   Xen_Instance_Flag flags) {
   if (!impl) {
-    return nil;
+    return NULL;
   }
   struct __Instance* inst = malloc(impl->__inst_size);
   if (!inst) {
-    return nil;
+    return NULL;
   }
   inst->__refers = 0;
   Xen_ADD_REF(inst);
@@ -28,18 +26,19 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     mapped->__map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
     if (!mapped->__map) {
       free(inst);
-      return nil;
+      return NULL;
     }
   }
   if (impl->__alloc) {
     Xen_Instance* ret = impl->__alloc(0, inst, args);
-    if (ret != Xen_True) {
+    if (!ret) {
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
         Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
       }
       free(inst);
-      return nil;
+      return NULL;
     }
+    Xen_DEL_REF(ret);
   }
   return inst;
 }

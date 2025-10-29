@@ -10,7 +10,7 @@
 struct __Implement* __implement_new(char* impl_name) {
   struct __Implement* impl =
       (struct __Implement*)__instance_new(&Xen_Basic, nil, 0);
-  if_nil_eval(impl) {
+  if (!impl) {
     return NULL;
   }
   impl->__impl_name = strdup(impl_name);
@@ -19,7 +19,7 @@ struct __Implement* __implement_new(char* impl_name) {
     return NULL;
   }
   impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
-  if_nil_eval(impl->__props) {
+  if (!impl->__props) {
     Xen_DEL_REF(impl);
     return NULL;
   }

@@ -16,7 +16,7 @@ Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
   Xen_Module* module =
       (Xen_Module*)__instance_new(&Xen_Module_Implement, nil, 0);
   if (!module) {
-    return nil;
+    return NULL;
   }
   module->mod_map = Xen_ADD_REF(mod_map);
   module->mod_context = Xen_ADD_REF(mod_context);
@@ -26,13 +26,13 @@ Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
 Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
   Xen_Instance* ctx_args =
       Xen_Vector_From_Array(4, (Xen_Instance*[]){nil, nil, nil, nil});
-  if_nil_eval(ctx_args) {
-    return nil;
+  if (!ctx_args) {
+    return NULL;
   }
   Xen_Instance* mod_ctx = __instance_new(&Xen_Run_Frame, ctx_args, 0);
-  if_nil_eval(mod_ctx) {
+  if (!mod_ctx) {
     Xen_DEL_REF(ctx_args);
-    return nil;
+    return NULL;
   }
   Xen_DEL_REF(ctx_args);
   RunContext_ptr ctx = (RunContext_ptr)mod_ctx;
@@ -40,23 +40,23 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
     ctx->ctx_code = callable_new_native(mod_def.mod_init);
     if (!ctx->ctx_code) {
       Xen_DEL_REF(mod_ctx);
-      return nil;
+      return NULL;
     }
   }
   Xen_Instance* mod_map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
-  if_nil_eval(mod_map) {
+  if (!mod_map) {
     callable_free(ctx->ctx_code);
     Xen_DEL_REF(mod_ctx);
-    return nil;
+    return NULL;
   }
   for (int i = 0; mod_def.mod_functions[i].fun_name != NULL; i++) {
     Xen_Instance* fun =
         Xen_Function_From_Native(mod_def.mod_functions[i].fun_func, mod_ctx);
-    if_nil_eval(fun) {
+    if (!fun) {
       Xen_DEL_REF(mod_map);
       callable_free(ctx->ctx_code);
       Xen_DEL_REF(mod_ctx);
-      return nil;
+      return NULL;
     }
     if (!Xen_Map_Push_Pair_Str(
             mod_map,
@@ -65,16 +65,16 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
       Xen_DEL_REF(mod_map);
       callable_free(ctx->ctx_code);
       Xen_DEL_REF(mod_ctx);
-      return nil;
+      return NULL;
     }
     Xen_DEL_REF(fun);
   }
   Xen_Instance* module = Xen_Module_New(mod_map, mod_ctx);
-  if_nil_eval(module) {
+  if (!module) {
     Xen_DEL_REF(mod_map);
     callable_free(ctx->ctx_code);
     Xen_DEL_REF(mod_ctx);
-    return nil;
+    return NULL;
   }
   if (mod_def.mod_init) {
     Xen_Instance* ret = vm_run_ctx(ctx);
@@ -83,7 +83,7 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
       Xen_DEL_REF(mod_map);
       callable_free(ctx->ctx_code);
       Xen_DEL_REF(mod_ctx);
-      return nil;
+      return NULL;
     }
     Xen_DEL_REF(ret);
     callable_free(ctx->ctx_code);

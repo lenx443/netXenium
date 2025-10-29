@@ -4,7 +4,6 @@
 
 #include "instance.h"
 #include "vm_consts.h"
-#include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
@@ -15,11 +14,11 @@ vm_Consts_ptr vm_consts_new() {
     return NULL;
   }
   consts->c_names = Xen_Vector_New();
-  if_nil_eval(consts->c_names) {
+  if (!consts->c_names) {
     return NULL;
   }
   consts->c_instances = Xen_Vector_New();
-  if_nil_eval(consts->c_instances) {
+  if (!consts->c_instances) {
     return NULL;
   }
   return consts;
@@ -41,7 +40,7 @@ Xen_ssize_t vm_consts_push_name(vm_Consts_ptr consts, const char* c_name) {
     return false;
   }
   Xen_Instance* c_name_inst = Xen_String_From_CString(c_name);
-  if_nil_eval(c_name_inst) {
+  if (!c_name_inst) {
     return false;
   }
   Xen_size_t index = Xen_SIZE(consts->c_names);

@@ -5,7 +5,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_ast_instance.h"
-#include "xen_boolean.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_vector.h"
@@ -17,10 +16,10 @@ static Xen_Instance* ast_alloc(ctx_id_t id, Xen_Instance* self,
   ast->name = NULL;
   ast->value = NULL;
   ast->children = Xen_Vector_New();
-  if_nil_eval(ast->children) {
-    return 0;
+  if (!ast->children) {
+    return NULL;
   }
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* ast_destroy(ctx_id_t id, Xen_Instance* self,
@@ -40,7 +39,7 @@ static Xen_Instance* ast_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<AST>");
   if (!string) {
-    return nil;
+    return NULL;
   }
   return string;
 }

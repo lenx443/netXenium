@@ -5,7 +5,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
-#include "xen_boolean.h"
 #include "xen_function_instance.h"
 #include "xen_method_instance.h"
 #include "xen_nil.h"
@@ -17,7 +16,7 @@ static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
   Xen_Method* method = (Xen_Method*)self;
   method->function = nil;
   method->self = nil;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* method_destroy(ctx_id_t id, struct __Instance* self,

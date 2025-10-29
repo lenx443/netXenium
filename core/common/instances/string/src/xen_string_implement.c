@@ -27,7 +27,7 @@ static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
   string->characters = NULL;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -59,7 +59,7 @@ static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* raw = Xen_String_From_CString(buffer);
   if (!raw) {
     free(buffer);
-    return nil;
+    return NULL;
   }
   free(buffer);
   return raw;
@@ -70,8 +70,8 @@ static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   unsigned long hash = Xen_String_Hash(self);
   Xen_INSTANCE* hash_inst = Xen_Number_From_ULong(hash);
-  if_nil_eval(hash_inst) {
-    return nil;
+  if (!hash_inst) {
+    return NULL;
   }
   return hash_inst;
 }
@@ -81,7 +81,7 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
-    return nil;
+    return NULL;
 
   Xen_Instance* val = Xen_Operator_Eval_Pair_Steal2(
       args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
@@ -107,7 +107,7 @@ static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
   }
   Xen_Instance* character =
       Xen_String_From_Char(((Xen_String*)self)->characters[index]);
-  if_nil_eval(character) {
+  if (!character) {
     return NULL;
   }
   return character;
@@ -124,6 +124,35 @@ static Xen_Instance* string_opr_add(ctx_id_t id, Xen_Instance* self,
   return Xen_String_From_Concat(self, str);
 }
 
+static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1)
+    return NULL;
+  Xen_Instance* num_inst = Xen_Vector_Peek_Index(args, 0);
+  if (Xen_TYPE(num_inst) != &Xen_Number_Implement)
+    return NULL;
+  size_t num = Xen_Number_As(Xen_size_t, num_inst);
+  Xen_size_t bufcap = Xen_SIZE(self) * num + 1;
+  char* buffer = malloc(bufcap);
+  if (!buffer) {
+    return NULL;
+  }
+  const char* value = Xen_String_As_CString(self);
+  buffer[0] = '\0';
+  for (Xen_size_t i = 0; i < num; i++) {
+    strcat(buffer, value);
+  }
+  buffer[bufcap - 1] = '\0';
+  Xen_Instance* string = Xen_String_From_CString(buffer);
+  if (!string) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
+  return string;
+}
+
 static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
                                        Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -136,7 +165,7 @@ static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
   }
   buffer[Xen_SIZE(self)] = '\0';
   Xen_Instance* result = Xen_String_From_CString(buffer);
-  if_nil_eval(result) {
+  if (!result) {
     free(buffer);
     return NULL;
   }
@@ -156,7 +185,7 @@ static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
   }
   buffer[Xen_SIZE(self)] = '\0';
   Xen_Instance* result = Xen_String_From_CString(buffer);
-  if_nil_eval(result) {
+  if (!result) {
     free(buffer);
     return NULL;
   }
@@ -181,13 +210,14 @@ struct __Implement Xen_String_Implement = {
 
 int Xen_String_Init() {
   Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
-  if_nil_eval(props) {
+  if (!props) {
     return 0;
   }
   if (!vm_define_native_function(props, "__eq", string_opr_eq, nil) ||
       !vm_define_native_function(props, "__get_index", string_opr_get_index,
                                  nil) ||
       !vm_define_native_function(props, "__add", string_opr_add, nil) ||
+      !vm_define_native_function(props, "__mul", string_opr_mul, nil) ||
       !vm_define_native_function(props, "upper", string_prop_upper, nil) ||
       !vm_define_native_function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);

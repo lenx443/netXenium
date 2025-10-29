@@ -14,7 +14,7 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   }
   Xen_Method* method =
       (Xen_Method*)__instance_new(&Xen_Method_Implement, nil, 0);
-  if_nil_eval(method) {
+  if (!method) {
     return NULL;
   }
   method->function = Xen_ADD_REF(function);

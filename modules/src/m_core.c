@@ -20,24 +20,24 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
-    return nil;
+    return NULL;
   }
   if (Xen_SIZE(args) == 1) {
     Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
         args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
     if (!inst || !Xen_TYPE(inst)->__string) {
       Xen_DEL_REF(inst);
-      return nil;
+      return NULL;
     }
     Xen_Instance* string =
         vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
     if (!string || Xen_Nil_Eval(string)) {
-      return nil;
+      return NULL;
     }
     Xen_DEL_REF(inst);
     if (Xen_TYPE(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
-      return nil;
+      return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
     Xen_DEL_REF(string);
@@ -46,17 +46,17 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* out_reg = xen_register_prop_get("__out", id);
   if (!Xen_TYPE(out_reg)->__string) {
     Xen_DEL_REF(out_reg);
-    return nil;
+    return NULL;
   }
   Xen_Instance* string =
       vm_call_native_function(Xen_TYPE(out_reg)->__string, out_reg, nil);
   if (!string || Xen_Nil_Eval(string)) {
-    return nil;
+    return NULL;
   }
   Xen_DEL_REF(out_reg);
   if (Xen_TYPE(string) != &Xen_String_Implement) {
     Xen_DEL_REF(string);
-    return nil;
+    return NULL;
   }
   fputs(Xen_String_As_CString(string), stdout);
   Xen_DEL_REF(string);
@@ -72,17 +72,17 @@ static Xen_Instance* fn_fun(ctx_id_t id, Xen_Instance* self,
         args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
     if (!Xen_TYPE(inst)->__string) {
       Xen_DEL_REF(inst);
-      return nil;
+      return NULL;
     }
     Xen_Instance* string =
         vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
     if (!string || Xen_Nil_Eval(string)) {
-      return nil;
+      return NULL;
     }
     Xen_DEL_REF(inst);
     if (Xen_TYPE(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
-      return nil;
+      return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
     Xen_DEL_REF(string);

@@ -4,7 +4,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
-#include "xen_boolean.h"
 #include "xen_module_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -15,7 +14,7 @@ static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
   Xen_Module* module = (Xen_Module*)self;
   module->mod_map = nil;
   module->mod_context = nil;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* module_destroy(ctx_id_t id, Xen_Instance* self,
@@ -32,7 +31,7 @@ static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Module>");
   if (!string) {
-    return nil;
+    return NULL;
   }
   return string;
 }

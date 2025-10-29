@@ -5,7 +5,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -18,14 +17,15 @@ static Xen_Instance* basic_alloc(ctx_id_t id, struct __Instance* self,
   impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!impl->__props) {
     Xen_DEL_REF(impl);
-    return nil;
+    return NULL;
   }
   impl->__inst_size = sizeof(struct __Instance);
   impl->__alloc = NULL;
   impl->__destroy = NULL;
   impl->__callable = NULL;
   impl->__hash = NULL;
-  return Xen_True;
+  impl->__get_attr = NULL;
+  return nil;
 }
 
 static Xen_Instance* basic_destroy(ctx_id_t id, struct __Instance* self,
@@ -33,7 +33,7 @@ static Xen_Instance* basic_destroy(ctx_id_t id, struct __Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
   if (!impl)
-    return nil;
+    return NULL;
   if (impl->__props)
     Xen_DEL_REF(impl->__props);
   if (impl->__impl_name)
@@ -45,8 +45,7 @@ static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
                                     Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
-  Xen_INSTANCE* result = __instance_new(impl, args, 0);
-  return result;
+  return __instance_new(impl, args, 0);
 }
 
 static Xen_Instance* basic_string(ctx_id_t id, Xen_Instance* self,
@@ -54,7 +53,7 @@ static Xen_Instance* basic_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Basic>");
   if (!string) {
-    return nil;
+    return NULL;
   }
   return string;
 }

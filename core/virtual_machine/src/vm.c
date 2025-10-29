@@ -16,8 +16,6 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 
-#define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
-
 Xen_Instance* vm_current_ctx() {
   return run_context_stack_peek_top(&vm->vm_ctx_stack);
 }
@@ -29,7 +27,7 @@ Xen_Instance* vm_root_ctx() {
 bool vm_define_native_function(Xen_Instance* inst_map, const char* name,
                                Xen_Native_Func fun, Xen_Instance* closure) {
   Xen_INSTANCE* fun_inst = Xen_Function_From_Native(fun, closure);
-  if_nil_eval(fun_inst) {
+  if (!fun_inst) {
     return false;
   }
   Xen_Function* function_inst = (Xen_Function*)fun_inst;

@@ -7,7 +7,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -22,7 +21,7 @@ static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   tuple->instances = NULL;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* tuple_destroy(ctx_id_t id, Xen_Instance* self,
@@ -40,8 +39,8 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
                                   Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Tuple>");
-  if_nil_eval(string) {
-    return nil;
+  if (!string) {
+    return NULL;
   }
   return string;
 }
@@ -50,15 +49,15 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
                                          Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
-    return nil;
+    return NULL;
   }
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
   if (Xen_TYPE(index_inst) != &Xen_Number_Implement) {
-    return nil;
+    return NULL;
   }
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
-    return nil;
+    return NULL;
   }
   return Xen_ADD_REF(((Xen_Tuple*)self)->instances[index]);
 }

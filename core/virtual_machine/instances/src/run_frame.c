@@ -5,7 +5,6 @@
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "vm_stack.h"
-#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -19,22 +18,26 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
        Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
       (Xen_Nil_NEval(Xen_Vector_Peek_Index(args, 1)) &&
        Xen_TYPE(Xen_Vector_Peek_Index(args, 1)) != &Xen_Run_Frame)) {
-    return nil;
+    return NULL;
   }
   struct RunContext* ctx_new = (struct RunContext*)self;
   ctx_new->ctx_flags = CTX_FLAG_PROPS;
   ctx_new->ctx_id = 0;
-  if_nil_eval(Xen_Vector_Peek_Index(args, 0)) ctx_new->ctx_closure = nil;
-  else ctx_new->ctx_closure = Xen_Vector_Get_Index(args, 0);
-  if_nil_eval(Xen_Vector_Peek_Index(args, 1)) ctx_new->ctx_caller = NULL;
-  else ctx_new->ctx_caller = Xen_Vector_Get_Index(args, 1);
+  if (!Xen_Vector_Peek_Index(args, 0))
+    ctx_new->ctx_closure = nil;
+  else
+    ctx_new->ctx_closure = Xen_Vector_Get_Index(args, 0);
+  if (!Xen_Vector_Peek_Index(args, 1))
+    ctx_new->ctx_caller = NULL;
+  else
+    ctx_new->ctx_caller = Xen_Vector_Get_Index(args, 1);
   ctx_new->ctx_self = Xen_Vector_Get_Index(args, 2);
   ctx_new->ctx_code = NULL;
   vm_stack_start(&ctx_new->ctx_stack);
-  if_nil_neval(Xen_Vector_Peek_Index(args, 3)) {
+  if (Xen_Vector_Peek_Index(args, 3)) {
     ctx_new->ctx_args = Xen_Vector_Get_Index(args, 3);
-  }
-  else ctx_new->ctx_args = NULL;
+  } else
+    ctx_new->ctx_args = NULL;
   ctx_new->ctx_instances = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!ctx_new->ctx_instances) {
     Xen_DEL_REF(ctx_new->ctx_closure);
@@ -43,11 +46,11 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
     Xen_DEL_REF(ctx_new->ctx_self);
     if (ctx_new->ctx_args)
       Xen_DEL_REF(ctx_new->ctx_args);
-    return nil;
+    return NULL;
   }
   ctx_new->ctx_ip = 0;
   ctx_new->ctx_running = 0;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -70,9 +73,9 @@ static Xen_Instance* frame_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Context-Frame>");
   if (!string) {
-    return nil;
+    return NULL;
   }
-  return nil;
+  return string;
 }
 
 struct __Implement Xen_Run_Frame = {

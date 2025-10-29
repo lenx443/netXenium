@@ -2,7 +2,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
-#include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_vector.h"
@@ -18,7 +17,7 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
     return NULL;
   }
   Xen_Instance* args = Xen_Vector_From_Array(1, &attr);
-  if_nil_eval(args) {
+  if (!args) {
     return NULL;
   }
   Xen_Instance* result =
@@ -36,7 +35,7 @@ Xen_Instance* Xen_Attr_Get_Str(Xen_Instance* inst, const char* attr) {
     return NULL;
   }
   Xen_Instance* attr_inst = Xen_String_From_CString(attr);
-  if_nil_eval(attr_inst) {
+  if (!attr_inst) {
     return NULL;
   }
   Xen_Instance* result = Xen_Attr_Get(inst, attr_inst);

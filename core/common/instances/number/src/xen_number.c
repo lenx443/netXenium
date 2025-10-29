@@ -76,12 +76,12 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
 
 Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
   if (!cstring) {
-    return nil;
+    return NULL;
   }
 
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) {
-    return nil;
+  if (!z) {
+    return NULL;
   }
 
   z->digits = NULL;
@@ -120,7 +120,7 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
 
   if (base < 2 || base > 36) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   const char* start = str;
@@ -135,13 +135,13 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
 
   if (end == start) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   z->digits = (uint32_t*)malloc(sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
   z->digits[0] = 0;
   z->size = 1;
@@ -157,7 +157,7 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
       z->digits = NULL;
       z->size = 0;
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
 
     uint64_t carry = (uint64_t)dv;
@@ -176,7 +176,7 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
         z->digits = NULL;
         z->size = 0;
         Xen_DEL_REF(z);
-        return nil;
+        return NULL;
       }
       z->digits = nd;
       z->digits[z->size] = limb;
@@ -201,7 +201,8 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
 
 Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -211,7 +212,7 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -231,7 +232,7 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
   z->digits = (uint32_t*)malloc(sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   z->digits[0] = mag;
@@ -243,7 +244,8 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
 
 Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -253,7 +255,7 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -273,7 +275,7 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -290,7 +292,8 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
 
 Xen_INSTANCE* Xen_Number_From_Int(int value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -300,7 +303,7 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -320,7 +323,7 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -337,7 +340,8 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
 
 Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -347,7 +351,7 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -360,7 +364,7 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -377,7 +381,8 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
 
 Xen_INSTANCE* Xen_Number_From_Long(long value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -387,7 +392,7 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -407,7 +412,7 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -424,7 +429,8 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
 
 Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -434,7 +440,7 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -447,7 +453,7 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -464,7 +470,8 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
 
 Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -474,7 +481,7 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -494,7 +501,7 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;
@@ -511,7 +518,8 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
 
 Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
   Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(z) return nil;
+  if (!z)
+    return NULL;
 
   z->digits = NULL;
   z->size = 0;
@@ -521,7 +529,7 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
     z->digits = (uint32_t*)malloc(sizeof(uint32_t));
     if (!z->digits) {
       Xen_DEL_REF(z);
-      return nil;
+      return NULL;
     }
     z->digits[0] = 0;
     z->size = 1;
@@ -535,7 +543,7 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
   z->digits = (uint32_t*)malloc(2 * sizeof(uint32_t));
   if (!z->digits) {
     Xen_DEL_REF(z);
-    return nil;
+    return NULL;
   }
 
   size_t n = 0;

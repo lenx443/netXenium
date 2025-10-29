@@ -17,7 +17,7 @@ static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean* boolean = (Xen_Boolean*)self;
   boolean->value = 0;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
@@ -27,15 +27,15 @@ static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* string = NULL;
   if (boolean->value == 0) {
     if ((string = Xen_String_From_CString("false")) == NULL) {
-      return nil;
+      return NULL;
     }
   } else if (boolean->value == 1) {
     if ((string = Xen_String_From_CString("true")) == NULL) {
-      return nil;
+      return NULL;
     }
   } else {
     if ((string = Xen_String_From_CString("unknow")) == NULL) {
-      return nil;
+      return NULL;
     }
   }
   return string;
@@ -47,7 +47,7 @@ static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
   unsigned long hash = (unsigned long)((Xen_Boolean*)self)->value;
   Xen_Instance* hash_number = Xen_Number_From_ULong(hash);
   if (!hash_number) {
-    return nil;
+    return NULL;
   }
   return hash_number;
 }

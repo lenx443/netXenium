@@ -26,7 +26,7 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
   }
   ctx_stack_new->ctx =
       (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, 0);
-  if_nil_eval(ctx_stack_new->ctx) {
+  if (!ctx_stack_new->ctx) {
     Xen_DEL_REF(alloc_args);
     free(ctx_stack_new);
     return 0;
@@ -67,7 +67,7 @@ int run_context_stack_push_refer(RunContext_Stack_ptr* ctx_stack,
 
 Xen_Instance* run_context_stack_peek_top(RunContext_Stack_ptr* ctx_stack) {
   if (!ctx_stack) {
-    return nil;
+    return NULL;
   }
   return (Xen_Instance*)(*ctx_stack)->ctx;
 }

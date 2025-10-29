@@ -19,20 +19,20 @@
 
 Xen_Instance* Xen_Map_New(size_t capacity) {
   Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, 0);
-  if_nil_eval(map) {
-    return nil;
+  if (!map) {
+    return NULL;
   }
   map->map_buckets = malloc(capacity * sizeof(struct __Map_Node*));
   if (!map->map_buckets) {
-    return nil;
+    return NULL;
   }
   for (size_t i = 0; i < capacity; i++) {
     map->map_buckets[i] = NULL;
   }
   map->map_keys = __instance_new(&Xen_Vector_Implement, nil, 0);
-  if_nil_eval(map->map_keys) {
+  if (!map->map_keys) {
     free(map->map_buckets);
-    return nil;
+    return NULL;
   }
   map->map_capacity = capacity;
   return (Xen_Instance*)map;
@@ -44,7 +44,7 @@ Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs,
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair(map, pairs[i])) {
       Xen_DEL_REF(map);
-      return nil;
+      return NULL;
     }
   }
   return (Xen_Instance*)map;
@@ -57,7 +57,7 @@ Xen_Instance* Xen_Map_From_Pairs_Str_With_Size(size_t size,
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair_Str((Xen_Instance*)map, pairs[i])) {
       Xen_DEL_REF(map);
-      return nil;
+      return NULL;
     }
   }
   return (Xen_Instance*)map;
@@ -90,7 +90,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
       }
     } else {
       eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_OPR_EQ);
-      if_nil_eval(eval) {
+      if (!eval) {
         return 0;
       }
     }
@@ -124,7 +124,7 @@ int Xen_Map_Push_Pair_Str(Xen_Instance* map, Xen_Map_Pair_Str pair) {
     return 0;
   }
   Xen_Instance* key_inst = Xen_String_From_CString(pair.key);
-  if_nil_eval(key_inst) {
+  if (!key_inst) {
     return 0;
   }
   if (!Xen_Map_Push_Pair(map, (Xen_Map_Pair){key_inst, pair.value})) {
@@ -179,7 +179,7 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
       }
     } else {
       eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
-      if_nil_eval(eval) {
+      if (!eval) {
         return NULL;
       }
     }
@@ -206,7 +206,7 @@ Xen_Instance* Xen_Map_Get_Str(Xen_Instance* map, const char* key) {
 
 Xen_Instance* Xen_Map_Keys(Xen_Instance* map) {
   if (!map || Xen_Nil_Eval(map)) {
-    return nil;
+    return NULL;
   }
   return Xen_ADD_REF(((Xen_Map*)map)->map_keys);
 }

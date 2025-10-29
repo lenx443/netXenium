@@ -12,21 +12,21 @@
 
 Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
   Xen_AST_Node* ast = (Xen_AST_Node*)__instance_new(&Xen_AST_Implement, nil, 0);
-  if_nil_eval(ast) {
-    return nil;
+  if (!ast) {
+    return NULL;
   }
   if (name) {
     ast->name = strdup(name);
     if (!ast->name) {
       Xen_DEL_REF(ast);
-      return nil;
+      return NULL;
     }
   }
   if (value) {
     ast->value = strdup(value);
     if (!ast->value) {
       Xen_DEL_REF(ast);
-      return nil;
+      return NULL;
     }
   }
   return (Xen_Instance*)ast;
@@ -72,12 +72,12 @@ Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
 
 Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
   Xen_Instance* rsult = Xen_AST_Node_New(wrap, NULL);
-  if_nil_eval(rsult) {
-    return nil;
+  if (!rsult) {
+    return NULL;
   }
   if (!Xen_AST_Node_Push_Child(rsult, node)) {
     Xen_DEL_REF(rsult);
-    return nil;
+    return NULL;
   }
   return rsult;
 }

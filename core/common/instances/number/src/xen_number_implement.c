@@ -27,7 +27,7 @@ static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
   num->digits = NULL;
   num->size = 0;
   num->sign = 0;
-  return Xen_True;
+  return nil;
 }
 
 static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -44,12 +44,12 @@ static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE
   const char* cstring = Xen_Number_As_CString(self);
   if (!cstring) {
-    return nil;
+    return NULL;
   }
   Xen_Instance* string = Xen_String_From_CString(cstring);
   if (!string) {
     free((void*)cstring);
-    return nil;
+    return NULL;
   }
   free((void*)cstring);
   return string;
@@ -173,7 +173,7 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
     return (Xen_Instance*)Xen_ADD_REF(n);
   }
   Xen_Number* r = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
-  if_nil_eval(r) {
+  if (!r) {
     return NULL;
   }
   r->digits = malloc(size_n * sizeof(uint32_t));
@@ -222,7 +222,7 @@ struct __Implement Xen_Number_Implement = {
 
 int Xen_Number_Init() {
   Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
-  if_nil_eval(props) {
+  if (!props) {
     return 0;
   }
   if (!vm_define_native_function(props, "__pow", number_opr_pow, nil) ||
