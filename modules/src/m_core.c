@@ -7,6 +7,7 @@
 #include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_map.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -14,7 +15,6 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
-#include "xen_vector.h"
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args) {
@@ -87,10 +87,14 @@ static Xen_Instance* fn_fun(ctx_id_t id, Xen_Instance* self,
     fputs(Xen_String_As_CString(string), stdout);
     Xen_DEL_REF(string);
   }
-  return Xen_Vector_From_Array(
-      5, (Xen_Instance*[]){Xen_Number_From_Int(12), Xen_Number_From_Int(1),
-                           Xen_Number_From_Int(6), Xen_Number_From_Int(5),
-                           Xen_Number_From_Int(10)});
+  return Xen_Map_From_Pairs_Str_With_Size(
+      5,
+      (Xen_Map_Pair_Str[]){{"0", Xen_Number_From_Int(12)},
+                           {"1", Xen_Number_From_Int(1)},
+                           {"2", Xen_Number_From_Int(6)},
+                           {"3", Xen_Number_From_Int(5)},
+                           {"0", Xen_Number_From_Int(10)}},
+      XEN_MAP_DEFAULT_CAP);
 }
 
 static Xen_Module_Function_Table core_functions = {

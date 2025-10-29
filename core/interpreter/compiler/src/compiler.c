@@ -533,6 +533,42 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           emit_value = (Emit_Value){BINARYOP, Xen_OPR_DIV};
           stack[sp++] = Emit;
           frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_MOD};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_ADD};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_SUB};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_LT};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_LE};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_EQ};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_GT};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_GE};
+          stack[sp++] = Emit;
+          frame->passes++;
+        } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
+          emit_value = (Emit_Value){BINARYOP, Xen_OPR_NE};
+          stack[sp++] = Emit;
+          frame->passes++;
         } else {
           stack[sp++] = Error;
         }

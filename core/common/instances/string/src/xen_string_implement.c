@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "basic.h"
 #include "basic_templates.h"
@@ -33,7 +34,8 @@ static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
                                     Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
-  free(string->characters);
+  if (string->characters)
+    free(string->characters);
   return nil;
 }
 
@@ -41,6 +43,26 @@ static Xen_Instance* string_string(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_ADD_REF(self);
+}
+
+static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
+                                Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_String* string = (Xen_String*)self;
+  char* buffer = malloc(strlen(string->characters) + 3);
+  if (!buffer) {
+    return NULL;
+  }
+  strcpy(buffer, "'");
+  strcat(buffer, string->characters);
+  strcat(buffer, "'");
+  Xen_Instance* raw = Xen_String_From_CString(buffer);
+  if (!raw) {
+    free(buffer);
+    return nil;
+  }
+  free(buffer);
+  return raw;
 }
 
 static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
@@ -89,6 +111,17 @@ static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   return character;
+}
+
+static Xen_Instance* string_opr_add(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1)
+    return NULL;
+  Xen_Instance* str = Xen_Vector_Peek_Index(args, 0);
+  if (Xen_TYPE(str) != &Xen_String_Implement)
+    return NULL;
+  return Xen_String_From_Concat(self, str);
 }
 
 static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
@@ -140,7 +173,7 @@ struct __Implement Xen_String_Implement = {
     .__alloc = string_alloc,
     .__destroy = string_destroy,
     .__string = string_string,
-    .__raw = string_string,
+    .__raw = string_raw,
     .__callable = NULL,
     .__hash = string_hash,
     .__get_attr = Xen_Basic_Get_Attr_Static,
@@ -151,20 +184,12 @@ int Xen_String_Init() {
   if_nil_eval(props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__eq", string_opr_eq, nil)) {
-    Xen_DEL_REF(Xen_String_Implement.__props);
-    return 0;
-  }
-  if (!vm_define_native_function(props, "__get_index", string_opr_get_index,
-                                 nil)) {
-    Xen_DEL_REF(Xen_String_Implement.__props);
-    return 0;
-  }
-  if (!vm_define_native_function(props, "upper", string_prop_upper, nil)) {
-    Xen_DEL_REF(Xen_String_Implement.__props);
-    return 0;
-  }
-  if (!vm_define_native_function(props, "lower", string_prop_lower, nil)) {
+  if (!vm_define_native_function(props, "__eq", string_opr_eq, nil) ||
+      !vm_define_native_function(props, "__get_index", string_opr_get_index,
+                                 nil) ||
+      !vm_define_native_function(props, "__add", string_opr_add, nil) ||
+      !vm_define_native_function(props, "upper", string_prop_upper, nil) ||
+      !vm_define_native_function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);
     return 0;
   }

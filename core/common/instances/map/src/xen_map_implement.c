@@ -13,6 +13,10 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
+#include "xen_typedefs.h"
+#include "xen_vector.h"
+#include <stdlib.h>
+#include <string.h>
 
 static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
                                Xen_Instance* args) {
@@ -48,10 +52,90 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
                                 Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance* string = Xen_String_From_CString("<Map>");
+  Xen_Map* map = (Xen_Map*)self;
+  char* buffer = strdup("<Map(");
+  if (!buffer) {
+    return NULL;
+  }
+  Xen_size_t buflen = 6;
+  for (Xen_size_t i = 0; i < Xen_SIZE(map->map_keys); i++) {
+    Xen_Instance* key_inst = Xen_Vector_Peek_Index(map->map_keys, i);
+    Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
+    Xen_Instance* key_string =
+        vm_call_native_function(Xen_TYPE(key_inst)->__raw, key_inst, args);
+    if (!key_string) {
+      Xen_DEL_REF(value_inst);
+      free(buffer);
+      return NULL;
+    }
+    Xen_Instance* value_string =
+        vm_call_native_function(Xen_TYPE(value_inst)->__raw, value_inst, args);
+    if (!value_string) {
+      Xen_DEL_REF(key_string);
+      Xen_DEL_REF(value_inst);
+      free(buffer);
+      return NULL;
+    }
+    const char* key = strdup(Xen_String_As_CString(key_string));
+    if (!key) {
+      Xen_DEL_REF(value_string);
+      Xen_DEL_REF(key_string);
+      Xen_DEL_REF(value_inst);
+      free(buffer);
+      return NULL;
+    }
+    const char* value = strdup(Xen_String_As_CString(value_string));
+    if (!value) {
+      Xen_DEL_REF(value_string);
+      Xen_DEL_REF(key_string);
+      Xen_DEL_REF(value_inst);
+      free((void*)key);
+      free(buffer);
+      return NULL;
+    }
+    Xen_DEL_REF(value_string);
+    Xen_DEL_REF(key_string);
+    Xen_DEL_REF(value_inst);
+    buflen += strlen(key) + strlen(value) + 2;
+    char* temp = realloc(buffer, buflen);
+    if (!temp) {
+      free((void*)key);
+      free((void*)value);
+      free(buffer);
+      return NULL;
+    }
+    buffer = temp;
+    strcat(buffer, key);
+    strcat(buffer, ": ");
+    strcat(buffer, value);
+    free((void*)key);
+    free((void*)value);
+    if (i != Xen_SIZE(map->map_keys) - 1) {
+      buflen += 2;
+      char* tem = realloc(buffer, buflen);
+      if (!tem) {
+        free(buffer);
+        return NULL;
+      }
+      buffer = tem;
+      strcat(buffer, ", ");
+    }
+  }
+  buflen += 2;
+  char* temp = realloc(buffer, buflen);
+  if (!temp) {
+    free(buffer);
+    return NULL;
+  }
+  buffer = temp;
+  strcat(buffer, ")>");
+  buffer[buflen - 1] = '\0';
+  Xen_Instance* string = Xen_String_From_CString(buffer);
   if (!string) {
+    free(buffer);
     return nil;
   }
+  free(buffer);
   return string;
 }
 
