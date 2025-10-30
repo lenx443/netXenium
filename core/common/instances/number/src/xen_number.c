@@ -1122,10 +1122,15 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     return Xen_Number_From_CString(Xen_Number_As_CString(a_inst), 10);
 
   if (a->sign != b->sign) {
-    if (a->sign < 0)
-      return Xen_Number_Sub(b_inst, a_inst);
-    else
-      return Xen_Number_Sub(a_inst, b_inst);
+    if (a->sign < 0) {
+      Xen_Number tmp = *a;
+      tmp.sign = b->sign;
+      return Xen_Number_Sub(b_inst, (Xen_Instance*)&tmp);
+    } else {
+      Xen_Number tmp = *b;
+      tmp.sign = a->sign;
+      return Xen_Number_Sub(a_inst, (Xen_Instance*)&tmp);
+    }
   }
 
   Xen_size_t max_size = (a->size > b->size ? a->size : b->size) + 1;
