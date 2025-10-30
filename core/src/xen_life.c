@@ -10,6 +10,9 @@
 #include "xen_module_load.h"
 
 int Xen_Init(int argc, char** argv) {
+  program.argv = argv + 1;
+  program.argc = argc - 1;
+
   global_logs = list_new();
   if (!global_logs) {
     return 0;
@@ -19,9 +22,6 @@ int Xen_Init(int argc, char** argv) {
     return 0;
   }
   setlocale(LC_CTYPE, "");
-
-  program.argv = argv;
-  program.argc = argc;
 
   if (!Xen_Instance_Init()) {
     vm_destroy();
@@ -35,7 +35,6 @@ int Xen_Init(int argc, char** argv) {
     log_free(NULL);
     return 0;
   }
-
   return 1;
 }
 

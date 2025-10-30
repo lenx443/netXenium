@@ -6,8 +6,9 @@
 #include "xen_tuple.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
+#include "xen_typedefs.h"
 
-Xen_Instance* Xen_Tuple_From_Array(size_t size, Xen_Instance** array) {
+Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
   if (!array) {
     return NULL;
   }
@@ -24,4 +25,18 @@ Xen_Instance* Xen_Tuple_From_Array(size_t size, Xen_Instance** array) {
     tuple->instances[tuple->__size++] = Xen_ADD_REF(array[i]);
   }
   return (Xen_Instance*)tuple;
+}
+
+Xen_Instance* Xen_Tuple_Get_Index(Xen_Instance* tuple, Xen_size_t index) {
+  if (!tuple || index >= ((Xen_Tuple*)tuple)->__size) {
+    return NULL;
+  }
+  return Xen_ADD_REF(((Xen_Tuple*)tuple)->instances[index]);
+}
+
+Xen_Instance* Xen_Tuple_Peek_Index(Xen_Instance* tuple, Xen_size_t index) {
+  if (!tuple || index >= ((Xen_Tuple*)tuple)->__size) {
+    return NULL;
+  }
+  return ((Xen_Tuple*)tuple)->instances[index];
 }

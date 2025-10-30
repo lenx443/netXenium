@@ -40,10 +40,63 @@ static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance* string = Xen_String_From_CString("<Vector>");
-  if (!string) {
+  Xen_Vector* vector = (Xen_Vector*)self;
+  char* buffer = strdup("<Vector(");
+  if (!buffer) {
     return NULL;
   }
+  Xen_size_t buflen = 9;
+  for (Xen_size_t i = 0; i < Xen_SIZE(vector); i++) {
+    Xen_Instance* value_inst = Xen_Vector_Peek_Index(self, i);
+    Xen_Instance* value_string =
+        vm_call_native_function(Xen_TYPE(value_inst)->__raw, value_inst, args);
+    if (!value_string) {
+      free(buffer);
+      return NULL;
+    }
+    const char* value = strdup(Xen_String_As_CString(value_string));
+    if (!value) {
+      Xen_DEL_REF(value_string);
+      free(buffer);
+      return NULL;
+    }
+    Xen_DEL_REF(value_string);
+    buflen += strlen(value);
+    char* temp = realloc(buffer, buflen);
+    if (!temp) {
+      free((void*)value);
+      free(buffer);
+      return NULL;
+    }
+    buffer = temp;
+    strcat(buffer, value);
+    free((void*)value);
+    if (i != Xen_SIZE(vector) - 1) {
+      buflen += 2;
+      char* tem = realloc(buffer, buflen);
+      if (!tem) {
+        free(buffer);
+        return NULL;
+      }
+      buffer = tem;
+      strcat(buffer, ", ");
+    }
+  }
+  buflen += 2;
+  char* temp = realloc(buffer, buflen);
+  if (!temp) {
+    free(buffer);
+    return NULL;
+  }
+  buffer = temp;
+  strcat(buffer, ")>");
+  buffer[buflen - 1] = '\0';
+  Xen_Instance* string = Xen_String_From_CString(buffer);
+  if (!string) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
   return string;
 }
 

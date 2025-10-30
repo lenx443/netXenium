@@ -10,8 +10,7 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_vector.h"
-#include "xen_vector_implement.h"
+#include "xen_tuple.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
@@ -25,8 +24,8 @@ bool vm_create() {
   }
   vm->ctx_id_count = 0;
   vm->vm_ctx_stack = NULL;
-  Xen_Instance* args = __instance_new(&Xen_Vector_Implement, nil, 0);
-  if (!args) {
+  Xen_Instance** args_array = malloc(program.argc * sizeof(Xen_Instance*));
+  if (!args_array) {
     free(vm);
     return 0;
   }
@@ -34,15 +33,18 @@ bool vm_create() {
     Xen_INSTANCE* arg_value = Xen_String_From_CString(program.argv[i]);
     if (!arg_value) {
       free(vm);
-      Xen_DEL_REF(args);
-    }
-    if (!Xen_Vector_Push(args, arg_value)) {
-      Xen_DEL_REF(arg_value);
-      free(vm);
-      Xen_DEL_REF(args);
+      free(args_array);
       return 0;
     }
+    args_array[i] = arg_value;
   }
+  Xen_Instance* args = Xen_Tuple_From_Array(program.argc, args_array);
+  if (!args) {
+    free(vm);
+    free(args_array);
+    return 0;
+  }
+  free(args_array);
   if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args)) {
     free(vm);
     Xen_DEL_REF(args);

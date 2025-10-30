@@ -5,6 +5,7 @@
 
 int Xen_Number_Is_Zero(Xen_Instance*);
 int Xen_Number_Is_Odd(Xen_Instance*);
+int Xen_Number_Cmp(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Div2(Xen_Instance*);
 
 Xen_INSTANCE* Xen_Number_From_CString(const char*, int);
@@ -29,7 +30,10 @@ unsigned long long Xen_Number_As_ULongLong(Xen_INSTANCE*);
 
 Xen_Instance* Xen_Number_Mul(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Div(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_Mod(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Pow(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_Add(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_Sub(Xen_Instance*, Xen_Instance*);
 
 #define Xen_Number_As(T, inst)                                                 \
   _Generic((T)0,                                                               \

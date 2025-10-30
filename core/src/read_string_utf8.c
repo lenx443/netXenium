@@ -9,7 +9,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "colors.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
@@ -270,10 +269,7 @@ CodeUTF8 read_raw_char_utf8() {
 }
 
 LIST_ptr read_string_utf8() {
-#define default_promp(prompt)                                                  \
-  sprintf(prompt, "[%s%d" RESET "] " AMARILLO "%s" RESET " > ",                \
-          program.return_code == 0 ? VERDE : ROJO, program.return_code,        \
-          program.argv[0]);
+#define default_promp(prompt) sprintf(prompt, " -> ");
   LIST_ptr cmd = list_new();
   int i = 0;
   CodeUTF8 c;

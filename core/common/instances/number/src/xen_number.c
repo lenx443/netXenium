@@ -26,6 +26,34 @@ int Xen_Number_Is_Odd(Xen_Instance* n_inst) {
   return (n->digits[0] & 1) != 0;
 }
 
+int Xen_Number_Cmp(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return 0;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (a->sign > b->sign)
+    return 1;
+  if (a->sign < b->sign)
+    return -1;
+
+  int sign = a->sign;
+
+  if (a->size > b->size)
+    return sign;
+  if (a->size < b->size)
+    return -sign;
+
+  for (Xen_ssize_t i = (Xen_ssize_t)a->size - 1; i >= 0; i--) {
+    if (a->digits[i] > b->digits[i])
+      return sign;
+    if (a->digits[i] < b->digits[i])
+      return -sign;
+  }
+  return 0;
+}
+
 Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
   if (!n_inst)
     return NULL;
@@ -971,6 +999,76 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return (Xen_Instance*)result;
 }
 
+Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (Xen_Number_Is_Zero(b_inst))
+    return NULL;
+
+  if (Xen_Number_Is_Zero(a_inst)) {
+    Xen_Number* zero =
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+    if (!zero)
+      return NULL;
+    zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
+    if (!zero->digits) {
+      Xen_DEL_REF(zero);
+      return NULL;
+    }
+    zero->digits[0] = 0;
+    zero->size = 1;
+    zero->sign = 0;
+    return (Xen_Instance*)zero;
+  }
+
+  Xen_size_t rem_size = a->size;
+  uint32_t* remainder = (uint32_t*)calloc(rem_size, sizeof(uint32_t));
+  if (!remainder)
+    return NULL;
+  memcpy(remainder, a->digits, a->size * sizeof(uint32_t));
+
+  if (b->size != 1) {
+    free(remainder);
+    return NULL;
+  }
+
+  uint32_t divisor = b->digits[0];
+  uint64_t carry = 0;
+
+  for (Xen_ssize_t i = rem_size - 1; i >= 0; i--) {
+    uint64_t cur = (carry << 32) | remainder[i];
+    uint64_t q = cur / divisor;
+    carry = cur % divisor;
+    remainder[i] = (uint32_t)q;
+  }
+
+  uint32_t remainder_val = (uint32_t)carry;
+
+  Xen_Number* res = (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!res) {
+    free(remainder);
+    return NULL;
+  }
+
+  res->digits = (uint32_t*)malloc(sizeof(uint32_t));
+  if (!res->digits) {
+    Xen_DEL_REF(res);
+    free(remainder);
+    return NULL;
+  }
+
+  res->digits[0] = remainder_val;
+  res->size = 1;
+  res->sign = a->sign;
+
+  free(remainder);
+  return (Xen_Instance*)res;
+}
+
 Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   if (!base_inst || !exp_inst)
     return NULL;
@@ -1009,6 +1107,146 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   Xen_DEL_REF(one);
 
   return result;
+}
+
+Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (Xen_Number_Is_Zero(a_inst))
+    return Xen_Number_From_CString(Xen_Number_As_CString(b_inst), 10);
+  if (Xen_Number_Is_Zero(b_inst))
+    return Xen_Number_From_CString(Xen_Number_As_CString(a_inst), 10);
+
+  if (a->sign != b->sign) {
+    if (a->sign < 0)
+      return Xen_Number_Sub(b_inst, a_inst);
+    else
+      return Xen_Number_Sub(a_inst, b_inst);
+  }
+
+  Xen_size_t max_size = (a->size > b->size ? a->size : b->size) + 1;
+  uint32_t* res_digits = (uint32_t*)calloc(max_size, sizeof(uint32_t));
+  if (!res_digits)
+    return NULL;
+
+  uint64_t carry = 0;
+  Xen_size_t i;
+
+  for (i = 0; i < max_size - 1; i++) {
+    uint64_t av = (i < a->size) ? a->digits[i] : 0;
+    uint64_t bv = (i < b->size) ? b->digits[i] : 0;
+    uint64_t sum = av + bv + carry;
+    res_digits[i] = (uint32_t)(sum & 0xFFFFFFFFu);
+    carry = sum >> 32;
+  }
+
+  if (carry)
+    res_digits[i++] = (uint32_t)carry;
+
+  while (i > 1 && res_digits[i - 1] == 0)
+    i--;
+
+  Xen_Number* result =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!result) {
+    free(res_digits);
+    return NULL;
+  }
+
+  result->digits = (uint32_t*)malloc(i * sizeof(uint32_t));
+  if (!result->digits) {
+    Xen_DEL_REF(result);
+    free(res_digits);
+    return NULL;
+  }
+
+  memcpy(result->digits, res_digits, i * sizeof(uint32_t));
+  result->size = i;
+  result->sign = a->sign;
+
+  free(res_digits);
+  return (Xen_Instance*)result;
+}
+
+Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (a->sign != b->sign) {
+    Xen_Number tmp = *b;
+    tmp.sign = a->sign;
+    return Xen_Number_Add(a_inst, (Xen_Instance*)&tmp);
+  }
+
+  int cmp = Xen_Number_Cmp(a_inst, b_inst);
+  if (cmp == 0) {
+    Xen_Number* zero =
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+    if (!zero)
+      return NULL;
+    zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
+    if (!zero->digits) {
+      Xen_DEL_REF(zero);
+      return NULL;
+    }
+    zero->digits[0] = 0;
+    zero->size = 1;
+    zero->sign = 0;
+    return (Xen_Instance*)zero;
+  }
+
+  const Xen_Number* minuend = a;
+  const Xen_Number* subtrahend = b;
+  int result_sign = a->sign;
+
+  if (cmp < 0) {
+    minuend = b;
+    subtrahend = a;
+    result_sign = -a->sign;
+  }
+
+  Xen_size_t res_size = minuend->size;
+  uint32_t* res_digits = (uint32_t*)calloc(res_size, sizeof(uint32_t));
+  if (!res_digits)
+    return NULL;
+
+  uint64_t borrow = 0;
+  for (Xen_size_t i = 0; i < res_size; i++) {
+    uint64_t a_digit = minuend->digits[i];
+    uint64_t b_digit = (i < subtrahend->size) ? subtrahend->digits[i] : 0;
+    uint64_t tmp = a_digit;
+    if (tmp < b_digit + borrow) {
+      tmp += ((uint64_t)1 << 32);
+      res_digits[i] = (uint32_t)(tmp - b_digit - borrow);
+      borrow = 1;
+    } else {
+      res_digits[i] = (uint32_t)(tmp - b_digit - borrow);
+      borrow = 0;
+    }
+  }
+
+  while (res_size > 1 && res_digits[res_size - 1] == 0)
+    res_size--;
+
+  Xen_Number* result =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+  if (!result) {
+    free(res_digits);
+    return NULL;
+  }
+
+  result->digits = res_digits;
+  result->size = res_size;
+  result->sign = result_sign;
+
+  return (Xen_Instance*)result;
 }
 
 const signed char Xen_Char_Digit_Value[256] = {

@@ -27,9 +27,21 @@ static Xen_INSTANCE* __expose_get_handle(const char* name) {
   return expose;
 }
 
+static int __args_set_handle(const char* name, Xen_INSTANCE* inst) {
+  (void)name;
+  (void)inst;
+  return 1;
+}
+
+static Xen_INSTANCE* __args_get_handle(const char* name) {
+  (void)name;
+  return Xen_ADD_REF(vm->root_context->ctx_args);
+}
+
 static struct Xen_RegisterStream streams[] = {
     {"__expose", true, __expose_set_handle, __expose_get_handle},
     {"__expose_", false, __expose_set_handle, __expose_get_handle},
+    {"__args", true, __args_set_handle, __args_get_handle},
     {NULL, false, NULL, NULL},
 };
 
