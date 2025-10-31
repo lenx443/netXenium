@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -48,8 +49,7 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
   Xen_size_t buflen = 9;
   for (Xen_size_t i = 0; i < Xen_SIZE(vector); i++) {
     Xen_Instance* value_inst = Xen_Vector_Peek_Index(self, i);
-    Xen_Instance* value_string =
-        vm_call_native_function(Xen_TYPE(value_inst)->__raw, value_inst, args);
+    Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
     if (!value_string) {
       free(buffer);
       return NULL;
@@ -106,7 +106,7 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(index_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {

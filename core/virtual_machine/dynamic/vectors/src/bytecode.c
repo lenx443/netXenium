@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "attrs.h"
 #include "bytecode.h"
 #include "implement.h"
 #include "instance.h"
@@ -85,8 +86,7 @@ void bc_print(ProgramCode_t pc) {
           pc.consts->c_instances,
           Xen_Number_From_UInt(code->bc_array[i].bci_oparg), Xen_OPR_GET_INDEX);
       if (c_inst) {
-        Xen_Instance* string =
-            vm_call_native_function(Xen_TYPE(c_inst)->__raw, c_inst, nil);
+        Xen_Instance* string = Xen_Attr_Raw(c_inst);
         if (string) {
           val = strdup(Xen_String_As_CString(string));
           Xen_DEL_REF(string);

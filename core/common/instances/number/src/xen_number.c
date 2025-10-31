@@ -1106,6 +1106,7 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   Xen_DEL_REF(base);
   Xen_DEL_REF(one);
 
+  ((Xen_Number*)result)->sign = ((Xen_Number*)base_inst)->sign;
   return result;
 }
 

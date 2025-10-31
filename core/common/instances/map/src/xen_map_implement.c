@@ -1,4 +1,5 @@
 #include "xen_map_implement.h"
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -60,15 +61,13 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   for (Xen_size_t i = 0; i < Xen_SIZE(map->map_keys); i++) {
     Xen_Instance* key_inst = Xen_Vector_Peek_Index(map->map_keys, i);
     Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
-    Xen_Instance* key_string =
-        vm_call_native_function(Xen_TYPE(key_inst)->__raw, key_inst, args);
+    Xen_Instance* key_string = Xen_Attr_Raw(key_inst);
     if (!key_string) {
       Xen_DEL_REF(value_inst);
       free(buffer);
       return NULL;
     }
-    Xen_Instance* value_string =
-        vm_call_native_function(Xen_TYPE(value_inst)->__raw, value_inst, args);
+    Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
     if (!value_string) {
       Xen_DEL_REF(key_string);
       Xen_DEL_REF(value_inst);

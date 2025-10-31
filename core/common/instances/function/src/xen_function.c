@@ -39,7 +39,7 @@ Xen_INSTANCE* Xen_Function_From_Program(ProgramCode_t pc_fun,
 }
 
 Xen_Instance* Xen_Function_Call(Xen_Instance* fun, Xen_Instance* args) {
-  if (Xen_TYPE(fun) != &Xen_Function_Implement) {
+  if (Xen_IMPL(fun) != &Xen_Function_Implement) {
     return NULL;
   }
   Xen_Instance* ret = Xen_Function_Implement.__callable(0, fun, args);

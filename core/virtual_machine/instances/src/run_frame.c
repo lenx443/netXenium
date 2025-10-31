@@ -15,9 +15,9 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (!args || Xen_SIZE(args) != 4 ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 0)) &&
-       Xen_TYPE(Xen_Tuple_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
+       Xen_IMPL(Xen_Tuple_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 1)) &&
-       Xen_TYPE(Xen_Tuple_Peek_Index(args, 1)) != &Xen_Run_Frame)) {
+       Xen_IMPL(Xen_Tuple_Peek_Index(args, 1)) != &Xen_Run_Frame)) {
     return NULL;
   }
   struct RunContext* ctx_new = (struct RunContext*)self;

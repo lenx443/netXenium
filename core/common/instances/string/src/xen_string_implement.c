@@ -80,7 +80,7 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
-      Xen_TYPE(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
     return NULL;
 
   Xen_Instance* val = Xen_Operator_Eval_Pair_Steal2(
@@ -99,7 +99,7 @@ static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(index_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
@@ -119,7 +119,7 @@ static Xen_Instance* string_opr_add(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* str = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(str) != &Xen_String_Implement)
+  if (Xen_IMPL(str) != &Xen_String_Implement)
     return NULL;
   return Xen_String_From_Concat(self, str);
 }
@@ -130,7 +130,7 @@ static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* num_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(num_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(num_inst) != &Xen_Number_Implement)
     return NULL;
   size_t num = Xen_Number_As(Xen_size_t, num_inst);
   Xen_size_t bufcap = Xen_SIZE(self) * num + 1;

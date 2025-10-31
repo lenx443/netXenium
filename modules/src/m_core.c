@@ -1,12 +1,11 @@
 #include <stdio.h>
 
+#include "attrs.h"
 #include "callable.h"
-#include "implement.h"
 #include "instance.h"
 #include "m_core.h"
 #include "operators.h"
 #include "run_ctx.h"
-#include "vm.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -24,17 +23,16 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) == 1) {
     Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
         args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
-    if (!inst || !Xen_TYPE(inst)->__string) {
+    if (!inst) {
+      return NULL;
+    }
+    Xen_Instance* string = Xen_Attr_String(inst);
+    if (!string) {
       Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_Instance* string =
-        vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
-    if (!string || Xen_Nil_Eval(string)) {
-      return NULL;
-    }
     Xen_DEL_REF(inst);
-    if (Xen_TYPE(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
       return NULL;
     }
@@ -43,17 +41,16 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
     return nil;
   }
   Xen_Instance* out_reg = xen_register_prop_get("__out", id);
-  if (!Xen_TYPE(out_reg)->__string) {
+  if (!out_reg) {
+    return NULL;
+  }
+  Xen_Instance* string = Xen_Attr_String(out_reg);
+  if (!string) {
     Xen_DEL_REF(out_reg);
     return NULL;
   }
-  Xen_Instance* string =
-      vm_call_native_function(Xen_TYPE(out_reg)->__string, out_reg, nil);
-  if (!string || Xen_Nil_Eval(string)) {
-    return NULL;
-  }
   Xen_DEL_REF(out_reg);
-  if (Xen_TYPE(string) != &Xen_String_Implement) {
+  if (Xen_IMPL(string) != &Xen_String_Implement) {
     Xen_DEL_REF(string);
     return NULL;
   }
@@ -69,17 +66,13 @@ static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
         args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
-    if (!Xen_TYPE(inst)->__string) {
+    Xen_Instance* string = Xen_Attr_String(inst);
+    if (!string) {
       Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_Instance* string =
-        vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
-    if (!string || Xen_Nil_Eval(string)) {
-      return NULL;
-    }
     Xen_DEL_REF(inst);
-    if (Xen_TYPE(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
       return NULL;
     }
@@ -95,17 +88,13 @@ static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
         args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
-    if (!Xen_TYPE(inst)->__string) {
+    Xen_Instance* string = Xen_Attr_String(inst);
+    if (!string || Xen_Nil_Eval(string)) {
       Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_Instance* string =
-        vm_call_native_function(Xen_TYPE(inst)->__string, inst, nil);
-    if (!string || Xen_Nil_Eval(string)) {
-      return NULL;
-    }
     Xen_DEL_REF(inst);
-    if (Xen_TYPE(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != &Xen_String_Implement) {
       Xen_DEL_REF(string);
       return NULL;
     }

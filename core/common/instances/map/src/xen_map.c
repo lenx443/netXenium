@@ -64,7 +64,7 @@ Xen_Instance* Xen_Map_From_Pairs_Str_With_Size(size_t size,
 }
 
 int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
-  if (!pair.key || !pair.value || !Xen_TYPE(pair.key)->__hash) {
+  if (!pair.key || !pair.value || !Xen_IMPL(pair.key)->__hash) {
     return 0;
   }
   Xen_Map* map = (Xen_Map*)map_inst;
@@ -80,8 +80,8 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
-    if (Xen_TYPE(pair.key) == &Xen_String_Implement) {
-      if (Xen_TYPE(current->key) == &Xen_String_Implement &&
+    if (Xen_IMPL(pair.key) == &Xen_String_Implement) {
+      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
           strcmp(((Xen_String*)current->key)->characters,
                  ((Xen_String*)pair.key)->characters) == 0) {
         eval = Xen_True;
@@ -169,8 +169,8 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
-    if (Xen_TYPE(key) == &Xen_String_Implement) {
-      if (Xen_TYPE(current->key) == &Xen_String_Implement &&
+    if (Xen_IMPL(key) == &Xen_String_Implement) {
+      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
           strcmp(((Xen_String*)current->key)->characters,
                  ((Xen_String*)key)->characters) == 0) {
         eval = Xen_True;

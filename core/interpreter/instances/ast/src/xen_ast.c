@@ -33,7 +33,7 @@ Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
 }
 
 int Xen_AST_Node_Push_Child(Xen_Instance* ast_inst, Xen_Instance* child) {
-  if (Xen_TYPE(child) != &Xen_AST_Implement) {
+  if (Xen_IMPL(child) != &Xen_AST_Implement) {
     return 0;
   }
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
@@ -85,7 +85,7 @@ Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
 #ifndef NDEBUG
 static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
                              int is_last) {
-  if (!ast || Xen_TYPE(ast) != &Xen_AST_Implement)
+  if (!ast || Xen_IMPL(ast) != &Xen_AST_Implement)
     return;
 
   printf("%s", prefix);

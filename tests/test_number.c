@@ -3,10 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "implement.h"
+#include "attrs.h"
 #include "instance.h"
 #include "operators.h"
-#include "vm.h"
 #include "xen_boolean.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -423,8 +422,7 @@ void test_number_string() {
   {
     Xen_Instance* foo = Xen_Number_From_Int(27447);
     assert(Xen_Nil_NEval(foo));
-    Xen_Instance* foo_str =
-        vm_call_native_function(Xen_TYPE(foo)->__string, foo, nil);
+    Xen_Instance* foo_str = Xen_Attr_String(foo);
     assert(foo_str && Xen_Nil_NEval(foo_str));
     assert(strcmp(Xen_String_As_CString(foo_str), "27447") == 0);
     Xen_DEL_REF(foo_str);

@@ -52,7 +52,7 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_TYPE(index_inst) != &Xen_Number_Implement) {
+  if (Xen_IMPL(index_inst) != &Xen_Number_Implement) {
     return NULL;
   }
   size_t index = Xen_Number_As(size_t, index_inst);

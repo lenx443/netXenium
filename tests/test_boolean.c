@@ -1,9 +1,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "implement.h"
+#include "attrs.h"
 #include "instance.h"
-#include "vm.h"
 #include "xen_boolean.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -13,8 +12,7 @@ int main(int argc, char** argv) {
   assert(Xen_Init(argc, argv) == 1);
   {
     Xen_Instance* boolean = Xen_True;
-    Xen_Instance* string =
-        vm_call_native_function(Xen_TYPE(boolean)->__string, boolean, nil);
+    Xen_Instance* string = Xen_Attr_String(boolean);
     assert(string && string != nil);
     assert(strcmp(Xen_String_As_CString(string), "true") == 0);
     Xen_DEL_REF(string);
@@ -22,8 +20,7 @@ int main(int argc, char** argv) {
   }
   {
     Xen_Instance* boolean = Xen_False;
-    Xen_Instance* string =
-        vm_call_native_function(Xen_TYPE(boolean)->__string, boolean, nil);
+    Xen_Instance* string = Xen_Attr_String(boolean);
     assert(string && string != nil);
     assert(strcmp(Xen_String_As_CString(string), "false") == 0);
     Xen_DEL_REF(string);

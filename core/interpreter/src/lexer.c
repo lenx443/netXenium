@@ -339,19 +339,19 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
                  lexer->src[lexer->pos] == 'O') {
         lexer->pos++;
         size_t start = lexer->pos;
-        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] < '8') {
           lexer->pos++;
         }
         size_t len = lexer->pos - start;
         token.tkn_text[0] = '0';
-        token.tkn_text[1] = 'b';
+        token.tkn_text[1] = 'o';
         strncpy(token.tkn_text + 2, lexer->src + start, len);
         token.tkn_text[len + 2] = '\0';
         token.tkn_type = TKN_NUMBER;
       } else if (lexer->src[lexer->pos] >= '0' &&
                  lexer->src[lexer->pos] <= '8') {
         size_t start = lexer->pos;
-        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] <= '8') {
+        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] < '8') {
           lexer->pos++;
         }
         size_t len = lexer->pos - start;

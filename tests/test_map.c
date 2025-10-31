@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include "attrs.h"
 #include "instance.h"
 #include "operators.h"
-#include "vm.h"
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
@@ -72,13 +72,11 @@ int main(int argc, char** argv) {
       Xen_Instance* key = Xen_Operator_Eval_Pair_Steal2(
           keys, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
       assert(Xen_Nil_NEval(key));
-      Xen_Instance* key_str =
-          vm_call_native_function(Xen_TYPE(key)->__string, key, nil);
+      Xen_Instance* key_str = Xen_Attr_String(key);
       assert(key_str && Xen_Nil_NEval(key_str));
       Xen_Instance* value = Xen_Map_Get(map, key);
       assert(Xen_Nil_NEval(value));
-      Xen_Instance* value_str =
-          vm_call_native_function(Xen_TYPE(value)->__string, value, nil);
+      Xen_Instance* value_str = Xen_Attr_String(value);
       assert(value_str && Xen_Nil_NEval(value_str));
       printf("%s: %s\n", Xen_String_As_CString(key_str),
              Xen_String_As_CString(value_str));

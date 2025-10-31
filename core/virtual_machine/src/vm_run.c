@@ -91,14 +91,14 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
     Xen_DEL_REF(arg);
   }
   Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
-  if (Xen_TYPE(callable)->__callable == NULL) {
+  if (Xen_IMPL(callable)->__callable == NULL) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);
     ctx->ctx_error = 1;
     return;
   }
   Xen_Instance* ret =
-      vm_call_native_function(Xen_TYPE(callable)->__callable, callable, args);
+      vm_call_native_function(Xen_IMPL(callable)->__callable, callable, args);
   if (!ret) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);
@@ -153,7 +153,7 @@ static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != &Xen_Method_Implement) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
     ctx->ctx_error = 1;
@@ -180,7 +180,7 @@ static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != &Xen_Method_Implement) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
     ctx->ctx_error = 1;
@@ -207,7 +207,7 @@ static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != &Xen_Method_Implement) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
     ctx->ctx_error = 1;

@@ -9,7 +9,7 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   if (!function || !self) {
     return NULL;
   }
-  if (Xen_TYPE(function) != &Xen_Function_Implement) {
+  if (Xen_IMPL(function) != &Xen_Function_Implement) {
     return NULL;
   }
   Xen_Method* method =
@@ -23,7 +23,7 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
 }
 
 Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args) {
-  if (Xen_TYPE(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != &Xen_Method_Implement) {
     return NULL;
   }
   Xen_Instance* ret = Xen_Method_Implement.__callable(0, method, args);
