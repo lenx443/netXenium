@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "attrs.h"
 #include "instance.h"
-#include "operators.h"
 #include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -16,11 +16,8 @@ int main(int argc, char** argv) {
   WITH_INSTANCE(tuple,
                 Xen_Tuple_From_Array(2, (Xen_Instance*[]){foo, bar, NULL})) {
     assert(Xen_Nil_NEval(tuple));
-    WITH_INSTANCE(index0, Xen_Operator_Eval_Pair_Steal2(
-                              tuple, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX))
-    WITH_INSTANCE(index1,
-                  Xen_Operator_Eval_Pair_Steal2(tuple, Xen_Number_From_Int(1),
-                                                Xen_OPR_GET_INDEX)) {
+    WITH_INSTANCE(index0, Xen_Attr_Index_Size_Get(tuple, 0))
+    WITH_INSTANCE(index1, Xen_Attr_Index_Size_Get(tuple, 1)) {
       assert(index0);
       assert(index1);
       assert(Xen_Number_As_Int(index0) == 537);

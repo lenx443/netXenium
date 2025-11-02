@@ -8,6 +8,7 @@ static STACK_EFFECT(load_stack_effect, 1);
 static STACK_EFFECT(load_prop_stack_effect, 1);
 static STACK_EFFECT(call_stack_effect, -oparg);
 static STACK_EFFECT(binaryop_stack_effect, -1);
+static STACK_EFFECT(index_get_stack_effect, -1);
 static STACK_EFFECT(attr_get_stack_effect, 0);
 static STACK_EFFECT(unary_positive_stack_effect, 0);
 static STACK_EFFECT(unary_negative_stack_effect, 0);
@@ -20,6 +21,7 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [LOAD_PROP] = {"LOAD_PROP", load_prop_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [CALL] = {"CALL", call_stack_effect, INSTRUCT_FLAG_ARG},
     [BINARYOP] = {"BINARYOP", binaryop_stack_effect, INSTRUCT_FLAG_ARG},
+    [INDEX_GET] = {"INDEX_GET", index_get_stack_effect, 0},
     [ATTR_GET] = {"ATTR_GET", attr_get_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [UNARY_POSITIVE] = {"UNARY_POSITIVE", unary_positive_stack_effect, 0},
     [UNARY_NEGATIVE] = {"UNARY_NEGATIVE", unary_negative_stack_effect, 0},

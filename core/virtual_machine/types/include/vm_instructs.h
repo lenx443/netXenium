@@ -21,6 +21,7 @@ enum vm_Instruct {
   LOAD_PROP,
   CALL,
   BINARYOP,
+  INDEX_GET,
   ATTR_GET,
   UNARY_POSITIVE,
   UNARY_NEGATIVE,

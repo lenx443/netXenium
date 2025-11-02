@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
@@ -83,8 +83,7 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
     return NULL;
 
-  Xen_Instance* val = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) == 0) {
     Xen_DEL_REF(val);
     return Xen_True;

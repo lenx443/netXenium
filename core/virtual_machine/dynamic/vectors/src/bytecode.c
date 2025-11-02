@@ -3,15 +3,10 @@
 
 #include "attrs.h"
 #include "bytecode.h"
-#include "implement.h"
 #include "instance.h"
 #include "logs.h"
-#include "operators.h"
 #include "program_code.h"
-#include "vm.h"
 #include "vm_instructs.h"
-#include "xen_nil.h"
-#include "xen_number.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 
@@ -72,9 +67,8 @@ void bc_print(ProgramCode_t pc) {
     printf("%ld %s", i, Instruct_Info_Table[code->bc_array[i].bci_opcode].name);
     if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
         INSTRUCT_FLAG_CO_NAME) {
-      Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
-          pc.consts->c_names, Xen_Number_From_UInt(code->bc_array[i].bci_oparg),
-          Xen_OPR_GET_INDEX);
+      Xen_Instance* c_name = Xen_Attr_Index_Size_Get(
+          pc.consts->c_names, code->bc_array[i].bci_oparg);
       printf(" %d (%s)\n", code->bc_array[i].bci_oparg,
              c_name ? Xen_String_As_CString(c_name) : "Null");
       if (c_name)
@@ -82,9 +76,8 @@ void bc_print(ProgramCode_t pc) {
     } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
                INSTRUCT_FLAG_CO_INSTANCE) {
       char* val = NULL;
-      Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
-          pc.consts->c_instances,
-          Xen_Number_From_UInt(code->bc_array[i].bci_oparg), Xen_OPR_GET_INDEX);
+      Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(
+          pc.consts->c_instances, code->bc_array[i].bci_oparg);
       if (c_inst) {
         Xen_Instance* string = Xen_Attr_Raw(c_inst);
         if (string) {

@@ -4,7 +4,6 @@
 #include "callable.h"
 #include "instance.h"
 #include "m_core.h"
-#include "operators.h"
 #include "run_ctx.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
@@ -21,8 +20,7 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   if (Xen_SIZE(args) == 1) {
-    Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
-        args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
     if (!inst) {
       return NULL;
     }
@@ -64,8 +62,7 @@ static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
                               Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
-    Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
-        args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
+    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string) {
       Xen_DEL_REF(inst);
@@ -86,8 +83,7 @@ static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
                                 Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
-    Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
-        args, Xen_Number_From_Int64(i), Xen_OPR_GET_INDEX);
+    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string || Xen_Nil_Eval(string)) {
       Xen_DEL_REF(inst);
@@ -111,8 +107,7 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* inst = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* size = Xen_Number_From_Int64(Xen_SIZE(inst));
   if (!size) {
     Xen_DEL_REF(inst);

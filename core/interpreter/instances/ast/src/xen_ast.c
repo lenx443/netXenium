@@ -1,13 +1,12 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "attrs.h"
 #include "instance.h"
-#include "operators.h"
 #include "xen_ast.h"
 #include "xen_ast_implement.h"
 #include "xen_ast_instance.h"
 #include "xen_nil.h"
-#include "xen_number.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
@@ -66,8 +65,7 @@ Xen_Instance* Xen_AST_Node_Children(Xen_Instance* ast) {
 
 Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
-  return Xen_Operator_Eval_Pair_Steal2(
-      ast->children, Xen_Number_From_ULong(index), Xen_OPR_GET_INDEX);
+  return Xen_Attr_Index_Size_Get(ast->children, index);
 }
 
 Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
@@ -110,8 +108,7 @@ static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
            is_last ? "  " : "│ ");
 
   for (size_t i = 0; i < n; i++) {
-    Xen_Instance* child = Xen_Operator_Eval_Pair_Steal2(
-        children, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
+    Xen_Instance* child = Xen_Attr_Index_Size_Get(children, i);
     __AST_Node_Print(child, new_prefix, i == n - 1);
     Xen_DEL_REF(child);
   }

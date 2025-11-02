@@ -3,7 +3,6 @@
 
 #include "attrs.h"
 #include "instance.h"
-#include "operators.h"
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
@@ -30,8 +29,7 @@ int main(int argc, char** argv) {
     Xen_DEL_REF(key);
     Xen_Instance* key_access = Xen_String_From_CString("age1");
     assert(Xen_Nil_NEval(key_access));
-    Xen_Instance* result =
-        Xen_Operator_Eval_Pair(map, key_access, Xen_OPR_GET_INDEX);
+    Xen_Instance* result = Xen_Attr_Index_Get(map, key_access);
     assert(result != NULL);
     assert(Xen_Number_As_Int(result) == 23);
     Xen_DEL_REF(result);
@@ -69,8 +67,7 @@ int main(int argc, char** argv) {
     Xen_Instance* keys = Xen_Map_Keys(map);
     assert(Xen_Nil_NEval(keys));
     for (size_t i = 0; i < Xen_SIZE(keys); i++) {
-      Xen_Instance* key = Xen_Operator_Eval_Pair_Steal2(
-          keys, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
+      Xen_Instance* key = Xen_Attr_Index_Size_Get(keys, i);
       assert(Xen_Nil_NEval(key));
       Xen_Instance* key_str = Xen_Attr_String(key);
       assert(key_str && Xen_Nil_NEval(key_str));

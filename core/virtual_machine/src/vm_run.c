@@ -12,7 +12,6 @@
 #include "xen_method.h"
 #include "xen_method_implement.h"
 #include "xen_nil.h"
-#include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
@@ -20,9 +19,8 @@
 #include <stdint.h>
 
 static void op_push(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* c_inst = Xen_Operator_Eval_Pair_Steal2(
-      ctx->ctx_code->code.consts->c_instances, Xen_Number_From_UInt(oparg),
-      Xen_OPR_GET_INDEX);
+  Xen_Instance* c_inst =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
   if (!c_inst) {
     ctx->ctx_error = 1;
     return;
@@ -36,9 +34,8 @@ static void op_pop(RunContext_ptr ctx, uint8_t _) {
 }
 
 static void op_load(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
-      ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
-      Xen_OPR_GET_INDEX);
+  Xen_Instance* c_name =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ctx->ctx_error = 1;
     return;
@@ -56,9 +53,8 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* c_name = Xen_Operator_Eval_Pair_Steal2(
-      ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
-      Xen_OPR_GET_INDEX);
+  Xen_Instance* c_name =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ctx->ctx_error = 1;
     return;
@@ -127,11 +123,26 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(first);
 }
 
+static void op_index_get(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
+  if (!rsult) {
+    Xen_DEL_REF(index);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, rsult);
+  Xen_DEL_REF(rsult);
+  Xen_DEL_REF(index);
+  Xen_DEL_REF(inst);
+}
+
 static void op_attr_get(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance* attr = Xen_Operator_Eval_Pair_Steal2(
-      ctx->ctx_code->code.consts->c_names, Xen_Number_From_UInt(oparg),
-      Xen_OPR_GET_INDEX);
+  Xen_Instance* attr =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   Xen_Instance* result = Xen_Attr_Get(inst, attr);
   if (!result) {
     Xen_DEL_REF(inst);
@@ -233,6 +244,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [LOAD_PROP] = op_load_prop,
     [CALL] = op_call,
     [BINARYOP] = op_binaryop,
+    [INDEX_GET] = op_index_get,
     [ATTR_GET] = op_attr_get,
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,

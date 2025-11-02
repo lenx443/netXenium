@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "operators.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
@@ -62,8 +62,7 @@ static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* exp = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* exp = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Pow(self, exp);
   if (!result) {
     Xen_DEL_REF(exp);
@@ -80,8 +79,7 @@ static Xen_Instance* number_opr_mul(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Mul(self, num);
   if (!result) {
     Xen_DEL_REF(num);
@@ -98,8 +96,7 @@ static Xen_Instance* number_opr_div(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Div(self, num);
   if (!result) {
     Xen_DEL_REF(num);
@@ -116,8 +113,7 @@ static Xen_Instance* number_opr_mod(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Mod(self, num);
   if (!result) {
     Xen_DEL_REF(num);
@@ -134,8 +130,7 @@ static Xen_Instance* number_opr_add(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Add(self, num);
   if (!result) {
     Xen_DEL_REF(num);
@@ -152,8 +147,7 @@ static Xen_Instance* number_opr_sub(ctx_id_t id, Xen_Instance* self,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Operator_Eval_Pair_Steal2(
-      args, Xen_Number_From_Int(0), Xen_OPR_GET_INDEX);
+  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Sub(self, num);
   if (!result) {
     Xen_DEL_REF(num);
@@ -171,8 +165,7 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) == 0)
     return Xen_True;
   return Xen_False;
@@ -186,8 +179,7 @@ static Xen_Instance* number_opr_ne(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) != 0)
     return Xen_True;
   return Xen_False;
@@ -201,8 +193,7 @@ static Xen_Instance* number_opr_lt(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) < 0)
     return Xen_True;
   return Xen_False;
@@ -216,8 +207,7 @@ static Xen_Instance* number_opr_le(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) <= 0)
     return Xen_True;
   return Xen_False;
@@ -231,8 +221,7 @@ static Xen_Instance* number_opr_gt(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) > 0)
     return Xen_True;
   return Xen_False;
@@ -246,8 +235,7 @@ static Xen_Instance* number_opr_ge(ctx_id_t id, Xen_Instance* self,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Operator_Eval_Pair_Steal2(args, Xen_Number_From_Int(0),
-                                                  Xen_OPR_GET_INDEX);
+  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) >= 0)
     return Xen_True;
   return Xen_False;

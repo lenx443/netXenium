@@ -7,7 +7,6 @@
 #include "vm_run.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
-#define info(msg, ...) log_add(NULL, INFO, program.name, msg, ##__VA_ARGS__)
 
 int interpreter(const char* text_code) {
   if (!text_code) {

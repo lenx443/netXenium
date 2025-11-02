@@ -417,7 +417,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         frame->passes++;
         break;
       case 1:
-        emit_value = (Emit_Value){BINARYOP, (uint8_t)Xen_OPR_GET_INDEX};
+        emit_value = (Emit_Value){INDEX_GET, 0};
         stack[sp++] = Emit;
         frame->passes++;
         break;

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "attrs.h"
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
@@ -141,8 +142,7 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
   }
   Xen_Instance* src_keys = Xen_Map_Keys(map_src);
   for (size_t i = 0; i < Xen_SIZE(src_keys); i++) {
-    Xen_Instance* key = Xen_Operator_Eval_Pair_Steal2(
-        src_keys, Xen_Number_From_ULong(i), Xen_OPR_GET_INDEX);
+    Xen_Instance* key = Xen_Attr_Index_Size_Get(src_keys, i);
     Xen_Instance* value = Xen_Map_Get(map_src, key);
     if (!Xen_Map_Push_Pair(map_dst, (Xen_Map_Pair){key, value})) {
       Xen_DEL_REF(value);

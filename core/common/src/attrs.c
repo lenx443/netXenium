@@ -2,9 +2,13 @@
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
+#include "xen_boolean_implement.h"
+#include "xen_method.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
+#include "xen_tuple.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
@@ -52,7 +56,7 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
   }
-  Xen_Instance* string = Xen_Attr_Get_Str(inst, "__string");
+  Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", nil);
   if (!string) {
     if (Xen_IMPL(inst)->__string == NULL) {
       return NULL;
@@ -80,11 +84,26 @@ const char* Xen_Attr_String_Str(Xen_Instance* inst) {
   return Xen_String_As_CString(string);
 }
 
+Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* boolean = Xen_Method_Attr_Str_Call(inst, "__boolean", nil);
+  if (!boolean) {
+    return NULL;
+  }
+  if (Xen_IMPL(boolean) != &Xen_Boolean_Implement) {
+    Xen_DEL_REF(boolean);
+    return NULL;
+  }
+  return boolean;
+}
+
 Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
   }
-  Xen_Instance* raw = Xen_Attr_Get_Str(inst, "__raw");
+  Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil);
   if (!raw) {
     if (Xen_IMPL(inst)->__string == NULL) {
       return NULL;
@@ -110,4 +129,74 @@ const char* Xen_Attr_Raw_Str(Xen_Instance* inst) {
     return NULL;
   }
   return Xen_String_As_CString(raw);
+}
+
+Xen_Instance* Xen_Attr_Index_Get(Xen_Instance* inst, Xen_Instance* index) {
+  if (!inst || !index) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &index);
+  if (!args) {
+    return NULL;
+  }
+  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__get_index", args);
+  if (!ret) {
+    Xen_DEL_REF(args);
+    return NULL;
+  }
+  Xen_DEL_REF(args);
+  return ret;
+}
+
+Xen_Instance* Xen_Attr_Index_Size_Get(Xen_Instance* inst, Xen_size_t index) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* index_inst = Xen_Number_From_ULongLong(index);
+  if (!index_inst) {
+    return NULL;
+  }
+  Xen_Instance* ret = Xen_Attr_Index_Get(inst, index_inst);
+  if (!ret) {
+    Xen_DEL_REF(index_inst);
+    return NULL;
+  }
+  Xen_DEL_REF(index_inst);
+  return ret;
+}
+
+Xen_Instance* Xen_Attr_Index_Set(Xen_Instance* inst, Xen_Instance* index,
+                                 Xen_Instance* val) {
+  if (!inst || !index) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(2, (Xen_Instance*[]){index, val});
+  if (!args) {
+    return NULL;
+  }
+  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__set_index", args);
+  if (!ret) {
+    Xen_DEL_REF(args);
+    return NULL;
+  }
+  Xen_DEL_REF(args);
+  return ret;
+}
+
+Xen_Instance* Xen_Attr_Index_Size_Set(Xen_Instance* inst, Xen_size_t index,
+                                      Xen_Instance* val) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* index_inst = Xen_Number_From_ULongLong(index);
+  if (!index_inst) {
+    return NULL;
+  }
+  Xen_Instance* ret = Xen_Attr_Index_Set(inst, index_inst, val);
+  if (!ret) {
+    Xen_DEL_REF(index_inst);
+    return NULL;
+  }
+  Xen_DEL_REF(index_inst);
+  return ret;
 }

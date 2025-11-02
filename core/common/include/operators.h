@@ -4,7 +4,6 @@
 #include "instance.h"
 
 typedef enum {
-  Xen_OPR_GET_INDEX,
   Xen_OPR_POW,
   Xen_OPR_MUL,
   Xen_OPR_DIV,
