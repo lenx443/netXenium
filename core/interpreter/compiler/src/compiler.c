@@ -83,17 +83,22 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   } emit_value = {0, 0};
   struct Frame {
     Xen_Instance* node;
-    size_t passes;
+    Xen_size_t passes;
+    uint8_t mode;
   } stack[1024];
   typedef struct Emit_Value Emit_Value;
   typedef struct Frame Frame;
+#define FRAME1(node) (Frame){node, 0, 0}
+#define FRAME2(node, mode) (Frame){node, 0, mode}
+
+#define MODE_EXPR_ASSIGNMENT_LHS (1 >> 1)
   size_t sp = 0;
-  stack[sp++] = (Frame){ast, 0};
-  Frame Error = (Frame){Xen_AST_Node_New("CompilerError", NULL), 0};
+  stack[sp++] = FRAME1(ast);
+  Frame Error = FRAME1(Xen_AST_Node_New("CompilerError", NULL));
   if (!Error.node) {
     return 0;
   }
-  Frame Emit = (Frame){Xen_AST_Node_New("CompilerEmit", NULL), 0};
+  Frame Emit = FRAME1(Xen_AST_Node_New("CompilerEmit", NULL));
   if (!Emit.node) {
     Xen_DEL_REF(Error.node);
     return 0;
@@ -101,6 +106,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   while (sp > 0) {
     Frame* frame = &stack[sp - 1];
     Xen_Instance* node = frame->node;
+    uint8_t mode = frame->mode;
     if (Xen_AST_Node_Name_Cmp(node, "CompilerError") == 0) {
 #ifndef NDEBUG
       printf("Compile Error\n");
@@ -133,7 +139,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         stack[sp++] = Error;
         continue;
       }
-      stack[sp++] = (Frame){stmts, 0};
+      stack[sp++] = FRAME1(stmts);
       Xen_DEL_REF(stmts);
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
@@ -144,7 +150,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           continue;
         }
-        stack[sp++] = (Frame){stmt, 0};
+        stack[sp++] = FRAME1(stmt);
         Xen_DEL_REF(stmt);
         continue;
       }
@@ -168,7 +174,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         stack[sp++] = Error;
         continue;
       }
-      stack[sp++] = (Frame){stmt, 0};
+      stack[sp++] = FRAME1(stmt);
       Xen_DEL_REF(stmt);
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Expr") == 0) {
@@ -176,22 +182,38 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         continue;
       }
-      Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-      if (!value) {
-        stack[sp++] = Error;
-        continue;
-      }
-      if (Xen_AST_Node_Name_Cmp(value, "Primary") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Unary") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "Binary") != 0 &&
-          Xen_AST_Node_Name_Cmp(value, "List") != 0) {
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+        if (!value) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(value, "Primary") != 0) {
+          Xen_DEL_REF(value);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = FRAME2(value, MODE_EXPR_ASSIGNMENT_LHS);
         Xen_DEL_REF(value);
-        stack[sp++] = Error;
-        continue;
+        frame->passes++;
+      } else {
+        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+        if (!value) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(value, "Primary") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Unary") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "Binary") != 0 &&
+            Xen_AST_Node_Name_Cmp(value, "List") != 0) {
+          Xen_DEL_REF(value);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = FRAME1(value);
+        Xen_DEL_REF(value);
+        frame->passes++;
       }
-      stack[sp++] = (Frame){value, 0};
-      Xen_DEL_REF(value);
-      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
       switch (frame->passes) {
       case 0: {
@@ -209,7 +231,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){value, 0};
+        stack[sp++] = FRAME1(value);
         Xen_DEL_REF(value);
         frame->passes++;
         break;
@@ -226,7 +248,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
             stack[sp++] = Error;
             break;
           }
-          stack[sp++] = (Frame){suffix, 0};
+          stack[sp++] = FRAME1(suffix);
           Xen_DEL_REF(suffix);
           frame->passes++;
           break;
@@ -325,7 +347,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         stack[sp++] = Error;
         continue;
       }
-      stack[sp++] = (Frame){expr, 0};
+      stack[sp++] = FRAME1(expr);
       Xen_DEL_REF(expr);
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Suffix") == 0) {
@@ -343,7 +365,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           continue;
         }
-        stack[sp++] = (Frame){value, 0};
+        stack[sp++] = FRAME1(value);
         Xen_DEL_REF(value);
         frame->passes++;
         break;
@@ -360,7 +382,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
             stack[sp++] = Error;
             break;
           }
-          stack[sp++] = (Frame){suffix, 0};
+          stack[sp++] = FRAME1(suffix);
           Xen_DEL_REF(suffix);
           frame->passes++;
           break;
@@ -384,7 +406,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
             stack[sp++] = Error;
             break;
           }
-          stack[sp++] = (Frame){arg, 0};
+          stack[sp++] = FRAME1(arg);
           Xen_DEL_REF(arg);
         }
         frame->passes++;
@@ -412,7 +434,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){index, 0};
+        stack[sp++] = FRAME1(index);
         Xen_DEL_REF(index);
         frame->passes++;
         break;
@@ -460,7 +482,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){val, 0};
+        stack[sp++] = FRAME1(val);
         Xen_DEL_REF(val);
         frame->passes++;
         break;
@@ -500,7 +522,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){expr, 0};
+        stack[sp++] = FRAME1(expr);
         Xen_DEL_REF(expr);
         frame->passes++;
         break;
@@ -514,7 +536,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
           break;
         }
-        stack[sp++] = (Frame){expr, 0};
+        stack[sp++] = FRAME1(expr);
         Xen_DEL_REF(expr);
         frame->passes++;
         break;
@@ -572,6 +594,38 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           stack[sp++] = Error;
         }
         break;
+      default:
+        --sp;
+        break;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Assignment") == 0) {
+      switch (frame->passes) {
+      case 0: {
+        if (Xen_AST_Node_Children_Size(node) != 2) {
+          stack[sp++] = Error;
+          break;
+        }
+        Xen_Instance* rhs = Xen_AST_Node_Get_Child(node, 1);
+        if (Xen_AST_Node_Name_Cmp(rhs, "Expr") != 0) {
+          Xen_DEL_REF(rhs);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = FRAME1(rhs);
+        Xen_DEL_REF(rhs);
+        break;
+      }
+      case 1: {
+        Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+          Xen_DEL_REF(lhs);
+          stack[sp++] = Error;
+          break;
+        }
+        stack[sp++] = FRAME2(lhs, MODE_EXPR_ASSIGNMENT_LHS);
+        Xen_DEL_REF(lhs);
+        break;
+      }
       default:
         --sp;
         break;
