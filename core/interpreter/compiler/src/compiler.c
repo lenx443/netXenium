@@ -91,7 +91,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
 #define FRAME1(node) (Frame){node, 0, 0}
 #define FRAME2(node, mode) (Frame){node, 0, mode}
 
-#define MODE_EXPR_ASSIGNMENT_LHS (1 >> 1)
+#define MODE_EXPR_ASSIGNMENT_LHS 1
   size_t sp = 0;
   stack[sp++] = FRAME1(ast);
   Frame Error = FRAME1(Xen_AST_Node_New("CompilerError", NULL));
@@ -215,53 +215,84 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         frame->passes++;
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
-      switch (frame->passes) {
-      case 0: {
-        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-        if (!value) {
-          stack[sp++] = Error;
-          break;
-        }
-        if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS &&
+          Xen_AST_Node_Children_Size(node) == 1) {
+        switch (frame->passes) {
+        case 0: {
+          Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+          if (!value) {
+            stack[sp++] = Error;
+            break;
+          }
+          if (Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+            Xen_DEL_REF(value);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME2(value, MODE_EXPR_ASSIGNMENT_LHS);
           Xen_DEL_REF(value);
-          stack[sp++] = Error;
-          break;
-        }
-        stack[sp++] = FRAME1(value);
-        Xen_DEL_REF(value);
-        frame->passes++;
-        break;
-      }
-      case 1: {
-        if (Xen_AST_Node_Children_Size(node) == 2) {
-          Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
-          if (!suffix) {
-            stack[sp++] = Error;
-            break;
-          }
-          if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
-            Xen_DEL_REF(suffix);
-            stack[sp++] = Error;
-            break;
-          }
-          stack[sp++] = FRAME1(suffix);
-          Xen_DEL_REF(suffix);
           frame->passes++;
           break;
-        } else if (Xen_AST_Node_Children_Size(node) > 2) {
-          stack[sp++] = Error;
+        }
+        default:
+          --sp;
           break;
         }
-        frame->passes++;
-        break;
-      }
-      default:
-        --sp;
-        break;
+      } else {
+        switch (frame->passes) {
+        case 0: {
+          Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+          if (!value) {
+            stack[sp++] = Error;
+            break;
+          }
+          if (Xen_AST_Node_Name_Cmp(value, "String") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Number") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Literal") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Property") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Parent") != 0) {
+            Xen_DEL_REF(value);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(value);
+          Xen_DEL_REF(value);
+          frame->passes++;
+          break;
+        }
+        case 1: {
+          if (Xen_AST_Node_Children_Size(node) == 2) {
+            Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
+            if (!suffix) {
+              stack[sp++] = Error;
+              break;
+            }
+            if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
+              Xen_DEL_REF(suffix);
+              stack[sp++] = Error;
+              break;
+            }
+            if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+              stack[sp++] = FRAME2(suffix, MODE_EXPR_ASSIGNMENT_LHS);
+            } else {
+              stack[sp++] = FRAME1(suffix);
+            }
+            Xen_DEL_REF(suffix);
+            frame->passes++;
+            break;
+          } else if (Xen_AST_Node_Children_Size(node) > 2) {
+            stack[sp++] = Error;
+            break;
+          }
+          frame->passes++;
+          break;
+        }
+        default:
+          --sp;
+          break;
+        }
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "String") == 0) {
       if (frame->passes > 0) {
@@ -309,91 +340,161 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         continue;
       }
-      int co_idx =
-          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
-      if (co_idx < 0) {
-        stack[sp++] = Error;
-        continue;
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        int co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){STORE, (uint8_t)co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
+      } else {
+        int co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){LOAD, (uint8_t)co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
       }
-      emit_value = (Emit_Value){LOAD, (uint8_t)co_idx};
-      stack[sp++] = Emit;
-      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Property") == 0) {
       if (frame->passes > 0) {
         --sp;
         continue;
       }
-      int co_idx =
-          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
-      if (co_idx < 0) {
-        stack[sp++] = Error;
-        continue;
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        int co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){STORE_PROP, (uint8_t)co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
+      } else {
+        int co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){LOAD_PROP, (uint8_t)co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
       }
-      emit_value = (Emit_Value){LOAD_PROP, (uint8_t)co_idx};
-      stack[sp++] = Emit;
-      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Parent") == 0) {
       if (frame->passes > 0) {
         --sp;
         continue;
       }
-      Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
-      if (!expr) {
-        stack[sp++] = Error;
-        continue;
-      }
-      if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+        if (!expr) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+          Xen_DEL_REF(expr);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = FRAME2(expr, MODE_EXPR_ASSIGNMENT_LHS);
         Xen_DEL_REF(expr);
-        stack[sp++] = Error;
-        continue;
-      }
-      stack[sp++] = FRAME1(expr);
-      Xen_DEL_REF(expr);
-      frame->passes++;
-    } else if (Xen_AST_Node_Name_Cmp(node, "Suffix") == 0) {
-      switch (frame->passes) {
-      case 0: {
-        Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
-        if (!value) {
-          stack[sp++] = Error;
-          continue;
-        }
-        if (Xen_AST_Node_Name_Cmp(value, "Call") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Index") != 0 &&
-            Xen_AST_Node_Name_Cmp(value, "Attr") != 0) {
-          Xen_DEL_REF(value);
-          stack[sp++] = Error;
-          continue;
-        }
-        stack[sp++] = FRAME1(value);
-        Xen_DEL_REF(value);
         frame->passes++;
-        break;
+      } else {
+        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+        if (!expr) {
+          stack[sp++] = Error;
+          continue;
+        }
+        if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+          Xen_DEL_REF(expr);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = FRAME1(expr);
+        Xen_DEL_REF(expr);
+        frame->passes++;
       }
-      case 1: {
-        if (Xen_AST_Node_Children_Size(node) == 2) {
-          Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
-          if (!suffix) {
+    } else if (Xen_AST_Node_Name_Cmp(node, "Suffix") == 0) {
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS &&
+          Xen_AST_Node_Children_Size(node) == 1) {
+        switch (frame->passes) {
+        case 0: {
+          Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+          if (!value) {
             stack[sp++] = Error;
-            break;
+            continue;
           }
-          if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
-            Xen_DEL_REF(suffix);
+          if (Xen_AST_Node_Name_Cmp(value, "Index") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Attr") != 0) {
+            Xen_DEL_REF(value);
             stack[sp++] = Error;
-            break;
+            continue;
           }
-          stack[sp++] = FRAME1(suffix);
-          Xen_DEL_REF(suffix);
+          stack[sp++] = FRAME2(value, MODE_EXPR_ASSIGNMENT_LHS);
+          Xen_DEL_REF(value);
           frame->passes++;
           break;
-        } else if (Xen_AST_Node_Children_Size(node) > 2) {
-          stack[sp++] = Error;
+        }
+        default:
+          --sp;
           break;
         }
-      }
-      default:
-        --sp;
-        break;
+      } else {
+        switch (frame->passes) {
+        case 0: {
+          Xen_Instance* value = Xen_AST_Node_Get_Child(node, 0);
+          if (!value) {
+            stack[sp++] = Error;
+            continue;
+          }
+          if (Xen_AST_Node_Name_Cmp(value, "Call") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Index") != 0 &&
+              Xen_AST_Node_Name_Cmp(value, "Attr") != 0) {
+            Xen_DEL_REF(value);
+            stack[sp++] = Error;
+            continue;
+          }
+          stack[sp++] = FRAME1(value);
+          Xen_DEL_REF(value);
+          frame->passes++;
+          break;
+        }
+        case 1: {
+          if (Xen_AST_Node_Children_Size(node) == 2) {
+            Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
+            if (!suffix) {
+              stack[sp++] = Error;
+              break;
+            }
+            if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") != 0) {
+              Xen_DEL_REF(suffix);
+              stack[sp++] = Error;
+              break;
+            }
+            if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+              stack[sp++] = FRAME2(suffix, MODE_EXPR_ASSIGNMENT_LHS);
+            } else {
+              stack[sp++] = FRAME1(suffix);
+            }
+            Xen_DEL_REF(suffix);
+            frame->passes++;
+            break;
+          } else if (Xen_AST_Node_Children_Size(node) > 2) {
+            stack[sp++] = Error;
+            break;
+          }
+        }
+        default:
+          --sp;
+          break;
+        }
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Call") == 0) {
       switch (frame->passes) {
@@ -422,45 +523,85 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         break;
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Index") == 0) {
-      switch (frame->passes) {
-      case 0:
-        if (Xen_AST_Node_Children_Size(node) != 1) {
-          stack[sp++] = Error;
-          break;
-        }
-        Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
-        if (Xen_AST_Node_Name_Cmp(index, "Expr") != 0) {
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        switch (frame->passes) {
+        case 0:
+          if (Xen_AST_Node_Children_Size(node) != 1) {
+            stack[sp++] = Error;
+            break;
+          }
+          Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
+          if (Xen_AST_Node_Name_Cmp(index, "Expr") != 0) {
+            Xen_DEL_REF(index);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(index);
           Xen_DEL_REF(index);
-          stack[sp++] = Error;
+          frame->passes++;
+          break;
+        case 1:
+          emit_value = (Emit_Value){STORE_INDEX, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        default:
+          --sp;
           break;
         }
-        stack[sp++] = FRAME1(index);
-        Xen_DEL_REF(index);
-        frame->passes++;
-        break;
-      case 1:
-        emit_value = (Emit_Value){INDEX_GET, 0};
-        stack[sp++] = Emit;
-        frame->passes++;
-        break;
-      default:
-        --sp;
-        break;
+      } else {
+        switch (frame->passes) {
+        case 0:
+          if (Xen_AST_Node_Children_Size(node) != 1) {
+            stack[sp++] = Error;
+            break;
+          }
+          Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
+          if (Xen_AST_Node_Name_Cmp(index, "Expr") != 0) {
+            Xen_DEL_REF(index);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(index);
+          Xen_DEL_REF(index);
+          frame->passes++;
+          break;
+        case 1:
+          emit_value = (Emit_Value){LOAD_INDEX, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        default:
+          --sp;
+          break;
+        }
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Attr") == 0) {
       if (frame->passes > 0) {
         --sp;
         continue;
       }
-      Xen_ssize_t co_idx =
-          vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
-      if (co_idx < 0) {
-        stack[sp++] = Error;
-        continue;
+      if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
+        Xen_ssize_t co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){STORE_ATTR, co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
+      } else {
+        Xen_ssize_t co_idx =
+            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+        if (co_idx < 0) {
+          stack[sp++] = Error;
+          continue;
+        }
+        emit_value = (Emit_Value){LOAD_ATTR, co_idx};
+        stack[sp++] = Emit;
+        frame->passes++;
       }
-      emit_value = (Emit_Value){ATTR_GET, co_idx};
-      stack[sp++] = Emit;
-      frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Unary") == 0) {
       switch (frame->passes) {
       case 0:
@@ -613,6 +754,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         }
         stack[sp++] = FRAME1(rhs);
         Xen_DEL_REF(rhs);
+        frame->passes++;
         break;
       }
       case 1: {
@@ -624,6 +766,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         }
         stack[sp++] = FRAME2(lhs, MODE_EXPR_ASSIGNMENT_LHS);
         Xen_DEL_REF(lhs);
+        frame->passes++;
         break;
       }
       default:

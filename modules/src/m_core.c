@@ -12,6 +12,7 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args) {
@@ -117,9 +118,22 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
   return size;
 }
 
+static Xen_Instance* fn_test_vector(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_Vector_From_Array(
+      5, (Xen_Instance*[]){Xen_Number_From_Int64(1), Xen_Number_From_Int64(2),
+                           Xen_Number_From_Int64(3), Xen_Number_From_Int64(4),
+                           Xen_Number_From_Int64(5)});
+}
+
 static Xen_Module_Function_Table core_functions = {
-    {"echo", fn_echo}, {"print", fn_print}, {"println", fn_println},
-    {"size", fn_size}, {NULL, NULL},
+    {"echo", fn_echo},
+    {"print", fn_print},
+    {"println", fn_println},
+    {"size", fn_size},
+    {"test_vector", fn_test_vector},
+    {NULL, NULL},
 };
 
 struct Xen_Module_Def Module_Core = {

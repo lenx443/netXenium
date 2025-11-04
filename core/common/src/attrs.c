@@ -52,6 +52,47 @@ Xen_Instance* Xen_Attr_Get_Str(Xen_Instance* inst, const char* attr) {
   return result;
 }
 
+int Xen_Attr_Set(Xen_Instance* inst, Xen_Instance* attr, Xen_Instance* val) {
+  if (!inst || !attr || !val) {
+    return 0;
+  }
+  if (Xen_IMPL(attr) != &Xen_String_Implement) {
+    return 0;
+  }
+  if (!Xen_IMPL(inst)->__set_attr) {
+    return 0;
+  }
+  Xen_Instance* args = Xen_Vector_From_Array(2, (Xen_Instance*[]){attr, val});
+  if (!args) {
+    return 0;
+  }
+  Xen_Instance* result =
+      vm_call_native_function(Xen_IMPL(inst)->__set_attr, inst, args);
+  if (!result) {
+    Xen_DEL_REF(args);
+    return 0;
+  }
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(args);
+  return 1;
+}
+
+int Xen_Attr_Set_Str(Xen_Instance* inst, const char* attr, Xen_Instance* val) {
+  if (!inst || !attr || !val) {
+    return 0;
+  }
+  Xen_Instance* attr_inst = Xen_String_From_CString(attr);
+  if (!attr_inst) {
+    return 0;
+  }
+  if (!Xen_Attr_Set(inst, attr_inst, val)) {
+    Xen_DEL_REF(attr_inst);
+    return 0;
+  }
+  Xen_DEL_REF(attr_inst);
+  return 1;
+}
+
 Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
@@ -165,38 +206,38 @@ Xen_Instance* Xen_Attr_Index_Size_Get(Xen_Instance* inst, Xen_size_t index) {
   return ret;
 }
 
-Xen_Instance* Xen_Attr_Index_Set(Xen_Instance* inst, Xen_Instance* index,
-                                 Xen_Instance* val) {
+int Xen_Attr_Index_Set(Xen_Instance* inst, Xen_Instance* index,
+                       Xen_Instance* val) {
   if (!inst || !index) {
-    return NULL;
+    return 0;
   }
   Xen_Instance* args = Xen_Tuple_From_Array(2, (Xen_Instance*[]){index, val});
   if (!args) {
-    return NULL;
+    return 0;
   }
   Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__set_index", args);
   if (!ret) {
     Xen_DEL_REF(args);
-    return NULL;
+    return 0;
   }
   Xen_DEL_REF(args);
-  return ret;
+  Xen_DEL_REF(ret);
+  return 1;
 }
 
-Xen_Instance* Xen_Attr_Index_Size_Set(Xen_Instance* inst, Xen_size_t index,
-                                      Xen_Instance* val) {
+int Xen_Attr_Index_Size_Set(Xen_Instance* inst, Xen_size_t index,
+                            Xen_Instance* val) {
   if (!inst) {
-    return NULL;
+    return 0;
   }
   Xen_Instance* index_inst = Xen_Number_From_ULongLong(index);
   if (!index_inst) {
-    return NULL;
+    return 0;
   }
-  Xen_Instance* ret = Xen_Attr_Index_Set(inst, index_inst, val);
-  if (!ret) {
+  if (!Xen_Attr_Index_Set(inst, index_inst, val)) {
     Xen_DEL_REF(index_inst);
-    return NULL;
+    return 0;
   }
   Xen_DEL_REF(index_inst);
-  return ret;
+  return 1;
 }

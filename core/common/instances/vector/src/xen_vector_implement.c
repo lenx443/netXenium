@@ -115,6 +115,24 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return Xen_ADD_REF(((Xen_Vector*)self)->values[index]);
 }
 
+static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
+                                          Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 2)
+    return NULL;
+  Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
+  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
+    return NULL;
+  Xen_Instance* value_inst = Xen_Vector_Peek_Index(args, 1);
+  size_t index = Xen_Number_As(size_t, index_inst);
+  if (index >= self->__size) {
+    return NULL;
+  }
+  Xen_DEL_REF(((Xen_Vector*)self)->values[index]);
+  ((Xen_Vector*)self)->values[index] = Xen_ADD_REF(value_inst);
+  return nil;
+}
+
 struct __Implement Xen_Vector_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Vector",
@@ -128,6 +146,7 @@ struct __Implement Xen_Vector_Implement = {
     .__callable = NULL,
     .__hash = NULL,
     .__get_attr = Xen_Basic_Get_Attr_Static,
+    .__set_attr = NULL,
 };
 
 int Xen_Vector_Init() {
@@ -136,6 +155,8 @@ int Xen_Vector_Init() {
     return 0;
   }
   if (!vm_define_native_function(props, "__get_index", vector_opr_get_index,
+                                 nil) ||
+      !vm_define_native_function(props, "__set_index", vector_opr_set_index,
                                  nil)) {
     Xen_DEL_REF(props);
     return 0;

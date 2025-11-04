@@ -5,7 +5,6 @@
 
 #include "callable.h"
 #include "instance.h"
-#include "operators.h"
 
 struct __Instance;
 
@@ -41,6 +40,7 @@ struct __Implement {
   Xen_Native_Func __callable;
   Xen_Native_Func __hash;
   Xen_Native_Func __get_attr;
+  Xen_Native_Func __set_attr;
 };
 
 typedef struct __Implement Xen_Implement;

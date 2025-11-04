@@ -9,6 +9,7 @@
 #include "vm.h"
 #include "vm_instructs.h"
 #include "vm_stack.h"
+#include "xen_map.h"
 #include "xen_method.h"
 #include "xen_method_implement.h"
 #include "xen_nil.h"
@@ -71,6 +72,112 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
+static void op_load_index(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
+  if (!rsult) {
+    Xen_DEL_REF(index);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, rsult);
+  Xen_DEL_REF(rsult);
+  Xen_DEL_REF(index);
+  Xen_DEL_REF(inst);
+}
+
+static void op_load_attr(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* attr =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* result = Xen_Attr_Get(inst, attr);
+  if (!result) {
+    Xen_DEL_REF(inst);
+    Xen_DEL_REF(attr);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, result);
+  Xen_DEL_REF(result);
+  Xen_DEL_REF(inst);
+  Xen_DEL_REF(attr);
+}
+
+static void op_store(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* c_name =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+  if (!c_name) {
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  if (!inst) {
+    Xen_DEL_REF(c_name);
+    ctx->ctx_error = 1;
+    return;
+  }
+  if (!Xen_Map_Push_Pair(ctx->ctx_instances, (Xen_Map_Pair){c_name, inst})) {
+    Xen_DEL_REF(c_name);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_DEL_REF(c_name);
+  Xen_DEL_REF(inst);
+}
+
+static void op_store_prop(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* c_name =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+  if (!c_name) {
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  if (!xen_register_prop_set(Xen_String_As_CString(c_name), inst,
+                             ctx->ctx_id)) {
+    Xen_DEL_REF(c_name);
+    Xen_DEL_REF(inst);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_DEL_REF(c_name);
+  Xen_DEL_REF(inst);
+}
+
+static void op_store_index(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* value = vm_stack_pop(&ctx->ctx_stack);
+  if (!Xen_Attr_Index_Set(inst, index, value)) {
+    Xen_DEL_REF(value);
+    Xen_DEL_REF(inst);
+    Xen_DEL_REF(index);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_DEL_REF(value);
+  Xen_DEL_REF(inst);
+  Xen_DEL_REF(index);
+}
+
+static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* value = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* attr =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+  if (!Xen_Attr_Set(inst, attr, value)) {
+    Xen_DEL_REF(inst);
+    Xen_DEL_REF(attr);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_DEL_REF(inst);
+  Xen_DEL_REF(attr);
+}
+
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* args = Xen_Vector_New();
   if (!args) {
@@ -121,39 +228,6 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(rsult);
   Xen_DEL_REF(second);
   Xen_DEL_REF(first);
-}
-
-static void op_index_get(RunContext_ptr ctx, uint8_t _) {
-  Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
-  if (!rsult) {
-    Xen_DEL_REF(index);
-    Xen_DEL_REF(inst);
-    ctx->ctx_error = 1;
-    return;
-  }
-  vm_stack_push(&ctx->ctx_stack, rsult);
-  Xen_DEL_REF(rsult);
-  Xen_DEL_REF(index);
-  Xen_DEL_REF(inst);
-}
-
-static void op_attr_get(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance* attr =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
-  Xen_Instance* result = Xen_Attr_Get(inst, attr);
-  if (!result) {
-    Xen_DEL_REF(inst);
-    Xen_DEL_REF(attr);
-    ctx->ctx_error = 1;
-    return;
-  }
-  vm_stack_push(&ctx->ctx_stack, result);
-  Xen_DEL_REF(result);
-  Xen_DEL_REF(inst);
-  Xen_DEL_REF(attr);
 }
 
 static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
@@ -242,10 +316,14 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [POP] = op_pop,
     [LOAD] = op_load,
     [LOAD_PROP] = op_load_prop,
+    [LOAD_INDEX] = op_load_index,
+    [LOAD_ATTR] = op_load_attr,
+    [STORE] = op_store,
+    [STORE_PROP] = op_store_prop,
+    [STORE_INDEX] = op_store_index,
+    [STORE_ATTR] = op_store_attr,
     [CALL] = op_call,
     [BINARYOP] = op_binaryop,
-    [INDEX_GET] = op_index_get,
-    [ATTR_GET] = op_attr_get,
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,
     [UNARY_NOT] = op_unary_not,

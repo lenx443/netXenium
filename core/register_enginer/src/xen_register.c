@@ -60,7 +60,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
     }
   }
   Xen_INSTANCE* self = ((RunContext_ptr)vm_current_ctx())->ctx_self;
-  if (self && VM_CHECK_ID(id)) {
+  if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       if (!Xen_Map_Push_Pair_Str(((Xen_INSTANCE_MAPPED*)self)->__map,
                                  (Xen_Map_Pair_Str){name, inst})) {
@@ -91,7 +91,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
     }
   }
   Xen_INSTANCE* self = ((RunContext_ptr)vm_current_ctx())->ctx_self;
-  if (self && VM_CHECK_ID(id)) {
+  if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_INSTANCE* prop =
           Xen_Map_Get_Str(((Xen_INSTANCE_MAPPED*)self)->__map, name);

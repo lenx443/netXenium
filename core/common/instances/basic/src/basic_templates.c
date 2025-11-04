@@ -43,3 +43,30 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
   }
   return attr;
 }
+
+Xen_Instance* Xen_Basic_Set_Attr_Static(ctx_id_t id, Xen_Instance* self,
+                                        Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_IMPL(self)->__props == NULL ||
+      Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
+      Xen_IMPL(Xen_IMPL(self)->__props) != &Xen_Map_Implement) {
+    return NULL;
+  }
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_Instance* key = Xen_Vector_Get_Index(args, 0);
+  if (Xen_IMPL(key) != &Xen_String_Implement) {
+    Xen_DEL_REF(key);
+    return NULL;
+  }
+  Xen_Instance* value = Xen_Vector_Get_Index(args, 1);
+  if (!Xen_Map_Push_Pair(Xen_IMPL(self)->__props, (Xen_Map_Pair){key, value})) {
+    Xen_DEL_REF(value);
+    Xen_DEL_REF(key);
+    return NULL;
+  }
+  Xen_DEL_REF(value);
+  Xen_DEL_REF(key);
+  return nil;
+}
