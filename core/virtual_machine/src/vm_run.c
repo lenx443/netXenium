@@ -9,6 +9,7 @@
 #include "vm.h"
 #include "vm_instructs.h"
 #include "vm_stack.h"
+#include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_method_implement.h"
@@ -18,6 +19,11 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 #include <stdint.h>
+
+static void op_nop(RunContext_ptr ctx, uint8_t oparg) {
+  (void)ctx;
+  (void)oparg;
+}
 
 static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_inst =
@@ -311,7 +317,27 @@ static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(inst);
 }
 
+static void op_copy(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* val = vm_stack_pop(&ctx->ctx_stack);
+  vm_stack_push(&ctx->ctx_stack, val);
+  vm_stack_push(&ctx->ctx_stack, val);
+  Xen_DEL_REF(val);
+}
+
+static void op_jump_if_true(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* cond = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* evl = Xen_Attr_Boolean(cond);
+  if (!evl) {
+    Xen_DEL_REF(cond);
+    ctx->ctx_error = 1;
+  }
+  if (evl == Xen_True) {
+    ctx->ctx_ip = oparg;
+  }
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
+    [NOP] = op_nop,
     [PUSH] = op_push,
     [POP] = op_pop,
     [LOAD] = op_load,
@@ -327,6 +353,8 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,
     [UNARY_NOT] = op_unary_not,
+    [COPY] = op_copy,
+    [JUMP_IF_TRUE] = op_jump_if_true,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

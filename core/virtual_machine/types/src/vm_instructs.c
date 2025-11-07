@@ -1,7 +1,6 @@
-#include <stddef.h>
-
 #include "vm_instructs.h"
 
+static STACK_EFFECT(nop_stack_effect, 0);
 static STACK_EFFECT(push_stack_effect, 1);
 static STACK_EFFECT(pop_stack_effect, -1);
 static STACK_EFFECT(load_stack_effect, 1);
@@ -17,8 +16,11 @@ static STACK_EFFECT(binaryop_stack_effect, -1);
 static STACK_EFFECT(unary_positive_stack_effect, 0);
 static STACK_EFFECT(unary_negative_stack_effect, 0);
 static STACK_EFFECT(unary_not_stack_effect, 0);
+static STACK_EFFECT(copy_stack_effect, 1);
+static STACK_EFFECT(jump_if_true_stack_effect, -1);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
+    [NOP] = {"", nop_stack_effect, 0},
     [PUSH] = {"PUSH", push_stack_effect, INSTRUCT_FLAG_CO_INSTANCE},
     [POP] = {"POP", pop_stack_effect, 0},
     [LOAD] = {"LOAD", load_stack_effect, INSTRUCT_FLAG_CO_NAME},
@@ -36,4 +38,7 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [UNARY_POSITIVE] = {"UNARY_POSITIVE", unary_positive_stack_effect, 0},
     [UNARY_NEGATIVE] = {"UNARY_NEGATIVE", unary_negative_stack_effect, 0},
     [UNARY_NOT] = {"UNARY_NOT", unary_not_stack_effect, 0},
+    [COPY] = {"COPY", copy_stack_effect, 0},
+    [JUMP_IF_TRUE] = {"JUMP_IF_TRUE", jump_if_true_stack_effect,
+                      INSTRUCT_FLAG_ARG},
 };

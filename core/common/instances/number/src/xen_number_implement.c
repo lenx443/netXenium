@@ -55,6 +55,15 @@ static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
+static Xen_Instance* number_boolean(ctx_id_t id, Xen_Instance* self,
+                                    Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (((Xen_Number*)self)->sign == 0) {
+    return Xen_False;
+  }
+  return Xen_True;
+}
+
 static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
                                     Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -311,7 +320,8 @@ int Xen_Number_Init() {
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__pow", number_opr_pow, nil) ||
+  if (!vm_define_native_function(props, "__boolean", number_boolean, nil) ||
+      !vm_define_native_function(props, "__pow", number_opr_pow, nil) ||
       !vm_define_native_function(props, "__mul", number_opr_mul, nil) ||
       !vm_define_native_function(props, "__div", number_opr_div, nil) ||
       !vm_define_native_function(props, "__mod", number_opr_mod, nil) ||

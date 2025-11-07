@@ -2,13 +2,13 @@
 #include <stdio.h>
 
 #include "bc_instruct.h"
-#include "block_list.h"
+#include "bytecode.h"
 #include "compiler.h"
 #include "instance.h"
-#include "ir_bytecode.h"
 #include "lexer.h"
 #include "operators.h"
 #include "parser.h"
+#include "program_code.h"
 #include "vm.h"
 #include "vm_consts.h"
 #include "vm_def.h"
@@ -35,31 +35,25 @@ CALLABLE_ptr compiler(const char* text_code) {
 #ifndef NDEBUG
   Xen_AST_Node_Print(ast_program);
 #endif
-  block_list_ptr blocks = block_list_new();
-  if (!blocks) {
+  ProgramCode_t pc;
+  pc.code = bc_new();
+  if (!pc.code) {
     Xen_DEL_REF(ast_program);
-    return NULL;
+    return 0;
   }
-  block_node_ptr main_block = block_new();
-  if (!main_block) {
+  pc.consts = vm_consts_new();
+  if (!pc.consts) {
     Xen_DEL_REF(ast_program);
-    block_list_free(blocks);
-    return NULL;
+    bc_free(pc.code);
+    return 0;
   }
-  block_list_push_node(blocks, main_block);
-  if (!ast_compile(blocks, &main_block, ast_program)) {
+  if (!ast_compile(&pc, ast_program)) {
     Xen_DEL_REF(ast_program);
-    block_list_free(blocks);
+    vm_consts_free(pc.consts);
+    bc_free(pc.code);
     return 0;
   }
   Xen_DEL_REF(ast_program);
-  blocks_linealizer(blocks);
-  ProgramCode_t pc;
-  if (!blocks_compiler(&pc, blocks)) {
-    block_list_free(blocks);
-    return 0;
-  }
-  block_list_free(blocks);
 #ifndef NDEBUG
   bc_print(pc);
 #endif
@@ -74,22 +68,22 @@ CALLABLE_ptr compiler(const char* text_code) {
   return code;
 }
 
-int ast_compile(block_list_ptr block_result, block_node_ptr* block,
-                Xen_Instance* ast) {
-  (void)block_result;
-  (void)block;
+int ast_compile(ProgramCode_t* code, Xen_Instance* ast) {
   struct Emit_Value {
+    Xen_ssize_t offset;
     uint8_t opcode, oparg;
-  } emit_value = {0, 0};
+  } emit_value = {0, 0, 0};
   struct Frame {
     Xen_Instance* node;
     Xen_size_t passes;
     uint8_t mode;
+    uintptr_t stack_data_1;
   } stack[1024];
   typedef struct Emit_Value Emit_Value;
   typedef struct Frame Frame;
-#define FRAME1(node) (Frame){node, 0, 0}
-#define FRAME2(node, mode) (Frame){node, 0, mode}
+  Xen_ssize_t Emit_Result = 0;
+#define FRAME1(node) (Frame){node, 0, 0, 0}
+#define FRAME2(node, mode) (Frame){node, 0, mode, 0}
 
 #define MODE_EXPR_ASSIGNMENT_LHS 1
   size_t sp = 0;
@@ -119,9 +113,11 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         continue;
       }
-      ir_add_instr(
-          (*block)->instr_array,
-          (IR_Instruct_t){emit_value.opcode, emit_value.oparg, NULL, 0});
+      if ((Emit_Result = bc_emit(code->code, emit_value.offset,
+                                 emit_value.opcode, emit_value.oparg)) == -1) {
+        stack[sp++] = Error;
+        continue;
+      }
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Program") == 0) {
       if (frame->passes > 0) {
@@ -304,14 +300,14 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         stack[sp++] = Error;
         continue;
       }
-      Xen_ssize_t co_idx = vm_consts_push_instance(block_result->consts, value);
+      Xen_ssize_t co_idx = vm_consts_push_instance(code->consts, value);
       if (co_idx < 0) {
         Xen_DEL_REF(value);
         stack[sp++] = Error;
         continue;
       }
       Xen_DEL_REF(value);
-      emit_value = (Emit_Value){PUSH, (uint8_t)co_idx};
+      emit_value = (Emit_Value){-1, PUSH, (uint8_t)co_idx};
       stack[sp++] = Emit;
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Number") == 0) {
@@ -325,14 +321,14 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         stack[sp++] = Error;
         continue;
       }
-      int co_idx = vm_consts_push_instance(block_result->consts, value);
+      int co_idx = vm_consts_push_instance(code->consts, value);
       if (co_idx < 0) {
         Xen_DEL_REF(value);
         stack[sp++] = Error;
         continue;
       }
       Xen_DEL_REF(value);
-      emit_value = (Emit_Value){PUSH, (uint8_t)co_idx};
+      emit_value = (Emit_Value){-1, PUSH, (uint8_t)co_idx};
       stack[sp++] = Emit;
       frame->passes++;
     } else if (Xen_AST_Node_Name_Cmp(node, "Literal") == 0) {
@@ -342,22 +338,22 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
         int co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){STORE, (uint8_t)co_idx};
+        emit_value = (Emit_Value){-1, STORE, (uint8_t)co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       } else {
         int co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){LOAD, (uint8_t)co_idx};
+        emit_value = (Emit_Value){-1, LOAD, (uint8_t)co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       }
@@ -368,22 +364,22 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
         int co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){STORE_PROP, (uint8_t)co_idx};
+        emit_value = (Emit_Value){-1, STORE_PROP, (uint8_t)co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       } else {
         int co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){LOAD_PROP, (uint8_t)co_idx};
+        emit_value = (Emit_Value){-1, LOAD_PROP, (uint8_t)co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       }
@@ -514,7 +510,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         break;
       case 1:
         emit_value =
-            (Emit_Value){CALL, (uint8_t)Xen_AST_Node_Children_Size(node)};
+            (Emit_Value){-1, CALL, (uint8_t)Xen_AST_Node_Children_Size(node)};
         stack[sp++] = Emit;
         frame->passes++;
         break;
@@ -541,7 +537,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           frame->passes++;
           break;
         case 1:
-          emit_value = (Emit_Value){STORE_INDEX, 0};
+          emit_value = (Emit_Value){-1, STORE_INDEX, 0};
           stack[sp++] = Emit;
           frame->passes++;
           break;
@@ -567,7 +563,7 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
           frame->passes++;
           break;
         case 1:
-          emit_value = (Emit_Value){LOAD_INDEX, 0};
+          emit_value = (Emit_Value){-1, LOAD_INDEX, 0};
           stack[sp++] = Emit;
           frame->passes++;
           break;
@@ -583,22 +579,22 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
       }
       if (mode == MODE_EXPR_ASSIGNMENT_LHS) {
         Xen_ssize_t co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){STORE_ATTR, co_idx};
+        emit_value = (Emit_Value){-1, STORE_ATTR, co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       } else {
         Xen_ssize_t co_idx =
-            vm_consts_push_name(block_result->consts, Xen_AST_Node_Value(node));
+            vm_consts_push_name(code->consts, Xen_AST_Node_Value(node));
         if (co_idx < 0) {
           stack[sp++] = Error;
           continue;
         }
-        emit_value = (Emit_Value){LOAD_ATTR, co_idx};
+        emit_value = (Emit_Value){-1, LOAD_ATTR, co_idx};
         stack[sp++] = Emit;
         frame->passes++;
       }
@@ -629,15 +625,15 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         break;
       case 1:
         if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-          emit_value = (Emit_Value){UNARY_POSITIVE, 0};
+          emit_value = (Emit_Value){-1, UNARY_POSITIVE, 0};
           stack[sp++] = Emit;
           frame->passes++;
         } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-          emit_value = (Emit_Value){UNARY_NEGATIVE, 0};
+          emit_value = (Emit_Value){-1, UNARY_NEGATIVE, 0};
           stack[sp++] = Emit;
           frame->passes++;
         } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
-          emit_value = (Emit_Value){UNARY_NOT, 0};
+          emit_value = (Emit_Value){-1, UNARY_NOT, 0};
           stack[sp++] = Emit;
           frame->passes++;
         } else {
@@ -649,95 +645,168 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         break;
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Binary") == 0) {
-      switch (frame->passes) {
-      case 0: {
-        if (Xen_AST_Node_Children_Size(node) != 2) {
-          stack[sp++] = Error;
-          break;
-        }
-        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
-        if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
-            Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
-            Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+      if (Xen_AST_Node_Value_Cmp(node, "or") == 0) {
+        switch (frame->passes) {
+        case 0: {
+          if (Xen_AST_Node_Children_Size(node) != 2) {
+            stack[sp++] = Error;
+            break;
+          }
+          Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+          if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+            Xen_DEL_REF(expr);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(expr);
           Xen_DEL_REF(expr);
-          stack[sp++] = Error;
+          frame->passes++;
           break;
         }
-        stack[sp++] = FRAME1(expr);
-        Xen_DEL_REF(expr);
-        frame->passes++;
-        break;
-      }
-      case 1: {
-        Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 1);
-        if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
-            Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
-            Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+        case 1: {
+          emit_value = (Emit_Value){-1, COPY, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        }
+        case 2: {
+          emit_value = (Emit_Value){-1, JUMP_IF_TRUE, 0xFF};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        }
+        case 3: {
+          frame->stack_data_1 = Emit_Result;
+          emit_value = (Emit_Value){-1, POP, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        }
+        case 4: {
+          Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 1);
+          if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+            Xen_DEL_REF(expr);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(expr);
           Xen_DEL_REF(expr);
-          stack[sp++] = Error;
+          frame->passes++;
           break;
         }
-        stack[sp++] = FRAME1(expr);
-        Xen_DEL_REF(expr);
-        frame->passes++;
-        break;
-      }
-      case 2:
-        if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_POW};
+        case 5: {
+          emit_value = (Emit_Value){frame->stack_data_1, JUMP_IF_TRUE,
+                                    code->code->bc_size};
           stack[sp++] = Emit;
           frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_MUL};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_DIV};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_MOD};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_ADD};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_SUB};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_LT};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_LE};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_EQ};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_GT};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_GE};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
-          emit_value = (Emit_Value){BINARYOP, Xen_OPR_NE};
-          stack[sp++] = Emit;
-          frame->passes++;
-        } else {
-          stack[sp++] = Error;
+          break;
         }
-        break;
-      default:
-        --sp;
-        break;
+        case 6: {
+          emit_value = (Emit_Value){-1, NOP, 0};
+          stack[sp++] = Emit;
+          frame->passes++;
+          break;
+        }
+        default: {
+          --sp;
+          break;
+        }
+        }
+      } else {
+        switch (frame->passes) {
+        case 0: {
+          if (Xen_AST_Node_Children_Size(node) != 2) {
+            stack[sp++] = Error;
+            break;
+          }
+          Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+          if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+            Xen_DEL_REF(expr);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(expr);
+          Xen_DEL_REF(expr);
+          frame->passes++;
+          break;
+        }
+        case 1: {
+          Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 1);
+          if (Xen_AST_Node_Name_Cmp(expr, "Binary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Unary") != 0 &&
+              Xen_AST_Node_Name_Cmp(expr, "Primary") != 0) {
+            Xen_DEL_REF(expr);
+            stack[sp++] = Error;
+            break;
+          }
+          stack[sp++] = FRAME1(expr);
+          Xen_DEL_REF(expr);
+          frame->passes++;
+          break;
+        }
+        case 2:
+          if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_POW};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_MUL};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_DIV};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_MOD};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_ADD};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_SUB};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_LT};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_LE};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_EQ};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_GT};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_GE};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
+            emit_value = (Emit_Value){-1, BINARYOP, Xen_OPR_NE};
+            stack[sp++] = Emit;
+            frame->passes++;
+          } else {
+            stack[sp++] = Error;
+          }
+          break;
+        default:
+          --sp;
+          break;
+        }
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Assignment") == 0) {
       switch (frame->passes) {
@@ -773,6 +842,19 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
         --sp;
         break;
       }
+    } else if (Xen_AST_Node_Name_Cmp(node, "IfStatement") == 0) {
+      if (frame->passes == 0) {
+        Xen_Instance* condition = Xen_AST_Node_Get_Child(node, 0);
+        if (Xen_AST_Node_Name_Cmp(condition, "IfCondition") != 0) {
+          Xen_DEL_REF(condition);
+          stack[sp++] = Error;
+          continue;
+        }
+        stack[sp++] = FRAME1(condition);
+        Xen_DEL_REF(condition);
+        continue;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(node, "IfCondition") == 0) {
     } else {
 #ifndef NDEBUG
       printf("Compile Error: Invalid Node '%s'\n", Xen_AST_Node_Name(node));
@@ -785,61 +867,9 @@ int ast_compile(block_list_ptr block_result, block_node_ptr* block,
   return 1;
 }
 
-int blocks_compiler(ProgramCode_t* code, block_list_ptr blocks) {
-  if (!blocks) {
-    return 0;
-  }
-  code->consts = vm_consts_from_values(blocks->consts->c_names,
-                                       blocks->consts->c_instances);
-  if (!code->consts) {
-    return 0;
-  }
-  code->code = bc_new();
-  if (!code->code) {
-    vm_consts_free(code->consts);
-    return 0;
-  }
-  block_node_ptr current_block = blocks->head;
-  while (current_block) {
-    if (!current_block->ready) {
-      current_block = current_block->next;
-      continue;
-    }
-    for (size_t instr_iterator = 0;
-         instr_iterator < current_block->instr_array->ir_size;
-         instr_iterator++) {
-      if (!bc_add_instr(
-              code->code,
-              (bc_Instruct_t){{
-                  current_block->instr_array->ir_array[instr_iterator].opcode,
-                  current_block->instr_array->ir_array[instr_iterator].oparg,
-              }})) {
-        vm_consts_free(code->consts);
-        bc_free(code->code);
-        return 0;
-      }
-    }
-    current_block = current_block->next;
-  }
-  return 1;
-}
-
-void blocks_linealizer(block_list_ptr blocks) {
-  if (!blocks)
-    return;
-  block_node_ptr current_block = blocks->head;
-  int n = 0;
-  while (current_block) {
-    for (size_t i = 0; i < current_block->instr_array->ir_size; i++)
-      current_block->instr_array->ir_array[i].instr_num = n++;
-    current_block->ready = 1;
-    current_block = current_block->next;
-  }
-}
-
 void program_stack_depth(ProgramCode_t* pc) {
-  size_t depth = 0;
-  size_t effect = 0;
+  Xen_ssize_t depth = 0;
+  Xen_ssize_t effect = 0;
   for (size_t i = 0; i < pc->code->bc_size; i++) {
     bc_Instruct_t inst = pc->code->bc_array[i];
     effect += Instruct_Info_Table[inst.bci_opcode].stack_effect(inst.bci_oparg);

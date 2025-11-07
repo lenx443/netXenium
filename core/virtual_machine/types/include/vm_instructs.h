@@ -4,8 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "xen_typedefs.h"
+
 #define STACK_EFFECT(fname, ret)                                               \
-  size_t fname(size_t oparg) {                                                 \
+  Xen_ssize_t fname(Xen_ssize_t oparg) {                                       \
     (void)oparg;                                                               \
     return ret;                                                                \
   }
@@ -15,7 +17,8 @@
 #define INSTRUCT_FLAG_ARG (1 << 2)
 
 enum vm_Instruct {
-  PUSH = 0,
+  NOP = 0,
+  PUSH,
   POP,
   LOAD,
   LOAD_PROP,
@@ -30,12 +33,14 @@ enum vm_Instruct {
   UNARY_POSITIVE,
   UNARY_NEGATIVE,
   UNARY_NOT,
+  COPY,
+  JUMP_IF_TRUE,
   HALT,
 };
 
 struct vm_Instruct_Info {
   const char* name;
-  size_t (*stack_effect)(size_t);
+  Xen_ssize_t (*stack_effect)(Xen_ssize_t);
   uint8_t flags;
 };
 
