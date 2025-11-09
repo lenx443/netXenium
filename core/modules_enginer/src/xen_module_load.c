@@ -6,6 +6,7 @@
 #include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_modules_def.h"
+#include <string.h>
 
 static int core_success = 0;
 

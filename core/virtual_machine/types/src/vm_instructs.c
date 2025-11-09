@@ -18,6 +18,7 @@ static STACK_EFFECT(unary_negative_stack_effect, 0);
 static STACK_EFFECT(unary_not_stack_effect, 0);
 static STACK_EFFECT(copy_stack_effect, 1);
 static STACK_EFFECT(jump_if_true_stack_effect, -1);
+static STACK_EFFECT(jump_if_false_stack_effect, -1);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [NOP] = {"", nop_stack_effect, 0},
@@ -41,4 +42,6 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [COPY] = {"COPY", copy_stack_effect, 0},
     [JUMP_IF_TRUE] = {"JUMP_IF_TRUE", jump_if_true_stack_effect,
                       INSTRUCT_FLAG_ARG},
+    [JUMP_IF_FALSE] = {"JUMP_IF_FALSE", jump_if_false_stack_effect,
+                       INSTRUCT_FLAG_ARG},
 };

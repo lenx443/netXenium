@@ -35,6 +35,7 @@ enum vm_Instruct {
   UNARY_NOT,
   COPY,
   JUMP_IF_TRUE,
+  JUMP_IF_FALSE,
   HALT,
 };
 

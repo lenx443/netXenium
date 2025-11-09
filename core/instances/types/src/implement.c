@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "basic.h"
 #include "callable.h"

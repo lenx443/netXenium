@@ -336,6 +336,18 @@ static void op_jump_if_true(RunContext_ptr ctx, uint8_t oparg) {
   }
 }
 
+static void op_jump_if_false(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* cond = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* evl = Xen_Attr_Boolean(cond);
+  if (!evl) {
+    Xen_DEL_REF(cond);
+    ctx->ctx_error = 1;
+  }
+  if (evl == Xen_False) {
+    ctx->ctx_ip = oparg;
+  }
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [NOP] = op_nop,
     [PUSH] = op_push,
@@ -355,6 +367,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [UNARY_NOT] = op_unary_not,
     [COPY] = op_copy,
     [JUMP_IF_TRUE] = op_jump_if_true,
+    [JUMP_IF_FALSE] = op_jump_if_false,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

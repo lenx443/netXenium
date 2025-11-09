@@ -970,32 +970,17 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* condition_node = parser_expr(p);
-  if (!condition_node) {
-    Xen_DEL_REF(if_stmt);
-    return NULL;
-  }
-  Xen_Instance* condition = Xen_AST_Node_Wrap(condition_node, "IfCondition");
+  Xen_Instance* condition = parser_expr(p);
   if (!condition) {
-    Xen_DEL_REF(condition_node);
     Xen_DEL_REF(if_stmt);
     return NULL;
   }
-  Xen_DEL_REF(condition_node);
-  Xen_Instance* then_node = parser_block(p);
-  if (!then_node) {
-    Xen_DEL_REF(condition);
-    Xen_DEL_REF(if_stmt);
-    return NULL;
-  }
-  Xen_Instance* then = Xen_AST_Node_Wrap(then_node, "IfThen");
+  Xen_Instance* then = parser_block(p);
   if (!then) {
-    Xen_DEL_REF(then_node);
     Xen_DEL_REF(condition);
     Xen_DEL_REF(if_stmt);
     return NULL;
   }
-  Xen_DEL_REF(then_node);
   if (!Xen_AST_Node_Push_Child(if_stmt, condition)) {
     Xen_DEL_REF(then);
     Xen_DEL_REF(condition);
@@ -1010,45 +995,28 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   }
   Xen_DEL_REF(then);
   Xen_DEL_REF(condition);
+  Xen_Instance* current_if = if_stmt;
   while (p->token.tkn_type == TKN_KEYWORD &&
          strcmp(p->token.tkn_text, "elif") == 0) {
     parser_next(p);
-    Xen_Instance* elif = Xen_AST_Node_New("IfElseIf", NULL);
+    Xen_Instance* elif = Xen_AST_Node_New("IfStatement", NULL);
     if (!elif) {
       Xen_DEL_REF(if_stmt);
       return NULL;
     }
-    Xen_Instance* elif_condition_node = parser_expr(p);
-    if (!elif_condition_node) {
-      Xen_DEL_REF(elif);
-      Xen_DEL_REF(if_stmt);
-      return NULL;
-    }
-    Xen_Instance* elif_condition =
-        Xen_AST_Node_Wrap(elif_condition_node, "IfCondition");
+    Xen_Instance* elif_condition = parser_expr(p);
     if (!elif_condition) {
-      Xen_DEL_REF(elif_condition_node);
       Xen_DEL_REF(elif);
       Xen_DEL_REF(if_stmt);
       return NULL;
     }
-    Xen_DEL_REF(elif_condition_node);
-    Xen_Instance* elif_then_node = parser_block(p);
-    if (!elif_then_node) {
-      Xen_DEL_REF(elif_condition);
-      Xen_DEL_REF(elif);
-      Xen_DEL_REF(if_stmt);
-      return NULL;
-    }
-    Xen_Instance* elif_then = Xen_AST_Node_Wrap(elif_then_node, "IfThen");
+    Xen_Instance* elif_then = parser_block(p);
     if (!elif_then) {
-      Xen_DEL_REF(elif_then_node);
       Xen_DEL_REF(elif_condition);
       Xen_DEL_REF(elif);
       Xen_DEL_REF(if_stmt);
       return NULL;
     }
-    Xen_DEL_REF(elif_then_node);
     if (!Xen_AST_Node_Push_Child(elif, elif_condition)) {
       Xen_DEL_REF(elif_then);
       Xen_DEL_REF(elif_condition);
@@ -1065,29 +1033,23 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     }
     Xen_DEL_REF(elif_condition);
     Xen_DEL_REF(elif_then);
-    if (!Xen_AST_Node_Push_Child(if_stmt, elif)) {
+    if (!Xen_AST_Node_Push_Child(current_if, elif)) {
       Xen_DEL_REF(elif);
       Xen_DEL_REF(if_stmt);
       return NULL;
     }
+    current_if = elif;
     Xen_DEL_REF(elif);
   }
   if (p->token.tkn_type == TKN_KEYWORD &&
       strcmp(p->token.tkn_text, "else") == 0) {
     parser_next(p);
-    Xen_Instance* else_node = parser_block(p);
-    if (!else_node) {
-      Xen_DEL_REF(if_stmt);
-      return NULL;
-    }
-    Xen_Instance* els = Xen_AST_Node_Wrap(else_node, "IfElse");
+    Xen_Instance* els = parser_block(p);
     if (!els) {
-      Xen_DEL_REF(else_node);
       Xen_DEL_REF(if_stmt);
       return NULL;
     }
-    Xen_DEL_REF(else_node);
-    if (!Xen_AST_Node_Push_Child(if_stmt, els)) {
+    if (!Xen_AST_Node_Push_Child(current_if, els)) {
       Xen_DEL_REF(els);
       Xen_DEL_REF(if_stmt);
       return NULL;

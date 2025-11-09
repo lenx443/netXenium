@@ -3,16 +3,22 @@ cmake_minimum_required(VERSION 3.15)
 project(NetXenium)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fsanitize=address,leak -fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
+set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
 
 set(C_STANDARD 99)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
-  link_libraries(-fsanitize=address,undefined)
+  add_compile_options(-fsanitize=address,leak)
+  link_libraries(-fsanitize=address,leak,undefined)
+endif()
+
+if(SHELL_BASIC)
+  message(STATUS "Enabling Shell Basic Mode")
+  add_compile_options(-DSHELL_BASIC)
 endif()
 
 include_directories(
