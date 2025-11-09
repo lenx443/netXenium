@@ -1,9 +1,11 @@
 #include "xen_boolean_implement.h"
 #include "basic.h"
+#include "basic_templates.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
@@ -52,6 +54,12 @@ static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
   return hash_number;
 }
 
+static Xen_Instance* boolean_boolean(ctx_id_t id, Xen_Instance* self,
+                                     Xen_Instance* args) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_ADD_REF(self);
+}
+
 Xen_Implement Xen_Boolean_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Boolean",
@@ -64,6 +72,7 @@ Xen_Implement Xen_Boolean_Implement = {
     .__raw = NULL,
     .__callable = NULL,
     .__hash = boolean_hash,
+    .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Boolean_Init() {
@@ -75,7 +84,18 @@ int Xen_Boolean_Init() {
                              (Xen_Map_Pair_Str){"false", Xen_False})) {
     return 0;
   }
+  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!props) {
+    return 0;
+  }
+  if (!vm_define_native_function(props, "__boolean", boolean_boolean, nil)) {
+    Xen_DEL_REF(props);
+    return 0;
+  }
+  Xen_Boolean_Implement.__props = props;
   return 1;
 }
 
-void Xen_Boolean_Finish() {}
+void Xen_Boolean_Finish() {
+  Xen_DEL_REF(Xen_Boolean_Implement.__props);
+}

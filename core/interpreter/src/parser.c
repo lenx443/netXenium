@@ -1241,6 +1241,9 @@ Xen_Instance* parser_block(Parser* p) {
       return NULL;
     }
     Xen_DEL_REF(stmt);
+    while (p->token.tkn_type == TKN_NEWLINE) {
+      parser_next(p);
+    }
   }
   return block;
 }

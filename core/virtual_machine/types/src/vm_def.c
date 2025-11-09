@@ -44,6 +44,9 @@ bool vm_create() {
     free(args_array);
     return 0;
   }
+  for (int i = 0; i < program.argc; i++) {
+    Xen_DEL_REF(args_array[i]);
+  }
   free(args_array);
   if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args)) {
     free(vm);

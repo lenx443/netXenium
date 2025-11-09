@@ -107,6 +107,8 @@ static int compile_assignment_expr_primary_suffix_index(ProgramCode_t*,
 static int compile_assignment_expr_primary_suffix_attr(ProgramCode_t*,
                                                        Xen_Instance*);
 
+static int compile_block(ProgramCode_t*, Xen_Instance*);
+
 static int compile_if_statement(ProgramCode_t*, Xen_Instance*);
 
 int compile_program(ProgramCode_t* code, Xen_Instance* node) {
@@ -124,6 +126,9 @@ int compile_program(ProgramCode_t* code, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(stmt_list);
+  if (bc_emit(code->code, -1, NOP, 0) == -1) {
+    return 0;
+  }
   return 1;
 }
 
@@ -961,8 +966,87 @@ int compile_assignment_expr_primary_suffix_attr(ProgramCode_t* code,
   return 1;
 }
 
+int compile_block(ProgramCode_t* code, Xen_Instance* node) {
+  Xen_Instance* block = Xen_AST_Node_Get_Child(node, 0);
+  if (!block) {
+    return 0;
+  }
+  if (Xen_AST_Node_Name_Cmp(block, "Statement") == 0) {
+    if (!compile_statement(code, block)) {
+      Xen_DEL_REF(block);
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(block, "StatementList") == 0) {
+    if (!compile_statement_list(code, block)) {
+      Xen_DEL_REF(block);
+      return 0;
+    }
+  } else {
+    Xen_DEL_REF(block);
+    return 0;
+  }
+  Xen_DEL_REF(block);
+  return 1;
+}
+
 int compile_if_statement(ProgramCode_t* code, Xen_Instance* node) {
-  return 0;
+  Xen_Instance* condition = Xen_AST_Node_Get_Child(node, 0);
+  if (!condition) {
+    return 0;
+  }
+  if (Xen_AST_Node_Name_Cmp(condition, "Expr") != 0) {
+    Xen_DEL_REF(condition);
+    return 0;
+  }
+  if (!compile_expr(code, condition)) {
+    Xen_DEL_REF(condition);
+    return 0;
+  }
+  Xen_DEL_REF(condition);
+  Xen_ssize_t jump_if_offset = bc_emit(code->code, -1, JUMP_IF_FALSE, 0xFF);
+  if (jump_if_offset == -1) {
+    return 0;
+  }
+  Xen_Instance* then = Xen_AST_Node_Get_Child(node, 1);
+  if (!then) {
+    return 0;
+  }
+  if (Xen_AST_Node_Name_Cmp(then, "Block") != 0) {
+    Xen_DEL_REF(then);
+    return 0;
+  }
+  if (!compile_block(code, then)) {
+    Xen_DEL_REF(then);
+    return 0;
+  }
+  Xen_DEL_REF(then);
+  if (Xen_AST_Node_Children_Size(node) == 3) {
+    Xen_ssize_t jump_end_offset = bc_emit(code->code, -1, JUMP, 0xFF);
+    if (jump_end_offset == -1) {
+      return 0;
+    }
+    bc_emit(code->code, jump_if_offset, JUMP_IF_FALSE, code->code->bc_size);
+    Xen_Instance* els = Xen_AST_Node_Get_Child(node, 2);
+    if (Xen_AST_Node_Name_Cmp(els, "IfStatement") == 0) {
+      if (!compile_if_statement(code, els)) {
+        Xen_DEL_REF(els);
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(els, "Block") == 0) {
+      if (!compile_block(code, els)) {
+        Xen_DEL_REF(els);
+        return 0;
+      }
+    } else {
+      Xen_DEL_REF(els);
+      return 0;
+    }
+    Xen_DEL_REF(els);
+    bc_emit(code->code, jump_end_offset, JUMP, code->code->bc_size);
+  } else {
+    bc_emit(code->code, jump_if_offset, JUMP_IF_FALSE, code->code->bc_size);
+  }
+  return 1;
 }
 
 int ast_compile(ProgramCode_t* code, Xen_Instance* ast) {
