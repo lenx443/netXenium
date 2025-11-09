@@ -61,7 +61,7 @@ void shell_loop() {
   history = history_new(history_path);
 
   while (1) {
-#ifdef __SHELL_BASIC
+#ifndef SHELL_BASIC
     LIST_ptr cmd = read_string_utf8();
     if (program.closed) {
       list_free(cmd);
@@ -72,7 +72,11 @@ void shell_loop() {
 #else
     fputs(" -> ", stdout);
     char* cmd_str = malloc(CMDSIZ);
-    fgets(cmd_str, CMDSIZ, stdin);
+    if (!fgets(cmd_str, CMDSIZ, stdin)) {
+      fputs("\n", stdout);
+      free(cmd_str);
+      break;
+    }
 #endif
     if (!interpreter(cmd_str)) {
       log_show_and_clear(NULL);

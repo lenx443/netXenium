@@ -106,7 +106,6 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
       if (!impl_prop) {
         return NULL;
       }
-      Xen_ADD_REF(impl_prop);
       return impl_prop;
     }
     return NULL;
@@ -115,6 +114,5 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
   if (!root_prop) {
     return NULL;
   };
-  Xen_ADD_REF(root_prop);
   return root_prop;
 }

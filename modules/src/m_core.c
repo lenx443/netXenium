@@ -121,10 +121,19 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* fn_test_vector(ctx_id_t id, Xen_Instance* self,
                                     Xen_Instance* args) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  return Xen_Vector_From_Array(
-      5, (Xen_Instance*[]){Xen_Number_From_Int64(1), Xen_Number_From_Int64(2),
-                           Xen_Number_From_Int64(3), Xen_Number_From_Int64(4),
-                           Xen_Number_From_Int64(5)});
+  Xen_Instance* v1 = Xen_Number_From_Int64(1);
+  Xen_Instance* v2 = Xen_Number_From_Int64(2);
+  Xen_Instance* v3 = Xen_Number_From_Int64(3);
+  Xen_Instance* v4 = Xen_Number_From_Int64(4);
+  Xen_Instance* v5 = Xen_Number_From_Int64(5);
+  Xen_Instance* vec =
+      Xen_Vector_From_Array(5, (Xen_Instance*[]){v1, v2, v3, v4, v5});
+  Xen_DEL_REF(v5);
+  Xen_DEL_REF(v4);
+  Xen_DEL_REF(v3);
+  Xen_DEL_REF(v2);
+  Xen_DEL_REF(v1);
+  return vec;
 }
 
 static Xen_Module_Function_Table core_functions = {

@@ -175,11 +175,13 @@ static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* attr =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!Xen_Attr_Set(inst, attr, value)) {
+    Xen_DEL_REF(value);
     Xen_DEL_REF(inst);
     Xen_DEL_REF(attr);
     ctx->ctx_error = 1;
     return;
   }
+  Xen_DEL_REF(value);
   Xen_DEL_REF(inst);
   Xen_DEL_REF(attr);
 }

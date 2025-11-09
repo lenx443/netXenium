@@ -50,6 +50,7 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
   }
   ctx_new->ctx_ip = 0;
   ctx_new->ctx_running = 0;
+  ctx_new->ctx_error = 0;
   return nil;
 }
 

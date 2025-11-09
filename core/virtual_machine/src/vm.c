@@ -12,7 +12,6 @@
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_function.h"
-#include "xen_function_instance.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -30,16 +29,11 @@ bool vm_define_native_function(Xen_Instance* inst_map, const char* name,
   if (!fun_inst) {
     return false;
   }
-  Xen_Function* function_inst = (Xen_Function*)fun_inst;
-  function_inst->fun_callable = callable_new_native(fun);
-  if (!function_inst->fun_callable) {
-    Xen_DEL_REF(fun_inst);
-    return false;
-  }
   if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, fun_inst})) {
     Xen_DEL_REF(fun_inst);
     return false;
   }
+  Xen_DEL_REF(fun_inst);
   return true;
 }
 
