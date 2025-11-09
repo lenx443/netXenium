@@ -147,7 +147,7 @@ struct __Implement Xen_Vector_Implement = {
     .__callable = NULL,
     .__hash = NULL,
     .__get_attr = Xen_Basic_Get_Attr_Static,
-    .__set_attr = Xen_Basic_Set_Attr_Static,
+    .__set_attr = NULL,
 };
 
 int Xen_Vector_Init() {
