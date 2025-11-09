@@ -89,6 +89,8 @@ static int compile_expr_unary(ProgramCode_t*, Xen_Instance*);
 static int compile_expr_binary(ProgramCode_t*, Xen_Instance*);
 static int compile_expr_list(ProgramCode_t*, Xen_Instance*);
 
+static int compile_expr_statement(ProgramCode_t*, Xen_Instance*);
+
 static int compile_assignment(ProgramCode_t*, Xen_Instance*);
 static int compile_assignment_expr(ProgramCode_t*, Xen_Instance*);
 static int compile_assignment_expr_primary(ProgramCode_t*, Xen_Instance*);
@@ -143,7 +145,7 @@ int compile_statement(ProgramCode_t* code, Xen_Instance* node) {
     return 0;
   }
   if (Xen_AST_Node_Name_Cmp(stmt, "Expr") == 0) {
-    if (!compile_expr(code, stmt)) {
+    if (!compile_expr_statement(code, stmt)) {
       Xen_DEL_REF(stmt);
       return 0;
     }
@@ -533,9 +535,6 @@ int compile_expr_binary(ProgramCode_t* code, Xen_Instance* node) {
     }
     Xen_DEL_REF(expr2);
     bc_emit(code->code, jump_offset, JUMP_IF_FALSE, code->code->bc_size);
-    if (bc_emit(code->code, -1, NOP, 0) == -1) {
-      return 0;
-    }
     return 1;
   }
   if (Xen_AST_Node_Value_Cmp(node, "or") == 0) {
@@ -592,9 +591,6 @@ int compile_expr_binary(ProgramCode_t* code, Xen_Instance* node) {
     }
     Xen_DEL_REF(expr2);
     bc_emit(code->code, jump_offset, JUMP_IF_TRUE, code->code->bc_size);
-    if (bc_emit(code->code, -1, NOP, 0) == -1) {
-      return 0;
-    }
     return 1;
   }
   Xen_Instance* expr1 = Xen_AST_Node_Get_Child(node, 0);
@@ -695,6 +691,16 @@ int compile_expr_binary(ProgramCode_t* code, Xen_Instance* node) {
 
 int compile_expr_list(ProgramCode_t* code, Xen_Instance* node) {
   return 0;
+}
+
+int compile_expr_statement(ProgramCode_t* code, Xen_Instance* node) {
+  if (!compile_expr(code, node)) {
+    return 0;
+  }
+  if (bc_emit(code->code, -1, POP, 0) == -1) {
+    return 0;
+  }
+  return 1;
 }
 
 int compile_assignment(ProgramCode_t* code, Xen_Instance* node) {
