@@ -816,7 +816,33 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
 }
 
 int compile_expr_list(Compiler c, Xen_Instance* node) {
-  return 0;
+  for (Xen_size_t idx = 0; idx < Xen_AST_Node_Children_Size(node); idx++) {
+    Xen_Instance* expr = Xen_AST_Node_Get_Child(node, idx);
+    if (Xen_AST_Node_Name_Cmp(expr, "Binary") == 0) {
+      if (!compile_expr_binary(c, expr)) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(expr, "Unary") == 0) {
+      if (!compile_expr_unary(c, expr)) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(expr, "Primary") == 0) {
+      if (!compile_expr_primary(c, expr)) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else {
+      Xen_DEL_REF(expr);
+      return 0;
+    }
+    Xen_DEL_REF(expr);
+  }
+  if (emit(-1, MAKE_TUPLE, Xen_AST_Node_Children_Size(node)) == -1) {
+    return 0;
+  }
+  return 1;
 }
 
 int compile_expr_statement(Compiler c, Xen_Instance* node) {

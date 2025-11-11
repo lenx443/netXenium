@@ -55,6 +55,27 @@ int Xen_Number_Cmp(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return 0;
 }
 
+Xen_Instance* Xen_Number_Copy(Xen_Instance* n_inst) {
+  if (!n_inst)
+    return NULL;
+  Xen_Number* n = (Xen_Number*)n_inst;
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
+  if (!r)
+    return NULL;
+  r->digits = malloc(n->size * sizeof(uint32_t));
+  if (!r->digits) {
+    Xen_DEL_REF(r);
+    return NULL;
+  }
+  for (Xen_size_t i = 0; i < n->size; i++) {
+    r->digits[i] = n->digits[i];
+  }
+  r->sign = n->sign;
+  r->size = n->size;
+  return (Xen_Instance*)r;
+}
+
 Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
   if (!n_inst)
     return NULL;
@@ -1129,10 +1150,11 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   Xen_Number* a = (Xen_Number*)a_inst;
   Xen_Number* b = (Xen_Number*)b_inst;
 
-  if (Xen_Number_Is_Zero(a_inst))
-    return Xen_Number_From_CString(Xen_Number_As_CString(b_inst), 10);
+  if (Xen_Number_Is_Zero(a_inst)) {
+    return Xen_Number_Copy(b_inst);
+  }
   if (Xen_Number_Is_Zero(b_inst))
-    return Xen_Number_From_CString(Xen_Number_As_CString(a_inst), 10);
+    return Xen_Number_Copy(a_inst);
 
   if (a->sign != b->sign) {
     if (a->sign < 0) {
@@ -1197,9 +1219,12 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   Xen_Number* a = (Xen_Number*)a_inst;
   Xen_Number* b = (Xen_Number*)b_inst;
 
-  if (a->sign != b->sign) {
+  int a_sign = (a->sign == 0) ? +1 : a->sign;
+  int b_sign = (b->sign == 0) ? +1 : b->sign;
+
+  if (a_sign != b_sign) {
     Xen_Number tmp = *b;
-    tmp.sign = a->sign;
+    tmp.sign = -b_sign;
     return Xen_Number_Add(a_inst, (Xen_Instance*)&tmp);
   }
 
@@ -1220,19 +1245,10 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     return (Xen_Instance*)zero;
   }
 
-  const Xen_Number* minuend;
-  const Xen_Number* subtrahend;
-  int result_sign;
+  const Xen_Number* minuend = (cmp >= 0) ? a : b;
+  const Xen_Number* subtrahend = (cmp >= 0) ? b : a;
 
-  if (a->sign > 0) {
-    minuend = (cmp >= 0) ? a : b;
-    subtrahend = (cmp >= 0) ? b : a;
-    result_sign = (cmp >= 0) ? +1 : -1;
-  } else {
-    minuend = (cmp >= 0) ? b : a;
-    subtrahend = (cmp >= 0) ? a : b;
-    result_sign = (cmp >= 0) ? +1 : -1;
-  }
+  int result_sign = (cmp >= 0) ? a_sign : -a_sign;
 
   Xen_size_t res_size = minuend->size;
   uint32_t* res_digits = (uint32_t*)calloc(res_size, sizeof(uint32_t));
@@ -1266,7 +1282,9 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 
   result->digits = res_digits;
   result->size = res_size;
-  result->sign = result_sign;
+
+  bool is_zero = (res_size == 1 && res_digits[0] == 0);
+  result->sign = is_zero ? 0 : result_sign;
 
   return (Xen_Instance*)result;
 }

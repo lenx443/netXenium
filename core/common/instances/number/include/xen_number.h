@@ -6,6 +6,7 @@
 int Xen_Number_Is_Zero(Xen_Instance*);
 int Xen_Number_Is_Odd(Xen_Instance*);
 int Xen_Number_Cmp(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_Copy(Xen_Instance*);
 Xen_Instance* Xen_Number_Div2(Xen_Instance*);
 
 Xen_INSTANCE* Xen_Number_From_CString(const char*, int);
