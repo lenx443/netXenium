@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 
 #include "attrs.h"
 #include "callable.h"
@@ -15,7 +18,7 @@
 #include "xen_vector.h"
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args) {
+                             Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -60,7 +63,7 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
-                              Xen_Instance* args) {
+                              Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
@@ -81,7 +84,7 @@ static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args) {
+                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
@@ -102,8 +105,38 @@ static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
+static Xen_Instance* fn_readline(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  char* buffer = NULL;
+  Xen_size_t bufsiz = 0;
+  char c = '\0';
+  while (c != '\n') {
+    c = fgetc(stdin);
+    if (c == (char)EOF) {
+      free(buffer);
+      return NULL;
+    }
+    char* temp = realloc(buffer, bufsiz + 1);
+    if (!temp) {
+      free(buffer);
+      return NULL;
+    }
+    buffer = temp;
+    buffer[bufsiz++] = c;
+  }
+  buffer[strcspn(buffer, "\n")] = '\0';
+  Xen_Instance* rsult = Xen_String_From_CString(buffer);
+  if (!rsult) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
+  return rsult;
+}
+
 static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args) {
+                             Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
     return NULL;
@@ -119,7 +152,7 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* fn_test_vector(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* v1 = Xen_Number_From_Int64(1);
   Xen_Instance* v2 = Xen_Number_From_Int64(2);
@@ -140,6 +173,7 @@ static Xen_Module_Function_Table core_functions = {
     {"echo", fn_echo},
     {"print", fn_print},
     {"println", fn_println},
+    {"readline", fn_readline},
     {"size", fn_size},
     {"test_vector", fn_test_vector},
     {NULL, NULL},

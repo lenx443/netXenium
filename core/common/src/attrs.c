@@ -26,7 +26,7 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
     return NULL;
   }
   Xen_Instance* result =
-      vm_call_native_function(Xen_IMPL(inst)->__get_attr, inst, args);
+      vm_call_native_function(Xen_IMPL(inst)->__get_attr, inst, args, nil);
   if (!result) {
     Xen_DEL_REF(args);
     return NULL;
@@ -67,7 +67,7 @@ int Xen_Attr_Set(Xen_Instance* inst, Xen_Instance* attr, Xen_Instance* val) {
     return 0;
   }
   Xen_Instance* result =
-      vm_call_native_function(Xen_IMPL(inst)->__set_attr, inst, args);
+      vm_call_native_function(Xen_IMPL(inst)->__set_attr, inst, args, nil);
   if (!result) {
     Xen_DEL_REF(args);
     return 0;
@@ -97,12 +97,12 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
   }
-  Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", nil);
+  Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", nil, nil);
   if (!string) {
     if (Xen_IMPL(inst)->__string == NULL) {
       return NULL;
     }
-    string = vm_call_native_function(Xen_IMPL(inst)->__string, inst, nil);
+    string = vm_call_native_function(Xen_IMPL(inst)->__string, inst, nil, nil);
     if (!string) {
       return NULL;
     }
@@ -129,7 +129,7 @@ Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
   }
-  Xen_Instance* boolean = Xen_Method_Attr_Str_Call(inst, "__boolean", nil);
+  Xen_Instance* boolean = Xen_Method_Attr_Str_Call(inst, "__boolean", nil, nil);
   if (!boolean) {
     return NULL;
   }
@@ -144,12 +144,12 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
   }
-  Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil);
+  Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil, nil);
   if (!raw) {
     if (Xen_IMPL(inst)->__string == NULL) {
       return NULL;
     }
-    raw = vm_call_native_function(Xen_IMPL(inst)->__raw, inst, nil);
+    raw = vm_call_native_function(Xen_IMPL(inst)->__raw, inst, nil, nil);
     if (!raw) {
       return NULL;
     }
@@ -180,7 +180,7 @@ Xen_Instance* Xen_Attr_Index_Get(Xen_Instance* inst, Xen_Instance* index) {
   if (!args) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__get_index", args);
+  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__get_index", args, nil);
   if (!ret) {
     Xen_DEL_REF(args);
     return NULL;
@@ -215,7 +215,7 @@ int Xen_Attr_Index_Set(Xen_Instance* inst, Xen_Instance* index,
   if (!args) {
     return 0;
   }
-  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__set_index", args);
+  Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__set_index", args, nil);
   if (!ret) {
     Xen_DEL_REF(args);
     return 0;

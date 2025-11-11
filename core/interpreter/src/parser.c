@@ -1,3 +1,4 @@
+#include <malloc.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,7 @@ static Xen_Instance* parser_suffix(Parser*);
 static Xen_Instance* parser_assignment(Parser*);
 static Xen_Instance* parser_call(Parser*);
 static Xen_Instance* parser_arg_tail(Parser*);
+static Xen_Instance* parser_arg_assignment(Parser*);
 static Xen_Instance* parser_index(Parser*);
 static Xen_Instance* parser_attr(Parser*);
 static Xen_Instance* parser_keyword(Parser*);
@@ -841,18 +843,11 @@ Xen_Instance* parser_call(Parser* p) {
     parser_next(p);
     return args;
   }
-  Xen_Instance* arg_expr = parser_pair(p);
-  if (!arg_expr) {
-    Xen_DEL_REF(args);
-    return NULL;
-  }
-  Xen_Instance* arg_head = Xen_AST_Node_Wrap(arg_expr, "Expr");
+  Xen_Instance* arg_head = parser_arg_assignment(p);
   if (!arg_head) {
-    Xen_DEL_REF(arg_expr);
     Xen_DEL_REF(args);
     return NULL;
   }
-  Xen_DEL_REF(arg_expr);
   if (!Xen_AST_Node_Push_Child(args, arg_head)) {
     Xen_DEL_REF(arg_head);
     Xen_DEL_REF(args);
@@ -881,17 +876,70 @@ Xen_Instance* parser_arg_tail(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* arg_expr = parser_pair(p);
-  if (!arg_expr) {
-    return NULL;
-  }
-  Xen_Instance* arg = Xen_AST_Node_Wrap(arg_expr, "Expr");
+  Xen_Instance* arg = parser_arg_assignment(p);
   if (!arg) {
-    Xen_DEL_REF(arg_expr);
     return NULL;
   }
-  Xen_DEL_REF(arg_expr);
   return arg;
+}
+
+Xen_Instance* parser_arg_assignment(Parser* p) {
+  Xen_Instance* lhs_node = parser_pair(p);
+  if (!lhs_node) {
+    return NULL;
+  }
+  Xen_Instance* lhs = Xen_AST_Node_Wrap(lhs_node, "Expr");
+  if (!lhs) {
+    Xen_DEL_REF(lhs_node);
+    return NULL;
+  }
+  Xen_DEL_REF(lhs_node);
+
+  if (p->token.tkn_type == TKN_ASSIGNMENT) {
+    const char* operator = strdup(p->token.tkn_text);
+    parser_next(p);
+
+    Xen_Instance* rhs_node = parser_pair(p);
+    if (!rhs_node) {
+      Xen_DEL_REF(lhs);
+      free((void*)operator);
+      return NULL;
+    }
+    Xen_Instance* rhs = Xen_AST_Node_Wrap(rhs_node, "Expr");
+    if (!rhs) {
+      Xen_DEL_REF(rhs_node);
+      Xen_DEL_REF(lhs);
+      free((void*)operator);
+      return NULL;
+    }
+    Xen_DEL_REF(rhs_node);
+
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", operator);
+    if (!assignm) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      free((void*)operator);
+      return NULL;
+    }
+
+    if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      free((void*)operator);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
+      Xen_DEL_REF(lhs);
+      Xen_DEL_REF(rhs);
+      free((void*)operator);
+      return NULL;
+    }
+    Xen_DEL_REF(lhs);
+    Xen_DEL_REF(rhs);
+    free((void*)operator);
+    return assignm;
+  }
+  return lhs;
 }
 
 Xen_Instance* parser_index(Parser* p) {

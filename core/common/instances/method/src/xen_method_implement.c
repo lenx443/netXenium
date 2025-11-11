@@ -11,7 +11,7 @@
 #include "xen_string.h"
 
 static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   method->function = nil;
@@ -20,7 +20,7 @@ static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* method_destroy(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   Xen_DEL_REF(method->function);
@@ -29,18 +29,18 @@ static Xen_Instance* method_destroy(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* method_string(ctx_id_t id, struct __Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_String_From_CString("<Method>");
 }
 
 static Xen_Instance* method_callable(ctx_id_t id, struct __Instance* self,
-                                     Xen_Instance* args) {
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   Xen_Function_ptr function = (Xen_Function_ptr)method->function;
   return vm_run_callable(function->fun_callable, function->closure,
-                         method->self, args);
+                         method->self, args, kwargs);
 }
 
 Xen_Implement Xen_Method_Implement = {

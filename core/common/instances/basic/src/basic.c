@@ -10,7 +10,7 @@
 #include "xen_string.h"
 
 static Xen_Instance* basic_alloc(ctx_id_t id, struct __Instance* self,
-                                 Xen_Instance* args) {
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
   impl->__impl_name = NULL;
@@ -29,7 +29,7 @@ static Xen_Instance* basic_alloc(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* basic_destroy(ctx_id_t id, struct __Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
   if (!impl)
@@ -42,14 +42,14 @@ static Xen_Instance* basic_destroy(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
-  return __instance_new(impl, args, 0);
+  return __instance_new(impl, args, kwargs, 0);
 }
 
 static Xen_Instance* basic_string(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Basic>");
   if (!string) {

@@ -48,7 +48,7 @@ typedef uint8_t Xen_Instance_Flag;
 Xen_INSTANCE{Xen_INSTANCE_HEAD};
 Xen_INSTANCE_MAPPED{Xen_INSTANCE_MAPPED_HEAD};
 
-Xen_INSTANCE* __instance_new(struct __Implement*, Xen_INSTANCE*,
+Xen_INSTANCE* __instance_new(struct __Implement*, Xen_INSTANCE*, Xen_INSTANCE*,
                              Xen_Instance_Flag);
 void __instance_free(Xen_INSTANCE*);
 

@@ -9,7 +9,7 @@
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
                                        Xen_Instance* closure) {
   Xen_Function* fun =
-      (Xen_Function*)__instance_new(&Xen_Function_Implement, nil, 0);
+      (Xen_Function*)__instance_new(&Xen_Function_Implement, nil, nil, 0);
   if (!fun) {
     return NULL;
   }
@@ -25,7 +25,7 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
 Xen_INSTANCE* Xen_Function_From_Program(ProgramCode_t pc_fun,
                                         Xen_Instance* closure) {
   Xen_Function* fun =
-      (Xen_Function*)__instance_new(&Xen_Function_Implement, nil, 0);
+      (Xen_Function*)__instance_new(&Xen_Function_Implement, nil, nil, 0);
   if (!fun) {
     return NULL;
   }
@@ -38,11 +38,12 @@ Xen_INSTANCE* Xen_Function_From_Program(ProgramCode_t pc_fun,
   return (Xen_INSTANCE*)fun;
 }
 
-Xen_Instance* Xen_Function_Call(Xen_Instance* fun, Xen_Instance* args) {
+Xen_Instance* Xen_Function_Call(Xen_Instance* fun, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
   if (Xen_IMPL(fun) != &Xen_Function_Implement) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Function_Implement.__callable(0, fun, args);
+  Xen_Instance* ret = Xen_Function_Implement.__callable(0, fun, args, kwargs);
   if (!ret) {
     return NULL;
   }

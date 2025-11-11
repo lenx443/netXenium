@@ -2,6 +2,7 @@
 #include "attrs.h"
 #include "instance.h"
 #include "xen_method.h"
+#include "xen_nil.h"
 #include "xen_vector.h"
 
 static const char* Operators_Map[Xen_OPR_END] = {
@@ -25,7 +26,7 @@ Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
     Xen_DEL_REF(method);
     return NULL;
   }
-  Xen_Instance* result = Xen_Method_Call(method, args);
+  Xen_Instance* result = Xen_Method_Call(method, args, nil);
   if (!result) {
     Xen_DEL_REF(args);
     Xen_DEL_REF(method);

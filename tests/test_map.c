@@ -13,7 +13,7 @@
 int main(int argc, char** argv) {
   assert(Xen_Init(argc, argv) == 1);
   {
-    Xen_Instance* map = __instance_new(&Xen_Map_Implement, nil, 0);
+    Xen_Instance* map = __instance_new(&Xen_Map_Implement, nil, nil, 0);
     assert(map != NULL);
     Xen_DEL_REF(map);
   }

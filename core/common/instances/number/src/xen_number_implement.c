@@ -21,7 +21,7 @@
 #include "xen_vector.h"
 
 static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   num->digits = NULL;
@@ -31,7 +31,7 @@ static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
 }
 
 static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   if (num->digits)
@@ -40,7 +40,7 @@ static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
 }
 
 static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   const char* cstring = Xen_Number_As_CString(self);
   if (!cstring) {
@@ -56,7 +56,7 @@ static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_boolean(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (((Xen_Number*)self)->sign == 0) {
     return Xen_False;
@@ -65,7 +65,7 @@ static Xen_Instance* number_boolean(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -82,7 +82,7 @@ static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_mul(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -99,7 +99,7 @@ static Xen_Instance* number_opr_mul(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_div(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -116,7 +116,7 @@ static Xen_Instance* number_opr_div(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_mod(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -133,7 +133,7 @@ static Xen_Instance* number_opr_mod(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_add(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -150,7 +150,7 @@ static Xen_Instance* number_opr_add(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_sub(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -167,7 +167,7 @@ static Xen_Instance* number_opr_sub(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -181,7 +181,7 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_ne(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -195,7 +195,7 @@ static Xen_Instance* number_opr_ne(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_lt(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -209,7 +209,7 @@ static Xen_Instance* number_opr_lt(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_le(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -223,7 +223,7 @@ static Xen_Instance* number_opr_le(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_gt(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -237,7 +237,7 @@ static Xen_Instance* number_opr_gt(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_opr_ge(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
@@ -251,13 +251,15 @@ static Xen_Instance* number_opr_ge(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_prop_positive(ctx_id_t id, Xen_Instance* self,
-                                          Xen_Instance* args) {
+                                          Xen_Instance* args,
+                                          Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_ADD_REF(self);
 }
 
 static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
-                                          Xen_Instance* args) {
+                                          Xen_Instance* args,
+                                          Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Number* n = (Xen_Number*)self;
   Xen_size_t size_n = n->size;
@@ -267,7 +269,8 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
   if (size_n == 0 || n->sign == 0) {
     return (Xen_Instance*)Xen_ADD_REF(n);
   }
-  Xen_Number* r = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!r) {
     return NULL;
   }
@@ -292,7 +295,7 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* number_prop_not(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args) {
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (((Xen_Number*)self)->sign == 0) {
     return Xen_True;

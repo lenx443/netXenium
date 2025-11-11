@@ -14,7 +14,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
     return NULL;
   }
   Xen_String* string =
-      (Xen_String*)__instance_new(&Xen_String_Implement, nil, 0);
+      (Xen_String*)__instance_new(&Xen_String_Implement, nil, nil, 0);
   if (!string) {
     return NULL;
   }
@@ -30,7 +30,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
 
 Xen_Instance* Xen_String_From_Char(char c) {
   Xen_String* string =
-      (Xen_String*)__instance_new(&Xen_String_Implement, nil, 0);
+      (Xen_String*)__instance_new(&Xen_String_Implement, nil, nil, 0);
   if (!string) {
     return NULL;
   }

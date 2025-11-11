@@ -12,7 +12,7 @@
 #include "xen_vector.h"
 
 static Xen_Instance* ast_alloc(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args) {
+                               Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node* ast = (Xen_AST_Node*)self;
   ast->name = NULL;
@@ -25,7 +25,7 @@ static Xen_Instance* ast_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* ast_destroy(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args) {
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node* ast = (Xen_AST_Node*)self;
   if (ast->name)
@@ -37,7 +37,7 @@ static Xen_Instance* ast_destroy(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* ast_string(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args) {
+                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<AST>");
   if (!string) {

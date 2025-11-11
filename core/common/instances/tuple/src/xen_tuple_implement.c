@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -13,12 +15,13 @@
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
 #include "xen_vector.h"
 
 static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args) {
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   tuple->instances = NULL;
@@ -26,7 +29,7 @@ static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* tuple_destroy(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
@@ -37,17 +40,71 @@ static Xen_Instance* tuple_destroy(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance* string = Xen_String_From_CString("<Tuple>");
-  if (!string) {
+  Xen_Tuple* tuple = (Xen_Tuple*)self;
+  char* buffer = strdup("<Tuple(");
+  if (!buffer) {
     return NULL;
   }
+  Xen_size_t buflen = 8;
+  for (Xen_size_t i = 0; i < Xen_SIZE(tuple); i++) {
+    Xen_Instance* value_inst = Xen_Tuple_Peek_Index(self, i);
+    Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
+    if (!value_string) {
+      free(buffer);
+      return NULL;
+    }
+    const char* value = strdup(Xen_String_As_CString(value_string));
+    if (!value) {
+      Xen_DEL_REF(value_string);
+      free(buffer);
+      return NULL;
+    }
+    Xen_DEL_REF(value_string);
+    buflen += strlen(value);
+    char* temp = realloc(buffer, buflen);
+    if (!temp) {
+      free((void*)value);
+      free(buffer);
+      return NULL;
+    }
+    buffer = temp;
+    strcat(buffer, value);
+    free((void*)value);
+    if (i != Xen_SIZE(tuple) - 1) {
+      buflen += 2;
+      char* tem = realloc(buffer, buflen);
+      if (!tem) {
+        free(buffer);
+        return NULL;
+      }
+      buffer = tem;
+      strcat(buffer, ", ");
+    }
+  }
+  buflen += 2;
+  char* temp = realloc(buffer, buflen);
+  if (!temp) {
+    free(buffer);
+    return NULL;
+  }
+  buffer = temp;
+  strcat(buffer, ")>");
+  buffer[buflen - 1] = '\0';
+  Xen_Instance* string = Xen_String_From_CString(buffer);
+  if (!string) {
+    free(buffer);
+    return NULL;
+  }
+  free(buffer);
+  return string;
   return string;
 }
 
 static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
-                                         Xen_Instance* args) {
+                                         Xen_Instance* args,
+                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
     return NULL;

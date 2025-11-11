@@ -41,6 +41,9 @@ bool vm_create() {
   Xen_Instance* args = Xen_Tuple_From_Array(program.argc, args_array);
   if (!args) {
     free(vm);
+    for (int i = 0; i < program.argc; i++) {
+      Xen_DEL_REF(args_array[i]);
+    }
     free(args_array);
     return 0;
   }
@@ -48,7 +51,7 @@ bool vm_create() {
     Xen_DEL_REF(args_array[i]);
   }
   free(args_array);
-  if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args)) {
+  if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args, nil)) {
     free(vm);
     Xen_DEL_REF(args);
     return 0;

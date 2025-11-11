@@ -38,12 +38,14 @@ bool vm_define_native_function(Xen_Instance* inst_map, const char* name,
 }
 
 Xen_Instance* vm_call_native_function(Xen_Native_Func func, Xen_INSTANCE* self,
-                                      Xen_Instance* args) {
+                                      Xen_Instance* args,
+                                      Xen_Instance* kwargs) {
   if (!run_context_stack_push(&vm->vm_ctx_stack, vm_current_ctx(),
-                              (Xen_Instance*)vm->root_context, self, args)) {
+                              (Xen_Instance*)vm->root_context, self, args,
+                              kwargs)) {
     return NULL;
   }
-  Xen_Instance* ret = func(run_ctx_id(vm_current_ctx()), self, args);
+  Xen_Instance* ret = func(run_ctx_id(vm_current_ctx()), self, args, kwargs);
   if (!ret) {
     run_context_stack_pop_top(&vm->vm_ctx_stack);
     return NULL;
@@ -74,13 +76,14 @@ void vm_ctx_clear(RunContext_ptr ctx) {
 }
 
 int vm_new_ctx_callable(CALLABLE_ptr callable, Xen_Instance* closure,
-                        struct __Instance* self, Xen_Instance* args) {
+                        struct __Instance* self, Xen_Instance* args,
+                        Xen_Instance* kwargs) {
   if (!callable) {
     return 0;
   }
   if (!run_context_stack_push(&vm->vm_ctx_stack,
                               run_context_stack_peek_top(&vm->vm_ctx_stack),
-                              closure, self, args)) {
+                              closure, self, args, kwargs)) {
     return 0;
   }
   RunContext_ptr ctx =
@@ -90,11 +93,12 @@ int vm_new_ctx_callable(CALLABLE_ptr callable, Xen_Instance* closure,
 }
 
 Xen_Instance* vm_run_callable(CALLABLE_ptr callable, Xen_Instance* closure,
-                              struct __Instance* self, Xen_Instance* args) {
+                              struct __Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
   if (!callable) {
     return NULL;
   }
-  if (!vm_new_ctx_callable(callable, closure, self, args)) {
+  if (!vm_new_ctx_callable(callable, closure, self, args, kwargs)) {
     return NULL;
   }
   Xen_Instance* ret =

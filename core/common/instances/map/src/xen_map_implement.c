@@ -18,7 +18,7 @@
 #include "xen_vector.h"
 
 static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args) {
+                               Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
   map->map_keys = nil;
@@ -28,7 +28,7 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args) {
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
   Xen_DEL_REF(map->map_keys);
@@ -49,7 +49,7 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args) {
+                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
   char* buffer = strdup("<Map(");
@@ -137,7 +137,8 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
-                                       Xen_Instance* args) {
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 1) {
     return NULL;

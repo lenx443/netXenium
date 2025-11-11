@@ -63,7 +63,7 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
 
   if (Xen_Number_Is_Zero(n_inst)) {
     Xen_Number* zero =
-        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
@@ -77,7 +77,8 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
     return (Xen_Instance*)zero;
   }
 
-  Xen_Number* res = (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+  Xen_Number* res =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!res)
     return NULL;
 
@@ -108,7 +109,8 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
     return NULL;
   }
 
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z) {
     return NULL;
   }
@@ -229,7 +231,8 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
 }
 
 Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -272,7 +275,8 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -320,7 +324,8 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_Int(int value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -368,7 +373,8 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -409,7 +415,8 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_Long(long value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -457,7 +464,8 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -498,7 +506,8 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -546,7 +555,8 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
 }
 
 Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
-  Xen_Number* z = (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, 0);
+  Xen_Number* z =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!z)
     return NULL;
 
@@ -878,7 +888,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if ((a->size == 1 && a->digits[0] == 0) ||
       (b->size == 1 && b->digits[0] == 0)) {
     Xen_Number* zero =
-        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
@@ -919,7 +929,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     actual_size--;
 
   Xen_Number* result =
-      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!result) {
     free(res_digits);
     return NULL;
@@ -944,7 +954,7 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 
   if (Xen_Number_Is_Zero(a_inst)) {
     Xen_Number* zero =
-        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
@@ -985,7 +995,7 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     actual_size--;
 
   Xen_Number* result =
-      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!result) {
     free(res_digits);
     free(remainder);
@@ -1012,7 +1022,7 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 
   if (Xen_Number_Is_Zero(a_inst)) {
     Xen_Number* zero =
-        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
@@ -1049,7 +1059,8 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 
   uint32_t remainder_val = (uint32_t)carry;
 
-  Xen_Number* res = (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+  Xen_Number* res =
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!res) {
     free(remainder);
     return NULL;
@@ -1158,7 +1169,7 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     i--;
 
   Xen_Number* result =
-      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!result) {
     free(res_digits);
     return NULL;
@@ -1195,7 +1206,7 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   int cmp = Xen_Number_Cmp(a_inst, b_inst);
   if (cmp == 0) {
     Xen_Number* zero =
-        (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+        (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)malloc(sizeof(uint32_t));
@@ -1243,7 +1254,7 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     res_size--;
 
   Xen_Number* result =
-      (Xen_Number*)__instance_new(&Xen_Number_Implement, NULL, 0);
+      (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
   if (!result) {
     free(res_digits);
     return NULL;

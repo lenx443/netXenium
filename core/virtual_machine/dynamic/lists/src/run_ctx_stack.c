@@ -5,11 +5,13 @@
 #include "run_ctx_stack.h"
 #include "run_frame.h"
 #include "vm_def.h"
+#include "xen_nil.h"
 #include "xen_tuple.h"
 
 int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
                            Xen_Instance* closure, Xen_Instance* caller,
-                           struct __Instance* self, Xen_Instance* args) {
+                           struct __Instance* self, Xen_Instance* args,
+                           Xen_Instance* kwargs) {
   if (!ctx_stack) {
     return 0;
   }
@@ -17,14 +19,14 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
   if (!ctx_stack_new) {
     return 0;
   }
-  Xen_Instance* alloc_args =
-      Xen_Tuple_From_Array(4, (Xen_Instance*[]){caller, closure, self, args});
+  Xen_Instance* alloc_args = Xen_Tuple_From_Array(
+      5, (Xen_Instance*[]){caller, closure, self, args, kwargs});
   if (!alloc_args) {
     free(ctx_stack_new);
     return 0;
   }
   ctx_stack_new->ctx =
-      (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, 0);
+      (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, nil, 0);
   if (!ctx_stack_new->ctx) {
     Xen_DEL_REF(alloc_args);
     free(ctx_stack_new);

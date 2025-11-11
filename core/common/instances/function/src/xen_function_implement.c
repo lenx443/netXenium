@@ -10,7 +10,7 @@
 #include "xen_string.h"
 
 static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   inst->fun_callable = NULL;
@@ -19,7 +19,8 @@ static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* function_destroy(ctx_id_t id, struct __Instance* self,
-                                      Xen_Instance* args) {
+                                      Xen_Instance* args,
+                                      Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   if (inst->fun_callable)
@@ -29,12 +30,13 @@ static Xen_Instance* function_destroy(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
-                                       Xen_Instance* args) {
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   if (inst->fun_callable) {
     Xen_Instance* ret =
-        vm_run_callable(inst->fun_callable, inst->closure, nil, args);
+        vm_run_callable(inst->fun_callable, inst->closure, nil, args, kwargs);
     if (!ret) {
       return NULL;
     }
@@ -44,7 +46,7 @@ static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
 }
 
 static Xen_Instance* function_string(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args) {
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Instance* string = Xen_String_From_CString("<Function>");
   if (!string) {

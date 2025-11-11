@@ -19,6 +19,7 @@ struct RunContext {
   CALLABLE_ptr ctx_code;
   struct vm_Stack ctx_stack;
   Xen_Instance* ctx_args;
+  Xen_Instance* ctx_kwargs;
   struct __Instance* ctx_instances;
   uint32_t ctx_ip;
   bool ctx_running;

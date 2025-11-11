@@ -15,7 +15,7 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
     return NULL;
   }
   Xen_Method* method =
-      (Xen_Method*)__instance_new(&Xen_Method_Implement, nil, 0);
+      (Xen_Method*)__instance_new(&Xen_Method_Implement, nil, nil, 0);
   if (!method) {
     return NULL;
   }
@@ -24,11 +24,12 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   return (Xen_Instance*)method;
 }
 
-Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args) {
+Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Method_Implement.__callable(0, method, args);
+  Xen_Instance* ret = Xen_Method_Implement.__callable(0, method, args, kwargs);
   if (!ret) {
     return NULL;
   }
@@ -36,7 +37,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args) {
 }
 
 Xen_Instance* Xen_Method_Attr_Call(Xen_Instance* inst, Xen_Instance* attr,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   if (!inst || !attr || !args) {
     return NULL;
   }
@@ -44,7 +45,7 @@ Xen_Instance* Xen_Method_Attr_Call(Xen_Instance* inst, Xen_Instance* attr,
   if (!method) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Method_Call(method, args);
+  Xen_Instance* ret = Xen_Method_Call(method, args, kwargs);
   if (!ret) {
     Xen_DEL_REF(method);
     return NULL;
@@ -54,7 +55,8 @@ Xen_Instance* Xen_Method_Attr_Call(Xen_Instance* inst, Xen_Instance* attr,
 }
 
 Xen_Instance* Xen_Method_Attr_Str_Call(Xen_Instance* inst, const char* attr,
-                                       Xen_Instance* args) {
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
   if (!inst || !attr || !args) {
     return NULL;
   }
@@ -62,7 +64,7 @@ Xen_Instance* Xen_Method_Attr_Str_Call(Xen_Instance* inst, const char* attr,
   if (!attr_inst) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Method_Attr_Call(inst, attr_inst, args);
+  Xen_Instance* ret = Xen_Method_Attr_Call(inst, attr_inst, args, kwargs);
   if (!ret) {
     Xen_DEL_REF(attr_inst);
     return NULL;

@@ -9,7 +9,7 @@
 #include "xen_string.h"
 
 static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Module* module = (Xen_Module*)self;
   module->mod_map = nil;
@@ -18,7 +18,7 @@ static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* module_destroy(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Module* module = (Xen_Module*)self;
   if_nil_neval(module->mod_map) Xen_DEL_REF(module->mod_map);
@@ -27,7 +27,7 @@ static Xen_Instance* module_destroy(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Module>");
   if (!string) {

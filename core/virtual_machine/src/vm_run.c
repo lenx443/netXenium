@@ -1,4 +1,6 @@
-#include "vm_run.h"
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "attrs.h"
 #include "bytecode.h"
 #include "implement.h"
@@ -8,6 +10,7 @@
 #include "run_ctx_instance.h"
 #include "vm.h"
 #include "vm_instructs.h"
+#include "vm_run.h"
 #include "vm_stack.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
@@ -16,9 +19,8 @@
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
-#include "xen_vector.h"
-#include <stdint.h>
 
 static void op_nop(RunContext_ptr ctx, uint8_t oparg) {
   (void)ctx;
@@ -187,20 +189,28 @@ static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* args = Xen_Vector_New();
+  Xen_Instance** args_array = malloc(oparg * sizeof(Xen_Instance*));
+  if (!args_array) {
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t idx = oparg; idx > 0; --idx) {
+    Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
+    args_array[idx - 1] = arg;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(oparg, args_array);
   if (!args) {
+    for (uint8_t idx = 0; idx < oparg; idx++) {
+      Xen_DEL_REF(args_array[idx]);
+    }
+    free(args_array);
     ctx->ctx_error = 1;
     return;
   }
   for (uint8_t idx = 0; idx < oparg; idx++) {
-    Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
-    if (!Xen_Vector_Push(args, arg)) {
-      Xen_DEL_REF(args);
-      ctx->ctx_error = 1;
-      return;
-    }
-    Xen_DEL_REF(arg);
+    Xen_DEL_REF(args_array[idx]);
   }
+  free(args_array);
   Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
   if (Xen_IMPL(callable)->__callable == NULL) {
     Xen_DEL_REF(callable);
@@ -208,8 +218,8 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* ret =
-      vm_call_native_function(Xen_IMPL(callable)->__callable, callable, args);
+  Xen_Instance* ret = vm_call_native_function(Xen_IMPL(callable)->__callable,
+                                              callable, args, nil);
   if (!ret) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);
@@ -220,6 +230,78 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(ret);
   Xen_DEL_REF(callable);
   Xen_DEL_REF(args);
+}
+
+static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* kw_names = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* kwargs = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!kwargs) {
+    Xen_DEL_REF(kw_names);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (Xen_size_t idx = Xen_SIZE(kw_names); idx > 0; --idx) {
+    Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
+    Xen_Instance* kw_name = Xen_Attr_Index_Size_Get(kw_names, idx - 1);
+    if (!Xen_Map_Push_Pair(kwargs, (Xen_Map_Pair){kw_name, arg})) {
+      Xen_DEL_REF(kw_name);
+      Xen_DEL_REF(arg);
+      Xen_DEL_REF(kwargs);
+      Xen_DEL_REF(kw_names);
+      ctx->ctx_error = 1;
+      return;
+    }
+    Xen_DEL_REF(kw_name);
+    Xen_DEL_REF(arg);
+  }
+  Xen_size_t args_count = oparg - Xen_SIZE(kw_names);
+  Xen_DEL_REF(kw_names);
+  Xen_Instance** args_array = malloc(args_count * sizeof(Xen_Instance*));
+  if (!args_array) {
+    Xen_DEL_REF(kwargs);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t idx = args_count; idx > 0; --idx) {
+    Xen_Instance* arg = vm_stack_pop(&ctx->ctx_stack);
+    args_array[idx - 1] = arg;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(args_count, args_array);
+  if (!args) {
+    Xen_DEL_REF(kwargs);
+    for (uint8_t idx = 0; idx < args_count; idx++) {
+      Xen_DEL_REF(args_array[idx]);
+    }
+    free(args_array);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t idx = 0; idx < args_count; idx++) {
+    Xen_DEL_REF(args_array[idx]);
+  }
+  free(args_array);
+  Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_IMPL(callable)->__callable == NULL) {
+    Xen_DEL_REF(callable);
+    Xen_DEL_REF(args);
+    Xen_DEL_REF(kwargs);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* ret = vm_call_native_function(Xen_IMPL(callable)->__callable,
+                                              callable, args, kwargs);
+  if (!ret) {
+    Xen_DEL_REF(callable);
+    Xen_DEL_REF(args);
+    Xen_DEL_REF(kwargs);
+    ctx->ctx_error = 1;
+    return;
+  }
+  vm_stack_push(&ctx->ctx_stack, ret);
+  Xen_DEL_REF(ret);
+  Xen_DEL_REF(callable);
+  Xen_DEL_REF(args);
+  Xen_DEL_REF(kwargs);
 }
 
 static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
@@ -252,7 +334,7 @@ static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* result = Xen_Method_Call(method, nil);
+  Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
@@ -279,7 +361,7 @@ static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* result = Xen_Method_Call(method, nil);
+  Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
@@ -306,7 +388,7 @@ static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* result = Xen_Method_Call(method, nil);
+  Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
     Xen_DEL_REF(method);
     Xen_DEL_REF(inst);
@@ -367,6 +449,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [STORE_INDEX] = op_store_index,
     [STORE_ATTR] = op_store_attr,
     [CALL] = op_call,
+    [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,
@@ -382,7 +465,7 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
     return NULL;
   if (ctx->ctx_code->callable_type == CALL_NATIVE_FUNCTIIN) {
     Xen_Instance* ret = ctx->ctx_code->native_callable(
-        ctx->ctx_id, ctx->ctx_self, ctx->ctx_args);
+        ctx->ctx_id, ctx->ctx_self, ctx->ctx_args, ctx->ctx_kwargs);
     return ret;
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     ctx->ctx_running = 1;

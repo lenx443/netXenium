@@ -14,7 +14,7 @@
 
 Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
   Xen_Module* module =
-      (Xen_Module*)__instance_new(&Xen_Module_Implement, nil, 0);
+      (Xen_Module*)__instance_new(&Xen_Module_Implement, nil, nil, 0);
   if (!module) {
     return NULL;
   }
@@ -25,11 +25,11 @@ Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
 
 Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
   Xen_Instance* ctx_args =
-      Xen_Vector_From_Array(4, (Xen_Instance*[]){nil, nil, nil, nil});
+      Xen_Vector_From_Array(5, (Xen_Instance*[]){nil, nil, nil, nil, nil});
   if (!ctx_args) {
     return NULL;
   }
-  Xen_Instance* mod_ctx = __instance_new(&Xen_Run_Frame, ctx_args, 0);
+  Xen_Instance* mod_ctx = __instance_new(&Xen_Run_Frame, ctx_args, nil, 0);
   if (!mod_ctx) {
     Xen_DEL_REF(ctx_args);
     return NULL;

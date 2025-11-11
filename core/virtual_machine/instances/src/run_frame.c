@@ -11,9 +11,9 @@
 #include "xen_tuple.h"
 
 static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                 Xen_Instance* args) {
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (!args || Xen_SIZE(args) != 4 ||
+  if (!args || Xen_SIZE(args) != 5 ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 0)) &&
        Xen_IMPL(Xen_Tuple_Peek_Index(args, 0)) != &Xen_Run_Frame) ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 1)) &&
@@ -38,6 +38,10 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
     ctx_new->ctx_args = Xen_Tuple_Get_Index(args, 3);
   } else
     ctx_new->ctx_args = NULL;
+  if (Xen_Tuple_Peek_Index(args, 4)) {
+    ctx_new->ctx_kwargs = Xen_Tuple_Get_Index(args, 4);
+  } else
+    ctx_new->ctx_kwargs = NULL;
   ctx_new->ctx_instances = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
   if (!ctx_new->ctx_instances) {
     Xen_DEL_REF(ctx_new->ctx_closure);
@@ -55,7 +59,7 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
 }
 
 static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
-                                   Xen_INSTANCE* args) {
+                                   Xen_INSTANCE* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct RunContext* ctx = (struct RunContext*)self;
   Xen_DEL_REF(ctx->ctx_instances);
@@ -65,12 +69,14 @@ static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
   Xen_DEL_REF(ctx->ctx_self);
   if (ctx->ctx_args)
     Xen_DEL_REF(ctx->ctx_args);
+  if (ctx->ctx_kwargs)
+    Xen_DEL_REF(ctx->ctx_kwargs);
   vm_stack_free(&ctx->ctx_stack);
   return nil;
 }
 
 static Xen_Instance* frame_string(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Context-Frame>");
   if (!string) {

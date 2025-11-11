@@ -12,7 +12,8 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
   if (!array) {
     return NULL;
   }
-  Xen_Tuple* tuple = (Xen_Tuple*)__instance_new(&Xen_Tuple_Implement, nil, 0);
+  Xen_Tuple* tuple =
+      (Xen_Tuple*)__instance_new(&Xen_Tuple_Implement, nil, nil, 0);
   if (!tuple) {
     return NULL;
   }

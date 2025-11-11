@@ -15,7 +15,7 @@
 #include "xen_string.h"
 
 static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean* boolean = (Xen_Boolean*)self;
   boolean->value = 0;
@@ -23,7 +23,7 @@ static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean* boolean = (Xen_Boolean*)self;
   Xen_Instance* string = NULL;
@@ -44,7 +44,7 @@ static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   unsigned long hash = (unsigned long)((Xen_Boolean*)self)->value;
   Xen_Instance* hash_number = Xen_Number_From_ULong(hash);
@@ -55,7 +55,7 @@ static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* boolean_boolean(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args) {
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_ADD_REF(self);
 }

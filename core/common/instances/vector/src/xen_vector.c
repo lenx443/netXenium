@@ -9,7 +9,7 @@
 #include "xen_vector_instance.h"
 
 Xen_Instance* Xen_Vector_New() {
-  Xen_Instance* vector = __instance_new(&Xen_Vector_Implement, nil, 0);
+  Xen_Instance* vector = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
   if (!vector)
     return NULL;
   return vector;
@@ -19,7 +19,7 @@ Xen_Instance* Xen_Vector_From_Array(size_t size, Xen_Instance** array) {
   if (!array) {
     return NULL;
   }
-  Xen_INSTANCE* vector = __instance_new(&Xen_Vector_Implement, nil, 0);
+  Xen_INSTANCE* vector = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
   if (!vector) {
     return NULL;
   }

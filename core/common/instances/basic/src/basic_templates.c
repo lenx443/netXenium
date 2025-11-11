@@ -11,7 +11,8 @@
 #include "xen_vector.h"
 
 Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
-                                        Xen_Instance* args) {
+                                        Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
@@ -45,7 +46,8 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
 }
 
 Xen_Instance* Xen_Basic_Set_Attr_Static(ctx_id_t id, Xen_Instance* self,
-                                        Xen_Instance* args) {
+                                        Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||

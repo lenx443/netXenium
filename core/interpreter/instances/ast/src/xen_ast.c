@@ -10,7 +10,8 @@
 #include "xen_vector.h"
 
 Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
-  Xen_AST_Node* ast = (Xen_AST_Node*)__instance_new(&Xen_AST_Implement, nil, 0);
+  Xen_AST_Node* ast =
+      (Xen_AST_Node*)__instance_new(&Xen_AST_Implement, nil, nil, 0);
   if (!ast) {
     return NULL;
   }

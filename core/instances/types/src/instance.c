@@ -7,6 +7,7 @@
 #include "xen_map.h"
 
 struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
+                                  Xen_INSTANCE* kwargs,
                                   Xen_Instance_Flag flags) {
   if (!impl) {
     return NULL;
@@ -30,7 +31,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     }
   }
   if (impl->__alloc) {
-    Xen_Instance* ret = impl->__alloc(0, inst, args);
+    Xen_Instance* ret = impl->__alloc(0, inst, args, kwargs);
     if (!ret) {
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
         Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
@@ -49,7 +50,7 @@ void __instance_free(struct __Instance* inst) {
   }
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy)
-      inst->__impl->__destroy(0, inst, NULL);
+      inst->__impl->__destroy(0, inst, NULL, NULL);
     if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
     }

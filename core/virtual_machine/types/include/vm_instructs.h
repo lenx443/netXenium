@@ -29,6 +29,7 @@ enum vm_Instruct {
   STORE_INDEX,
   STORE_ATTR,
   CALL,
+  CALL_KW,
   BINARYOP,
   UNARY_POSITIVE,
   UNARY_NEGATIVE,

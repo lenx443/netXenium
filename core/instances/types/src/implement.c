@@ -10,7 +10,7 @@
 
 struct __Implement* __implement_new(char* impl_name) {
   struct __Implement* impl =
-      (struct __Implement*)__instance_new(&Xen_Basic, nil, 0);
+      (struct __Implement*)__instance_new(&Xen_Basic, nil, nil, 0);
   if (!impl) {
     return NULL;
   }

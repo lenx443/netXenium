@@ -20,7 +20,7 @@
 #include "xen_vector_instance.h"
 
 static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args) {
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
   vector->values = NULL;
@@ -29,7 +29,7 @@ static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args) {
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
   for (size_t i = 0; i < vector->__size; i++) {
@@ -40,7 +40,7 @@ static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args) {
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
   char* buffer = strdup("<Vector(");
@@ -102,7 +102,8 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
-                                          Xen_Instance* args) {
+                                          Xen_Instance* args,
+                                          Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1)
     return NULL;
@@ -117,7 +118,8 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
-                                          Xen_Instance* args) {
+                                          Xen_Instance* args,
+                                          Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 2)
     return NULL;

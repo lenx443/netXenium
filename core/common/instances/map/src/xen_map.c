@@ -20,7 +20,7 @@
 #include "xen_vector_implement.h"
 
 Xen_Instance* Xen_Map_New(size_t capacity) {
-  Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, 0);
+  Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, nil, 0);
   if (!map) {
     return NULL;
   }
@@ -31,7 +31,7 @@ Xen_Instance* Xen_Map_New(size_t capacity) {
   for (size_t i = 0; i < capacity; i++) {
     map->map_buckets[i] = NULL;
   }
-  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, 0);
+  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
   if (!map->map_keys) {
     free(map->map_buckets);
     return NULL;
@@ -72,7 +72,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   Xen_Map* map = (Xen_Map*)map_inst;
 
   Xen_Instance* hash_inst =
-      vm_call_native_function(pair.key->__impl->__hash, pair.key, nil);
+      vm_call_native_function(pair.key->__impl->__hash, pair.key, nil, nil);
   if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
     return 0;
   }
@@ -160,7 +160,7 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
 Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   Xen_Map* map = (Xen_Map*)map_inst;
   Xen_Instance* hash_inst =
-      vm_call_native_function(key->__impl->__hash, key, nil);
+      vm_call_native_function(key->__impl->__hash, key, nil, nil);
   if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
     return NULL;
   }
