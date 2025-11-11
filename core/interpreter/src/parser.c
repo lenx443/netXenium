@@ -9,6 +9,19 @@
 #include "xen_ast.h"
 #include "xen_nil.h"
 
+static inline void skip_newline_if_before_is(Parser* p, Lexer_Token token) {
+  int pos = p->lexer->pos;
+  Lexer_Token tkn = p->token;
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
+  if (p->token.tkn_type != token.tkn_type ||
+      strcmp(p->token.tkn_text, token.tkn_text) != 0) {
+    p->lexer->pos = pos;
+    p->token = tkn;
+  }
+}
+
 static bool is_stmt(Parser*);
 static bool is_expr(Parser*);
 static bool is_primary(Parser*);
@@ -35,7 +48,6 @@ static Xen_Instance* parser_relational(Parser*);
 static Xen_Instance* parser_not(Parser*);
 static Xen_Instance* parser_and(Parser*);
 static Xen_Instance* parser_or(Parser*);
-static Xen_Instance* parser_pair(Parser*);
 static Xen_Instance* parser_list(Parser*);
 static Xen_Instance* parser_suffix(Parser*);
 static Xen_Instance* parser_assignment(Parser*);
@@ -648,45 +660,8 @@ Xen_Instance* parser_or(Parser* p) {
   return left;
 }
 
-Xen_Instance* parser_pair(Parser* p) {
-  Xen_Instance* first = parser_or(p);
-  if (!first) {
-    return NULL;
-  }
-  if (p->token.tkn_type != TKN_COLON) {
-    return first;
-  }
-  parser_next(p);
-  Xen_Instance* second = parser_or(p);
-  if (!second) {
-    Xen_DEL_REF(first);
-    return NULL;
-  }
-  Xen_Instance* binary = Xen_AST_Node_New("Binary", ":");
-  if (!binary) {
-    Xen_DEL_REF(first);
-    Xen_DEL_REF(second);
-    return NULL;
-  }
-  if (!Xen_AST_Node_Push_Child(binary, first)) {
-    Xen_DEL_REF(first);
-    Xen_DEL_REF(second);
-    Xen_DEL_REF(binary);
-    return NULL;
-  }
-  if (!Xen_AST_Node_Push_Child(binary, second)) {
-    Xen_DEL_REF(first);
-    Xen_DEL_REF(second);
-    Xen_DEL_REF(binary);
-    return NULL;
-  }
-  Xen_DEL_REF(first);
-  Xen_DEL_REF(second);
-  return binary;
-}
-
 Xen_Instance* parser_list(Parser* p) {
-  Xen_Instance* expr_head = parser_pair(p);
+  Xen_Instance* expr_head = parser_or(p);
   if (!expr_head) {
     return NULL;
   }
@@ -709,7 +684,7 @@ Xen_Instance* parser_list(Parser* p) {
     if (!is_expr(p)) {
       return list;
     }
-    Xen_Instance* expr = parser_pair(p);
+    Xen_Instance* expr = parser_or(p);
     if (!expr) {
       Xen_DEL_REF(list);
       return NULL;
@@ -884,7 +859,7 @@ Xen_Instance* parser_arg_tail(Parser* p) {
 }
 
 Xen_Instance* parser_arg_assignment(Parser* p) {
-  Xen_Instance* lhs_node = parser_pair(p);
+  Xen_Instance* lhs_node = parser_or(p);
   if (!lhs_node) {
     return NULL;
   }
@@ -899,7 +874,7 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
     const char* operator = strdup(p->token.tkn_text);
     parser_next(p);
 
-    Xen_Instance* rhs_node = parser_pair(p);
+    Xen_Instance* rhs_node = parser_or(p);
     if (!rhs_node) {
       Xen_DEL_REF(lhs);
       free((void*)operator);
@@ -1023,6 +998,9 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     Xen_DEL_REF(if_stmt);
     return NULL;
   }
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
   Xen_Instance* then = parser_block(p);
   if (!then) {
     Xen_DEL_REF(condition);
@@ -1041,6 +1019,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     Xen_DEL_REF(if_stmt);
     return NULL;
   }
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "elif"});
   Xen_DEL_REF(then);
   Xen_DEL_REF(condition);
   Xen_Instance* current_if = if_stmt;
@@ -1057,6 +1036,9 @@ Xen_Instance* parser_if_stmt(Parser* p) {
       Xen_DEL_REF(elif);
       Xen_DEL_REF(if_stmt);
       return NULL;
+    }
+    while (p->token.tkn_type == TKN_NEWLINE) {
+      parser_next(p);
     }
     Xen_Instance* elif_then = parser_block(p);
     if (!elif_then) {
@@ -1089,9 +1071,13 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     current_if = elif;
     Xen_DEL_REF(elif);
   }
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "else"});
   if (p->token.tkn_type == TKN_KEYWORD &&
       strcmp(p->token.tkn_text, "else") == 0) {
     parser_next(p);
+    while (p->token.tkn_type == TKN_NEWLINE) {
+      parser_next(p);
+    }
     Xen_Instance* els = parser_block(p);
     if (!els) {
       Xen_DEL_REF(if_stmt);
@@ -1116,32 +1102,20 @@ Xen_Instance* parser_while_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* condition_node = parser_expr(p);
-  if (!condition_node) {
-    Xen_DEL_REF(while_stmt);
-    return NULL;
-  }
-  Xen_Instance* condition = Xen_AST_Node_Wrap(condition_node, "WhileCondition");
+  Xen_Instance* condition = parser_expr(p);
   if (!condition) {
-    Xen_DEL_REF(condition_node);
     Xen_DEL_REF(while_stmt);
     return NULL;
   }
-  Xen_DEL_REF(condition_node);
-  Xen_Instance* do_node = parser_block(p);
-  if (!do_node) {
-    Xen_DEL_REF(condition);
-    Xen_DEL_REF(while_stmt);
-    return NULL;
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
   }
-  Xen_Instance* wdo = Xen_AST_Node_Wrap(do_node, "WhileDo");
+  Xen_Instance* wdo = parser_block(p);
   if (!wdo) {
-    Xen_DEL_REF(do_node);
     Xen_DEL_REF(condition);
     Xen_DEL_REF(while_stmt);
     return NULL;
   }
-  Xen_DEL_REF(do_node);
   if (!Xen_AST_Node_Push_Child(while_stmt, condition)) {
     Xen_DEL_REF(wdo);
     Xen_DEL_REF(condition);
@@ -1201,6 +1175,9 @@ Xen_Instance* parser_for_stmt(Parser* p) {
     return NULL;
   }
   Xen_DEL_REF(expr_node);
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
   Xen_Instance* do_node = parser_block(p);
   if (!do_node) {
     Xen_DEL_REF(expr);
@@ -1245,9 +1222,6 @@ Xen_Instance* parser_for_stmt(Parser* p) {
 }
 
 Xen_Instance* parser_block(Parser* p) {
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
   if (p->token.tkn_type != TKN_BLOCK) {
     return NULL;
   }
@@ -1289,9 +1263,6 @@ Xen_Instance* parser_block(Parser* p) {
       return NULL;
     }
     Xen_DEL_REF(stmt);
-    while (p->token.tkn_type == TKN_NEWLINE) {
-      parser_next(p);
-    }
   }
   return block;
 }

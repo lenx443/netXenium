@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "attrs.h"
 #include "implement.h"
 #include "instance.h"
@@ -122,22 +124,13 @@ const char* Xen_Attr_String_Str(Xen_Instance* inst) {
   if (!string) {
     return NULL;
   }
-  return Xen_String_As_CString(string);
-}
-
-Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
-  if (!inst) {
+  const char* string_str = strdup(Xen_String_As_CString(string));
+  if (!string_str) {
+    Xen_DEL_REF(string);
     return NULL;
   }
-  Xen_Instance* boolean = Xen_Method_Attr_Str_Call(inst, "__boolean", nil, nil);
-  if (!boolean) {
-    return NULL;
-  }
-  if (Xen_IMPL(boolean) != &Xen_Boolean_Implement) {
-    Xen_DEL_REF(boolean);
-    return NULL;
-  }
-  return boolean;
+  Xen_DEL_REF(string);
+  return string_str;
 }
 
 Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
@@ -169,7 +162,28 @@ const char* Xen_Attr_Raw_Str(Xen_Instance* inst) {
   if (!raw) {
     return NULL;
   }
-  return Xen_String_As_CString(raw);
+  const char* raw_str = strdup(Xen_String_As_CString(raw));
+  if (!raw_str) {
+    Xen_DEL_REF(raw);
+    return NULL;
+  }
+  Xen_DEL_REF(raw);
+  return raw_str;
+}
+
+Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* boolean = Xen_Method_Attr_Str_Call(inst, "__boolean", nil, nil);
+  if (!boolean) {
+    return NULL;
+  }
+  if (Xen_IMPL(boolean) != &Xen_Boolean_Implement) {
+    Xen_DEL_REF(boolean);
+    return NULL;
+  }
+  return boolean;
 }
 
 Xen_Instance* Xen_Attr_Index_Get(Xen_Instance* inst, Xen_Instance* index) {

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "attrs.h"
@@ -408,6 +409,17 @@ static void op_copy(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(val);
 }
 
+static void op_print_top(RunContext_ptr ctx, uint8_t _) {
+  Xen_Instance* val = vm_stack_pop(&ctx->ctx_stack);
+  vm_stack_push(&ctx->ctx_stack, val);
+  const char* val_str = Xen_Attr_Raw_Str(val);
+  if (val_str) {
+    puts(val_str);
+    free((void*)val_str);
+  }
+  Xen_DEL_REF(val);
+}
+
 static void op_jump(RunContext_ptr ctx, uint8_t oparg) {
   ctx->ctx_ip = oparg;
 }
@@ -455,6 +467,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [UNARY_NEGATIVE] = op_unary_negative,
     [UNARY_NOT] = op_unary_not,
     [COPY] = op_copy,
+    [PRINT_TOP] = op_print_top,
     [JUMP] = op_jump,
     [JUMP_IF_TRUE] = op_jump_if_true,
     [JUMP_IF_FALSE] = op_jump_if_false,

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "colors.h"
+#include "compiler.h"
 #include "history.h"
 #include "interpreter.h"
 #include "list.h"
@@ -42,7 +43,7 @@ void load_script(char* filename) {
     program.exit_code = EXIT_FAILURE;
     return;
   }
-  if (!interpreter(file_content)) {
+  if (!interpreter(file_content, Xen_COMPILE_PROGRAM)) {
     log_show_and_clear(NULL);
   }
   free(file_content);
@@ -78,7 +79,7 @@ void shell_loop() {
       break;
     }
 #endif
-    if (!interpreter(cmd_str)) {
+    if (!interpreter(cmd_str, Xen_COMPILE_REPL)) {
       log_show_and_clear(NULL);
       free(cmd_str);
       if (program.closed)

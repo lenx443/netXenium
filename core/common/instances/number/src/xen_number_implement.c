@@ -175,8 +175,11 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) == 0)
+  if (Xen_Number_Cmp(a, b) == 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -189,8 +192,11 @@ static Xen_Instance* number_opr_ne(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) != 0)
+  if (Xen_Number_Cmp(a, b) != 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -203,8 +209,11 @@ static Xen_Instance* number_opr_lt(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) < 0)
+  if (Xen_Number_Cmp(a, b) < 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -217,8 +226,11 @@ static Xen_Instance* number_opr_le(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) <= 0)
+  if (Xen_Number_Cmp(a, b) <= 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -231,8 +243,11 @@ static Xen_Instance* number_opr_gt(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) > 0)
+  if (Xen_Number_Cmp(a, b) > 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -245,8 +260,11 @@ static Xen_Instance* number_opr_ge(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
-  if (Xen_Number_Cmp(a, b) >= 0)
+  if (Xen_Number_Cmp(a, b) >= 0) {
+    Xen_DEL_REF(b);
     return Xen_True;
+  }
+  Xen_DEL_REF(b);
   return Xen_False;
 }
 

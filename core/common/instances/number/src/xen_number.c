@@ -1220,14 +1220,18 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     return (Xen_Instance*)zero;
   }
 
-  const Xen_Number* minuend = a;
-  const Xen_Number* subtrahend = b;
-  int result_sign = a->sign;
+  const Xen_Number* minuend;
+  const Xen_Number* subtrahend;
+  int result_sign;
 
-  if (cmp < 0) {
-    minuend = b;
-    subtrahend = a;
-    result_sign = -a->sign;
+  if (a->sign > 0) {
+    minuend = (cmp >= 0) ? a : b;
+    subtrahend = (cmp >= 0) ? b : a;
+    result_sign = (cmp >= 0) ? +1 : -1;
+  } else {
+    minuend = (cmp >= 0) ? b : a;
+    subtrahend = (cmp >= 0) ? a : b;
+    result_sign = (cmp >= 0) ? +1 : -1;
   }
 
   Xen_size_t res_size = minuend->size;
