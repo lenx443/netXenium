@@ -11,8 +11,8 @@
 #include "xen_string.h"
 #include "xen_vector.h"
 
-static Xen_Instance* ast_alloc(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* ast_create(ctx_id_t id, Xen_Instance* self,
+                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node* ast = (Xen_AST_Node*)self;
   ast->name = NULL;
@@ -52,7 +52,7 @@ Xen_Implement Xen_AST_Implement = {
     .__inst_size = sizeof(struct Xen_AST_Node_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
-    .__alloc = ast_alloc,
+    .__create = ast_create,
     .__destroy = ast_destroy,
     .__string = ast_string,
     .__raw = ast_string,

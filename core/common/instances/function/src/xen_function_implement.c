@@ -9,8 +9,8 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 
-static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* function_create(ctx_id_t id, struct __Instance* self,
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   inst->fun_callable = NULL;
@@ -61,7 +61,7 @@ struct __Implement Xen_Function_Implement = {
     .__inst_size = sizeof(Xen_Function),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = function_alloc,
+    .__create = function_create,
     .__destroy = function_destroy,
     .__string = function_string,
     .__raw = function_string,

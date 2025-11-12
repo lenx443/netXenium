@@ -25,7 +25,7 @@ struct __Implement* __implement_new(char* impl_name) {
     return NULL;
   }
   impl->__inst_size = sizeof(struct __Instance);
-  impl->__alloc = NULL;
+  impl->__create = NULL;
   impl->__destroy = NULL;
   impl->__callable = NULL;
   impl->__hash = NULL;

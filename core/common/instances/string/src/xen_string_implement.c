@@ -22,8 +22,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_create(ctx_id_t id, Xen_INSTANCE* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
   string->characters = NULL;
@@ -201,7 +201,7 @@ struct __Implement Xen_String_Implement = {
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = string_alloc,
+    .__create = string_create,
     .__destroy = string_destroy,
     .__string = string_string,
     .__raw = string_raw,

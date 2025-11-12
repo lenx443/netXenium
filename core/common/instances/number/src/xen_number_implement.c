@@ -20,8 +20,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* number_create(ctx_id_t id, Xen_INSTANCE* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   num->digits = NULL;
@@ -327,7 +327,7 @@ struct __Implement Xen_Number_Implement = {
     .__inst_size = sizeof(struct Xen_Number_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = number_alloc,
+    .__create = number_create,
     .__destroy = number_destroy,
     .__string = number_string,
     .__raw = number_string,

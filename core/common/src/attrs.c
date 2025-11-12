@@ -139,7 +139,7 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   }
   Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil, nil);
   if (!raw) {
-    if (Xen_IMPL(inst)->__string == NULL) {
+    if (Xen_IMPL(inst)->__raw == NULL) {
       return NULL;
     }
     raw = vm_call_native_function(Xen_IMPL(inst)->__raw, inst, nil, nil);

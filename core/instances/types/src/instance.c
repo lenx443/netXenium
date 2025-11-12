@@ -12,16 +12,24 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   if (!impl) {
     return NULL;
   }
-  struct __Instance* inst = malloc(impl->__inst_size);
-  if (!inst) {
-    return NULL;
+  struct __Instance* inst;
+  if (impl->__alloc) {
+    inst = impl->__alloc(0, NULL, args, kwargs);
+    if (!inst) {
+      return NULL;
+    }
+  } else {
+    inst = malloc(impl->__inst_size);
+    if (!inst) {
+      return NULL;
+    }
+    inst->__refers = 0;
+    Xen_ADD_REF(inst);
+    inst->__impl = impl;
+    inst->__size = 0;
+    inst->__flags = flags;
+    inst->__flags |= impl->__inst_default_flags;
   }
-  inst->__refers = 0;
-  Xen_ADD_REF(inst);
-  inst->__impl = impl;
-  inst->__flags = inst->__impl->__inst_default_flags;
-  inst->__flags |= flags;
-  inst->__size = 0;
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
     mapped->__map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
@@ -30,8 +38,8 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
       return NULL;
     }
   }
-  if (impl->__alloc) {
-    Xen_Instance* ret = impl->__alloc(0, inst, args, kwargs);
+  if (impl->__create) {
+    Xen_Instance* ret = impl->__create(0, inst, args, kwargs);
     if (!ret) {
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
         Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);

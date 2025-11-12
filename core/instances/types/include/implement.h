@@ -34,6 +34,7 @@ struct __Implement {
   Xen_Instance_Flag __inst_default_flags;
   struct __Instance* __props;
   Xen_Native_Func __alloc;
+  Xen_Native_Func __create;
   Xen_Native_Func __destroy;
   Xen_Native_Func __string;
   Xen_Native_Func __raw;

@@ -17,8 +17,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_create(ctx_id_t id, Xen_Instance* self,
+                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
   map->map_keys = nil;
@@ -159,7 +159,7 @@ struct __Implement Xen_Map_Implement = {
     .__inst_size = sizeof(struct Xen_Map_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = map_alloc,
+    .__create = map_create,
     .__destroy = map_destroy,
     .__string = map_string,
     .__raw = map_string,

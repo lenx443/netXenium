@@ -9,8 +9,8 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 
-static Xen_Instance* basic_alloc(ctx_id_t id, struct __Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* basic_create(ctx_id_t id, struct __Instance* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl = (struct __Implement*)self;
   impl->__impl_name = NULL;
@@ -20,7 +20,7 @@ static Xen_Instance* basic_alloc(ctx_id_t id, struct __Instance* self,
     return NULL;
   }
   impl->__inst_size = sizeof(struct __Instance);
-  impl->__alloc = NULL;
+  impl->__create = NULL;
   impl->__destroy = NULL;
   impl->__callable = NULL;
   impl->__hash = NULL;
@@ -64,7 +64,7 @@ struct __Implement Xen_Basic = {
     .__inst_size = sizeof(struct __Implement),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = basic_alloc,
+    .__create = basic_create,
     .__destroy = basic_destroy,
     .__string = basic_string,
     .__raw = basic_string,

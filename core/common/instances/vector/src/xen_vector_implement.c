@@ -19,8 +19,8 @@
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
-static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
   vector->values = NULL;
@@ -142,7 +142,7 @@ struct __Implement Xen_Vector_Implement = {
     .__inst_size = sizeof(struct Xen_Vector_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = vector_alloc,
+    .__create = vector_create,
     .__destroy = vector_destroy,
     .__string = vector_string,
     .__raw = vector_string,

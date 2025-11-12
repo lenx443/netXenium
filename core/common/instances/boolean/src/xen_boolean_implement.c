@@ -1,4 +1,5 @@
 #include "xen_boolean_implement.h"
+#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -17,9 +18,19 @@
 static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Boolean* boolean = (Xen_Boolean*)self;
-  boolean->value = 0;
-  return nil;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* boolean = Xen_Attr_Boolean(inst);
+    if (!boolean) {
+      Xen_DEL_REF(inst);
+      return NULL;
+    }
+    Xen_DEL_REF(inst);
+    return boolean;
+  }
+  return Xen_False;
 }
 
 static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
@@ -67,15 +78,22 @@ Xen_Implement Xen_Boolean_Implement = {
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
     .__alloc = boolean_alloc,
+    .__create = NULL,
     .__destroy = NULL,
     .__string = boolean_string,
-    .__raw = NULL,
+    .__raw = boolean_string,
     .__callable = NULL,
     .__hash = boolean_hash,
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
 int Xen_Boolean_Init() {
+  if (!Xen_Map_Push_Pair_Str(
+          vm->root_context->ctx_instances,
+          (Xen_Map_Pair_Str){"boolean",
+                             (Xen_Instance*)&Xen_Boolean_Implement})) {
+    return 0;
+  }
   if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
                              (Xen_Map_Pair_Str){"true", Xen_True})) {
     return 0;

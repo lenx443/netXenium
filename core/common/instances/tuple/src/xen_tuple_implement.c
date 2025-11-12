@@ -20,8 +20,8 @@
 #include "xen_tuple_instance.h"
 #include "xen_vector.h"
 
-static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* tuple_create(ctx_id_t id, Xen_Instance* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   tuple->instances = NULL;
@@ -126,7 +126,7 @@ Xen_Implement Xen_Tuple_Implement = {
     .__inst_size = sizeof(struct Xen_Tuple_Instance),
     .__inst_default_flags = 0x00,
     .__props = NULL,
-    .__alloc = tuple_alloc,
+    .__create = tuple_create,
     .__destroy = tuple_destroy,
     .__string = tuple_string,
     .__raw = tuple_string,

@@ -10,8 +10,8 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 
-static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* method_create(ctx_id_t id, struct __Instance* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   method->function = nil;
@@ -49,7 +49,7 @@ Xen_Implement Xen_Method_Implement = {
     .__inst_size = sizeof(struct Xen_Method_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = method_alloc,
+    .__create = method_create,
     .__destroy = method_destroy,
     .__string = method_string,
     .__raw = method_string,

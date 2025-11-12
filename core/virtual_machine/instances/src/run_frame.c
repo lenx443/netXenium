@@ -10,8 +10,8 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 
-static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* frame_create(ctx_id_t id, Xen_INSTANCE* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (!args || Xen_SIZE(args) != 5 ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 0)) &&
@@ -91,7 +91,7 @@ struct __Implement Xen_Run_Frame = {
     .__inst_size = sizeof(struct RunContext),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = frame_alloc,
+    .__create = frame_create,
     .__destroy = frame_destroy,
     .__string = frame_string,
     .__raw = frame_string,

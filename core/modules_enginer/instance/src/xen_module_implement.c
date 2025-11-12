@@ -8,8 +8,8 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 
-static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_create(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Module* module = (Xen_Module*)self;
   module->mod_map = nil;
@@ -42,7 +42,7 @@ struct __Implement Xen_Module_Implement = {
     .__inst_size = sizeof(struct Xen_Module_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__alloc = module_alloc,
+    .__create = module_create,
     .__destroy = module_destroy,
     .__string = module_string,
     .__raw = module_string,
