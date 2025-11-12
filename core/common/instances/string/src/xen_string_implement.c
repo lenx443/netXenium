@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,6 +10,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -22,12 +22,15 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* string_create(ctx_id_t id, Xen_INSTANCE* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_String* string = (Xen_String*)self;
+  Xen_String* string = (Xen_String*)Xen_Instance_Alloc(&Xen_String_Implement);
+  if (!string) {
+    return NULL;
+  }
   string->characters = NULL;
-  return nil;
+  return (Xen_Instance*)string;
 }
 
 static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -35,7 +38,7 @@ static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
   if (string->characters)
-    free(string->characters);
+    Xen_Dealloc(string->characters);
   return nil;
 }
 
@@ -49,7 +52,7 @@ static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
-  char* buffer = malloc(strlen(string->characters) + 3);
+  char* buffer = Xen_Alloc(strlen(string->characters) + 3);
   if (!buffer) {
     return NULL;
   }
@@ -58,10 +61,10 @@ static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
   strcat(buffer, "'");
   Xen_Instance* raw = Xen_String_From_CString(buffer);
   if (!raw) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return raw;
 }
 
@@ -134,7 +137,7 @@ static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
     return NULL;
   size_t num = Xen_Number_As(Xen_size_t, num_inst);
   Xen_size_t bufcap = Xen_SIZE(self) * num + 1;
-  char* buffer = malloc(bufcap);
+  char* buffer = Xen_Alloc(bufcap);
   if (!buffer) {
     return NULL;
   }
@@ -146,10 +149,10 @@ static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
   buffer[bufcap - 1] = '\0';
   Xen_Instance* string = Xen_String_From_CString(buffer);
   if (!string) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return string;
 }
 
@@ -157,7 +160,7 @@ static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
                                        Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  char* buffer = malloc(Xen_SIZE(self) + 1);
+  char* buffer = Xen_Alloc(Xen_SIZE(self) + 1);
   if (!buffer) {
     return NULL;
   }
@@ -167,10 +170,10 @@ static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
   buffer[Xen_SIZE(self)] = '\0';
   Xen_Instance* result = Xen_String_From_CString(buffer);
   if (!result) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return result;
 }
 
@@ -178,7 +181,7 @@ static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
                                        Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  char* buffer = malloc(Xen_SIZE(self) + 1);
+  char* buffer = Xen_Alloc(Xen_SIZE(self) + 1);
   if (!buffer) {
     return NULL;
   }
@@ -188,10 +191,10 @@ static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
   buffer[Xen_SIZE(self)] = '\0';
   Xen_Instance* result = Xen_String_From_CString(buffer);
   if (!result) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return result;
 }
 
@@ -201,7 +204,8 @@ struct __Implement Xen_String_Implement = {
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = string_create,
+    .__alloc = string_alloc,
+    .__create = NULL,
     .__destroy = string_destroy,
     .__string = string_string,
     .__raw = string_raw,
@@ -211,7 +215,7 @@ struct __Implement Xen_String_Implement = {
 };
 
 int Xen_String_Init() {
-  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }

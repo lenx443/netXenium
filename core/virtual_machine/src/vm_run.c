@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "attrs.h"
 #include "bytecode.h"
@@ -13,6 +12,7 @@
 #include "vm_instructs.h"
 #include "vm_run.h"
 #include "vm_stack.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_method.h"
@@ -190,7 +190,7 @@ static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance** vals_array = malloc(oparg * sizeof(Xen_Instance*));
+  Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!vals_array) {
     ctx->ctx_error = 1;
     return;
@@ -204,20 +204,20 @@ static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
     for (uint8_t idx = 0; idx < oparg; idx++) {
       Xen_DEL_REF(vals_array[idx]);
     }
-    free(vals_array);
+    Xen_Dealloc(vals_array);
     ctx->ctx_error = 1;
     return;
   }
   for (uint8_t idx = 0; idx < oparg; idx++) {
     Xen_DEL_REF(vals_array[idx]);
   }
-  free(vals_array);
+  Xen_Dealloc(vals_array);
   vm_stack_push(&ctx->ctx_stack, tuple);
   Xen_DEL_REF(tuple);
 }
 
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance** args_array = malloc(oparg * sizeof(Xen_Instance*));
+  Xen_Instance** args_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!args_array) {
     ctx->ctx_error = 1;
     return;
@@ -231,14 +231,14 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
     for (uint8_t idx = 0; idx < oparg; idx++) {
       Xen_DEL_REF(args_array[idx]);
     }
-    free(args_array);
+    Xen_Dealloc(args_array);
     ctx->ctx_error = 1;
     return;
   }
   for (uint8_t idx = 0; idx < oparg; idx++) {
     Xen_DEL_REF(args_array[idx]);
   }
-  free(args_array);
+  Xen_Dealloc(args_array);
   Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
   if (Xen_IMPL(callable)->__callable == NULL) {
     Xen_DEL_REF(callable);
@@ -262,7 +262,7 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
 
 static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* kw_names = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance* kwargs = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* kwargs = Xen_Map_New();
   if (!kwargs) {
     Xen_DEL_REF(kw_names);
     ctx->ctx_error = 1;
@@ -284,7 +284,7 @@ static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
   }
   Xen_size_t args_count = oparg - Xen_SIZE(kw_names);
   Xen_DEL_REF(kw_names);
-  Xen_Instance** args_array = malloc(args_count * sizeof(Xen_Instance*));
+  Xen_Instance** args_array = Xen_Alloc(args_count * sizeof(Xen_Instance*));
   if (!args_array) {
     Xen_DEL_REF(kwargs);
     ctx->ctx_error = 1;
@@ -300,14 +300,14 @@ static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
     for (uint8_t idx = 0; idx < args_count; idx++) {
       Xen_DEL_REF(args_array[idx]);
     }
-    free(args_array);
+    Xen_Dealloc(args_array);
     ctx->ctx_error = 1;
     return;
   }
   for (uint8_t idx = 0; idx < args_count; idx++) {
     Xen_DEL_REF(args_array[idx]);
   }
-  free(args_array);
+  Xen_Dealloc(args_array);
   Xen_Instance* callable = vm_stack_pop(&ctx->ctx_stack);
   if (Xen_IMPL(callable)->__callable == NULL) {
     Xen_DEL_REF(callable);
@@ -442,7 +442,7 @@ static void op_print_top(RunContext_ptr ctx, uint8_t _) {
   const char* val_str = Xen_Attr_Raw_Str(val);
   if (val_str) {
     puts(val_str);
-    free((void*)val_str);
+    Xen_Dealloc((void*)val_str);
   }
   Xen_DEL_REF(val);
 }

@@ -12,6 +12,7 @@
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
+#include "xen_alloc.h"
 
 void load_script(char* filename) {
   FILE* fp = fopen(filename, "r");
@@ -46,7 +47,7 @@ void load_script(char* filename) {
   if (!interpreter(file_content, Xen_COMPILE_PROGRAM)) {
     log_show_and_clear(NULL);
   }
-  free(file_content);
+  Xen_Dealloc(file_content);
 }
 
 void shell_loop() {
@@ -72,21 +73,21 @@ void shell_loop() {
     list_free(cmd);
 #else
     fputs(" -> ", stdout);
-    char* cmd_str = malloc(CMDSIZ);
+    char* cmd_str = Xen_Alloc(CMDSIZ);
     if (!fgets(cmd_str, CMDSIZ, stdin)) {
       fputs("\n", stdout);
-      free(cmd_str);
+      Xen_Dealloc(cmd_str);
       break;
     }
 #endif
     if (!interpreter(cmd_str, Xen_COMPILE_REPL)) {
       log_show_and_clear(NULL);
-      free(cmd_str);
+      Xen_Dealloc(cmd_str);
       if (program.closed)
         break;
       continue;
     }
-    free(cmd_str);
+    Xen_Dealloc(cmd_str);
     if (program.closed)
       break;
   }

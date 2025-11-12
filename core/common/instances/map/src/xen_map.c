@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "operators.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
@@ -17,32 +18,17 @@
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
 #include "xen_vector.h"
-#include "xen_vector_implement.h"
 
-Xen_Instance* Xen_Map_New(size_t capacity) {
+Xen_Instance* Xen_Map_New() {
   Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, nil, 0);
   if (!map) {
     return NULL;
   }
-  map->map_buckets = malloc(capacity * sizeof(struct __Map_Node*));
-  if (!map->map_buckets) {
-    return NULL;
-  }
-  for (size_t i = 0; i < capacity; i++) {
-    map->map_buckets[i] = NULL;
-  }
-  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
-  if (!map->map_keys) {
-    free(map->map_buckets);
-    return NULL;
-  }
-  map->map_capacity = capacity;
   return (Xen_Instance*)map;
 }
 
-Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs,
-                                           size_t capacity) {
-  Xen_Instance* map = Xen_Map_New(capacity);
+Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs) {
+  Xen_Instance* map = Xen_Map_New();
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair(map, pairs[i])) {
       Xen_DEL_REF(map);
@@ -53,9 +39,8 @@ Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs,
 }
 
 Xen_Instance* Xen_Map_From_Pairs_Str_With_Size(size_t size,
-                                               Xen_Map_Pair_Str* pairs,
-                                               size_t capacity) {
-  Xen_Instance* map = Xen_Map_New(capacity);
+                                               Xen_Map_Pair_Str* pairs) {
+  Xen_Instance* map = Xen_Map_New();
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair_Str((Xen_Instance*)map, pairs[i])) {
       Xen_DEL_REF(map);
@@ -103,12 +88,12 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
     }
     current = current->next;
   }
-  struct __Map_Node* new_node = malloc(sizeof(struct __Map_Node));
+  struct __Map_Node* new_node = Xen_Alloc(sizeof(struct __Map_Node));
   if (!new_node) {
     return 0;
   }
   if (!Xen_Vector_Push(map->map_keys, pair.key)) {
-    free(new_node);
+    Xen_Dealloc(new_node);
     return 0;
   }
   new_node->key = pair.key;

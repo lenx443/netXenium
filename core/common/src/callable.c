@@ -1,30 +1,34 @@
-#include <stdlib.h>
-
-#include "bytecode.h"
 #include "callable.h"
+#include "bytecode.h"
 #include "vm_consts.h"
+#include "xen_alloc.h"
 
 CALLABLE_ptr callable_new_native(Xen_Native_Func native) {
-  CALLABLE_ptr new_callable = malloc(sizeof(CALLABLE));
-  if (!new_callable) { return NULL; }
+  CALLABLE_ptr new_callable = Xen_Alloc(sizeof(CALLABLE));
+  if (!new_callable) {
+    return NULL;
+  }
   new_callable->callable_type = CALL_NATIVE_FUNCTIIN;
   new_callable->native_callable = native;
   return new_callable;
 }
 
 CALLABLE_ptr callable_new_code(ProgramCode_t bpc) {
-  CALLABLE_ptr new_callable = malloc(sizeof(CALLABLE));
-  if (!new_callable) { return NULL; }
+  CALLABLE_ptr new_callable = Xen_Alloc(sizeof(CALLABLE));
+  if (!new_callable) {
+    return NULL;
+  }
   new_callable->callable_type = CALL_BYTECODE_PROGRAM;
   new_callable->code = bpc;
   return new_callable;
 }
 
 void callable_free(CALLABLE_ptr callable) {
-  if (!callable) return;
+  if (!callable)
+    return;
   if (callable->callable_type == CALL_BYTECODE_PROGRAM) {
     bc_free(callable->code.code);
     vm_consts_free(callable->code.consts);
   }
-  free(callable);
+  Xen_Dealloc(callable);
 }

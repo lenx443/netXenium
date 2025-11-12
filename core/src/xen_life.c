@@ -1,11 +1,11 @@
 #include <locale.h>
-#include <stdlib.h>
 
 #include "instance_life.h"
 #include "list.h"
 #include "logs.h"
 #include "program.h"
 #include "vm_def.h"
+#include "xen_alloc.h"
 #include "xen_life.h"
 #include "xen_module_load.h"
 
@@ -40,7 +40,7 @@ int Xen_Init(int argc, char** argv) {
 
 void Xen_Finish() {
   Xen_Instance_Finish();
-  free(program.name);
+  Xen_Dealloc(program.name);
   vm_destroy();
   log_free(NULL);
 }

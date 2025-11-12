@@ -1,8 +1,8 @@
-#include <malloc.h>
 #include <stddef.h>
 #include <stdlib.h>
 
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_nil.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
@@ -39,7 +39,7 @@ int Xen_Vector_Push(Xen_Instance* vector_inst, Xen_Instance* value) {
   Xen_Vector* vector = (Xen_Vector*)vector_inst;
   if (vector->__size >= vector->capacity) {
     size_t new_cap = vector->capacity == 0 ? 4 : vector->capacity * 2;
-    Xen_Instance** new_mem = (Xen_INSTANCE**)realloc(
+    Xen_Instance** new_mem = (Xen_INSTANCE**)Xen_Realloc(
         vector->values, sizeof(Xen_Instance*) * new_cap);
     if (!new_mem) {
       return 0;

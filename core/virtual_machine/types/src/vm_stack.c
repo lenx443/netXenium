@@ -2,6 +2,7 @@
 
 #include "instance.h"
 #include "vm_stack.h"
+#include "xen_alloc.h"
 
 int vm_stack_init(struct vm_Stack* stack, size_t cap) {
   if (stack != NULL) {
@@ -21,7 +22,7 @@ void vm_stack_free(struct vm_Stack* stack) {
     while (stack->stack_top > stack->stack_head) {
       Xen_DEL_REF(*--stack->stack_top);
     }
-    free(stack->stack_head);
+    Xen_Dealloc(stack->stack_head);
   }
   vm_stack_start(stack);
 }

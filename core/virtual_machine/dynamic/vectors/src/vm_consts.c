@@ -4,12 +4,13 @@
 
 #include "instance.h"
 #include "vm_consts.h"
+#include "xen_alloc.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
 vm_Consts_ptr vm_consts_new() {
-  vm_Consts_ptr consts = malloc(sizeof(vm_Consts));
+  vm_Consts_ptr consts = Xen_Alloc(sizeof(vm_Consts));
   if (!consts) {
     return NULL;
   }
@@ -26,7 +27,7 @@ vm_Consts_ptr vm_consts_new() {
 
 vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
                                     struct __Instance* c_instances) {
-  vm_Consts_ptr consts = malloc(sizeof(vm_Consts));
+  vm_Consts_ptr consts = Xen_Alloc(sizeof(vm_Consts));
   if (!consts) {
     return NULL;
   }
@@ -70,6 +71,6 @@ void vm_consts_free(vm_Consts_ptr consts) {
   }
   Xen_DEL_REF(consts->c_names);
   Xen_DEL_REF(consts->c_instances);
-  free(consts);
+  Xen_Dealloc(consts);
   consts = NULL;
 }

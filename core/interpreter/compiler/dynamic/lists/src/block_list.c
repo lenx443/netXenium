@@ -1,21 +1,19 @@
-#include <malloc.h>
-#include <stdlib.h>
-
 #include "block_list.h"
 #include "logs.h"
 #include "vm_consts.h"
+#include "xen_alloc.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Block list", msg, ##__VA_ARGS__)
 
 block_node_ptr block_new() {
-  block_node_ptr new_block = malloc(sizeof(block_node_t));
+  block_node_ptr new_block = Xen_Alloc(sizeof(block_node_t));
   if (!new_block) {
     error("Memoria insuficiente");
     return NULL;
   }
   new_block->instr_array = ir_new();
   if (!new_block->instr_array) {
-    free(new_block);
+    Xen_Dealloc(new_block);
     return NULL;
   }
   new_block->next = NULL;
@@ -29,18 +27,18 @@ void block_free(block_node_ptr block) {
     return;
   }
   ir_free(block->instr_array);
-  free(block);
+  Xen_Dealloc(block);
 }
 
 block_list_ptr block_list_new() {
-  block_list_ptr new_list = malloc(sizeof(block_list_t));
+  block_list_ptr new_list = Xen_Alloc(sizeof(block_list_t));
   if (!new_list) {
     error("Memoria insuficiente");
     return NULL;
   }
   new_list->consts = vm_consts_new();
   if (!new_list->consts) {
-    free(new_list);
+    Xen_Dealloc(new_list);
     return NULL;
   }
   new_list->head = NULL;
@@ -75,5 +73,5 @@ void block_list_free(block_list_ptr blocks) {
   }
   blocks->head = NULL;
   blocks->tail = NULL;
-  free(blocks);
+  Xen_Dealloc(blocks);
 }

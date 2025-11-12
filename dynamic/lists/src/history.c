@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -7,9 +6,10 @@
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
+#include "xen_alloc.h"
 
 HISTORY_ptr history_new(const char* filename) {
-  HISTORY_ptr new_history = malloc(sizeof(HISTORY));
+  HISTORY_ptr new_history = Xen_Alloc(sizeof(HISTORY));
   if (new_history == NULL) {
     log_add(NULL, ERROR, "History", "No se pudo crear un nuevo historial");
     return NULL;
@@ -23,7 +23,7 @@ HISTORY_ptr history_new(const char* filename) {
     DynSetLog(NULL);
     log_add(NULL, ERROR, "History",
             "No se pudo crear el historial para el cache");
-    free(new_history);
+    Xen_Dealloc(new_history);
     return NULL;
   }
 
@@ -32,7 +32,7 @@ HISTORY_ptr history_new(const char* filename) {
     DynSetLog(NULL);
     log_add(NULL, ERROR, "History", "No se pudo crear el historial local");
     list_free(new_history->cache_history);
-    free(new_history);
+    Xen_Dealloc(new_history);
     return NULL;
   }
 
@@ -44,7 +44,7 @@ HISTORY_ptr history_new(const char* filename) {
       log_add_errno(NULL, ERROR, "History");
       list_free(new_history->local_history);
       list_free(new_history->cache_history);
-      free(new_history);
+      Xen_Dealloc(new_history);
       return NULL;
     }
     fclose(new_file);
@@ -56,7 +56,7 @@ HISTORY_ptr history_new(const char* filename) {
     log_add_errno(NULL, ERROR, "History");
     list_free(new_history->local_history);
     list_free(new_history->cache_history);
-    free(new_history);
+    Xen_Dealloc(new_history);
     return NULL;
   }
   fseek(fp, 0, SEEK_END);
@@ -164,8 +164,8 @@ int history_save(HISTORY hist) {
     HISTORY_struct* hist_struct = (HISTORY_struct*)node->point;
     fputs(hist_struct->command, fp);
     fputc('\n', fp);
-    free(node->point);
-    free(node);
+    Xen_Dealloc(node->point);
+    Xen_Dealloc(node);
     node = list_pop_back(hist.local_history);
   }
   fclose(fp);
@@ -179,5 +179,5 @@ int history_size(HISTORY hist) {
 void history_free(HISTORY_ptr hist) {
   list_free(hist->local_history);
   list_free(hist->cache_history);
-  free(hist);
+  Xen_Dealloc(hist);
 }

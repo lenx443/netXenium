@@ -14,6 +14,7 @@
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
+#include "xen_alloc.h"
 
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
@@ -404,7 +405,7 @@ LIST_ptr read_string_utf8() {
               strncpy(new_history_line.command, cmd_cstring, cmd_size);
               new_history_line.command[cmd_size] = '\0';
               history_push_line(history, new_history_line);
-              free(cmd_cstring);
+              Xen_Dealloc(cmd_cstring);
             }
           }
         }

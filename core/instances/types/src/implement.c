@@ -1,10 +1,10 @@
-#include <stdlib.h>
 #include <string.h>
 
 #include "basic.h"
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -16,10 +16,10 @@ struct __Implement* __implement_new(char* impl_name) {
   }
   impl->__impl_name = strdup(impl_name);
   if (!impl->__impl_name) {
-    free(impl);
+    Xen_Dealloc(impl);
     return NULL;
   }
-  impl->__props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  impl->__props = Xen_Map_New();
   if (!impl->__props) {
     Xen_DEL_REF(impl);
     return NULL;

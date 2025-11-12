@@ -10,6 +10,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -20,14 +21,17 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* number_create(ctx_id_t id, Xen_INSTANCE* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  Xen_Number* num = (Xen_Number*)self;
+  Xen_Number* num = (Xen_Number*)Xen_Instance_Alloc(&Xen_Number_Implement);
+  if (!num) {
+    return NULL;
+  }
   num->digits = NULL;
   num->size = 0;
   num->sign = 0;
-  return nil;
+  return (Xen_Instance*)num;
 }
 
 static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -35,7 +39,7 @@ static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Number* num = (Xen_Number*)self;
   if (num->digits)
-    free(num->digits);
+    Xen_Dealloc(num->digits);
   return nil;
 }
 
@@ -48,10 +52,10 @@ static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
   }
   Xen_Instance* string = Xen_String_From_CString(cstring);
   if (!string) {
-    free((void*)cstring);
+    Xen_Dealloc((void*)cstring);
     return NULL;
   }
-  free((void*)cstring);
+  Xen_Dealloc((void*)cstring);
   return string;
 }
 
@@ -292,7 +296,7 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
   if (!r) {
     return NULL;
   }
-  r->digits = malloc(size_n * sizeof(uint32_t));
+  r->digits = Xen_Alloc(size_n * sizeof(uint32_t));
   if (!r->digits) {
     Xen_DEL_REF(r->digits);
     return NULL;
@@ -327,7 +331,8 @@ struct __Implement Xen_Number_Implement = {
     .__inst_size = sizeof(struct Xen_Number_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = number_create,
+    .__alloc = number_alloc,
+    .__create = NULL,
     .__destroy = number_destroy,
     .__string = number_string,
     .__raw = number_string,
@@ -337,7 +342,7 @@ struct __Implement Xen_Number_Implement = {
 };
 
 int Xen_Number_Init() {
-  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }

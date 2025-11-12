@@ -80,6 +80,7 @@ set(SOURCES
   core/src/read_string_utf8.c
 
   # Codigo Commun
+  core/common/src/xen_alloc.c
   core/common/src/operators.c
   core/common/src/callable.c
   core/common/src/attrs.c

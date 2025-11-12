@@ -8,6 +8,7 @@
 #include "instance.h"
 #include "m_core.h"
 #include "run_ctx.h"
+#include "xen_alloc.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -114,12 +115,12 @@ static Xen_Instance* fn_readline(ctx_id_t id, Xen_Instance* self,
   while (c != '\n') {
     c = fgetc(stdin);
     if (c == (char)EOF) {
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
-    char* temp = realloc(buffer, bufsiz + 1);
+    char* temp = Xen_Realloc(buffer, bufsiz + 1);
     if (!temp) {
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     buffer = temp;
@@ -128,10 +129,10 @@ static Xen_Instance* fn_readline(ctx_id_t id, Xen_Instance* self,
   buffer[strcspn(buffer, "\n")] = '\0';
   Xen_Instance* rsult = Xen_String_From_CString(buffer);
   if (!rsult) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return rsult;
 }
 

@@ -9,6 +9,8 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "vm_def.h"
+#include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -16,15 +18,33 @@
 #include "xen_string.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+#include "xen_vector_implement.h"
 
-static Xen_Instance* map_create(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args, Xen_Instance* kwargs) {
+#define XEN_MAP_CAPACITY 128
+
+static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
+                               Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Map* map = (Xen_Map*)self;
-  map->map_keys = nil;
-  map->map_buckets = NULL;
-  map->map_capacity = 0;
-  return nil;
+  Xen_Map* map = (Xen_Map*)Xen_Instance_Alloc(&Xen_Map_Implement);
+  if (!map) {
+    return NULL;
+  }
+  map->map_buckets = Xen_Alloc(XEN_MAP_CAPACITY * sizeof(struct __Map_Node*));
+  if (!map->map_buckets) {
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
+    map->map_buckets[i] = NULL;
+  }
+  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
+  if (!map->map_keys) {
+    Xen_Dealloc(map->map_buckets);
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  map->map_capacity = XEN_MAP_CAPACITY;
+  return (Xen_Instance*)map;
 }
 
 static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
@@ -40,10 +60,10 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
         current = current->next;
         Xen_DEL_REF(temp->key);
         Xen_DEL_REF(temp->value);
-        free(temp);
+        Xen_Dealloc(temp);
       }
     }
-    free(map->map_buckets);
+    Xen_Dealloc(map->map_buckets);
   }
   return nil;
 }
@@ -63,14 +83,14 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* key_string = Xen_Attr_Raw(key_inst);
     if (!key_string) {
       Xen_DEL_REF(value_inst);
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
     if (!value_string) {
       Xen_DEL_REF(key_string);
       Xen_DEL_REF(value_inst);
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     const char* key = strdup(Xen_String_As_CString(key_string));
@@ -78,7 +98,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       Xen_DEL_REF(value_string);
       Xen_DEL_REF(key_string);
       Xen_DEL_REF(value_inst);
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = strdup(Xen_String_As_CString(value_string));
@@ -86,32 +106,32 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       Xen_DEL_REF(value_string);
       Xen_DEL_REF(key_string);
       Xen_DEL_REF(value_inst);
-      free((void*)key);
-      free(buffer);
+      Xen_Dealloc((void*)key);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     Xen_DEL_REF(value_string);
     Xen_DEL_REF(key_string);
     Xen_DEL_REF(value_inst);
     buflen += strlen(key) + strlen(value) + 2;
-    char* temp = realloc(buffer, buflen);
+    char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
-      free((void*)key);
-      free((void*)value);
-      free(buffer);
+      Xen_Dealloc((void*)key);
+      Xen_Dealloc((void*)value);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     buffer = temp;
     strcat(buffer, key);
     strcat(buffer, ": ");
     strcat(buffer, value);
-    free((void*)key);
-    free((void*)value);
+    Xen_Dealloc((void*)key);
+    Xen_Dealloc((void*)value);
     if (i != Xen_SIZE(map->map_keys) - 1) {
       buflen += 2;
-      char* tem = realloc(buffer, buflen);
+      char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
-        free(buffer);
+        Xen_Dealloc(buffer);
         return NULL;
       }
       buffer = tem;
@@ -119,9 +139,9 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     }
   }
   buflen += 2;
-  char* temp = realloc(buffer, buflen);
+  char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
   buffer = temp;
@@ -129,10 +149,10 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   buffer[buflen - 1] = '\0';
   Xen_Instance* string = Xen_String_From_CString(buffer);
   if (!string) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return string;
 }
 
@@ -159,7 +179,8 @@ struct __Implement Xen_Map_Implement = {
     .__inst_size = sizeof(struct Xen_Map_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = map_create,
+    .__alloc = map_alloc,
+    .__create = NULL,
     .__destroy = map_destroy,
     .__string = map_string,
     .__raw = map_string,
@@ -169,7 +190,12 @@ struct __Implement Xen_Map_Implement = {
 };
 
 int Xen_Map_Init() {
-  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  if (!Xen_Map_Push_Pair_Str(
+          vm->root_context->ctx_instances,
+          (Xen_Map_Pair_Str){"map", (Xen_Instance*)&Xen_Map_Implement})) {
+    return 0;
+  }
+  Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }

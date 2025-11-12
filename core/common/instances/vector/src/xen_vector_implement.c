@@ -10,6 +10,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -19,13 +20,16 @@
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
-static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
+                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Vector* vector = (Xen_Vector*)self;
+  Xen_Vector* vector = (Xen_Vector*)Xen_Instance_Alloc(&Xen_Vector_Implement);
+  if (!vector) {
+    return NULL;
+  }
   vector->values = NULL;
   vector->capacity = 0;
-  return nil;
+  return (Xen_Instance*)vector;
 }
 
 static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
@@ -35,7 +39,7 @@ static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
   for (size_t i = 0; i < vector->__size; i++) {
     Xen_DEL_REF(vector->values[i]);
   }
-  free(vector->values);
+  Xen_Dealloc(vector->values);
   return nil;
 }
 
@@ -52,31 +56,31 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* value_inst = Xen_Vector_Peek_Index(self, i);
     Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
     if (!value_string) {
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = strdup(Xen_String_As_CString(value_string));
     if (!value) {
       Xen_DEL_REF(value_string);
-      free(buffer);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     Xen_DEL_REF(value_string);
     buflen += strlen(value);
-    char* temp = realloc(buffer, buflen);
+    char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
-      free((void*)value);
-      free(buffer);
+      Xen_Dealloc((void*)value);
+      Xen_Dealloc(buffer);
       return NULL;
     }
     buffer = temp;
     strcat(buffer, value);
-    free((void*)value);
+    Xen_Dealloc((void*)value);
     if (i != Xen_SIZE(vector) - 1) {
       buflen += 2;
-      char* tem = realloc(buffer, buflen);
+      char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
-        free(buffer);
+        Xen_Dealloc(buffer);
         return NULL;
       }
       buffer = tem;
@@ -84,9 +88,9 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
     }
   }
   buflen += 2;
-  char* temp = realloc(buffer, buflen);
+  char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
   buffer = temp;
@@ -94,10 +98,10 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
   buffer[buflen - 1] = '\0';
   Xen_Instance* string = Xen_String_From_CString(buffer);
   if (!string) {
-    free(buffer);
+    Xen_Dealloc(buffer);
     return NULL;
   }
-  free(buffer);
+  Xen_Dealloc(buffer);
   return string;
 }
 
@@ -142,7 +146,8 @@ struct __Implement Xen_Vector_Implement = {
     .__inst_size = sizeof(struct Xen_Vector_Instance),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = vector_create,
+    .__alloc = vector_alloc,
+    .__create = NULL,
     .__destroy = vector_destroy,
     .__string = vector_string,
     .__raw = vector_string,
@@ -153,7 +158,7 @@ struct __Implement Xen_Vector_Implement = {
 };
 
 int Xen_Vector_Init() {
-  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }

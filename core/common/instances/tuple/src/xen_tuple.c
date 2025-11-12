@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"
 #include "xen_tuple_implement.h"
@@ -17,7 +18,7 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
   if (!tuple) {
     return NULL;
   }
-  tuple->instances = malloc(size * sizeof(Xen_Instance*));
+  tuple->instances = Xen_Alloc(size * sizeof(Xen_Instance*));
   if (!tuple->instances) {
     __instance_free((Xen_Instance*)tuple);
     return NULL;

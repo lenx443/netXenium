@@ -8,6 +8,7 @@
 #include "list.h"
 #include "logs.h"
 #include "string_utf8.h"
+#include "xen_alloc.h"
 
 int char_utf8_display_with(CharUTF8 ch) {
   wchar_t wc;
@@ -75,7 +76,7 @@ char* string_utf8_get(LIST_ptr utf8) {
     total_size += character->size;
   }
 
-  char* result = malloc(total_size + 1);
+  char* result = Xen_Alloc(total_size + 1);
   if (!result) {
     log_add(NULL, ERROR, "String-UTF8",
             "No,se pudo obtener la cadena por falta de memoria");
@@ -122,6 +123,6 @@ int string_utf8_strcmp_cstring(LIST_ptr utf8, char* str) {
   if (cstring_utf8 == NULL)
     return -999;
   int result = strcmp(cstring_utf8, str);
-  free(cstring_utf8);
+  Xen_Dealloc(cstring_utf8);
   return result;
 }

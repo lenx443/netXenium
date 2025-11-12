@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "attrs.h"
 #include "instance.h"
 #include "operators.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -23,7 +23,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "13724") == 0);
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -34,7 +34,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "-13724") == 0);
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -45,7 +45,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "18436911873091484569") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == INT64_MAX);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -56,7 +56,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "-18436911873091484569") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == INT64_MIN);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -67,7 +67,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "22") == 0);
     assert(Xen_Number_As_Int32(foo) == 22);
     assert(Xen_Number_As_Int64(foo) == 22);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -78,7 +78,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "-22") == 0);
     assert(Xen_Number_As_Int32(foo) == -22);
     assert(Xen_Number_As_Int64(foo) == -22);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -89,7 +89,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "255") == 0);
     assert(Xen_Number_As_Int32(foo) == 255);
     assert(Xen_Number_As_Int64(foo) == 255);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -100,7 +100,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "-255") == 0);
     assert(Xen_Number_As_Int32(foo) == -255);
     assert(Xen_Number_As_Int64(foo) == -255);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -111,7 +111,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "1024") == 0);
     assert(Xen_Number_As_Int32(foo) == 1024);
     assert(Xen_Number_As_Int64(foo) == 1024);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -122,7 +122,7 @@ static void test_number_from_cstring() {
     assert(strcmp(foo_str, "-1024") == 0);
     assert(Xen_Number_As_Int32(foo) == -1024);
     assert(Xen_Number_As_Int64(foo) == -1024);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -137,7 +137,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "13724") == 0);
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -148,7 +148,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "-13724") == 0);
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -159,7 +159,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "18436911873091484569") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == INT64_MAX);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -170,7 +170,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "-18436911873091484569") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == INT64_MIN);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -181,7 +181,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "22") == 0);
     assert(Xen_Number_As_Int32(foo) == 22);
     assert(Xen_Number_As_Int64(foo) == 22);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -192,7 +192,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "-22") == 0);
     assert(Xen_Number_As_Int32(foo) == -22);
     assert(Xen_Number_As_Int64(foo) == -22);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -203,7 +203,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "255") == 0);
     assert(Xen_Number_As_Int32(foo) == 255);
     assert(Xen_Number_As_Int64(foo) == 255);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -214,7 +214,7 @@ static void test_number_from_cstring_base() {
     assert(strcmp(foo_str, "-255") == 0);
     assert(Xen_Number_As_Int32(foo) == -255);
     assert(Xen_Number_As_Int64(foo) == -255);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -229,7 +229,7 @@ static void test_number_from_int32() {
     assert(strcmp(foo_str, "13724") == 0);
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -240,7 +240,7 @@ static void test_number_from_int32() {
     assert(strcmp(foo_str, "-13724") == 0);
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -255,7 +255,7 @@ static void test_number_from_int64() {
     assert(strcmp(foo_str, "1372418483818485888") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == 1372418483818485888l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -266,7 +266,7 @@ static void test_number_from_int64() {
     assert(strcmp(foo_str, "-1372418483818485888") == 0);
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == -1372418483818485888l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -283,7 +283,7 @@ void test_number_from_int() {
     assert(Xen_Number_As_Int64(foo) == 65535);
     assert(Xen_Number_As_Int(foo) == 65535);
     assert(Xen_Number_As_UInt(foo) == 65535);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -296,7 +296,7 @@ void test_number_from_int() {
     assert(Xen_Number_As_Int64(foo) == -65535);
     assert(Xen_Number_As_Int(foo) == -65535);
     assert(Xen_Number_As_UInt(foo) == 0);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -313,7 +313,7 @@ void test_number_from_uint() {
     assert(Xen_Number_As_Int64(foo) == 65535);
     assert(Xen_Number_As_Int(foo) == 65535);
     assert(Xen_Number_As_UInt(foo) == 65535);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -330,7 +330,7 @@ void test_number_from_long() {
     assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
     assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -343,7 +343,7 @@ void test_number_from_long() {
     assert(Xen_Number_As_Int64(foo) == -2747282858672828557l);
     assert(Xen_Number_As_Long(foo) == -2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 0l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -360,7 +360,7 @@ void test_number_from_ulong() {
     assert(Xen_Number_As_Int64(foo) == 2747282858672828557l);
     assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -379,7 +379,7 @@ void test_number_from_longlong() {
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
   {
@@ -394,7 +394,7 @@ void test_number_from_longlong() {
     assert(Xen_Number_As_ULong(foo) == 0l);
     assert(Xen_Number_As_LongLong(foo) == -2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 0l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }
@@ -413,7 +413,7 @@ void test_number_from_ulonglong() {
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
-    free((void*)foo_str);
+    Xen_Dealloc((void*)foo_str);
     Xen_DEL_REF(foo);
   }
 }

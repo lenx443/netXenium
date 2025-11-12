@@ -102,7 +102,7 @@ int Xen_Boolean_Init() {
                              (Xen_Map_Pair_Str){"false", Xen_False})) {
     return 0;
   }
-  Xen_Instance* props = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }

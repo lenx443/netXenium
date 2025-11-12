@@ -5,9 +5,10 @@
 
 #include "list.h"
 #include "logs.h"
+#include "xen_alloc.h"
 
 LIST_ptr list_new() {
-  LIST_ptr list = malloc(sizeof(LIST));
+  LIST_ptr list = Xen_Alloc(sizeof(LIST));
   if (list == NULL) {
     dyn_error = DYN_NO_MEMORY;
     return NULL;
@@ -59,16 +60,16 @@ int list_push_back(LIST_ptr list, const void* value, size_t size) {
     dyn_error = DYN_INVALID;
     return 0;
   }
-  NODE_ptr newNode = malloc(sizeof(NODE));
+  NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
     dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->size = size;
-  newNode->point = malloc(newNode->size);
+  newNode->point = Xen_Alloc(newNode->size);
   if (newNode == NULL) {
     dyn_error = DYN_NO_MEMORY;
-    free(newNode);
+    Xen_Dealloc(newNode);
     return 0;
   }
   memcpy(newNode->point, value, newNode->size);
@@ -86,16 +87,16 @@ int list_push_begin(LIST_ptr list, void* value, size_t size) {
     dyn_error = DYN_INVALID;
     return 0;
   }
-  NODE_ptr newNode = malloc(sizeof(NODE));
+  NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
     dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->size = size;
-  newNode->point = malloc(newNode->size);
+  newNode->point = Xen_Alloc(newNode->size);
   if (newNode->point == NULL) {
     dyn_error = DYN_NO_MEMORY;
-    free(newNode);
+    Xen_Dealloc(newNode);
     return 0;
   }
   memcpy(newNode->point, value, newNode->size);
@@ -116,14 +117,14 @@ int list_push_at_index(LIST_ptr list, int index, void* value, size_t size) {
     return 0;
   }
   if (index == 0 || list_empty(list)) {
-    NODE_ptr node = malloc(sizeof(NODE));
+    NODE_ptr node = Xen_Alloc(sizeof(NODE));
     if (!node) {
       dyn_error = DYN_NO_MEMORY;
       return 0;
     }
-    node->point = malloc(size);
+    node->point = Xen_Alloc(size);
     if (!node->point) {
-      free(node);
+      Xen_Dealloc(node);
       dyn_error = DYN_NO_MEMORY;
       return 0;
     }
@@ -149,14 +150,14 @@ int list_push_at_index(LIST_ptr list, int index, void* value, size_t size) {
     return 0;
   }
 
-  NODE_ptr node = malloc(sizeof(NODE));
+  NODE_ptr node = Xen_Alloc(sizeof(NODE));
   if (!node) {
     dyn_error = DYN_NO_MEMORY;
     return 0;
   }
-  node->point = malloc(size);
+  node->point = Xen_Alloc(size);
   if (!node->point) {
-    free(node);
+    Xen_Dealloc(node);
     dyn_error = DYN_NO_MEMORY;
     return 0;
   }
@@ -190,22 +191,22 @@ NODE_ptr list_pop_back(LIST_ptr list) {
   NODE_ptr current = list->head;
   NODE_ptr prev = NULL;
   if (current == list->tail) {
-    NODE* data = malloc(sizeof(NODE));
+    NODE* data = Xen_Alloc(sizeof(NODE));
     if (data == NULL) {
       dyn_error = DYN_NO_MEMORY;
       return NULL;
     }
-    data->point = malloc(current->size);
+    data->point = Xen_Alloc(current->size);
     if (data->point == NULL) {
       dyn_error = DYN_NO_MEMORY;
-      free(data);
+      Xen_Dealloc(data);
       return NULL;
     }
     memcpy(data->point, current->point, current->size);
     data->size = current->size;
     data->next = NULL;
-    free(current->point);
-    free(current);
+    Xen_Dealloc(current->point);
+    Xen_Dealloc(current);
     list->head = list->tail = NULL;
     return data;
   }
@@ -213,22 +214,22 @@ NODE_ptr list_pop_back(LIST_ptr list) {
     current = current->next;
   prev = current;
   current = current->next;
-  NODE_ptr data = malloc(sizeof(NODE));
+  NODE_ptr data = Xen_Alloc(sizeof(NODE));
   if (data == NULL) {
     dyn_error = DYN_NO_MEMORY;
     return NULL;
   }
-  data->point = malloc(current->size);
+  data->point = Xen_Alloc(current->size);
   if (data->point == NULL) {
     dyn_error = DYN_NO_MEMORY;
-    free(data);
+    Xen_Dealloc(data);
     return NULL;
   }
   memcpy(data->point, current->point, current->size);
   data->size = current->size;
   data->next = NULL;
-  free(current->point);
-  free(current);
+  Xen_Dealloc(current->point);
+  Xen_Dealloc(current);
   prev->next = NULL;
   list->tail = prev;
   return data;
@@ -346,15 +347,15 @@ int list_index_set(int index, LIST_ptr list, void* value, size_t size) {
     dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
-  NODE_ptr newNode = malloc(sizeof(NODE));
+  NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
     dyn_error = DYN_NO_MEMORY;
     return 0;
   }
-  newNode->point = malloc(size);
+  newNode->point = Xen_Alloc(size);
   if (newNode->point == NULL) {
     dyn_error = DYN_NO_MEMORY;
-    free(newNode);
+    Xen_Dealloc(newNode);
     return 0;
   }
   memcpy(newNode->point, value, size);
@@ -364,8 +365,8 @@ int list_index_set(int index, LIST_ptr list, void* value, size_t size) {
     list->head = newNode;
   else
     prev->next = newNode;
-  free(current->point);
-  free(current);
+  Xen_Dealloc(current->point);
+  Xen_Dealloc(current);
   return 1;
 }
 
@@ -388,8 +389,8 @@ void list_clear(LIST_ptr list) {
   NODE_ptr current = list->head;
   while (current != NULL) {
     NODE_ptr next = current->next;
-    free(current->point);
-    free(current);
+    Xen_Dealloc(current->point);
+    Xen_Dealloc(current);
     current = next;
   }
 
@@ -403,11 +404,11 @@ void list_free(LIST_ptr list) {
   NODE_ptr current = list->head;
   while (current != NULL) {
     NODE_ptr next = current->next;
-    free(current->point);
-    free(current);
+    Xen_Dealloc(current->point);
+    Xen_Dealloc(current);
     current = next;
   }
-  free(list);
+  Xen_Dealloc(list);
 }
 
 int node_empty(NODE_ptr* node) {
@@ -422,8 +423,8 @@ void node_free(NODE_ptr* node) {
   if (node == NULL) {
     return;
   }
-  free((*node)->point);
-  free(*node);
+  Xen_Dealloc((*node)->point);
+  Xen_Dealloc(*node);
   *node = NULL;
 }
 

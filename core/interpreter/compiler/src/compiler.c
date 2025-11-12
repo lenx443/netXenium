@@ -14,6 +14,7 @@
 #include "vm_consts.h"
 #include "vm_def.h"
 #include "vm_instructs.h"
+#include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_number.h"
 #include "xen_string.h"
@@ -414,7 +415,7 @@ int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
   }
   Xen_size_t kw_count = Xen_AST_Node_Children_Size(node) - idx;
   if (kw_count != 0) {
-    Xen_Instance** kw_array = malloc(kw_count * sizeof(Xen_Instance*));
+    Xen_Instance** kw_array = Xen_Alloc(kw_count * sizeof(Xen_Instance*));
     if (!kw_array) {
       return 0;
     }
@@ -427,7 +428,7 @@ int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
         for (Xen_size_t y = 0; y < i; y++) {
           Xen_DEL_REF(kw_array[y]);
         }
-        free(kw_array);
+        Xen_Dealloc(kw_array);
         return 0;
       }
       kw_array[i] = kw;
@@ -438,13 +439,13 @@ int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
       for (Xen_size_t i = 0; i < kw_count; i++) {
         Xen_DEL_REF(kw_array[i]);
       }
-      free(kw_array);
+      Xen_Dealloc(kw_array);
       return 0;
     }
     for (Xen_size_t i = 0; i < kw_count; i++) {
       Xen_DEL_REF(kw_array[i]);
     }
-    free(kw_array);
+    Xen_Dealloc(kw_array);
     Xen_ssize_t co_idx = co_push_instance(kw_tuple);
     if (co_idx == -1) {
       Xen_DEL_REF(kw_tuple);

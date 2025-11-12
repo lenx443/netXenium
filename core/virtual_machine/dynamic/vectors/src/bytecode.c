@@ -9,6 +9,7 @@
 #include "logs.h"
 #include "program_code.h"
 #include "vm_instructs.h"
+#include "xen_alloc.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 
@@ -16,7 +17,7 @@
   log_add(NULL, ERROR, "ByteCode Array", msg, ##__VA_ARGS__)
 
 Bytecode_Array_ptr bc_new() {
-  Bytecode_Array_ptr bytecode = malloc(sizeof(Bytecode_Array_t));
+  Bytecode_Array_ptr bytecode = Xen_Alloc(sizeof(Bytecode_Array_t));
   if (!bytecode) {
     error("No hay memoria disponible");
     return NULL;
@@ -30,7 +31,7 @@ Bytecode_Array_ptr bc_new() {
 void bc_clear(Bytecode_Array_ptr bc) {
   if (!bc)
     return;
-  free(bc->bc_array);
+  Xen_Dealloc(bc->bc_array);
   bc->bc_size = 0;
   bc->bc_capacity = 0;
 }
@@ -38,8 +39,8 @@ void bc_clear(Bytecode_Array_ptr bc) {
 void bc_free(const Bytecode_Array_ptr bc) {
   if (!bc)
     return;
-  free(bc->bc_array);
-  free(bc);
+  Xen_Dealloc(bc->bc_array);
+  Xen_Dealloc(bc);
 }
 
 Xen_ssize_t bc_emit(Bytecode_Array_ptr bc, Xen_ssize_t offset, uint8_t opcode,
@@ -53,7 +54,7 @@ Xen_ssize_t bc_emit(Bytecode_Array_ptr bc, Xen_ssize_t offset, uint8_t opcode,
     if (bc->bc_size >= bc->bc_capacity) {
       int new_capacity = (bc->bc_capacity == 0) ? 8 : bc->bc_capacity * 2;
       bc_Instruct_ptr new_mem =
-          realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
+          Xen_Realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
       if (!new_mem) {
         error("No se le pudo asignar mas memoria al arreglo de bytecode");
         return -1;
@@ -101,7 +102,7 @@ void bc_print(ProgramCode_t pc) {
       }
       printf(" %d (%s)\n", code->bc_array[i].bci_oparg, val ? val : "Null");
       if (val)
-        free(val);
+        Xen_Dealloc(val);
     } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
                INSTRUCT_FLAG_ARG) {
       printf(" %d\n", code->bc_array[i].bci_oparg);

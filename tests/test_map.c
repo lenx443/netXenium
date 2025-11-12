@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
     assert(Xen_Nil_NEval(key));
     Xen_Instance* foo = Xen_Number_From_Int(23);
     assert(Xen_Nil_NEval(foo));
-    Xen_Instance* map = Xen_Map_From_Pairs_With_Size(
-        1, &((Xen_Map_Pair){key, foo}), XEN_MAP_DEFAULT_CAP);
+    Xen_Instance* map =
+        Xen_Map_From_Pairs_With_Size(1, &((Xen_Map_Pair){key, foo}));
     assert(Xen_Nil_NEval(map));
     Xen_DEL_REF(foo);
     Xen_DEL_REF(key);
@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
   {
     Xen_Instance* foo = Xen_Number_From_Int(23);
     assert(Xen_Nil_NEval(foo));
-    Xen_Instance* map = Xen_Map_From_Pairs_Str_With_Size(
-        1, &((Xen_Map_Pair_Str){"age1", foo}), XEN_MAP_DEFAULT_CAP);
+    Xen_Instance* map =
+        Xen_Map_From_Pairs_Str_With_Size(1, &((Xen_Map_Pair_Str){"age1", foo}));
     assert(Xen_Nil_NEval(map));
     Xen_DEL_REF(foo);
     Xen_Instance* result = Xen_Map_Get_Str(map, "age1");
@@ -57,9 +57,8 @@ int main(int argc, char** argv) {
     Xen_Instance* age3 = Xen_Number_From_Int(35);
     assert(Xen_Nil_NEval(age3));
     Xen_Instance* map = Xen_Map_From_Pairs_Str_With_Size(
-        3,
-        (Xen_Map_Pair_Str[]){{"age-1", age1}, {"age-2", age2}, {"age-3", age3}},
-        XEN_MAP_DEFAULT_CAP);
+        3, (Xen_Map_Pair_Str[]){
+               {"age-1", age1}, {"age-2", age2}, {"age-3", age3}});
     assert(Xen_Nil_NEval(map));
     Xen_DEL_REF(age1);
     Xen_DEL_REF(age2);

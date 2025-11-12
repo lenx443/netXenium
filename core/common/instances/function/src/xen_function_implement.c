@@ -5,17 +5,22 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_function_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 
-static Xen_Instance* function_create(ctx_id_t id, struct __Instance* self,
-                                     Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  Xen_Function_ptr inst = (Xen_Function_ptr)self;
+  Xen_Function_ptr inst =
+      (Xen_Function_ptr)Xen_Instance_Alloc(&Xen_Function_Implement);
+  if (!inst) {
+    return NULL;
+  }
   inst->fun_callable = NULL;
   inst->closure = nil;
-  return nil;
+  return (Xen_Instance*)inst;
 }
 
 static Xen_Instance* function_destroy(ctx_id_t id, struct __Instance* self,
@@ -61,7 +66,8 @@ struct __Implement Xen_Function_Implement = {
     .__inst_size = sizeof(Xen_Function),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = function_create,
+    .__alloc = function_alloc,
+    .__create = NULL,
     .__destroy = function_destroy,
     .__string = function_string,
     .__raw = function_string,

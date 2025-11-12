@@ -43,7 +43,7 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
       return NULL;
     }
   }
-  Xen_Instance* mod_map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  Xen_Instance* mod_map = Xen_Map_New();
   if (!mod_map) {
     callable_free(ctx->ctx_code);
     Xen_DEL_REF(mod_ctx);

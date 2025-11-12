@@ -5,13 +5,14 @@
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "vm_stack.h"
+#include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 
-static Xen_Instance* frame_create(ctx_id_t id, Xen_INSTANCE* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (!args || Xen_SIZE(args) != 5 ||
       (Xen_Nil_NEval(Xen_Tuple_Peek_Index(args, 0)) &&
@@ -20,7 +21,11 @@ static Xen_Instance* frame_create(ctx_id_t id, Xen_INSTANCE* self,
        Xen_IMPL(Xen_Tuple_Peek_Index(args, 1)) != &Xen_Run_Frame)) {
     return NULL;
   }
-  struct RunContext* ctx_new = (struct RunContext*)self;
+  struct RunContext* ctx_new =
+      (struct RunContext*)Xen_Instance_Alloc(&Xen_Run_Frame);
+  if (!ctx_new) {
+    return NULL;
+  }
   ctx_new->ctx_flags = CTX_FLAG_PROPS;
   ctx_new->ctx_id = 0;
   if (!Xen_Tuple_Peek_Index(args, 0))
@@ -42,7 +47,7 @@ static Xen_Instance* frame_create(ctx_id_t id, Xen_INSTANCE* self,
     ctx_new->ctx_kwargs = Xen_Tuple_Get_Index(args, 4);
   } else
     ctx_new->ctx_kwargs = NULL;
-  ctx_new->ctx_instances = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+  ctx_new->ctx_instances = Xen_Map_New();
   if (!ctx_new->ctx_instances) {
     Xen_DEL_REF(ctx_new->ctx_closure);
     if (ctx_new->ctx_caller)
@@ -50,12 +55,13 @@ static Xen_Instance* frame_create(ctx_id_t id, Xen_INSTANCE* self,
     Xen_DEL_REF(ctx_new->ctx_self);
     if (ctx_new->ctx_args)
       Xen_DEL_REF(ctx_new->ctx_args);
+    Xen_DEL_REF(ctx_new);
     return NULL;
   }
   ctx_new->ctx_ip = 0;
   ctx_new->ctx_running = 0;
   ctx_new->ctx_error = 0;
-  return nil;
+  return (Xen_Instance*)ctx_new;
 }
 
 static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -91,7 +97,8 @@ struct __Implement Xen_Run_Frame = {
     .__inst_size = sizeof(struct RunContext),
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
-    .__create = frame_create,
+    .__alloc = frame_alloc,
+    .__create = NULL,
     .__destroy = frame_destroy,
     .__string = frame_string,
     .__raw = frame_string,

@@ -1,10 +1,9 @@
-#include <stdlib.h>
-
+#include "run_ctx_stack.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
-#include "run_ctx_stack.h"
 #include "run_frame.h"
 #include "vm_def.h"
+#include "xen_alloc.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"
 
@@ -15,21 +14,21 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
   if (!ctx_stack) {
     return 0;
   }
-  RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
+  RunContext_Stack_ptr ctx_stack_new = Xen_Alloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) {
     return 0;
   }
   Xen_Instance* alloc_args = Xen_Tuple_From_Array(
       5, (Xen_Instance*[]){caller, closure, self, args, kwargs});
   if (!alloc_args) {
-    free(ctx_stack_new);
+    Xen_Dealloc(ctx_stack_new);
     return 0;
   }
   ctx_stack_new->ctx =
       (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, nil, 0);
   if (!ctx_stack_new->ctx) {
     Xen_DEL_REF(alloc_args);
-    free(ctx_stack_new);
+    Xen_Dealloc(ctx_stack_new);
     return 0;
   }
   Xen_DEL_REF(alloc_args);
@@ -49,7 +48,7 @@ int run_context_stack_push_refer(RunContext_Stack_ptr* ctx_stack,
   if (!ctx_stack) {
     return 0;
   }
-  RunContext_Stack_ptr ctx_stack_new = malloc(sizeof(RunContext_Stack));
+  RunContext_Stack_ptr ctx_stack_new = Xen_Alloc(sizeof(RunContext_Stack));
   if (!ctx_stack_new) {
     return 0;
   }
@@ -80,7 +79,7 @@ void run_context_stack_pop_top(RunContext_Stack_ptr* ctx_stack) {
   RunContext_Stack_ptr temp = *ctx_stack;
   *ctx_stack = (*ctx_stack)->next;
   Xen_DEL_REF(temp->ctx);
-  free(temp);
+  Xen_Dealloc(temp);
 }
 
 void run_context_stack_free(RunContext_Stack_ptr* ctx_stack) {
@@ -91,7 +90,7 @@ void run_context_stack_free(RunContext_Stack_ptr* ctx_stack) {
   while (current) {
     RunContext_Stack_ptr next = current->next;
     Xen_DEL_REF(current->ctx);
-    free(current);
+    Xen_Dealloc(current);
     current = next;
   }
   *ctx_stack = NULL;

@@ -4,6 +4,7 @@
 
 #include "implement.h"
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_map.h"
 
 struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
@@ -19,35 +20,20 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
       return NULL;
     }
   } else {
-    inst = malloc(impl->__inst_size);
+    inst = Xen_Instance_Alloc(impl);
     if (!inst) {
       return NULL;
     }
-    inst->__refers = 0;
-    Xen_ADD_REF(inst);
-    inst->__impl = impl;
-    inst->__size = 0;
     inst->__flags = flags;
     inst->__flags |= impl->__inst_default_flags;
   }
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
-    mapped->__map = Xen_Map_New(XEN_MAP_DEFAULT_CAP);
+    mapped->__map = Xen_Map_New();
     if (!mapped->__map) {
-      free(inst);
+      Xen_Dealloc(inst);
       return NULL;
     }
-  }
-  if (impl->__create) {
-    Xen_Instance* ret = impl->__create(0, inst, args, kwargs);
-    if (!ret) {
-      if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-        Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
-      }
-      free(inst);
-      return NULL;
-    }
-    Xen_DEL_REF(ret);
   }
   return inst;
 }
@@ -62,6 +48,6 @@ void __instance_free(struct __Instance* inst) {
     if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
     }
-    free(inst);
+    Xen_Dealloc(inst);
   }
 }

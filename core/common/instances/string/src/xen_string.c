@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
@@ -19,7 +20,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
     return NULL;
   }
   string->__size = strlen(cstring);
-  string->characters = malloc(string->__size + 1);
+  string->characters = Xen_Alloc(string->__size + 1);
   if (!string->characters) {
     __instance_free((Xen_Instance*)string);
     return NULL;
@@ -35,7 +36,7 @@ Xen_Instance* Xen_String_From_Char(char c) {
     return NULL;
   }
   string->__size = 1;
-  string->characters = malloc(string->__size + 1);
+  string->characters = Xen_Alloc(string->__size + 1);
   if (!string->characters) {
     __instance_free((Xen_Instance*)string);
     return NULL;
@@ -50,7 +51,7 @@ Xen_Instance* Xen_String_From_Concat(Xen_Instance* s1, Xen_Instance* s2) {
     return NULL;
   }
   size_t length = ((Xen_String*)s1)->__size + ((Xen_String*)s2)->__size + 1;
-  char* buf = malloc(length);
+  char* buf = Xen_Alloc(length);
   if (!buf) {
     return NULL;
   }
@@ -59,10 +60,10 @@ Xen_Instance* Xen_String_From_Concat(Xen_Instance* s1, Xen_Instance* s2) {
   buf[length - 1] = '\0';
   Xen_Instance* string = Xen_String_From_CString(buf);
   if (!string) {
-    free(buf);
+    Xen_Dealloc(buf);
     return NULL;
   }
-  free(buf);
+  Xen_Dealloc(buf);
   return string;
 }
 

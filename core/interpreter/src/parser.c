@@ -1,11 +1,10 @@
-#include <malloc.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "instance.h"
 #include "lexer.h"
 #include "parser.h"
+#include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_nil.h"
 
@@ -415,33 +414,33 @@ Xen_Instance* parser_term(Parser* p) {
     Xen_Instance* right = parser_factor(p);
     if (!right) {
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
     if (!binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
-    free(op);
+    Xen_Dealloc(op);
     left = binary;
   }
   return left;
@@ -462,33 +461,33 @@ Xen_Instance* parser_add(Parser* p) {
     Xen_Instance* right = parser_term(p);
     if (!right) {
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
     if (!binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
-    free(op);
+    Xen_Dealloc(op);
     left = binary;
   }
   return left;
@@ -511,33 +510,33 @@ Xen_Instance* parser_relational(Parser* p) {
     Xen_Instance* right = parser_add(p);
     if (!right) {
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
     if (!binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
-    free(op);
+    Xen_Dealloc(op);
     left = binary;
   }
   return left;
@@ -581,33 +580,33 @@ Xen_Instance* parser_and(Parser* p) {
     Xen_Instance* right = parser_not(p);
     if (!right) {
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
     if (!binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
-    free(op);
+    Xen_Dealloc(op);
     left = binary;
   }
   return left;
@@ -628,33 +627,33 @@ Xen_Instance* parser_or(Parser* p) {
     Xen_Instance* right = parser_and(p);
     if (!right) {
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
     if (!binary) {
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, left)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(binary, right)) {
       Xen_DEL_REF(binary);
       Xen_DEL_REF(right);
       Xen_DEL_REF(left);
-      free(op);
+      Xen_Dealloc(op);
       return NULL;
     }
     Xen_DEL_REF(right);
     Xen_DEL_REF(left);
-    free(op);
+    Xen_Dealloc(op);
     left = binary;
   }
   return left;
@@ -773,7 +772,7 @@ Xen_Instance* parser_assignment(Parser* p) {
     Xen_Instance* rhs = parser_expr(p);
     if (!rhs) {
       Xen_DEL_REF(lhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
 
@@ -781,25 +780,25 @@ Xen_Instance* parser_assignment(Parser* p) {
     if (!assignm) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
 
     if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     Xen_DEL_REF(lhs);
     Xen_DEL_REF(rhs);
-    free((void*)operator);
+    Xen_Dealloc((void*)operator);
     return assignm;
   }
   return lhs;
@@ -877,14 +876,14 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
     Xen_Instance* rhs_node = parser_or(p);
     if (!rhs_node) {
       Xen_DEL_REF(lhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     Xen_Instance* rhs = Xen_AST_Node_Wrap(rhs_node, "Expr");
     if (!rhs) {
       Xen_DEL_REF(rhs_node);
       Xen_DEL_REF(lhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     Xen_DEL_REF(rhs_node);
@@ -893,25 +892,25 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
     if (!assignm) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
 
     if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
       Xen_DEL_REF(lhs);
       Xen_DEL_REF(rhs);
-      free((void*)operator);
+      Xen_Dealloc((void*)operator);
       return NULL;
     }
     Xen_DEL_REF(lhs);
     Xen_DEL_REF(rhs);
-    free((void*)operator);
+    Xen_Dealloc((void*)operator);
     return assignm;
   }
   return lhs;
@@ -961,10 +960,10 @@ Xen_Instance* parser_attr(Parser* p) {
   parser_next(p);
   Xen_Instance* attr = Xen_AST_Node_New("Attr", ident);
   if (!attr) {
-    free((void*)ident);
+    Xen_Dealloc((void*)ident);
     return NULL;
   }
-  free((void*)ident);
+  Xen_Dealloc((void*)ident);
   return attr;
 }
 
