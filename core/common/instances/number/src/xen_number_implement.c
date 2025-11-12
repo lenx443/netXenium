@@ -1,6 +1,5 @@
 #include <iso646.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "attrs.h"
 #include "basic.h"
@@ -10,20 +9,54 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
+#include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_boolean_implement.h"
+#include "xen_boolean_instance.h"
 #include "xen_map.h"
+#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_number_instance.h"
 #include "xen_string.h"
+#include "xen_string_implement.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
 static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* rsult = NULL;
+    if (Xen_IMPL(val) == &Xen_Number_Implement) {
+      rsult = Xen_ADD_REF(val);
+    } else if (Xen_IMPL(val) == &Xen_String_Implement) {
+      const char* str = Xen_String_As_CString(val);
+      int base = 0;
+      if (kwargs && Xen_IMPL(kwargs) == &Xen_Map_Implement) {
+        Xen_Instance* base_inst = Xen_Map_Get_Str(kwargs, "base");
+        if (base_inst) {
+          if (Xen_IMPL(base_inst) != &Xen_Number_Implement) {
+            Xen_DEL_REF(base_inst);
+            Xen_DEL_REF(val);
+            return NULL;
+          }
+          base = Xen_Number_As_Int(base_inst);
+          Xen_DEL_REF(base_inst);
+        }
+      }
+      rsult = Xen_Number_From_CString(str, base);
+    } else if (Xen_IMPL(val) == &Xen_Boolean_Implement) {
+      rsult = Xen_Number_From_Int(((Xen_Boolean*)val)->value);
+    }
+    Xen_DEL_REF(val);
+    return rsult;
+  }
   Xen_Number* num = (Xen_Number*)Xen_Instance_Alloc(&Xen_Number_Implement);
   if (!num) {
     return NULL;
@@ -32,6 +65,22 @@ static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
   num->size = 0;
   num->sign = 0;
   return (Xen_Instance*)num;
+}
+
+static Xen_Instance* number_create(ctx_id_t id, Xen_INSTANCE* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Number* n = (Xen_Number*)self;
+  if (!n->digits) {
+    n->digits = Xen_Alloc(sizeof(uint32_t));
+    if (!n->digits) {
+      return NULL;
+    }
+    n->digits[0] = 0;
+    n->size = 1;
+    n->sign = 0;
+  }
+  return nil;
 }
 
 static Xen_Instance* number_destroy(ctx_id_t id, Xen_INSTANCE* self,
@@ -332,7 +381,7 @@ struct __Implement Xen_Number_Implement = {
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
     .__alloc = number_alloc,
-    .__create = NULL,
+    .__create = number_create,
     .__destroy = number_destroy,
     .__string = number_string,
     .__raw = number_string,
@@ -342,6 +391,11 @@ struct __Implement Xen_Number_Implement = {
 };
 
 int Xen_Number_Init() {
+  if (!Xen_Map_Push_Pair_Str(
+          vm->root_context->ctx_instances,
+          (Xen_Map_Pair_Str){"number", (Xen_Instance*)&Xen_Number_Implement})) {
+    return 0;
+  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

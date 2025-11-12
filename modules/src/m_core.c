@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -7,16 +6,39 @@
 #include "callable.h"
 #include "instance.h"
 #include "m_core.h"
+#include "program.h"
 #include "run_ctx.h"
 #include "xen_alloc.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_number_implement.h"
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+
+static Xen_Instance* fn_exit(ctx_id_t id, Xen_Instance* self,
+                             Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* exit_code = Xen_Attr_Index_Size_Get(args, 0);
+    if (Xen_IMPL(exit_code) != &Xen_Number_Implement) {
+      Xen_DEL_REF(exit_code);
+      return NULL;
+    }
+    program.closed = 1;
+    program.exit_code = Xen_Number_As_Int(exit_code);
+    Xen_DEL_REF(exit_code);
+    return nil;
+  }
+  program.closed = 1;
+  program.exit_code = 0;
+  return nil;
+}
 
 static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args, Xen_Instance* kwargs) {
@@ -59,7 +81,6 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   }
   fputs(Xen_String_As_CString(string), stdout);
   Xen_DEL_REF(string);
-  fputs(Xen_String_As_CString(out_reg), stdout);
   return nil;
 }
 
@@ -171,6 +192,7 @@ static Xen_Instance* fn_test_vector(ctx_id_t id, Xen_Instance* self,
 }
 
 static Xen_Module_Function_Table core_functions = {
+    {"exit", fn_exit},
     {"echo", fn_echo},
     {"print", fn_print},
     {"println", fn_println},
