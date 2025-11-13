@@ -12,7 +12,7 @@
 int main(int argc, char** argv) {
   assert(Xen_Init(argc, argv) == 1);
   Xen_Instance* echo_fun =
-      vm_get_instance("echo", vm->vm_ctx_stack->ctx->ctx_id);
+      Xen_VM_Load_Instance("echo", vm->vm_ctx_stack->ctx->ctx_id);
   assert(echo_fun != NULL);
   Xen_Instance* text = Xen_String_From_CString("Hola Mundo\n");
   assert(Xen_Nil_NEval(text));

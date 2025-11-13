@@ -9,7 +9,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
@@ -40,6 +39,7 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   map->map_keys = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
+    map->map_buckets = NULL;
     Xen_DEL_REF(map);
     return NULL;
   }
@@ -51,7 +51,9 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
-  Xen_DEL_REF(map->map_keys);
+  if (map->map_keys) {
+    Xen_DEL_REF(map->map_keys);
+  }
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
@@ -173,6 +175,24 @@ static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return value;
 }
 
+static Xen_Instance* map_push(ctx_id_t id, Xen_Instance* self,
+                              Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 1);
+  if (!Xen_Map_Push_Pair(self, (Xen_Map_Pair){key, value})) {
+    Xen_DEL_REF(value);
+    Xen_DEL_REF(key);
+    return NULL;
+  }
+  Xen_DEL_REF(value);
+  Xen_DEL_REF(key);
+  return nil;
+}
+
 struct __Implement Xen_Map_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Map",
@@ -190,17 +210,16 @@ struct __Implement Xen_Map_Implement = {
 };
 
 int Xen_Map_Init() {
-  if (!Xen_Map_Push_Pair_Str(
-          vm->root_context->ctx_instances,
-          (Xen_Map_Pair_Str){"map", (Xen_Instance*)&Xen_Map_Implement})) {
+  if (!Xen_VM_Store_Global("map", (Xen_Instance*)&Xen_Map_Implement)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__get_index", map_opr_get_index,
-                                 nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__get_index", map_opr_get_index,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

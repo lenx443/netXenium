@@ -59,7 +59,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
       break;
     }
   }
-  Xen_INSTANCE* self = ((RunContext_ptr)vm_current_ctx())->ctx_self;
+  Xen_INSTANCE* self = ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self;
   if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       if (!Xen_Map_Push_Pair_Str(((Xen_INSTANCE_MAPPED*)self)->__map,
@@ -90,7 +90,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
       break;
     }
   }
-  Xen_INSTANCE* self = ((RunContext_ptr)vm_current_ctx())->ctx_self;
+  Xen_INSTANCE* self = ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self;
   if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_INSTANCE* prop =

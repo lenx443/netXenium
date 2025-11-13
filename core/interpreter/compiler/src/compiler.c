@@ -74,7 +74,7 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #ifndef NDEBUG
   bc_print(pc);
 #endif
-  vm_ctx_clear(vm->root_context);
+  Xen_VM_Ctx_Clear(vm->root_context);
   program_stack_depth(&pc);
   CALLABLE_ptr code = callable_new_code(pc);
   if (!code) {

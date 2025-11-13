@@ -140,6 +140,21 @@ static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
+static Xen_Instance* vector_push(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+  if (!Xen_Vector_Push(self, val)) {
+    Xen_DEL_REF(val);
+    return NULL;
+  }
+  Xen_DEL_REF(val);
+  return nil;
+}
+
 struct __Implement Xen_Vector_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Vector",
@@ -158,14 +173,18 @@ struct __Implement Xen_Vector_Implement = {
 };
 
 int Xen_Vector_Init() {
+  if (!Xen_VM_Store_Global("vector", (Xen_Instance*)&Xen_Vector_Implement)) {
+    return 0;
+  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__get_index", vector_opr_get_index,
-                                 nil) ||
-      !vm_define_native_function(props, "__set_index", vector_opr_set_index,
-                                 nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__get_index", vector_opr_get_index,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__set_index", vector_opr_set_index,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "push", vector_push, nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

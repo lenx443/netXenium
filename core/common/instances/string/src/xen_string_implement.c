@@ -25,6 +25,18 @@
 static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* rsult = Xen_Attr_String(val);
+    if (!rsult) {
+      Xen_DEL_REF(val);
+      return NULL;
+    }
+    Xen_DEL_REF(val);
+    return rsult;
+  }
   Xen_String* string = (Xen_String*)Xen_Instance_Alloc(&Xen_String_Implement);
   if (!string) {
     return NULL;
@@ -88,6 +100,22 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) == 0) {
+    Xen_DEL_REF(val);
+    return Xen_True;
+  }
+  Xen_DEL_REF(val);
+  return Xen_False;
+}
+
+static Xen_Instance* string_opr_ne(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
+    return NULL;
+
+  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+  if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) != 0) {
     Xen_DEL_REF(val);
     return Xen_True;
   }
@@ -215,17 +243,21 @@ struct __Implement Xen_String_Implement = {
 };
 
 int Xen_String_Init() {
+  if (!Xen_VM_Store_Global("string", (Xen_Instance*)&Xen_String_Implement)) {
+    return 0;
+  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__eq", string_opr_eq, nil) ||
-      !vm_define_native_function(props, "__get_index", string_opr_get_index,
-                                 nil) ||
-      !vm_define_native_function(props, "__add", string_opr_add, nil) ||
-      !vm_define_native_function(props, "__mul", string_opr_mul, nil) ||
-      !vm_define_native_function(props, "upper", string_prop_upper, nil) ||
-      !vm_define_native_function(props, "lower", string_prop_lower, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__eq", string_opr_eq, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__ne", string_opr_ne, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__get_index", string_opr_get_index,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__add", string_opr_add, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__mul", string_opr_mul, nil) ||
+      !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
+      !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);
     return 0;
   }

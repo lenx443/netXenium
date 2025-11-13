@@ -7,7 +7,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
 #include "xen_map.h"
@@ -88,25 +87,16 @@ Xen_Implement Xen_Boolean_Implement = {
 };
 
 int Xen_Boolean_Init() {
-  if (!Xen_Map_Push_Pair_Str(
-          vm->root_context->ctx_instances,
-          (Xen_Map_Pair_Str){"boolean",
-                             (Xen_Instance*)&Xen_Boolean_Implement})) {
-    return 0;
-  }
-  if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
-                             (Xen_Map_Pair_Str){"true", Xen_True})) {
-    return 0;
-  }
-  if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
-                             (Xen_Map_Pair_Str){"false", Xen_False})) {
+  if (!Xen_VM_Store_Global("boolean", (Xen_Instance*)&Xen_Boolean_Implement) ||
+      !Xen_VM_Store_Global("true", Xen_True) ||
+      !Xen_VM_Store_Global("false", Xen_False)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__boolean", boolean_boolean, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__boolean", boolean_boolean, nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

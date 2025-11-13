@@ -57,7 +57,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   Xen_Map* map = (Xen_Map*)map_inst;
 
   Xen_Instance* hash_inst =
-      vm_call_native_function(pair.key->__impl->__hash, pair.key, nil, nil);
+      Xen_VM_Call_Native_Function(pair.key->__impl->__hash, pair.key, nil, nil);
   if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
     return 0;
   }
@@ -145,7 +145,7 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
 Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   Xen_Map* map = (Xen_Map*)map_inst;
   Xen_Instance* hash_inst =
-      vm_call_native_function(key->__impl->__hash, key, nil, nil);
+      Xen_VM_Call_Native_Function(key->__impl->__hash, key, nil, nil);
   if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
     return NULL;
   }

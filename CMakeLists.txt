@@ -43,6 +43,8 @@ include_directories(
   core/common/instances/tuple/types/header/
   core/common/instances/method/include/
   core/common/instances/method/types/header/
+  core/common/instances/set/include/
+  core/common/instances/set/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -81,6 +83,7 @@ set(SOURCES
 
   # Codigo Commun
   core/common/src/xen_alloc.c
+  core/common/src/xen_cstrings.c
   core/common/src/operators.c
   core/common/src/callable.c
   core/common/src/attrs.c
@@ -121,9 +124,13 @@ set(SOURCES
   core/common/instances/tuple/src/xen_tuple_implement.c
   core/common/instances/tuple/src/xen_tuple.c
 
-  # Implementacion del objeto `Method`
+  # implementacion del objeto `method`
   core/common/instances/method/src/xen_method_implement.c
   core/common/instances/method/src/xen_method.c
+
+  # implementacion del objeto `set`
+  core/common/instances/set/src/xen_set_implement.c
+  core/common/instances/set/src/xen_set.c
 
   # Implementacion del objeto `AST`
   core/interpreter/instances/ast/src/xen_ast.c

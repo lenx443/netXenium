@@ -51,7 +51,7 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
     return;
   }
   Xen_Instance* inst =
-      vm_get_instance(Xen_String_As_CString(c_name), ctx->ctx_id);
+      Xen_VM_Load_Instance(Xen_String_As_CString(c_name), ctx->ctx_id);
   if (!inst) {
     Xen_DEL_REF(c_name);
     ctx->ctx_error = 1;
@@ -246,8 +246,8 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* ret = vm_call_native_function(Xen_IMPL(callable)->__callable,
-                                              callable, args, nil);
+  Xen_Instance* ret = Xen_VM_Call_Native_Function(
+      Xen_IMPL(callable)->__callable, callable, args, nil);
   if (!ret) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);
@@ -316,8 +316,8 @@ static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
     ctx->ctx_error = 1;
     return;
   }
-  Xen_Instance* ret = vm_call_native_function(Xen_IMPL(callable)->__callable,
-                                              callable, args, kwargs);
+  Xen_Instance* ret = Xen_VM_Call_Native_Function(
+      Xen_IMPL(callable)->__callable, callable, args, kwargs);
   if (!ret) {
     Xen_DEL_REF(callable);
     Xen_DEL_REF(args);

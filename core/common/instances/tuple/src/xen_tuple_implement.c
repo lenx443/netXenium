@@ -125,7 +125,7 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
 }
 
 Xen_Implement Xen_Tuple_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, 0x00),
+    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "tuple",
     .__inst_size = sizeof(struct Xen_Tuple_Instance),
     .__inst_default_flags = 0x00,
@@ -141,12 +141,15 @@ Xen_Implement Xen_Tuple_Implement = {
 };
 
 int Xen_Tuple_Init() {
+  if (!Xen_VM_Store_Global("tuple", (Xen_Instance*)&Xen_Tuple_Implement)) {
+    return 0;
+  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__get_index", tuple_opr_get_index,
-                                 nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__get_index", tuple_opr_get_index,
+                                    nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

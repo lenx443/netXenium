@@ -40,8 +40,8 @@ static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   if (inst->fun_callable) {
-    Xen_Instance* ret =
-        vm_run_callable(inst->fun_callable, inst->closure, nil, args, kwargs);
+    Xen_Instance* ret = Xen_VM_Call_Callable(inst->fun_callable, inst->closure,
+                                             nil, args, kwargs);
     if (!ret) {
       return NULL;
     }

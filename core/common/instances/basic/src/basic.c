@@ -51,7 +51,7 @@ static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
   }
   if (impl->__create) {
     Xen_Instance* rsult =
-        vm_call_native_function(impl->__create, inst, args, kwargs);
+        Xen_VM_Call_Native_Function(impl->__create, inst, args, kwargs);
     if (!rsult) {
       Xen_DEL_REF(inst);
       return NULL;

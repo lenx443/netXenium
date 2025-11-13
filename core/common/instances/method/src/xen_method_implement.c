@@ -43,8 +43,8 @@ static Xen_Instance* method_callable(ctx_id_t id, struct __Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   Xen_Function_ptr function = (Xen_Function_ptr)method->function;
-  return vm_run_callable(function->fun_callable, function->closure,
-                         method->self, args, kwargs);
+  return Xen_VM_Call_Callable(function->fun_callable, function->closure,
+                              method->self, args, kwargs);
 }
 
 Xen_Implement Xen_Method_Implement = {

@@ -9,7 +9,6 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_boolean_implement.h"
@@ -391,33 +390,31 @@ struct __Implement Xen_Number_Implement = {
 };
 
 int Xen_Number_Init() {
-  if (!Xen_Map_Push_Pair_Str(
-          vm->root_context->ctx_instances,
-          (Xen_Map_Pair_Str){"number", (Xen_Instance*)&Xen_Number_Implement})) {
+  if (!Xen_VM_Store_Global("number", (Xen_Instance*)&Xen_Number_Implement)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;
   }
-  if (!vm_define_native_function(props, "__boolean", number_boolean, nil) ||
-      !vm_define_native_function(props, "__pow", number_opr_pow, nil) ||
-      !vm_define_native_function(props, "__mul", number_opr_mul, nil) ||
-      !vm_define_native_function(props, "__div", number_opr_div, nil) ||
-      !vm_define_native_function(props, "__mod", number_opr_mod, nil) ||
-      !vm_define_native_function(props, "__add", number_opr_add, nil) ||
-      !vm_define_native_function(props, "__sub", number_opr_sub, nil) ||
-      !vm_define_native_function(props, "__eq", number_opr_eq, nil) ||
-      !vm_define_native_function(props, "__ne", number_opr_ne, nil) ||
-      !vm_define_native_function(props, "__lt", number_opr_lt, nil) ||
-      !vm_define_native_function(props, "__le", number_opr_le, nil) ||
-      !vm_define_native_function(props, "__gt", number_opr_gt, nil) ||
-      !vm_define_native_function(props, "__ge", number_opr_ge, nil) ||
-      !vm_define_native_function(props, "__positive", number_prop_positive,
-                                 nil) ||
-      !vm_define_native_function(props, "__negative", number_prop_negative,
-                                 nil) ||
-      !vm_define_native_function(props, "__not", number_prop_not, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__boolean", number_boolean, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__pow", number_opr_pow, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__mul", number_opr_mul, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__div", number_opr_div, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__mod", number_opr_mod, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__add", number_opr_add, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__sub", number_opr_sub, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__eq", number_opr_eq, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__ne", number_opr_ne, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__lt", number_opr_lt, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__le", number_opr_le, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__gt", number_opr_gt, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__ge", number_opr_ge, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__positive", number_prop_positive,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__negative", number_prop_negative,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

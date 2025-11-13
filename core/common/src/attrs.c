@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "attrs.h"
+#include "basic_templates.h"
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
@@ -28,7 +29,7 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
     return NULL;
   }
   Xen_Instance* result =
-      vm_call_native_function(Xen_IMPL(inst)->__get_attr, inst, args, nil);
+      Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__get_attr, inst, args, nil);
   if (!result) {
     Xen_DEL_REF(args);
     return NULL;
@@ -69,7 +70,7 @@ int Xen_Attr_Set(Xen_Instance* inst, Xen_Instance* attr, Xen_Instance* val) {
     return 0;
   }
   Xen_Instance* result =
-      vm_call_native_function(Xen_IMPL(inst)->__set_attr, inst, args, nil);
+      Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__set_attr, inst, args, nil);
   if (!result) {
     Xen_DEL_REF(args);
     return 0;
@@ -102,11 +103,16 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", nil, nil);
   if (!string) {
     if (Xen_IMPL(inst)->__string == NULL) {
-      return NULL;
-    }
-    string = vm_call_native_function(Xen_IMPL(inst)->__string, inst, nil, nil);
-    if (!string) {
-      return NULL;
+      string = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, nil, nil);
+      if (!string) {
+        return NULL;
+      }
+    } else {
+      string =
+          Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__string, inst, nil, nil);
+      if (!string) {
+        return NULL;
+      }
     }
   }
   if (Xen_IMPL(string) != &Xen_String_Implement) {
@@ -140,11 +146,15 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil, nil);
   if (!raw) {
     if (Xen_IMPL(inst)->__raw == NULL) {
-      return NULL;
-    }
-    raw = vm_call_native_function(Xen_IMPL(inst)->__raw, inst, nil, nil);
-    if (!raw) {
-      return NULL;
+      raw = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, nil, nil);
+      if (!raw) {
+        return NULL;
+      }
+    } else {
+      raw = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__raw, inst, nil, nil);
+      if (!raw) {
+        return NULL;
+      }
     }
   }
   if (Xen_IMPL(raw) != &Xen_String_Implement) {
