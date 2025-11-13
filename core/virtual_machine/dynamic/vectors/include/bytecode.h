@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include "bc_instruct.h"
-#include "xen_typedefs.h"
 
 struct Bytecode_Array {
   union bc_Instruct* bc_array;
@@ -19,7 +18,7 @@ typedef Bytecode_Array_t* Bytecode_Array_ptr;
 Bytecode_Array_ptr bc_new();
 void bc_clear(Bytecode_Array_ptr);
 void bc_free(const Bytecode_Array_ptr);
-Xen_ssize_t bc_emit(Bytecode_Array_ptr, Xen_ssize_t, uint8_t, uint8_t);
+int bc_emit(Bytecode_Array_ptr, uint8_t, uint8_t);
 
 #ifndef NDEBUG
 struct ProgramCode;

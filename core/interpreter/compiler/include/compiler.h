@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "block_list.h"
 #include "callable.h"
 #include "instance.h"
 #include "program_code.h"
@@ -11,7 +12,8 @@
 #define Xen_COMPILE_REPL 1
 
 CALLABLE_ptr compiler(const char*, uint8_t);
-int ast_compile(ProgramCode_t*, uint8_t, Xen_Instance*);
-void program_stack_depth(ProgramCode_t*);
+int ast_compile(block_list_ptr, block_node_ptr, uint8_t, Xen_Instance*);
+void blocks_linealizer(block_list_ptr);
+int blocks_compiler(block_list_ptr, ProgramCode_t*);
 
 #endif

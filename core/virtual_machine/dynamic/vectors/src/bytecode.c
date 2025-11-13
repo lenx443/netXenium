@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "attrs.h"
@@ -43,35 +42,25 @@ void bc_free(const Bytecode_Array_ptr bc) {
   Xen_Dealloc(bc);
 }
 
-Xen_ssize_t bc_emit(Bytecode_Array_ptr bc, Xen_ssize_t offset, uint8_t opcode,
-                    uint8_t oparg) {
+int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg) {
   if (!bc) {
     error("El arreglo de bytecode esta vacío");
-    return -1;
+    return 0;
   }
   bc_Instruct_t instr = {{opcode, oparg}};
-  if (offset == -1) {
-    if (bc->bc_size >= bc->bc_capacity) {
-      int new_capacity = (bc->bc_capacity == 0) ? 8 : bc->bc_capacity * 2;
-      bc_Instruct_ptr new_mem =
-          Xen_Realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
-      if (!new_mem) {
-        error("No se le pudo asignar mas memoria al arreglo de bytecode");
-        return -1;
-      }
-      bc->bc_array = new_mem;
-      bc->bc_capacity = new_capacity;
+  if (bc->bc_size >= bc->bc_capacity) {
+    int new_capacity = (bc->bc_capacity == 0) ? 8 : bc->bc_capacity * 2;
+    bc_Instruct_ptr new_mem =
+        Xen_Realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
+    if (!new_mem) {
+      error("No se le pudo asignar mas memoria al arreglo de bytecode");
+      return 0;
     }
-    Xen_size_t rsult = bc->bc_size;
-    bc->bc_array[bc->bc_size++] = instr;
-    return rsult;
-  } else {
-    if (offset < 0 || (Xen_size_t)offset > bc->bc_size) {
-      return -1;
-    }
-    bc->bc_array[offset] = instr;
-    return offset;
+    bc->bc_array = new_mem;
+    bc->bc_capacity = new_capacity;
   }
+  bc->bc_array[bc->bc_size++] = instr;
+  return 1;
 }
 
 #ifndef NDEBUG

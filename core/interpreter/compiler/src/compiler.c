@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bc_instruct.h"
+#include "block_list.h"
 #include "bytecode.h"
 #include "compiler.h"
 #include "instance.h"
+#include "ir_instruct.h"
 #include "lexer.h"
 #include "operators.h"
 #include "parser.h"
@@ -22,7 +23,8 @@
 #include "xen_typedefs.h"
 
 typedef struct {
-  ProgramCode_t* code;
+  block_list_ptr b_list;
+  block_node_ptr b_current;
   uint8_t mode;
 } Compiler;
 
@@ -46,36 +48,41 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #ifndef NDEBUG
   Xen_AST_Node_Print(ast_program);
 #endif
-  ProgramCode_t pc;
-  pc.code = bc_new();
-  if (!pc.code) {
+  block_list_ptr blocks = block_list_new();
+  if (!blocks) {
     Xen_DEL_REF(ast_program);
-    return 0;
+    return NULL;
   }
-  pc.consts = vm_consts_new();
-  if (!pc.consts) {
+  block_node_ptr main_block = block_new();
+  if (!main_block) {
     Xen_DEL_REF(ast_program);
-    bc_free(pc.code);
-    return 0;
+    block_list_free(blocks);
+    return NULL;
   }
+  block_list_push_node(blocks, main_block);
 #ifndef NDEBUG
   printf("== Compiling ==\n");
 #endif
-  if (!ast_compile(&pc, mode, ast_program)) {
+  if (!ast_compile(blocks, main_block, mode, ast_program)) {
 #ifndef NDEBUG
     printf("Compiler Error\n");
 #endif
     Xen_DEL_REF(ast_program);
-    vm_consts_free(pc.consts);
-    bc_free(pc.code);
+    block_list_free(blocks);
     return 0;
   }
   Xen_DEL_REF(ast_program);
+  blocks_linealizer(blocks);
+  ProgramCode_t pc;
+  if (!blocks_compiler(blocks, &pc)) {
+    block_list_free(blocks);
+    return 0;
+  }
 #ifndef NDEBUG
   bc_print(pc);
 #endif
+  block_list_free(blocks);
   Xen_VM_Ctx_Clear(vm->root_context);
-  program_stack_depth(&pc);
   CALLABLE_ptr code = callable_new_code(pc);
   if (!code) {
     vm_consts_free(pc.consts);
@@ -86,11 +93,12 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 }
 
 #define COMPILE_MODE c.mode
-#define OFFSET c.code->code->bc_size
+#define OFFSET c.b_current->instr_array->ir_size
 
-#define emit(offset, opcode, oparg) bc_emit(c.code->code, offset, opcode, oparg)
-#define co_push_name(name) vm_consts_push_name(c.code->consts, name)
-#define co_push_instance(inst) vm_consts_push_instance(c.code->consts, inst)
+#define emit(offset, opcode, oparg)                                            \
+  ir_emit(c.b_current->instr_array, offset, opcode, oparg)
+#define co_push_name(name) vm_consts_push_name(c.b_list->consts, name)
+#define co_push_instance(inst) vm_consts_push_instance(c.b_list->consts, inst)
 
 static int compile_program(Compiler, Xen_Instance*);
 
@@ -1238,18 +1246,56 @@ int compile_while_statement(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int ast_compile(ProgramCode_t* code, uint8_t mode, Xen_Instance* ast) {
-  return compile_program((Compiler){code, mode}, ast);
+int ast_compile(block_list_ptr b_list, block_node_ptr b_current, uint8_t mode,
+                Xen_Instance* ast) {
+  return compile_program((Compiler){b_list, b_current, mode}, ast);
 }
 
-void program_stack_depth(ProgramCode_t* pc) {
+void blocks_linealizer(block_list_ptr blocks) {
+  if (!blocks)
+    return;
+  block_node_ptr current_block = blocks->head;
+  int n = 0;
+  while (current_block) {
+    for (size_t i = 0; i < current_block->instr_array->ir_size; i++)
+      current_block->instr_array->ir_array[i].instr_num = n++;
+    current_block->ready = 1;
+    current_block = current_block->next;
+  }
+}
+
+int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
+  pc->code = bc_new();
+  if (!pc->code) {
+    return 0;
+  }
+  pc->consts = vm_consts_from_values(blocks->consts->c_names,
+                                     blocks->consts->c_instances);
+  if (!pc->consts) {
+    bc_free(pc->code);
+    return 0;
+  }
   Xen_ssize_t depth = 0;
   Xen_ssize_t effect = 0;
-  for (size_t i = 0; i < pc->code->bc_size; i++) {
-    bc_Instruct_t inst = pc->code->bc_array[i];
-    effect += Instruct_Info_Table[inst.bci_opcode].stack_effect(inst.bci_oparg);
-    if (effect > depth)
-      depth = effect;
+  block_node_ptr b_iter = blocks->head;
+  while (b_iter) {
+    if (!b_iter->ready) {
+      b_iter = b_iter->next;
+      continue;
+    }
+    for (size_t i_iter = 0; i_iter < b_iter->instr_array->ir_size; i_iter++) {
+      IR_Instruct_t inst = b_iter->instr_array->ir_array[i_iter];
+      if (!bc_emit(pc->code, inst.opcode, inst.oparg)) {
+        bc_free(pc->code);
+        vm_consts_free(pc->consts);
+        return 0;
+      }
+      effect += Instruct_Info_Table[inst.opcode].stack_effect(inst.oparg);
+      if (effect > depth)
+        depth = effect;
+    }
+    b_iter = b_iter->next;
   }
   pc->stack_depth = depth;
+  return 1;
 }
