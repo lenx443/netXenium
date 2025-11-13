@@ -144,8 +144,8 @@ static Xen_Instance* set_push(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* set_has(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* set_opr_has(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 1) {
     return NULL;
@@ -184,8 +184,8 @@ int Xen_Set_Init() {
   if (!props) {
     return 0;
   }
-  if (!Xen_VM_Store_Native_Function(props, "push", set_push, nil) ||
-      !Xen_VM_Store_Native_Function(props, "has", set_has, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__has", set_opr_has, nil) ||
+      !Xen_VM_Store_Native_Function(props, "push", set_push, nil)) {
     return 0;
   }
   Xen_Set_Implement.__props = props;

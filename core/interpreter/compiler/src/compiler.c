@@ -810,6 +810,10 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
     if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_NE) == -1) {
       return 0;
     }
+  } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
+    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_HAS) == -1) {
+      return 0;
+    }
   } else {
     return 0;
   }

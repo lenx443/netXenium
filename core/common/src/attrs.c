@@ -139,6 +139,56 @@ const char* Xen_Attr_String_Str(Xen_Instance* inst) {
   return string_str;
 }
 
+Xen_Instance* Xen_Attr_String_Stack(Xen_Instance* inst, Xen_Instance* stack) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &stack);
+  if (!args) {
+    return NULL;
+  }
+  Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", args, nil);
+  if (!string) {
+    if (Xen_IMPL(inst)->__string == NULL) {
+      string = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
+      if (!string) {
+        Xen_DEL_REF(args);
+        return NULL;
+      }
+    } else {
+      string = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__string, inst, args,
+                                           nil);
+      if (!string) {
+        Xen_DEL_REF(args);
+        return NULL;
+      }
+    }
+  }
+  Xen_DEL_REF(args);
+  if (Xen_IMPL(string) != &Xen_String_Implement) {
+    Xen_DEL_REF(string);
+    return NULL;
+  }
+  return string;
+}
+
+const char* Xen_Attr_String_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* string = Xen_Attr_String_Stack(inst, stack);
+  if (!string) {
+    return NULL;
+  }
+  const char* string_str = strdup(Xen_String_As_CString(string));
+  if (!string_str) {
+    Xen_DEL_REF(string);
+    return NULL;
+  }
+  Xen_DEL_REF(string);
+  return string_str;
+}
+
 Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   if (!inst) {
     return NULL;
@@ -169,6 +219,55 @@ const char* Xen_Attr_Raw_Str(Xen_Instance* inst) {
     return NULL;
   }
   Xen_Instance* raw = Xen_Attr_Raw(inst);
+  if (!raw) {
+    return NULL;
+  }
+  const char* raw_str = strdup(Xen_String_As_CString(raw));
+  if (!raw_str) {
+    Xen_DEL_REF(raw);
+    return NULL;
+  }
+  Xen_DEL_REF(raw);
+  return raw_str;
+}
+
+Xen_Instance* Xen_Attr_Raw_Stack(Xen_Instance* inst, Xen_Instance* stack) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &stack);
+  if (!args) {
+    return NULL;
+  }
+  Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", args, nil);
+  if (!raw) {
+    if (Xen_IMPL(inst)->__string == NULL) {
+      raw = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
+      if (!raw) {
+        Xen_DEL_REF(args);
+        return NULL;
+      }
+    } else {
+      raw = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__raw, inst, args, nil);
+      if (!raw) {
+        Xen_DEL_REF(args);
+        return NULL;
+      }
+    }
+  }
+  Xen_DEL_REF(args);
+  if (Xen_IMPL(raw) != &Xen_String_Implement) {
+    Xen_DEL_REF(raw);
+    return NULL;
+  }
+  return raw;
+}
+
+const char* Xen_Attr_Raw_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
+  if (!inst) {
+    return NULL;
+  }
+  Xen_Instance* raw = Xen_Attr_Raw_Stack(inst, stack);
   if (!raw) {
     return NULL;
   }

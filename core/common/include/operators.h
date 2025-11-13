@@ -16,6 +16,7 @@ typedef enum {
   Xen_OPR_GT,
   Xen_OPR_GE,
   Xen_OPR_NE,
+  Xen_OPR_HAS,
   Xen_OPR_END,
 } Xen_Opr;
 

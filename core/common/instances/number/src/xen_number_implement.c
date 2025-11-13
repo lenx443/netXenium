@@ -107,6 +107,30 @@ static Xen_Instance* number_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
+static Xen_Instance* number_hash(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+
+  Xen_Number* n = (Xen_Number*)self;
+  int64_t hash = 0;
+  int64_t y;
+  Xen_ssize_t i = n->size;
+
+  const int SHIFT = 32;
+  const int HASH_BITS = 8 * sizeof(int64_t);
+
+  while (--i >= 0) {
+    y = (int64_t)n->digits[i];
+    hash = ((hash << SHIFT) | (hash >> (HASH_BITS - SHIFT))) ^ y;
+  }
+
+  hash ^= n->size;
+  if (n->sign < 0)
+    hash = -hash;
+
+  return Xen_Number_From_Int64(hash);
+}
+
 static Xen_Instance* number_boolean(ctx_id_t id, Xen_Instance* self,
                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -385,7 +409,7 @@ struct __Implement Xen_Number_Implement = {
     .__string = number_string,
     .__raw = number_string,
     .__callable = NULL,
-    .__hash = NULL,
+    .__hash = number_hash,
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 

@@ -619,6 +619,10 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
   return (Xen_INSTANCE*)z;
 }
 
+Xen_INSTANCE* Xen_Number_From_Pointer(void* ptr) {
+  return Xen_Number_From_LongLong((long long)(uintptr_t)ptr);
+}
+
 const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   Xen_Number* n = (Xen_Number*)inst;
   if (!n)

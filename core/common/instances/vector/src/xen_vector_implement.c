@@ -15,6 +15,8 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_implement.h"
+#include "xen_set.h"
+#include "xen_set_implement.h"
 #include "xen_string.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
@@ -46,21 +48,66 @@ static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Instance* self_id = Xen_Number_From_Pointer(self);
+  if (!self_id) {
+    return NULL;
+  }
+  Xen_Instance* stack = NULL;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    stack = Xen_Attr_Index_Size_Get(args, 0);
+    if (Xen_IMPL(stack) != &Xen_Set_Implement) {
+      Xen_DEL_REF(self_id);
+      Xen_DEL_REF(stack);
+      return NULL;
+    }
+  }
+  if (!stack) {
+    stack = Xen_Set_New();
+    if (!stack) {
+      Xen_DEL_REF(self_id);
+      return NULL;
+    }
+  } else {
+    if (Xen_Set_Has(stack, self_id)) {
+      Xen_Instance* string = Xen_String_From_CString("<Vector(...)>");
+      if (!string) {
+        Xen_DEL_REF(self_id);
+        Xen_DEL_REF(stack);
+        return NULL;
+      }
+      Xen_DEL_REF(self_id);
+      Xen_DEL_REF(stack);
+      return string;
+    }
+  }
+  if (!Xen_Set_Push(stack, self_id)) {
+    Xen_DEL_REF(self_id);
+    Xen_DEL_REF(stack);
+    return NULL;
+  }
   Xen_Vector* vector = (Xen_Vector*)self;
   char* buffer = strdup("<Vector(");
   if (!buffer) {
+    Xen_DEL_REF(self_id);
+    Xen_DEL_REF(stack);
     return NULL;
   }
   Xen_size_t buflen = 9;
   for (Xen_size_t i = 0; i < Xen_SIZE(vector); i++) {
     Xen_Instance* value_inst = Xen_Vector_Peek_Index(self, i);
-    Xen_Instance* value_string = Xen_Attr_Raw(value_inst);
+    Xen_Instance* value_string = Xen_Attr_Raw_Stack(value_inst, stack);
     if (!value_string) {
+      Xen_DEL_REF(self_id);
+      Xen_DEL_REF(stack);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = strdup(Xen_String_As_CString(value_string));
     if (!value) {
+      Xen_DEL_REF(self_id);
+      Xen_DEL_REF(stack);
       Xen_DEL_REF(value_string);
       Xen_Dealloc(buffer);
       return NULL;
@@ -69,6 +116,8 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
     buflen += strlen(value);
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
+      Xen_DEL_REF(self_id);
+      Xen_DEL_REF(stack);
       Xen_Dealloc((void*)value);
       Xen_Dealloc(buffer);
       return NULL;
@@ -80,6 +129,8 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
       buflen += 2;
       char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
+        Xen_DEL_REF(self_id);
+        Xen_DEL_REF(stack);
         Xen_Dealloc(buffer);
         return NULL;
       }
@@ -87,6 +138,8 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
       strcat(buffer, ", ");
     }
   }
+  Xen_DEL_REF(self_id);
+  Xen_DEL_REF(stack);
   buflen += 2;
   char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {

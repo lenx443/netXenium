@@ -116,6 +116,9 @@ int Xen_Set_Push_Str(Xen_Instance* set, const char* value) {
 }
 
 int Xen_Set_Has(Xen_Instance* set_inst, Xen_Instance* value) {
+  if (!value || !Xen_IMPL(value)->__hash) {
+    return 0;
+  }
   Xen_Set* set = (Xen_Set*)set_inst;
   Xen_Instance* hash_inst =
       Xen_VM_Call_Native_Function(value->__impl->__hash, value, nil, nil);

@@ -18,6 +18,7 @@ Xen_INSTANCE* Xen_Number_From_Long(long);
 Xen_INSTANCE* Xen_Number_From_ULong(unsigned long);
 Xen_INSTANCE* Xen_Number_From_LongLong(long long);
 Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long);
+Xen_INSTANCE* Xen_Number_From_Pointer(void*);
 
 const char* Xen_Number_As_CString(Xen_INSTANCE*);
 int32_t Xen_Number_As_Int32(Xen_INSTANCE*);
