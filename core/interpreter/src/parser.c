@@ -1142,18 +1142,11 @@ Xen_Instance* parser_for_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* target_node = parser_expr(p);
-  if (!target_node) {
-    Xen_DEL_REF(for_stmt);
-    return NULL;
-  }
-  Xen_Instance* target = Xen_AST_Node_Wrap(target_node, "ForTarget");
+  Xen_Instance* target = parser_expr(p);
   if (!target) {
-    Xen_DEL_REF(target_node);
     Xen_DEL_REF(for_stmt);
     return NULL;
   }
-  Xen_DEL_REF(target_node);
   if (p->token.tkn_type != TKN_KEYWORD ||
       strcmp(p->token.tkn_text, "in") != 0) {
     Xen_DEL_REF(target);
@@ -1161,39 +1154,22 @@ Xen_Instance* parser_for_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* expr_node = parser_expr(p);
-  if (!expr_node) {
-    Xen_DEL_REF(target);
-    Xen_DEL_REF(for_stmt);
-    return NULL;
-  }
-  Xen_Instance* expr = Xen_AST_Node_Wrap(expr_node, "ForExpr");
+  Xen_Instance* expr = parser_expr(p);
   if (!expr) {
-    Xen_DEL_REF(expr_node);
     Xen_DEL_REF(target);
     Xen_DEL_REF(for_stmt);
     return NULL;
   }
-  Xen_DEL_REF(expr_node);
   while (p->token.tkn_type == TKN_NEWLINE) {
     parser_next(p);
   }
-  Xen_Instance* do_node = parser_block(p);
-  if (!do_node) {
-    Xen_DEL_REF(expr);
-    Xen_DEL_REF(target);
-    Xen_DEL_REF(for_stmt);
-    return NULL;
-  }
-  Xen_Instance* fdo = Xen_AST_Node_Wrap(do_node, "ForDo");
+  Xen_Instance* fdo = parser_block(p);
   if (!fdo) {
-    Xen_DEL_REF(do_node);
     Xen_DEL_REF(expr);
     Xen_DEL_REF(target);
     Xen_DEL_REF(for_stmt);
     return NULL;
   }
-  Xen_DEL_REF(do_node);
   if (!Xen_AST_Node_Push_Child(for_stmt, target)) {
     Xen_DEL_REF(fdo);
     Xen_DEL_REF(expr);

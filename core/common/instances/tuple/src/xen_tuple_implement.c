@@ -21,6 +21,7 @@
 #include "xen_tuple.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
+#include "xen_tuple_iterator.h"
 #include "xen_vector.h"
 
 static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
@@ -177,6 +178,12 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return Xen_ADD_REF(((Xen_Tuple*)self)->instances[index]);
 }
 
+static Xen_Instance* tuple_iter(ctx_id_t id, Xen_Instance* self,
+                                Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_Tuple_Iterator_New(self);
+}
+
 Xen_Implement Xen_Tuple_Implement = {
     Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "tuple",
@@ -202,7 +209,8 @@ int Xen_Tuple_Init() {
     return 0;
   }
   if (!Xen_VM_Store_Native_Function(props, "__get_index", tuple_opr_get_index,
-                                    nil)) {
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__iter", tuple_iter, nil)) {
     Xen_DEL_REF(props);
     return 0;
   }

@@ -23,11 +23,13 @@ static STACK_EFFECT(print_top_stack_effect, 0);
 static STACK_EFFECT(jump_stack_effect, 0);
 static STACK_EFFECT(jump_if_true_stack_effect, -1);
 static STACK_EFFECT(jump_if_false_stack_effect, -1);
+static STACK_EFFECT(iter_get_stack_effect, 0);
+static STACK_EFFECT(iter_for_stack_effect, 1);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [NOP] = {"", nop_stack_effect, 0},
     [PUSH] = {"PUSH", push_stack_effect, INSTRUCT_FLAG_CO_INSTANCE},
-    [POP] = {"POP", pop_stack_effect, 0},
+    [POP] = {"POP", pop_stack_effect, INSTRUCT_FLAG_ARG},
     [LOAD] = {"LOAD", load_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [LOAD_PROP] = {"LOAD_PROP", load_prop_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [LOAD_INDEX] = {"LOAD_INDEX", load_index_stack_effect, 0},
@@ -53,4 +55,6 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
                       INSTRUCT_FLAG_ARG},
     [JUMP_IF_FALSE] = {"JUMP_IF_FALSE", jump_if_false_stack_effect,
                        INSTRUCT_FLAG_ARG},
+    [ITER_GET] = {"ITER_GET", iter_get_stack_effect, 0},
+    [ITER_FOR] = {"ITER_FOR", iter_for_stack_effect, INSTRUCT_FLAG_ARG},
 };

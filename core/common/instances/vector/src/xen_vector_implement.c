@@ -25,6 +25,15 @@
 static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+    if (Xen_IMPL(inst) == &Xen_Vector_Implement) {
+      return inst;
+    }
+    Xen_DEL_REF(inst);
+  }
   Xen_Vector* vector = (Xen_Vector*)Xen_Instance_Alloc(&Xen_Vector_Implement);
   if (!vector) {
     return NULL;
@@ -32,6 +41,36 @@ static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
   vector->values = NULL;
   vector->capacity = 0;
   return (Xen_Instance*)vector;
+}
+
+static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
+                                   Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) > 1) {
+    return NULL;
+  } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* iterable = Xen_Attr_Index_Size_Get(args, 0);
+    if (self == iterable) {
+      Xen_DEL_REF(iterable);
+      return nil;
+    }
+    Xen_Instance* iter = Xen_Attr_Iter(iterable);
+    if (!iter) {
+      Xen_DEL_REF(iterable);
+      return NULL;
+    }
+    Xen_DEL_REF(iterable);
+    Xen_Instance* value = NULL;
+    while ((value = Xen_Attr_Next(iter)) != NULL) {
+      if (!Xen_Vector_Push(self, value)) {
+        Xen_DEL_REF(value);
+        return NULL;
+      }
+      Xen_DEL_REF(value);
+    }
+    Xen_DEL_REF(iter);
+  }
+  return nil;
 }
 
 static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
@@ -215,7 +254,7 @@ struct __Implement Xen_Vector_Implement = {
     .__inst_default_flags = 0x00,
     .__props = &Xen_Nil_Def,
     .__alloc = vector_alloc,
-    .__create = NULL,
+    .__create = vector_create,
     .__destroy = vector_destroy,
     .__string = vector_string,
     .__raw = vector_string,

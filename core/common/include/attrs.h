@@ -21,5 +21,7 @@ Xen_Instance* Xen_Attr_Index_Get(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Attr_Index_Size_Get(Xen_Instance*, Xen_size_t);
 int Xen_Attr_Index_Set(Xen_Instance*, Xen_Instance*, Xen_Instance*);
 int Xen_Attr_Index_Size_Set(Xen_Instance*, Xen_size_t, Xen_Instance*);
+Xen_Instance* Xen_Attr_Iter(Xen_Instance*);
+Xen_Instance* Xen_Attr_Next(Xen_Instance*);
 
 #endif

@@ -41,6 +41,8 @@ include_directories(
   core/common/instances/boolean/types/header/
   core/common/instances/tuple/include/
   core/common/instances/tuple/types/header/
+  core/common/instances/tuple/tuple_iterator/include/
+  core/common/instances/tuple/tuple_iterator/types/header/
   core/common/instances/method/include/
   core/common/instances/method/types/header/
   core/common/instances/set/include/
@@ -88,51 +90,55 @@ set(SOURCES
   core/common/src/callable.c
   core/common/src/attrs.c
 
-  # Implementacion del objeto `Basic`
+  # Implementacion del tipo `Basic`
   core/common/instances/basic/src/basic.c
   core/common/instances/basic/src/basic_templates.c
 
-  # Implementacion del objeto `Function`
+  # Implementacion del tipo `Function`
   core/common/instances/function/src/xen_function_implement.c
   core/common/instances/function/src/xen_function.c
 
-  # Implementacion del objeto `String`
+  # Implementacion del tipo `String`
   core/common/instances/string/src/xen_string_implement.c
   core/common/instances/string/src/xen_string.c
 
-  # Implementacion del objeto `Number`
+  # Implementacion del tipo `Number`
   core/common/instances/number/src/xen_number_implement.c
   core/common/instances/number/src/xen_number.c
 
-  # Implementacion del objeto `Vector`
+  # Implementacion del tipo `Vector`
   core/common/instances/vector/src/xen_vector_implement.c
   core/common/instances/vector/src/xen_vector.c
 
-  # Implementacion del objeto `Nil`
+  # Implementacion del tipo `Nil`
   core/common/instances/nil/src/xen_nil_implement.c
   core/common/instances/nil/src/xen_nil.c
 
-  # Implementacion del objeto `Map`
+  # Implementacion del tipo `Map`
   core/common/instances/map/src/xen_map_implement.c
   core/common/instances/map/src/xen_map.c
 
-  # Implementacion del objeto `Boolean`
+  # Implementacion del tipo `Boolean`
   core/common/instances/boolean/src/xen_boolean_implement.c
   core/common/instances/boolean/src/xen_boolean.c
 
-  # Implementacion del objeto `Tuple`
+  # Implementacion del tipo `Tuple`
   core/common/instances/tuple/src/xen_tuple_implement.c
   core/common/instances/tuple/src/xen_tuple.c
 
-  # implementacion del objeto `method`
+  # Implementacion del tipo `TupleIterator`
+  core/common/instances/tuple/tuple_iterator/src/xen_tuple_iterator_implement.c
+  core/common/instances/tuple/tuple_iterator/src/xen_tuple_iterator.c
+
+  # implementacion del tipo `method`
   core/common/instances/method/src/xen_method_implement.c
   core/common/instances/method/src/xen_method.c
 
-  # implementacion del objeto `set`
+  # implementacion del tipo `set`
   core/common/instances/set/src/xen_set_implement.c
   core/common/instances/set/src/xen_set.c
 
-  # Implementacion del objeto `AST`
+  # Implementacion del tipo `AST`
   core/interpreter/instances/ast/src/xen_ast.c
   core/interpreter/instances/ast/src/xen_ast_implement.c
 

@@ -364,3 +364,25 @@ int Xen_Attr_Index_Size_Set(Xen_Instance* inst, Xen_size_t index,
   Xen_DEL_REF(index_inst);
   return 1;
 }
+
+Xen_Instance* Xen_Attr_Iter(Xen_Instance* iterable) {
+  if (!iterable) {
+    return NULL;
+  }
+  Xen_Instance* iter = Xen_Method_Attr_Str_Call(iterable, "__iter", nil, nil);
+  if (!iter) {
+    return NULL;
+  }
+  return iter;
+}
+
+Xen_Instance* Xen_Attr_Next(Xen_Instance* iter) {
+  if (!iter) {
+    return NULL;
+  }
+  Xen_Instance* rsult = Xen_Method_Attr_Str_Call(iter, "__next", nil, nil);
+  if (!rsult) {
+    return NULL;
+  }
+  return rsult;
+}

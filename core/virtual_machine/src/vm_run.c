@@ -37,8 +37,10 @@ static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(c_inst);
 }
 
-static void op_pop(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
-  Xen_DEL_REF(vm_stack_pop(&ctx->ctx_stack));
+static void op_pop(RunContext_ptr ctx, uint8_t oparg) {
+  for (uint8_t i = 0; i < oparg; i++) {
+    Xen_DEL_REF(vm_stack_pop(&ctx->ctx_stack));
+  }
 }
 
 static void op_load(RunContext_ptr ctx, uint8_t oparg) {
@@ -475,6 +477,34 @@ static void op_jump_if_false(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(cond);
 }
 
+static void op_iter_get(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+  Xen_Instance* iterable = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance* iter = Xen_Attr_Iter(iterable);
+  if (!iter) {
+    Xen_DEL_REF(iter);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_DEL_REF(iterable);
+  vm_stack_push(&ctx->ctx_stack, iter);
+  Xen_DEL_REF(iter);
+}
+
+static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* iter = vm_stack_pop(&ctx->ctx_stack);
+  vm_stack_push(&ctx->ctx_stack, iter);
+  Xen_Instance* rsult = Xen_Attr_Next(iter);
+  if (!rsult) {
+    Xen_DEL_REF(iter);
+    vm_stack_push(&ctx->ctx_stack, nil);
+    ctx->ctx_ip = oparg;
+    return;
+  }
+  Xen_DEL_REF(iter);
+  vm_stack_push(&ctx->ctx_stack, rsult);
+  Xen_DEL_REF(rsult);
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [NOP] = op_nop,
     [PUSH] = op_push,
@@ -499,6 +529,8 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [JUMP] = op_jump,
     [JUMP_IF_TRUE] = op_jump_if_true,
     [JUMP_IF_FALSE] = op_jump_if_false,
+    [ITER_GET] = op_iter_get,
+    [ITER_FOR] = op_iter_for,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

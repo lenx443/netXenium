@@ -40,6 +40,8 @@ enum vm_Instruct {
   JUMP,
   JUMP_IF_TRUE,
   JUMP_IF_FALSE,
+  ITER_GET,
+  ITER_FOR,
   HALT,
 };
 
