@@ -1338,6 +1338,9 @@ int compile_for_statement(Compiler c, Xen_Instance* node) {
   if (!for_block) {
     return 0;
   }
+  if (!emit(COPY, 0)) {
+    return 0;
+  }
   B_PTR end_block = B_NEW();
   if (!end_block) {
     return 0;

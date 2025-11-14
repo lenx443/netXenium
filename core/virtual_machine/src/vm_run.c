@@ -481,7 +481,7 @@ static void op_iter_get(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* iterable = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
-    Xen_DEL_REF(iter);
+    Xen_DEL_REF(iterable);
     ctx->ctx_error = 1;
     return;
   }
@@ -492,7 +492,6 @@ static void op_iter_get(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
 
 static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* iter = vm_stack_pop(&ctx->ctx_stack);
-  vm_stack_push(&ctx->ctx_stack, iter);
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
     Xen_DEL_REF(iter);
