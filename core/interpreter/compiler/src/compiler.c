@@ -24,7 +24,7 @@
 
 typedef struct {
   block_list_ptr b_list;
-  block_node_ptr b_current;
+  block_node_ptr* b_current;
   uint8_t mode;
 } Compiler;
 
@@ -59,24 +59,29 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
     block_list_free(blocks);
     return NULL;
   }
-  block_list_push_node(blocks, main_block);
+  if (!block_list_push_node(blocks, main_block)) {
+    Xen_DEL_REF(ast_program);
+    block_free(main_block);
+    block_list_free(blocks);
+    return NULL;
+  }
 #ifndef NDEBUG
   printf("== Compiling ==\n");
 #endif
-  if (!ast_compile(blocks, main_block, mode, ast_program)) {
+  if (!ast_compile(blocks, &main_block, mode, ast_program)) {
 #ifndef NDEBUG
     printf("Compiler Error\n");
 #endif
     Xen_DEL_REF(ast_program);
     block_list_free(blocks);
-    return 0;
+    return NULL;
   }
   Xen_DEL_REF(ast_program);
   blocks_linealizer(blocks);
   ProgramCode_t pc;
   if (!blocks_compiler(blocks, &pc)) {
     block_list_free(blocks);
-    return 0;
+    return NULL;
   }
 #ifndef NDEBUG
   bc_print(pc);
@@ -87,18 +92,39 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
   if (!code) {
     vm_consts_free(pc.consts);
     bc_free(pc.code);
-    return 0;
+    return NULL;
   }
   return code;
 }
 
 #define COMPILE_MODE c.mode
-#define OFFSET c.b_current->instr_array->ir_size
 
-#define emit(offset, opcode, oparg)                                            \
-  ir_emit(c.b_current->instr_array, offset, opcode, oparg)
+#define emit(opcode, oparg) ir_emit((*c.b_current)->instr_array, opcode, oparg)
+#define emit_jump(opcode, block)                                               \
+  ir_emit_jump((*c.b_current)->instr_array, opcode, block)
 #define co_push_name(name) vm_consts_push_name(c.b_list->consts, name)
 #define co_push_instance(inst) vm_consts_push_instance(c.b_list->consts, inst)
+
+#define B_PTR block_node_ptr
+#define B_NEW() block_new()
+#define B_FREE(node) block_free(node)
+#define B_LIST_PUSH(block) block_list_push_node(c.b_list, block)
+#define B_CURRENT *c.b_current
+#define B_SET_CURRENT(block) *c.b_current = block
+#define B_MAKE_CURRENT() __B_MAKE_CURRENT(c)
+
+static inline B_PTR __B_MAKE_CURRENT(Compiler c) {
+  B_PTR node = B_NEW();
+  if (!node) {
+    return NULL;
+  }
+  if (!B_LIST_PUSH(node)) {
+    B_FREE(node);
+    return NULL;
+  }
+  B_SET_CURRENT(node);
+  return node;
+}
 
 static int compile_program(Compiler, Xen_Instance*);
 
@@ -156,7 +182,7 @@ int compile_program(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(stmt_list);
-  if (emit(-1, NOP, 0) == -1) {
+  if (!emit(NOP, 0)) {
     return 0;
   }
   return 1;
@@ -302,7 +328,7 @@ int compile_expr_primary_string(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(string);
-  if (emit(-1, PUSH, (uint8_t)co_idx) == -1) {
+  if (!emit(PUSH, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -319,7 +345,7 @@ int compile_expr_primary_number(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(number);
-  if (emit(-1, PUSH, (uint8_t)co_idx) == -1) {
+  if (!emit(PUSH, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -330,7 +356,7 @@ int compile_expr_primary_literal(Compiler c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, LOAD, (uint8_t)co_idx) == -1) {
+  if (!emit(LOAD, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -341,7 +367,7 @@ int compile_expr_primary_property(Compiler c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, LOAD_PROP, (uint8_t)co_idx) == -1) {
+  if (!emit(LOAD_PROP, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -460,14 +486,14 @@ int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(kw_tuple);
-    if (emit(-1, PUSH, (uint8_t)co_idx) == -1) {
+    if (!emit(PUSH, (uint8_t)co_idx)) {
       return 0;
     }
-    if (emit(-1, CALL_KW, (uint8_t)Xen_AST_Node_Children_Size(node)) == -1) {
+    if (!emit(CALL_KW, (uint8_t)Xen_AST_Node_Children_Size(node))) {
       return 0;
     }
   } else {
-    if (emit(-1, CALL, (uint8_t)Xen_AST_Node_Children_Size(node)) == -1) {
+    if (!emit(CALL, (uint8_t)Xen_AST_Node_Children_Size(node))) {
       return 0;
     }
   }
@@ -540,7 +566,7 @@ int compile_expr_primary_suffix_index(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(index);
-  if (emit(-1, LOAD_INDEX, 0) == -1) {
+  if (!emit(LOAD_INDEX, 0)) {
     return 0;
   }
   return 1;
@@ -551,7 +577,7 @@ int compile_expr_primary_suffix_attr(Compiler c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, LOAD_ATTR, (uint8_t)co_idx) == -1) {
+  if (!emit(LOAD_ATTR, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -595,15 +621,15 @@ int compile_expr_unary(Compiler c, Xen_Instance* node) {
   }
   Xen_DEL_REF(val);
   if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-    if (emit(-1, UNARY_POSITIVE, 0) == -1) {
+    if (!emit(UNARY_POSITIVE, 0)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-    if (emit(-1, UNARY_NEGATIVE, 0) == -1) {
+    if (!emit(UNARY_NEGATIVE, 0)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
-    if (emit(-1, UNARY_NOT, 0) == -1) {
+    if (!emit(UNARY_NOT, 0)) {
       return 0;
     }
   } else {
@@ -638,14 +664,21 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(expr1);
-    if (emit(-1, COPY, 0) == -1) {
+    if (!emit(COPY, 0)) {
       return 0;
     }
-    Xen_ssize_t jump_offset = emit(-1, JUMP_IF_FALSE, 0xff);
-    if (jump_offset < 0) {
+    B_PTR end_block = B_NEW();
+    if (!end_block) {
       return 0;
     }
-    if (emit(-1, POP, 0) == -1) {
+    if (!B_LIST_PUSH(end_block)) {
+      B_FREE(end_block);
+      return 0;
+    }
+    if (!emit_jump(JUMP_IF_FALSE, end_block)) {
+      return 0;
+    }
+    if (!emit(POP, 0)) {
       return 0;
     }
     Xen_Instance* expr2 = Xen_AST_Node_Get_Child(node, 1);
@@ -669,7 +702,7 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(expr2);
-    emit(jump_offset, JUMP_IF_FALSE, OFFSET);
+    B_SET_CURRENT(end_block);
     return 1;
   }
   if (Xen_AST_Node_Value_Cmp(node, "or") == 0) {
@@ -694,14 +727,21 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(expr1);
-    if (emit(-1, COPY, 0) == -1) {
+    if (!emit(COPY, 0)) {
       return 0;
     }
-    Xen_ssize_t jump_offset = emit(-1, JUMP_IF_TRUE, 0xff);
-    if (jump_offset < 0) {
+    B_PTR end_block = B_NEW();
+    if (!end_block) {
       return 0;
     }
-    if (emit(-1, POP, 0) == -1) {
+    if (!B_LIST_PUSH(end_block)) {
+      B_FREE(end_block);
+      return 0;
+    }
+    if (!emit_jump(JUMP_IF_TRUE, end_block)) {
+      return 0;
+    }
+    if (!emit(POP, 0)) {
       return 0;
     }
     Xen_Instance* expr2 = Xen_AST_Node_Get_Child(node, 1);
@@ -725,7 +765,7 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(expr2);
-    emit(jump_offset, JUMP_IF_TRUE, OFFSET);
+    B_SET_CURRENT(end_block);
     return 1;
   }
   Xen_Instance* expr1 = Xen_AST_Node_Get_Child(node, 0);
@@ -771,55 +811,55 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
   }
   Xen_DEL_REF(expr2);
   if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_POW) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_POW)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_MUL) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_MUL)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_DIV) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_DIV)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_MOD) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_MOD)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_ADD) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_ADD)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_SUB) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_SUB)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_LT) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_LT)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_LE) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_LE)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_GT) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_GT)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_GE) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_GE)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_EQ) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_EQ)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_NE) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_NE)) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
-    if (emit(-1, BINARYOP, (uint8_t)Xen_OPR_HAS) == -1) {
+    if (!emit(BINARYOP, (uint8_t)Xen_OPR_HAS)) {
       return 0;
     }
   } else {
@@ -852,7 +892,7 @@ int compile_expr_list(Compiler c, Xen_Instance* node) {
     }
     Xen_DEL_REF(expr);
   }
-  if (emit(-1, MAKE_TUPLE, Xen_AST_Node_Children_Size(node)) == -1) {
+  if (!emit(MAKE_TUPLE, Xen_AST_Node_Children_Size(node))) {
     return 0;
   }
   return 1;
@@ -863,11 +903,11 @@ int compile_expr_statement(Compiler c, Xen_Instance* node) {
     return 0;
   }
   if (COMPILE_MODE == Xen_COMPILE_REPL) {
-    if (emit(-1, PRINT_TOP, 0) == -1) {
+    if (!emit(PRINT_TOP, 0)) {
       return 0;
     }
   }
-  if (emit(-1, POP, 0) == -1) {
+  if (!emit(POP, 0)) {
     return 0;
   }
   return 1;
@@ -996,7 +1036,7 @@ int compile_assignment_expr_primary_literal(Compiler c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, STORE, (uint8_t)co_idx) == -1) {
+  if (!emit(STORE, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -1007,7 +1047,7 @@ int compile_assignment_expr_primary_property(Compiler c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, STORE_PROP, (uint8_t)co_idx) == -1) {
+  if (!emit(STORE_PROP, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -1106,7 +1146,7 @@ int compile_assignment_expr_primary_suffix_index(Compiler c,
     return 0;
   }
   Xen_DEL_REF(index);
-  if (emit(-1, STORE_INDEX, 0) == -1) {
+  if (!emit(STORE_INDEX, 0)) {
     return 0;
   }
   return 1;
@@ -1118,7 +1158,7 @@ int compile_assignment_expr_primary_suffix_attr(Compiler c,
   if (co_idx == -1) {
     return 0;
   }
-  if (emit(-1, STORE_ATTR, (uint8_t)co_idx) == -1) {
+  if (!emit(STORE_ATTR, (uint8_t)co_idx)) {
     return 0;
   }
   return 1;
@@ -1161,8 +1201,15 @@ int compile_if_statement(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(condition);
-  Xen_ssize_t jump_if_offset = emit(-1, JUMP_IF_FALSE, 0xFF);
-  if (jump_if_offset == -1) {
+  B_PTR if_false_block = B_NEW();
+  if (!if_false_block) {
+    return 0;
+  }
+  if (!B_LIST_PUSH(if_false_block)) {
+    B_FREE(if_false_block);
+    return 0;
+  }
+  if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
     return 0;
   }
   Xen_Instance* then = Xen_AST_Node_Get_Child(node, 1);
@@ -1179,11 +1226,18 @@ int compile_if_statement(Compiler c, Xen_Instance* node) {
   }
   Xen_DEL_REF(then);
   if (Xen_AST_Node_Children_Size(node) == 3) {
-    Xen_ssize_t jump_end_offset = emit(-1, JUMP, 0xFF);
-    if (jump_end_offset == -1) {
+    B_PTR end_block = B_NEW();
+    if (!end_block) {
       return 0;
     }
-    emit(jump_if_offset, JUMP_IF_FALSE, OFFSET);
+    if (!B_LIST_PUSH(end_block)) {
+      B_FREE(end_block);
+      return 0;
+    }
+    if (!emit_jump(JUMP, end_block)) {
+      return 0;
+    }
+    B_SET_CURRENT(if_false_block);
     Xen_Instance* els = Xen_AST_Node_Get_Child(node, 2);
     if (Xen_AST_Node_Name_Cmp(els, "IfStatement") == 0) {
       if (!compile_if_statement(c, els)) {
@@ -1200,9 +1254,9 @@ int compile_if_statement(Compiler c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(els);
-    emit(jump_end_offset, JUMP, OFFSET);
+    B_SET_CURRENT(end_block);
   } else {
-    emit(jump_if_offset, JUMP_IF_FALSE, OFFSET);
+    B_SET_CURRENT(if_false_block);
   }
   return 1;
 }
@@ -1211,7 +1265,10 @@ int compile_while_statement(Compiler c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) != 2) {
     return 0;
   }
-  Xen_size_t while_init = OFFSET;
+  B_PTR init_block = B_MAKE_CURRENT();
+  if (!init_block) {
+    return 0;
+  }
   Xen_Instance* condition = Xen_AST_Node_Get_Child(node, 0);
   if (Xen_AST_Node_Name_Cmp(condition, "Expr") != 0) {
     Xen_DEL_REF(condition);
@@ -1222,8 +1279,15 @@ int compile_while_statement(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(condition);
-  Xen_ssize_t jump_if_offset = emit(-1, JUMP_IF_FALSE, 0xFF);
-  if (jump_if_offset == -1) {
+  B_PTR if_false_block = B_NEW();
+  if (!if_false_block) {
+    return 0;
+  }
+  if (!B_LIST_PUSH(if_false_block)) {
+    B_FREE(if_false_block);
+    return 0;
+  }
+  if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
     return 0;
   }
   Xen_Instance* wdo = Xen_AST_Node_Get_Child(node, 1);
@@ -1239,14 +1303,14 @@ int compile_while_statement(Compiler c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(wdo);
-  if (emit(-1, JUMP, while_init) == -1) {
+  if (!emit_jump(JUMP, init_block)) {
     return 0;
   }
-  emit(jump_if_offset, JUMP_IF_FALSE, OFFSET);
+  B_SET_CURRENT(if_false_block);
   return 1;
 }
 
-int ast_compile(block_list_ptr b_list, block_node_ptr b_current, uint8_t mode,
+int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
   return compile_program((Compiler){b_list, b_current, mode}, ast);
 }
@@ -1285,10 +1349,19 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
     }
     for (size_t i_iter = 0; i_iter < b_iter->instr_array->ir_size; i_iter++) {
       IR_Instruct_t inst = b_iter->instr_array->ir_array[i_iter];
-      if (!bc_emit(pc->code, inst.opcode, inst.oparg)) {
-        bc_free(pc->code);
-        vm_consts_free(pc->consts);
-        return 0;
+      if (inst.is_jump) {
+        if (!bc_emit(pc->code, inst.opcode,
+                     inst.jump_block->instr_array->ir_array[0].instr_num)) {
+          bc_free(pc->code);
+          vm_consts_free(pc->consts);
+          return 0;
+        }
+      } else {
+        if (!bc_emit(pc->code, inst.opcode, inst.oparg)) {
+          bc_free(pc->code);
+          vm_consts_free(pc->consts);
+          return 0;
+        }
       }
       effect += Instruct_Info_Table[inst.opcode].stack_effect(inst.oparg);
       if (effect > depth)

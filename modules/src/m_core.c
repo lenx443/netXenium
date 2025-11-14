@@ -17,7 +17,6 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
-#include "xen_vector.h"
 
 static Xen_Instance* fn_exit(ctx_id_t id, Xen_Instance* self,
                              Xen_Instance* args, Xen_Instance* kwargs) {
@@ -173,22 +172,20 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
   return size;
 }
 
-static Xen_Instance* fn_test_vector(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_id(ctx_id_t id, Xen_Instance* self, Xen_Instance* args,
+                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Instance* v1 = Xen_Number_From_Int64(1);
-  Xen_Instance* v2 = Xen_Number_From_Int64(2);
-  Xen_Instance* v3 = Xen_Number_From_Int64(3);
-  Xen_Instance* v4 = Xen_Number_From_Int64(4);
-  Xen_Instance* v5 = Xen_Number_From_Int64(5);
-  Xen_Instance* vec =
-      Xen_Vector_From_Array(5, (Xen_Instance*[]){v1, v2, v3, v4, v5});
-  Xen_DEL_REF(v5);
-  Xen_DEL_REF(v4);
-  Xen_DEL_REF(v3);
-  Xen_DEL_REF(v2);
-  Xen_DEL_REF(v1);
-  return vec;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* r_id = Xen_Number_From_Pointer(inst);
+  if (!r_id) {
+    Xen_DEL_REF(inst);
+    return NULL;
+  }
+  Xen_DEL_REF(inst);
+  return r_id;
 }
 
 static Xen_Module_Function_Table core_functions = {
@@ -198,7 +195,7 @@ static Xen_Module_Function_Table core_functions = {
     {"println", fn_println},
     {"readline", fn_readline},
     {"size", fn_size},
-    {"test_vector", fn_test_vector},
+    {"id", fn_id},
     {NULL, NULL},
 };
 

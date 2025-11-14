@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
+struct block_node;
+
 struct IR_Instruct {
   uint8_t opcode;
   uint8_t oparg;
   uint8_t is_jump;
-  void* jump_block;
+  struct block_node* jump_block;
   int instr_num;
 };
 

@@ -91,6 +91,15 @@ static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
   return hash_inst;
 }
 
+static Xen_Instance* string_boolean(ctx_id_t id, Xen_INSTANCE* self,
+                                    Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (((Xen_String*)self)->characters) {
+    return Xen_True;
+  }
+  return Xen_False;
+}
+
 static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -256,6 +265,7 @@ int Xen_String_Init() {
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__add", string_opr_add, nil) ||
       !Xen_VM_Store_Native_Function(props, "__mul", string_opr_mul, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__boolean", string_boolean, nil) ||
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil)) {
     Xen_DEL_REF(Xen_String_Implement.__props);

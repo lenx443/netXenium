@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "ir_instruct.h"
-#include "xen_typedefs.h"
 
 struct IR_Bytecode_Array {
   struct IR_Instruct* ir_array;
@@ -12,11 +11,13 @@ struct IR_Bytecode_Array {
   size_t ir_capacity;
 };
 
+struct block_node;
 typedef struct IR_Bytecode_Array IR_Bytecode_Array_t;
 typedef IR_Bytecode_Array_t* IR_Bytecode_Array_ptr;
 
 IR_Bytecode_Array_ptr ir_new();
 void ir_free(const IR_Bytecode_Array_ptr);
-Xen_ssize_t ir_emit(IR_Bytecode_Array_ptr, Xen_ssize_t, uint8_t, uint8_t);
+int ir_emit(IR_Bytecode_Array_ptr, uint8_t, uint8_t);
+int ir_emit_jump(IR_Bytecode_Array_ptr, uint8_t, struct block_node*);
 
 #endif

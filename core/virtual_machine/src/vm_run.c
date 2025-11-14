@@ -23,10 +23,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
-static void op_nop(RunContext_ptr ctx, uint8_t oparg) {
-  (void)ctx;
-  (void)oparg;
-}
+static void op_nop([[maybe_unused]] RunContext_ptr ctx,
+                   [[maybe_unused]] uint8_t oparg) {}
 
 static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* c_inst =
@@ -39,7 +37,7 @@ static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(c_inst);
 }
 
-static void op_pop(RunContext_ptr ctx, uint8_t _) {
+static void op_pop(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(vm_stack_pop(&ctx->ctx_stack));
 }
 
@@ -81,7 +79,7 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_load_index(RunContext_ptr ctx, uint8_t _) {
+static void op_load_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
@@ -156,7 +154,7 @@ static void op_store_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_store_index(RunContext_ptr ctx, uint8_t _) {
+static void op_store_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* index = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* value = vm_stack_pop(&ctx->ctx_stack);
@@ -348,7 +346,8 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(first);
 }
 
-static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
+static void op_unary_positive(RunContext_ptr ctx,
+                              [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
   if (!method) {
@@ -375,7 +374,8 @@ static void op_unary_positive(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(inst);
 }
 
-static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
+static void op_unary_negative(RunContext_ptr ctx,
+                              [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
   if (!method) {
@@ -402,7 +402,7 @@ static void op_unary_negative(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(inst);
 }
 
-static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
+static void op_unary_not(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* inst = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
   if (!method) {
@@ -429,14 +429,14 @@ static void op_unary_not(RunContext_ptr ctx, uint8_t _) {
   Xen_DEL_REF(inst);
 }
 
-static void op_copy(RunContext_ptr ctx, uint8_t _) {
+static void op_copy(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* val = vm_stack_pop(&ctx->ctx_stack);
   vm_stack_push(&ctx->ctx_stack, val);
   vm_stack_push(&ctx->ctx_stack, val);
   Xen_DEL_REF(val);
 }
 
-static void op_print_top(RunContext_ptr ctx, uint8_t _) {
+static void op_print_top(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_Instance* val = vm_stack_pop(&ctx->ctx_stack);
   vm_stack_push(&ctx->ctx_stack, val);
   const char* val_str = Xen_Attr_Raw_Str(val);
@@ -455,24 +455,24 @@ static void op_jump_if_true(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* cond = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
-    Xen_DEL_REF(cond);
     ctx->ctx_error = 1;
   }
   if (evl == Xen_True) {
     ctx->ctx_ip = oparg;
   }
+  Xen_DEL_REF(cond);
 }
 
 static void op_jump_if_false(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance* cond = vm_stack_pop(&ctx->ctx_stack);
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
-    Xen_DEL_REF(cond);
     ctx->ctx_error = 1;
   }
   if (evl == Xen_False) {
     ctx->ctx_ip = oparg;
   }
+  Xen_DEL_REF(cond);
 }
 
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
