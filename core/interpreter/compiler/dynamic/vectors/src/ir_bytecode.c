@@ -1,10 +1,16 @@
 #include <stdint.h>
+#include <stdio.h>
 
+#include "attrs.h"
 #include "block_list.h"
 #include "ir_bytecode.h"
 #include "ir_instruct.h"
 #include "logs.h"
+#include "vm_consts.h"
+#include "vm_instructs.h"
 #include "xen_alloc.h"
+#include "xen_string.h"
+#include "xen_typedefs.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "IR Array", msg, ##__VA_ARGS__)
 
@@ -69,3 +75,67 @@ int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode,
   ir->ir_array[ir->ir_size++] = instr;
   return 1;
 }
+
+#ifndef NDEBUG
+void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
+  IR_Bytecode_Array_ptr code = block->instr_array;
+  for (Xen_size_t i = 0; i < code->ir_size; i++) {
+    printf("%d %ld %s", code->ir_array[i].instr_num, i,
+           Instruct_Info_Table[code->ir_array[i].opcode].name);
+    if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
+        INSTRUCT_FLAG_CO_NAME) {
+      if (!consts) {
+        printf(" %d (name?)\n", code->ir_array[i].oparg);
+      } else {
+        Xen_Instance* c_name =
+            Xen_Attr_Index_Size_Get(consts->c_names, code->ir_array[i].oparg);
+        printf(" %d (%s)\n", code->ir_array[i].oparg,
+               c_name ? Xen_String_As_CString(c_name) : "Null");
+        if (c_name)
+          Xen_DEL_REF(c_name);
+      }
+    } else if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
+               INSTRUCT_FLAG_CO_INSTANCE) {
+      if (!consts) {
+        printf(" %d (instance?)\n", code->ir_array[i].oparg);
+      } else {
+        char* val = NULL;
+        Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(consts->c_instances,
+                                                       code->ir_array[i].oparg);
+        if (c_inst) {
+          Xen_Instance* string = Xen_Attr_Raw(c_inst);
+          if (string) {
+            val = strdup(Xen_String_As_CString(string));
+            Xen_DEL_REF(string);
+          }
+          Xen_DEL_REF(c_inst);
+        }
+        printf(" %d (%s)\n", code->ir_array[i].oparg, val ? val : "Null");
+        if (val)
+          Xen_Dealloc(val);
+      }
+    } else if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
+               INSTRUCT_FLAG_ARG) {
+      if (code->ir_array[i].is_jump && block->ready) {
+        printf(
+            " %d\n",
+            code->ir_array[i].jump_block->instr_array->ir_array[0].instr_num);
+      } else {
+        printf(" %d\n", code->ir_array[i].oparg);
+      }
+    } else {
+      printf("\n");
+    }
+  }
+}
+
+void ir_print(block_list_ptr bl) {
+  block_node_ptr current = bl->head;
+  Xen_size_t b_count = 0;
+  while (current) {
+    printf("--- Block %lu:\n", b_count++);
+    ir_print_block(current, bl->consts);
+    current = current->next;
+  }
+}
+#endif

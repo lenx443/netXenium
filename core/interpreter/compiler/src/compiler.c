@@ -78,14 +78,14 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
   }
   Xen_DEL_REF(ast_program);
   blocks_linealizer(blocks);
+#ifndef NDEBUG
+  ir_print(blocks);
+#endif
   ProgramCode_t pc;
   if (!blocks_compiler(blocks, &pc)) {
     block_list_free(blocks);
     return NULL;
   }
-#ifndef NDEBUG
-  bc_print(pc);
-#endif
   block_list_free(blocks);
   Xen_VM_Ctx_Clear(vm->root_context);
   CALLABLE_ptr code = callable_new_code(pc);
@@ -97,23 +97,23 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
   return code;
 }
 
-#define COMPILE_MODE c.mode
+#define COMPILE_MODE c->mode
 
-#define emit(opcode, oparg) ir_emit((*c.b_current)->instr_array, opcode, oparg)
+#define emit(opcode, oparg) ir_emit((*c->b_current)->instr_array, opcode, oparg)
 #define emit_jump(opcode, block)                                               \
-  ir_emit_jump((*c.b_current)->instr_array, opcode, block)
-#define co_push_name(name) vm_consts_push_name(c.b_list->consts, name)
-#define co_push_instance(inst) vm_consts_push_instance(c.b_list->consts, inst)
+  ir_emit_jump((*c->b_current)->instr_array, opcode, block)
+#define co_push_name(name) vm_consts_push_name(c->b_list->consts, name)
+#define co_push_instance(inst) vm_consts_push_instance(c->b_list->consts, inst)
 
 #define B_PTR block_node_ptr
 #define B_NEW() block_new()
 #define B_FREE(node) block_free(node)
-#define B_LIST_PUSH(block) block_list_push_node(c.b_list, block)
-#define B_CURRENT *c.b_current
-#define B_SET_CURRENT(block) *c.b_current = block
+#define B_LIST_PUSH(block) block_list_push_node(c->b_list, block)
+#define B_CURRENT *c->b_current
+#define B_SET_CURRENT(block) *c->b_current = block
 #define B_MAKE_CURRENT() __B_MAKE_CURRENT(c)
 
-static inline B_PTR __B_MAKE_CURRENT(Compiler c) {
+static inline B_PTR __B_MAKE_CURRENT(Compiler* c) {
   B_PTR node = B_NEW();
   if (!node) {
     return NULL;
@@ -126,50 +126,51 @@ static inline B_PTR __B_MAKE_CURRENT(Compiler c) {
   return node;
 }
 
-static int compile_program(Compiler, Xen_Instance*);
+static int compile_program(Compiler*, Xen_Instance*);
 
-static int compile_statement_list(Compiler, Xen_Instance*);
-static int compile_statement(Compiler, Xen_Instance*);
+static int compile_statement_list(Compiler*, Xen_Instance*);
+static int compile_statement(Compiler*, Xen_Instance*);
 
-static int compile_expr(Compiler, Xen_Instance*);
-static int compile_expr_primary(Compiler, Xen_Instance*);
-static int compile_expr_primary_string(Compiler, Xen_Instance*);
-static int compile_expr_primary_number(Compiler, Xen_Instance*);
-static int compile_expr_primary_literal(Compiler, Xen_Instance*);
-static int compile_expr_primary_property(Compiler, Xen_Instance*);
-static int compile_expr_primary_parent(Compiler, Xen_Instance*);
-static int compile_expr_primary_suffix(Compiler, Xen_Instance*);
-static int compile_expr_primary_suffix_call(Compiler, Xen_Instance*);
+static int compile_expr(Compiler*, Xen_Instance*);
+static int compile_expr_primary(Compiler*, Xen_Instance*);
+static int compile_expr_primary_string(Compiler*, Xen_Instance*);
+static int compile_expr_primary_number(Compiler*, Xen_Instance*);
+static int compile_expr_primary_literal(Compiler*, Xen_Instance*);
+static int compile_expr_primary_property(Compiler*, Xen_Instance*);
+static int compile_expr_primary_parent(Compiler*, Xen_Instance*);
+static int compile_expr_primary_suffix(Compiler*, Xen_Instance*);
+static int compile_expr_primary_suffix_call(Compiler*, Xen_Instance*);
 static Xen_Instance*
-compile_expr_primary_suffix_call_arg_assignment(Compiler, Xen_Instance*);
-static int compile_expr_primary_suffix_index(Compiler, Xen_Instance*);
-static int compile_expr_primary_suffix_attr(Compiler, Xen_Instance*);
-static int compile_expr_unary(Compiler, Xen_Instance*);
-static int compile_expr_binary(Compiler, Xen_Instance*);
-static int compile_expr_list(Compiler, Xen_Instance*);
+compile_expr_primary_suffix_call_arg_assignment(Compiler*, Xen_Instance*);
+static int compile_expr_primary_suffix_index(Compiler*, Xen_Instance*);
+static int compile_expr_primary_suffix_attr(Compiler*, Xen_Instance*);
+static int compile_expr_unary(Compiler*, Xen_Instance*);
+static int compile_expr_binary(Compiler*, Xen_Instance*);
+static int compile_expr_list(Compiler*, Xen_Instance*);
 
-static int compile_expr_statement(Compiler, Xen_Instance*);
+static int compile_expr_statement(Compiler*, Xen_Instance*);
 
-static int compile_assignment(Compiler, Xen_Instance*);
-static int compile_assignment_expr(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary_literal(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary_property(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary_parent(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary_suffix(Compiler, Xen_Instance*);
-static int compile_assignment_expr_primary_suffix_index(Compiler,
+static int compile_assignment(Compiler*, Xen_Instance*);
+static int compile_assignment_expr(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary_literal(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary_property(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary_parent(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary_suffix(Compiler*, Xen_Instance*);
+static int compile_assignment_expr_primary_suffix_index(Compiler*,
                                                         Xen_Instance*);
-static int compile_assignment_expr_primary_suffix_attr(Compiler, Xen_Instance*);
+static int compile_assignment_expr_primary_suffix_attr(Compiler*,
+                                                       Xen_Instance*);
 
-static int compile_block(Compiler, Xen_Instance*);
+static int compile_block(Compiler*, Xen_Instance*);
 
-static int compile_if_statement(Compiler, Xen_Instance*);
+static int compile_if_statement(Compiler*, Xen_Instance*);
 
-static int compile_while_statement(Compiler, Xen_Instance*);
+static int compile_while_statement(Compiler*, Xen_Instance*);
 
-static int compile_for_statement(Compiler, Xen_Instance*);
+static int compile_for_statement(Compiler*, Xen_Instance*);
 
-int compile_program(Compiler c, Xen_Instance* node) {
+int compile_program(Compiler* c, Xen_Instance* node) {
   Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
   if (!stmt_list) {
     return 0;
@@ -190,7 +191,7 @@ int compile_program(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_statement_list(Compiler c, Xen_Instance* node) {
+int compile_statement_list(Compiler* c, Xen_Instance* node) {
   for (Xen_size_t idx = 0; idx < Xen_AST_Node_Children_Size(node); idx++) {
     Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, idx);
     if (!compile_statement(c, stmt)) {
@@ -202,7 +203,7 @@ int compile_statement_list(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_statement(Compiler c, Xen_Instance* node) {
+int compile_statement(Compiler* c, Xen_Instance* node) {
   Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, 0);
   if (!stmt) {
     return 0;
@@ -240,7 +241,7 @@ int compile_statement(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr(Compiler c, Xen_Instance* node) {
+int compile_expr(Compiler* c, Xen_Instance* node) {
   Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
   if (!expr) {
     return 0;
@@ -273,7 +274,7 @@ int compile_expr(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary(Compiler c, Xen_Instance* node) {
+int compile_expr_primary(Compiler* c, Xen_Instance* node) {
   Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
   if (!primary) {
     return 0;
@@ -324,7 +325,7 @@ int compile_expr_primary(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_string(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_string(Compiler* c, Xen_Instance* node) {
   Xen_Instance* string = Xen_String_From_CString(Xen_AST_Node_Value(node));
   if (!string) {
     return 0;
@@ -341,7 +342,7 @@ int compile_expr_primary_string(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_number(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_number(Compiler* c, Xen_Instance* node) {
   Xen_Instance* number = Xen_Number_From_CString(Xen_AST_Node_Value(node), 0);
   if (!number) {
     return 0;
@@ -358,7 +359,7 @@ int compile_expr_primary_number(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_literal(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
     return 0;
@@ -369,7 +370,7 @@ int compile_expr_primary_literal(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_property(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_property(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
     return 0;
@@ -380,7 +381,7 @@ int compile_expr_primary_property(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_parent(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_parent(Compiler* c, Xen_Instance* node) {
   Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
   if (!expr) {
     return 0;
@@ -398,7 +399,7 @@ int compile_expr_primary_parent(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_suffix(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_suffix(Compiler* c, Xen_Instance* node) {
   Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 0);
   if (!suffix) {
     return 0;
@@ -439,7 +440,7 @@ int compile_expr_primary_suffix(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_suffix_call(Compiler* c, Xen_Instance* node) {
   Xen_size_t idx = 0;
   for (; idx < Xen_AST_Node_Children_Size(node); idx++) {
     Xen_Instance* arg = Xen_AST_Node_Get_Child(node, idx);
@@ -508,7 +509,7 @@ int compile_expr_primary_suffix_call(Compiler c, Xen_Instance* node) {
 }
 
 Xen_Instance*
-compile_expr_primary_suffix_call_arg_assignment(Compiler c,
+compile_expr_primary_suffix_call_arg_assignment(Compiler* c,
                                                 Xen_Instance* node) {
   if (Xen_AST_Node_Name_Cmp(node, "Assignment") != 0 ||
       Xen_AST_Node_Children_Size(node) != 2) {
@@ -558,7 +559,7 @@ compile_expr_primary_suffix_call_arg_assignment(Compiler c,
   return name;
 }
 
-int compile_expr_primary_suffix_index(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_suffix_index(Compiler* c, Xen_Instance* node) {
   Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
   if (!index) {
     return 0;
@@ -579,7 +580,7 @@ int compile_expr_primary_suffix_index(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_primary_suffix_attr(Compiler c, Xen_Instance* node) {
+int compile_expr_primary_suffix_attr(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
     return 0;
@@ -590,7 +591,7 @@ int compile_expr_primary_suffix_attr(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_unary(Compiler c, Xen_Instance* node) {
+int compile_expr_unary(Compiler* c, Xen_Instance* node) {
   Xen_Instance* val = Xen_AST_Node_Get_Child(node, 0);
   if (!val) {
     return 0;
@@ -645,7 +646,7 @@ int compile_expr_unary(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_binary(Compiler c, Xen_Instance* node) {
+int compile_expr_binary(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) != 2) {
     return 0;
   }
@@ -875,7 +876,7 @@ int compile_expr_binary(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_list(Compiler c, Xen_Instance* node) {
+int compile_expr_list(Compiler* c, Xen_Instance* node) {
   for (Xen_size_t idx = 0; idx < Xen_AST_Node_Children_Size(node); idx++) {
     Xen_Instance* expr = Xen_AST_Node_Get_Child(node, idx);
     if (Xen_AST_Node_Name_Cmp(expr, "Binary") == 0) {
@@ -905,7 +906,7 @@ int compile_expr_list(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_expr_statement(Compiler c, Xen_Instance* node) {
+int compile_expr_statement(Compiler* c, Xen_Instance* node) {
   if (!compile_expr(c, node)) {
     return 0;
   }
@@ -920,7 +921,7 @@ int compile_expr_statement(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment(Compiler c, Xen_Instance* node) {
+int compile_assignment(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) != 2) {
     return 0;
   }
@@ -947,7 +948,7 @@ int compile_assignment(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr(Compiler* c, Xen_Instance* node) {
   Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
   if (!expr) {
     return 0;
@@ -965,7 +966,7 @@ int compile_assignment_expr(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr_primary(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr_primary(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) == 2) {
     Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
     if (Xen_AST_Node_Name_Cmp(primary, "String") == 0) {
@@ -1038,7 +1039,7 @@ int compile_assignment_expr_primary(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr_primary_literal(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
     return 0;
@@ -1049,7 +1050,7 @@ int compile_assignment_expr_primary_literal(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr_primary_property(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr_primary_property(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
     return 0;
@@ -1060,7 +1061,7 @@ int compile_assignment_expr_primary_property(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr_primary_parent(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr_primary_parent(Compiler* c, Xen_Instance* node) {
   Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
   if (!expr) {
     return 0;
@@ -1079,7 +1080,7 @@ int compile_assignment_expr_primary_parent(Compiler c, Xen_Instance* node) {
   return 0;
 }
 
-int compile_assignment_expr_primary_suffix(Compiler c, Xen_Instance* node) {
+int compile_assignment_expr_primary_suffix(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) == 2) {
     Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 0);
     if (Xen_AST_Node_Name_Cmp(suffix, "Call") == 0) {
@@ -1137,7 +1138,7 @@ int compile_assignment_expr_primary_suffix(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_assignment_expr_primary_suffix_index(Compiler c,
+int compile_assignment_expr_primary_suffix_index(Compiler* c,
                                                  Xen_Instance* node) {
   Xen_Instance* index = Xen_AST_Node_Get_Child(node, 0);
   if (!index) {
@@ -1159,7 +1160,7 @@ int compile_assignment_expr_primary_suffix_index(Compiler c,
   return 1;
 }
 
-int compile_assignment_expr_primary_suffix_attr(Compiler c,
+int compile_assignment_expr_primary_suffix_attr(Compiler* c,
                                                 Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(node));
   if (co_idx == -1) {
@@ -1171,7 +1172,7 @@ int compile_assignment_expr_primary_suffix_attr(Compiler c,
   return 1;
 }
 
-int compile_block(Compiler c, Xen_Instance* node) {
+int compile_block(Compiler* c, Xen_Instance* node) {
   Xen_Instance* block = Xen_AST_Node_Get_Child(node, 0);
   if (!block) {
     return 0;
@@ -1194,7 +1195,7 @@ int compile_block(Compiler c, Xen_Instance* node) {
   return 1;
 }
 
-int compile_if_statement(Compiler c, Xen_Instance* node) {
+int compile_if_statement(Compiler* c, Xen_Instance* node) {
   Xen_Instance* condition = Xen_AST_Node_Get_Child(node, 0);
   if (!condition) {
     return 0;
@@ -1212,63 +1213,78 @@ int compile_if_statement(Compiler c, Xen_Instance* node) {
   if (!if_false_block) {
     return 0;
   }
-  if (!B_LIST_PUSH(if_false_block)) {
-    B_FREE(if_false_block);
-    return 0;
-  }
   if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
+    B_FREE(if_false_block);
     return 0;
   }
   Xen_Instance* then = Xen_AST_Node_Get_Child(node, 1);
   if (!then) {
+    B_FREE(if_false_block);
     return 0;
   }
   if (Xen_AST_Node_Name_Cmp(then, "Block") != 0) {
     Xen_DEL_REF(then);
+    B_FREE(if_false_block);
     return 0;
   }
   if (!compile_block(c, then)) {
     Xen_DEL_REF(then);
+    B_FREE(if_false_block);
     return 0;
   }
   Xen_DEL_REF(then);
   if (Xen_AST_Node_Children_Size(node) == 3) {
     B_PTR end_block = B_NEW();
     if (!end_block) {
-      return 0;
-    }
-    if (!B_LIST_PUSH(end_block)) {
-      B_FREE(end_block);
+      B_FREE(if_false_block);
       return 0;
     }
     if (!emit_jump(JUMP, end_block)) {
+      B_FREE(end_block);
+      B_FREE(if_false_block);
+      return 0;
+    }
+    if (!B_LIST_PUSH(if_false_block)) {
+      B_FREE(end_block);
+      B_FREE(if_false_block);
       return 0;
     }
     B_SET_CURRENT(if_false_block);
     Xen_Instance* els = Xen_AST_Node_Get_Child(node, 2);
     if (Xen_AST_Node_Name_Cmp(els, "IfStatement") == 0) {
       if (!compile_if_statement(c, els)) {
+        B_FREE(end_block);
         Xen_DEL_REF(els);
         return 0;
       }
     } else if (Xen_AST_Node_Name_Cmp(els, "Block") == 0) {
       if (!compile_block(c, els)) {
+        B_FREE(end_block);
         Xen_DEL_REF(els);
         return 0;
       }
     } else {
+      B_FREE(end_block);
       Xen_DEL_REF(els);
       return 0;
     }
     Xen_DEL_REF(els);
+    if (!B_LIST_PUSH(end_block)) {
+      B_FREE(end_block);
+      return 0;
+    }
     B_SET_CURRENT(end_block);
   } else {
+    if (!B_LIST_PUSH(if_false_block)) {
+      B_FREE(if_false_block);
+      return 0;
+    }
     B_SET_CURRENT(if_false_block);
   }
   return 1;
 }
 
-int compile_while_statement(Compiler c, Xen_Instance* node) {
+int compile_while_statement(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) != 2) {
     return 0;
   }
@@ -1290,34 +1306,39 @@ int compile_while_statement(Compiler c, Xen_Instance* node) {
   if (!if_false_block) {
     return 0;
   }
-  if (!B_LIST_PUSH(if_false_block)) {
-    B_FREE(if_false_block);
-    return 0;
-  }
   if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
+    B_FREE(if_false_block);
     return 0;
   }
   Xen_Instance* wdo = Xen_AST_Node_Get_Child(node, 1);
   if (!wdo) {
+    B_FREE(if_false_block);
     return 0;
   }
   if (Xen_AST_Node_Name_Cmp(wdo, "Block") != 0) {
     Xen_DEL_REF(wdo);
+    B_FREE(if_false_block);
     return 0;
   }
   if (!compile_block(c, wdo)) {
     Xen_DEL_REF(wdo);
+    B_FREE(if_false_block);
     return 0;
   }
   Xen_DEL_REF(wdo);
   if (!emit_jump(JUMP, init_block)) {
+    B_FREE(if_false_block);
+    return 0;
+  }
+  if (!B_LIST_PUSH(if_false_block)) {
+    B_FREE(if_false_block);
     return 0;
   }
   B_SET_CURRENT(if_false_block);
   return 1;
 }
 
-int compile_for_statement(Compiler c, Xen_Instance* node) {
+int compile_for_statement(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Children_Size(node) != 3) {
     return 0;
   }
@@ -1345,57 +1366,40 @@ int compile_for_statement(Compiler c, Xen_Instance* node) {
   if (!end_block) {
     return 0;
   }
-  if (!B_LIST_PUSH(end_block)) {
+  if (!emit_jump(ITER_FOR, end_block)) {
     B_FREE(end_block);
     return 0;
   }
-  if (!emit_jump(ITER_FOR, end_block)) {
+  Xen_Instance* target = Xen_AST_Node_Get_Child(node, 0);
+  if (Xen_AST_Node_Name_Cmp(target, "Expr") != 0) {
+    Xen_DEL_REF(target);
+    B_FREE(end_block);
     return 0;
   }
-  Xen_Instance* target_expr = Xen_AST_Node_Get_Child(node, 0);
-  if (Xen_AST_Node_Name_Cmp(target_expr, "Expr") != 0 ||
-      Xen_AST_Node_Children_Size(target_expr) != 1) {
-    Xen_DEL_REF(target_expr);
+  if (!compile_assignment_expr(c, target)) {
+    Xen_DEL_REF(target);
+    B_FREE(end_block);
     return 0;
   }
-  Xen_Instance* target_primary = Xen_AST_Node_Get_Child(target_expr, 0);
-  if (Xen_AST_Node_Name_Cmp(target_primary, "Primary") != 0 ||
-      Xen_AST_Node_Children_Size(target_primary) != 1) {
-    Xen_DEL_REF(target_primary);
-    Xen_DEL_REF(target_expr);
-    return 0;
-  }
-  Xen_Instance* target_literal = Xen_AST_Node_Get_Child(target_primary, 0);
-  if (Xen_AST_Node_Name_Cmp(target_literal, "Literal") != 0) {
-    Xen_DEL_REF(target_literal);
-    Xen_DEL_REF(target_primary);
-    Xen_DEL_REF(target_expr);
-    return 0;
-  }
-  Xen_ssize_t co_idx = co_push_name(Xen_AST_Node_Value(target_literal));
-  if (co_idx == -1) {
-    Xen_DEL_REF(target_literal);
-    Xen_DEL_REF(target_primary);
-    Xen_DEL_REF(target_expr);
-    return 0;
-  }
-  Xen_DEL_REF(target_literal);
-  Xen_DEL_REF(target_primary);
-  Xen_DEL_REF(target_expr);
-  if (!emit(STORE, co_idx)) {
-    return 0;
-  }
+  Xen_DEL_REF(target);
   Xen_Instance* block = Xen_AST_Node_Get_Child(node, 2);
   if (Xen_AST_Node_Name_Cmp(block, "Block") != 0) {
     Xen_DEL_REF(block);
+    B_FREE(end_block);
     return 0;
   }
   if (!compile_block(c, block)) {
     Xen_DEL_REF(block);
+    B_FREE(end_block);
     return 0;
   }
   Xen_DEL_REF(block);
   if (!emit_jump(JUMP, for_block)) {
+    B_FREE(end_block);
+    return 0;
+  }
+  if (!B_LIST_PUSH(end_block)) {
+    B_FREE(end_block);
     return 0;
   }
   B_SET_CURRENT(end_block);
@@ -1407,7 +1411,8 @@ int compile_for_statement(Compiler c, Xen_Instance* node) {
 
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
-  return compile_program((Compiler){b_list, b_current, mode}, ast);
+  Compiler c = {b_list, b_current, mode};
+  return compile_program(&c, ast);
 }
 
 void blocks_linealizer(block_list_ptr blocks) {

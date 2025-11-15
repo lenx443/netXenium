@@ -1100,8 +1100,13 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   }
 
   res->digits[0] = remainder_val;
-  res->size = 1;
-  res->sign = a->sign;
+  if (remainder_val == 0) {
+    res->size = 0;
+    res->sign = 0;
+  } else {
+    res->size = 1;
+    res->sign = a->sign;
+  }
 
   Xen_Dealloc(remainder);
   return (Xen_Instance*)res;
