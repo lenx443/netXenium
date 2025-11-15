@@ -1180,9 +1180,56 @@ int compile_assignment_expr_primary_suffix_attr(Compiler* c,
 }
 
 int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
+  int starred = 0;
+  Xen_ssize_t starred_index = -1;
   Xen_size_t count = Xen_AST_Node_Children_Size(node);
-  if (!emit(SEQ_UNPACK, (uint8_t)count)) {
-    return 0;
+  for (Xen_size_t i = 0; i < count; i++) {
+    Xen_Instance* expr = Xen_AST_Node_Get_Child(node, i);
+    if (Xen_AST_Node_Name_Cmp(expr, "Primary") == 0) {
+      Xen_DEL_REF(expr);
+      continue;
+    } else if (Xen_AST_Node_Name_Cmp(expr, "List") == 0) {
+      Xen_DEL_REF(expr);
+      continue;
+    } else if (Xen_AST_Node_Name_Cmp(expr, "Unary") == 0) {
+      if (starred) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+      if (Xen_AST_Node_Value_Cmp(expr, "*") == 0) {
+        starred = 1;
+        starred_index = i;
+      } else {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else {
+      Xen_DEL_REF(expr);
+      return 0;
+    }
+    Xen_DEL_REF(expr);
+  }
+  if (starred) {
+    if (starred_index == 0) {
+      if (!emit(SEQ_UNPACK_END, (uint8_t)count)) {
+        return 0;
+      }
+    } else if (starred_index == (Xen_ssize_t)count - 1) {
+      if (!emit(SEQ_UNPACK_START, (uint8_t)count)) {
+        return 0;
+      }
+    } else {
+      if (!emit(SEQ_UNPACK_END, (uint8_t)(count - starred_index))) {
+        return 0;
+      }
+      if (!emit(SEQ_UNPACK_START, (uint8_t)(starred_index + 1))) {
+        return 0;
+      }
+    }
+  } else {
+    if (!emit(SEQ_UNPACK, (uint8_t)count)) {
+      return 0;
+    }
   }
   for (Xen_size_t i = 0; i < count; i++) {
     Xen_Instance* expr = Xen_AST_Node_Get_Child(node, i);
@@ -1196,6 +1243,23 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
         Xen_DEL_REF(expr);
         return 0;
       }
+    } else if (Xen_AST_Node_Name_Cmp(expr, "Unary") == 0) {
+      Xen_Instance* primary = Xen_AST_Node_Get_Child(expr, 0);
+      if (!primary) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+      if (Xen_AST_Node_Name_Cmp(primary, "Primary") != 0) {
+        Xen_DEL_REF(primary);
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+      if (!compile_assignment_expr_primary(c, primary)) {
+        Xen_DEL_REF(primary);
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+      Xen_DEL_REF(primary);
     } else {
       Xen_DEL_REF(expr);
       return 0;

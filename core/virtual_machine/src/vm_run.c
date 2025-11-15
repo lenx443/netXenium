@@ -21,7 +21,10 @@
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+#include "xen_tuple_implement.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
+#include "xen_vector_implement.h"
 
 static void op_nop([[maybe_unused]] RunContext_ptr ctx,
                    [[maybe_unused]] uint8_t oparg) {}
@@ -504,45 +507,134 @@ static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(rsult);
 }
 
-static void op_iter_unpack(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* iter = vm_stack_pop(&ctx->ctx_stack);
-  Xen_Instance** values = Xen_Alloc(oparg * sizeof(Xen_Instance*));
-  if (!values) {
-    Xen_DEL_REF(iter);
+static void op_seq_unpack(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* seq = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
+      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_DEL_REF(seq);
     ctx->ctx_error = 1;
     return;
   }
-  uint8_t index = oparg;
-  Xen_Instance* value = NULL;
-  while ((value = Xen_Attr_Next(iter)) != NULL) {
-    if (index == 0) {
-      for (int i = oparg; i > 0; --i) {
-        Xen_DEL_REF(values[i - 1]);
-      }
-      Xen_DEL_REF(value);
-      Xen_DEL_REF(iter);
-      Xen_Dealloc(values);
+  if (oparg != Xen_SIZE(seq)) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t i = oparg; i > 0; --i) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
+    if (!val) {
+      Xen_DEL_REF(seq);
       ctx->ctx_error = 1;
       return;
     }
-    values[--index] = value;
-  }
-  if (index != 0) {
-    for (int i = oparg; i > index; --i) {
-      Xen_DEL_REF(values[i - 1]);
-    }
-    Xen_DEL_REF(iter);
-    Xen_Dealloc(values);
-    ctx->ctx_error = 1;
-    return;
-  }
-  for (uint8_t i = 0; i < oparg; i++) {
-    Xen_Instance* val = values[i];
     vm_stack_push(&ctx->ctx_stack, val);
     Xen_DEL_REF(val);
   }
-  Xen_Dealloc(values);
-  Xen_DEL_REF(iter);
+  Xen_DEL_REF(seq);
+}
+
+static void op_seq_unpack_start(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* seq = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
+      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_size_t seq_size = Xen_SIZE(seq);
+  if (oparg > seq_size) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_Instance* new_seq = Xen_Vector_New();
+  if (!new_seq) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (Xen_size_t i = oparg; i <= seq_size; i++) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
+    if (!val) {
+      Xen_DEL_REF(new_seq);
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    if (!Xen_Vector_Push(new_seq, val)) {
+      Xen_DEL_REF(val);
+      Xen_DEL_REF(new_seq);
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    Xen_DEL_REF(val);
+  }
+  vm_stack_push(&ctx->ctx_stack, new_seq);
+  Xen_DEL_REF(new_seq);
+  for (Xen_size_t i = oparg - 1; i > 0; --i) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
+    if (!val) {
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    vm_stack_push(&ctx->ctx_stack, val);
+    Xen_DEL_REF(val);
+  }
+  Xen_DEL_REF(seq);
+}
+
+static void op_seq_unpack_end(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* seq = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
+      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  Xen_size_t seq_size = Xen_SIZE(seq);
+  if (oparg > seq_size) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (Xen_ssize_t i = seq_size; i > (Xen_ssize_t)seq_size - (oparg - 1); --i) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
+    if (!val) {
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    vm_stack_push(&ctx->ctx_stack, val);
+    Xen_DEL_REF(val);
+  }
+  Xen_Instance* new_seq = Xen_Vector_New();
+  if (!new_seq) {
+    Xen_DEL_REF(seq);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (Xen_size_t i = 0; i <= seq_size - oparg; i++) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i);
+    if (!val) {
+      Xen_DEL_REF(new_seq);
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    if (!Xen_Vector_Push(new_seq, val)) {
+      Xen_DEL_REF(val);
+      Xen_DEL_REF(new_seq);
+      Xen_DEL_REF(seq);
+      ctx->ctx_error = 1;
+      return;
+    }
+    Xen_DEL_REF(val);
+  }
+  vm_stack_push(&ctx->ctx_stack, new_seq);
+  Xen_DEL_REF(new_seq);
+  Xen_DEL_REF(seq);
 }
 
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
@@ -571,7 +663,9 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [JUMP_IF_FALSE] = op_jump_if_false,
     [ITER_GET] = op_iter_get,
     [ITER_FOR] = op_iter_for,
-    [ITER_UNPACK] = op_iter_unpack,
+    [SEQ_UNPACK] = op_seq_unpack,
+    [SEQ_UNPACK_START] = op_seq_unpack_start,
+    [SEQ_UNPACK_END] = op_seq_unpack_end,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

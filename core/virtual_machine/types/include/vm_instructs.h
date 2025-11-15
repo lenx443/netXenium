@@ -43,6 +43,8 @@ enum vm_Instruct {
   ITER_GET,
   ITER_FOR,
   SEQ_UNPACK,
+  SEQ_UNPACK_START,
+  SEQ_UNPACK_END,
   HALT,
 };
 

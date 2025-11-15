@@ -130,7 +130,8 @@ bool is_primary(Parser* p) {
 
 bool is_unary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT) {
+  if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT ||
+      token == TKN_MUL) {
     return true;
   }
   return false;
