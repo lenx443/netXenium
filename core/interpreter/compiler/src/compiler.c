@@ -6,6 +6,7 @@
 #include "bytecode.h"
 #include "compiler.h"
 #include "instance.h"
+#include "ir_bytecode.h"
 #include "ir_instruct.h"
 #include "lexer.h"
 #include "operators.h"
@@ -43,7 +44,7 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #ifndef NDEBUG
     printf("Parser Error\n");
 #endif
-    return 0;
+    return NULL;
   }
 #ifndef NDEBUG
   Xen_AST_Node_Print(ast_program);
@@ -77,7 +78,10 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
     return NULL;
   }
   Xen_DEL_REF(ast_program);
-  blocks_linealizer(blocks);
+  if (!blocks_linealizer(blocks)) {
+    block_list_free(blocks);
+    return NULL;
+  }
 #ifndef NDEBUG
   ir_print(blocks);
 #endif
@@ -161,6 +165,7 @@ static int compile_assignment_expr_primary_suffix_index(Compiler*,
                                                         Xen_Instance*);
 static int compile_assignment_expr_primary_suffix_attr(Compiler*,
                                                        Xen_Instance*);
+static int compile_assignment_expr_list(Compiler*, Xen_Instance*);
 
 static int compile_block(Compiler*, Xen_Instance*);
 
@@ -185,9 +190,6 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(stmt_list);
-  if (!emit(NOP, 0)) {
-    return 0;
-  }
   return 1;
 }
 
@@ -958,6 +960,11 @@ int compile_assignment_expr(Compiler* c, Xen_Instance* node) {
       Xen_DEL_REF(expr);
       return 0;
     }
+  } else if (Xen_AST_Node_Name_Cmp(expr, "List") == 0) {
+    if (!compile_assignment_expr_list(c, expr)) {
+      Xen_DEL_REF(expr);
+      return 0;
+    }
   } else {
     Xen_DEL_REF(expr);
     return 0;
@@ -1168,6 +1175,32 @@ int compile_assignment_expr_primary_suffix_attr(Compiler* c,
   }
   if (!emit(STORE_ATTR, (uint8_t)co_idx)) {
     return 0;
+  }
+  return 1;
+}
+
+int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
+  Xen_size_t count = Xen_AST_Node_Children_Size(node);
+  if (!emit(UNPACK_TUPLE, (uint8_t)count)) {
+    return 0;
+  }
+  for (Xen_size_t i = 0; i < count; i++) {
+    Xen_Instance* expr = Xen_AST_Node_Get_Child(node, i);
+    if (Xen_AST_Node_Name_Cmp(expr, "Primary") == 0) {
+      if (!compile_assignment_expr_primary(c, expr)) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(expr, "List") == 0) {
+      if (!compile_assignment_expr_list(c, expr)) {
+        Xen_DEL_REF(expr);
+        return 0;
+      }
+    } else {
+      Xen_DEL_REF(expr);
+      return 0;
+    }
+    Xen_DEL_REF(expr);
   }
   return 1;
 }
@@ -1415,17 +1448,24 @@ int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
   return compile_program(&c, ast);
 }
 
-void blocks_linealizer(block_list_ptr blocks) {
+int blocks_linealizer(block_list_ptr blocks) {
   if (!blocks)
-    return;
+    return 0;
   block_node_ptr current_block = blocks->head;
   int n = 0;
   while (current_block) {
-    for (size_t i = 0; i < current_block->instr_array->ir_size; i++)
+    if (current_block->instr_array->ir_size == 0) {
+      if (!ir_emit(current_block->instr_array, NOP, 0)) {
+        return 0;
+      }
+    }
+    for (Xen_size_t i = 0; i < current_block->instr_array->ir_size; i++) {
       current_block->instr_array->ir_array[i].instr_num = n++;
+    }
     current_block->ready = 1;
     current_block = current_block->next;
   }
+  return 1;
 }
 
 int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {

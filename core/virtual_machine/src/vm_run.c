@@ -21,6 +21,7 @@
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+#include "xen_tuple_implement.h"
 #include "xen_typedefs.h"
 
 static void op_nop([[maybe_unused]] RunContext_ptr ctx,
@@ -213,6 +214,26 @@ static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
   }
   Xen_Dealloc(vals_array);
   vm_stack_push(&ctx->ctx_stack, tuple);
+  Xen_DEL_REF(tuple);
+}
+
+static void op_unpack_tuple(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* tuple = vm_stack_pop(&ctx->ctx_stack);
+  if (Xen_IMPL(tuple) != &Xen_Tuple_Implement) {
+    Xen_DEL_REF(tuple);
+    ctx->ctx_error = 1;
+    return;
+  }
+  if (oparg != Xen_SIZE(tuple)) {
+    Xen_DEL_REF(tuple);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t i = oparg; i > 0; --i) {
+    Xen_Instance* val = Xen_Tuple_Get_Index(tuple, i - 1);
+    vm_stack_push(&ctx->ctx_stack, val);
+    Xen_DEL_REF(val);
+  }
   Xen_DEL_REF(tuple);
 }
 
@@ -517,6 +538,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [STORE_INDEX] = op_store_index,
     [STORE_ATTR] = op_store_attr,
     [MAKE_TUPLE] = op_make_tuple,
+    [UNPACK_TUPLE] = op_unpack_tuple,
     [CALL] = op_call,
     [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,

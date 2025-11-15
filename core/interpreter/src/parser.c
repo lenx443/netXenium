@@ -8,6 +8,12 @@
 #include "xen_ast.h"
 #include "xen_nil.h"
 
+static inline void skip_newline(Parser* p) {
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
+}
+
 static inline void skip_newline_if_before_is(Parser* p, Lexer_Token token) {
   int pos = p->lexer->pos;
   Lexer_Token tkn = p->token;
@@ -16,6 +22,19 @@ static inline void skip_newline_if_before_is(Parser* p, Lexer_Token token) {
   }
   if (p->token.tkn_type != token.tkn_type ||
       strcmp(p->token.tkn_text, token.tkn_text) != 0) {
+    p->lexer->pos = pos;
+    p->token = tkn;
+  }
+}
+
+static inline void skip_newline_if_callback(Parser* p,
+                                            bool (*callback)(Parser*)) {
+  int pos = p->lexer->pos;
+  Lexer_Token tkn = p->token;
+  while (p->token.tkn_type == TKN_NEWLINE) {
+    parser_next(p);
+  }
+  if (!callback(p)) {
     p->lexer->pos = pos;
     p->token = tkn;
   }
@@ -258,11 +277,13 @@ Xen_Instance* parser_parent(Parser* p) {
   if (!parent) {
     return NULL;
   }
+  skip_newline(p);
   Xen_Instance* expr = parser_expr(p);
   if (!expr) {
     Xen_DEL_REF(parent);
     return NULL;
   }
+  skip_newline(p);
   if (p->token.tkn_type != TKN_RPARENT) {
     Xen_DEL_REF(expr);
     Xen_DEL_REF(parent);
@@ -679,8 +700,10 @@ Xen_Instance* parser_list(Parser* p) {
     return NULL;
   }
   Xen_DEL_REF(expr_head);
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_COMMA, ","});
   while (p->token.tkn_type == TKN_COMMA) {
     parser_next(p);
+    skip_newline_if_callback(p, is_expr);
     if (!is_expr(p)) {
       return list;
     }

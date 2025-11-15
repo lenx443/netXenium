@@ -29,6 +29,7 @@ enum vm_Instruct {
   STORE_INDEX,
   STORE_ATTR,
   MAKE_TUPLE,
+  UNPACK_TUPLE,
   CALL,
   CALL_KW,
   BINARYOP,
