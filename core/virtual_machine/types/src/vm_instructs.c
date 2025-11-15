@@ -11,8 +11,7 @@ static STACK_EFFECT(store_stack_effect, -1);
 static STACK_EFFECT(store_prop_stack_effect, -1);
 static STACK_EFFECT(store_index_stack_effect, -3);
 static STACK_EFFECT(store_attr_stack_effect, -2);
-static STACK_EFFECT(make_tuple_attr_stack_effect, -oparg + 1);
-static STACK_EFFECT(unpack_tuple_attr_stack_effect, oparg - 1);
+static STACK_EFFECT(make_tuple_stack_effect, -oparg + 1);
 static STACK_EFFECT(call_stack_effect, -oparg);
 static STACK_EFFECT(call_kw_stack_effect, -oparg - 1);
 static STACK_EFFECT(binaryop_stack_effect, -1);
@@ -26,6 +25,7 @@ static STACK_EFFECT(jump_if_true_stack_effect, -1);
 static STACK_EFFECT(jump_if_false_stack_effect, -1);
 static STACK_EFFECT(iter_get_stack_effect, 0);
 static STACK_EFFECT(iter_for_stack_effect, 0);
+static STACK_EFFECT(seq_unpack_stack_effect, oparg - 1);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [NOP] = {"", nop_stack_effect, 0},
@@ -41,10 +41,7 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [STORE_INDEX] = {"STORE_INDEX", store_index_stack_effect, 0},
     [STORE_ATTR] = {"STORE_ATTR", store_attr_stack_effect,
                     INSTRUCT_FLAG_CO_NAME},
-    [MAKE_TUPLE] = {"MAKE_TUPLE", make_tuple_attr_stack_effect,
-                    INSTRUCT_FLAG_ARG},
-    [UNPACK_TUPLE] = {"UNPACK_TUPLE", unpack_tuple_attr_stack_effect,
-                      INSTRUCT_FLAG_ARG},
+    [MAKE_TUPLE] = {"MAKE_TUPLE", make_tuple_stack_effect, INSTRUCT_FLAG_ARG},
     [CALL] = {"CALL", call_stack_effect, INSTRUCT_FLAG_ARG},
     [CALL_KW] = {"CALL_KW", call_kw_stack_effect, INSTRUCT_FLAG_ARG},
     [BINARYOP] = {"BINARYOP", binaryop_stack_effect, INSTRUCT_FLAG_ARG},
@@ -60,4 +57,5 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
                        INSTRUCT_FLAG_ARG},
     [ITER_GET] = {"ITER_GET", iter_get_stack_effect, 0},
     [ITER_FOR] = {"ITER_FOR", iter_for_stack_effect, INSTRUCT_FLAG_ARG},
+    [SEQ_UNPACK] = {"SEQ_UNPACK", seq_unpack_stack_effect, INSTRUCT_FLAG_ARG},
 };

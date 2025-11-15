@@ -21,7 +21,6 @@
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
-#include "xen_tuple_implement.h"
 #include "xen_typedefs.h"
 
 static void op_nop([[maybe_unused]] RunContext_ptr ctx,
@@ -214,26 +213,6 @@ static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
   }
   Xen_Dealloc(vals_array);
   vm_stack_push(&ctx->ctx_stack, tuple);
-  Xen_DEL_REF(tuple);
-}
-
-static void op_unpack_tuple(RunContext_ptr ctx, uint8_t oparg) {
-  Xen_Instance* tuple = vm_stack_pop(&ctx->ctx_stack);
-  if (Xen_IMPL(tuple) != &Xen_Tuple_Implement) {
-    Xen_DEL_REF(tuple);
-    ctx->ctx_error = 1;
-    return;
-  }
-  if (oparg != Xen_SIZE(tuple)) {
-    Xen_DEL_REF(tuple);
-    ctx->ctx_error = 1;
-    return;
-  }
-  for (uint8_t i = oparg; i > 0; --i) {
-    Xen_Instance* val = Xen_Tuple_Get_Index(tuple, i - 1);
-    vm_stack_push(&ctx->ctx_stack, val);
-    Xen_DEL_REF(val);
-  }
   Xen_DEL_REF(tuple);
 }
 
@@ -525,6 +504,47 @@ static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(rsult);
 }
 
+static void op_iter_unpack(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* iter = vm_stack_pop(&ctx->ctx_stack);
+  Xen_Instance** values = Xen_Alloc(oparg * sizeof(Xen_Instance*));
+  if (!values) {
+    Xen_DEL_REF(iter);
+    ctx->ctx_error = 1;
+    return;
+  }
+  uint8_t index = oparg;
+  Xen_Instance* value = NULL;
+  while ((value = Xen_Attr_Next(iter)) != NULL) {
+    if (index == 0) {
+      for (int i = oparg; i > 0; --i) {
+        Xen_DEL_REF(values[i - 1]);
+      }
+      Xen_DEL_REF(value);
+      Xen_DEL_REF(iter);
+      Xen_Dealloc(values);
+      ctx->ctx_error = 1;
+      return;
+    }
+    values[--index] = value;
+  }
+  if (index != 0) {
+    for (int i = oparg; i > index; --i) {
+      Xen_DEL_REF(values[i - 1]);
+    }
+    Xen_DEL_REF(iter);
+    Xen_Dealloc(values);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t i = 0; i < oparg; i++) {
+    Xen_Instance* val = values[i];
+    vm_stack_push(&ctx->ctx_stack, val);
+    Xen_DEL_REF(val);
+  }
+  Xen_Dealloc(values);
+  Xen_DEL_REF(iter);
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [NOP] = op_nop,
     [PUSH] = op_push,
@@ -538,7 +558,6 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [STORE_INDEX] = op_store_index,
     [STORE_ATTR] = op_store_attr,
     [MAKE_TUPLE] = op_make_tuple,
-    [UNPACK_TUPLE] = op_unpack_tuple,
     [CALL] = op_call,
     [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,
@@ -552,6 +571,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [JUMP_IF_FALSE] = op_jump_if_false,
     [ITER_GET] = op_iter_get,
     [ITER_FOR] = op_iter_for,
+    [ITER_UNPACK] = op_iter_unpack,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {

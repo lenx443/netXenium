@@ -1181,7 +1181,7 @@ int compile_assignment_expr_primary_suffix_attr(Compiler* c,
 
 int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
   Xen_size_t count = Xen_AST_Node_Children_Size(node);
-  if (!emit(UNPACK_TUPLE, (uint8_t)count)) {
+  if (!emit(SEQ_UNPACK, (uint8_t)count)) {
     return 0;
   }
   for (Xen_size_t i = 0; i < count; i++) {
