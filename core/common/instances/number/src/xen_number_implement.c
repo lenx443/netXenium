@@ -370,7 +370,7 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
   }
   r->digits = Xen_Alloc(size_n * sizeof(uint32_t));
   if (!r->digits) {
-    Xen_DEL_REF(r->digits);
+    Xen_DEL_REF(r);
     return NULL;
   }
   for (Xen_size_t i = 0; i < size_n; i++) {

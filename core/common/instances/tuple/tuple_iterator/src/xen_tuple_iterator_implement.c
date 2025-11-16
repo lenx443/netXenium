@@ -1,5 +1,4 @@
 #include "xen_tuple_iterator_implement.h"
-#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -10,6 +9,7 @@
 #include "xen_alloc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_tuple.h"
 #include "xen_tuple_iterator_instance.h"
 #include "xen_typedefs.h"
 
@@ -57,7 +57,7 @@ static Xen_Instance* tuple_iterator_next(ctx_id_t id, Xen_Instance* self,
     it->index = -1;
     return NULL;
   }
-  Xen_Instance* rsult = Xen_Attr_Index_Size_Get(it->tuple, it->index++);
+  Xen_Instance* rsult = Xen_Tuple_Get_Index(it->tuple, it->index++);
   if (!rsult) {
     return NULL;
   }

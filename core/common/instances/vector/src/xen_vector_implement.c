@@ -22,18 +22,13 @@
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
+#include "xen_vector_iterator.h"
 
 static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
                                   Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
-  } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
-    if (Xen_IMPL(inst) == &Xen_Vector_Implement) {
-      return inst;
-    }
-    Xen_DEL_REF(inst);
   }
   Xen_Vector* vector = (Xen_Vector*)Xen_Instance_Alloc(&Xen_Vector_Implement);
   if (!vector) {
@@ -214,6 +209,12 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return Xen_ADD_REF(((Xen_Vector*)self)->values[index]);
 }
 
+static Xen_Instance* vector_iter(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_Vector_Iterator_New(self);
+}
+
 static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
@@ -277,6 +278,7 @@ int Xen_Vector_Init() {
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__set_index", vector_opr_set_index,
                                     nil) ||
+      !Xen_VM_Store_Native_Function(props, "__iter", vector_iter, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", vector_push, nil)) {
     Xen_DEL_REF(props);
     return 0;

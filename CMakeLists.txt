@@ -34,6 +34,8 @@ include_directories(
   core/common/instances/number/types/header/
   core/common/instances/vector/include/
   core/common/instances/vector/type/header/
+  core/common/instances/vector/vector_iterator/include/
+  core/common/instances/vector/vector_iterator/types/header/
   core/common/instances/nil/include/
   core/common/instances/map/include/
   core/common/instances/map/types/header/
@@ -109,6 +111,10 @@ set(SOURCES
   # Implementacion del tipo `Vector`
   core/common/instances/vector/src/xen_vector_implement.c
   core/common/instances/vector/src/xen_vector.c
+
+  # Implementacion del tipo `VectorIterator`
+  core/common/instances/vector/vector_iterator/src/xen_vector_iterator_implement.c
+  core/common/instances/vector/vector_iterator/src/xen_vector_iterator.c
 
   # Implementacion del tipo `Nil`
   core/common/instances/nil/src/xen_nil_implement.c
