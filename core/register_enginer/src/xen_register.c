@@ -6,6 +6,7 @@
 #include "run_ctx.h"
 #include "vm.h"
 #include "vm_def.h"
+#include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_register.h"
@@ -52,7 +53,8 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
   }
   for (struct Xen_RegisterStream* f = streams; f->prefix; f++) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
-        (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
+        (!f->exact_match &&
+         strncmp(name, f->prefix, Xen_CString_Len(f->prefix)) == 0)) {
       if (f->set_handle) {
         return f->set_handle(name, inst);
       }
@@ -83,7 +85,8 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
   }
   for (struct Xen_RegisterStream* f = streams; f->prefix; f++) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
-        (!f->exact_match && strncmp(name, f->prefix, strlen(f->prefix)) == 0)) {
+        (!f->exact_match &&
+         strncmp(name, f->prefix, Xen_CString_Len(f->prefix)) == 0)) {
       if (f->get_handle) {
         return f->get_handle(name);
       }

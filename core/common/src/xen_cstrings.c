@@ -1,6 +1,9 @@
-#include "xen_cstrings.h"
-#include "xen_alloc.h"
 #include <stdint.h>
+#include <string.h>
+
+#include "xen_alloc.h"
+#include "xen_cstrings.h"
+#include "xen_typedefs.h"
 
 char* Xen_CString_From_Pointer(void* ptr) {
   char* buf = Xen_Alloc(2 + sizeof(void*) * 2 + 1);
@@ -28,4 +31,118 @@ char* Xen_CString_From_Pointer(void* ptr) {
 
   *p = '\0';
   return buf;
+}
+
+char* Xen_CString_As_Raw(const char* str) {
+  if (!str)
+    return NULL;
+  size_t capacity = 64;
+  char* out = (char*)Xen_Alloc(capacity);
+  if (!out)
+    return NULL;
+  size_t len = 0;
+  const unsigned char* p = (const unsigned char*)str;
+  while (*p) {
+    unsigned char c = *p;
+    const char* escape = NULL;
+    size_t esc_len = 0;
+    char buf[4];
+    switch (c) {
+    case '\\':
+      escape = "\\\\";
+      esc_len = 2;
+      break;
+    case '\"':
+      escape = "\\\"";
+      esc_len = 2;
+      break;
+    case '\'':
+      escape = "\\\'";
+      esc_len = 2;
+      break;
+    case '\n':
+      escape = "\\n";
+      esc_len = 2;
+      break;
+    case '\r':
+      escape = "\\r";
+      esc_len = 2;
+      break;
+    case '\t':
+      escape = "\\t";
+      esc_len = 2;
+      break;
+    case '\b':
+      escape = "\\b";
+      esc_len = 2;
+      break;
+    case '\f':
+      escape = "\\f";
+      esc_len = 2;
+      break;
+    case '\v':
+      escape = "\\v";
+      esc_len = 2;
+      break;
+    case '\a':
+      escape = "\\a";
+      esc_len = 2;
+      break;
+    default:
+      if (c < 32 || c >= 127) {
+        static const char HEX[] = "0123456789ABCDEF";
+        buf[0] = '\\';
+        buf[1] = 'x';
+        buf[2] = HEX[(c >> 4) & 0xF];
+        buf[3] = HEX[c & 0xF];
+        escape = buf;
+        esc_len = 4;
+      } else {
+        buf[0] = (char)c;
+        escape = buf;
+        esc_len = 1;
+      }
+      break;
+    }
+    if (len + esc_len + 1 > capacity) {
+      size_t new_capacity = (capacity * 2) + esc_len + 1;
+      char* tmp = Xen_Realloc(out, new_capacity);
+      if (!tmp) {
+        Xen_Dealloc(out);
+        return NULL;
+      }
+      out = tmp;
+      capacity = new_capacity;
+    }
+    for (size_t i = 0; i < esc_len; i++)
+      out[len++] = escape[i];
+    p++;
+  }
+
+  out[len] = '\0';
+  return out;
+}
+
+Xen_size_t Xen_CString_Len(const char* str) {
+  if (!str) {
+    return 0;
+  }
+  const char* p = str;
+  while (*p != '\0') {
+    p++;
+  }
+  return (Xen_size_t)(p - str);
+}
+
+char* Xen_CString_Dup(const char* str) {
+  if (!str) {
+    return NULL;
+  }
+  Xen_size_t len = Xen_CString_Len(str) + 1;
+  char* dup = (char*)Xen_Alloc(len);
+  if (!dup) {
+    return NULL;
+  }
+  memcpy(dup, str, len);
+  return dup;
 }

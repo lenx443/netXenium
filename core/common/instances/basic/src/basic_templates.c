@@ -26,8 +26,8 @@ Xen_Instance* Xen_Basic_String(ctx_id_t id, Xen_Instance* self,
   if (!addr) {
     return NULL;
   }
-  Xen_size_t size =
-      1 + strlen(Xen_IMPL(self)->__impl_name) + 2 + strlen(addr) + 2;
+  Xen_size_t size = 1 + Xen_CString_Len(Xen_IMPL(self)->__impl_name) + 2 +
+                    Xen_CString_Len(addr) + 2;
   char* buffer = Xen_Alloc(size);
   if (!buffer) {
     Xen_Dealloc(addr);

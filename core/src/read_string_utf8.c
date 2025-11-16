@@ -15,6 +15,7 @@
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
@@ -401,7 +402,7 @@ LIST_ptr read_string_utf8() {
                       "No se pudo gurdar el comando en el hsitorial");
               log_show_and_clear(NULL);
             } else {
-              int cmd_size = strlen(cmd_cstring);
+              int cmd_size = Xen_CString_Len(cmd_cstring);
               strncpy(new_history_line.command, cmd_cstring, cmd_size);
               new_history_line.command[cmd_size] = '\0';
               history_push_line(history, new_history_line);

@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
+#include "xen_cstrings.h"
 #include "xen_nil.h"
 
 static inline void skip_newline(Parser* p) {
@@ -435,7 +436,7 @@ Xen_Instance* parser_term(Parser* p) {
   }
   while (p->token.tkn_type == TKN_MUL || p->token.tkn_type == TKN_DIV ||
          p->token.tkn_type == TKN_MOD) {
-    char* op = strdup(p->token.tkn_text);
+    char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       Xen_DEL_REF(left);
       return NULL;
@@ -482,7 +483,7 @@ Xen_Instance* parser_add(Parser* p) {
     return NULL;
   }
   while (p->token.tkn_type == TKN_ADD || p->token.tkn_type == TKN_MINUS) {
-    char* op = strdup(p->token.tkn_text);
+    char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       Xen_DEL_REF(left);
       return NULL;
@@ -532,7 +533,7 @@ Xen_Instance* parser_relational(Parser* p) {
          p->token.tkn_type == TKN_LE || p->token.tkn_type == TKN_GE ||
          p->token.tkn_type == TKN_EQ || p->token.tkn_type == TKN_NE ||
          p->token.tkn_type == TKN_HAS) {
-    char* op = strdup(p->token.tkn_text);
+    char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       Xen_DEL_REF(left);
       return NULL;
@@ -602,7 +603,7 @@ Xen_Instance* parser_and(Parser* p) {
     return NULL;
   }
   while (p->token.tkn_type == TKN_AND) {
-    char* op = strdup(p->token.tkn_text);
+    char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       Xen_DEL_REF(left);
       return NULL;
@@ -649,7 +650,7 @@ Xen_Instance* parser_or(Parser* p) {
     return NULL;
   }
   while (p->token.tkn_type == TKN_OR) {
-    char* op = strdup(p->token.tkn_text);
+    char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       Xen_DEL_REF(left);
       return NULL;
@@ -819,7 +820,7 @@ Xen_Instance* parser_assignment(Parser* p) {
   }
 
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
-    const char* operator = strdup(p->token.tkn_text);
+    const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
 
     Xen_Instance* rhs = parser_expr(p);
@@ -923,7 +924,7 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
   Xen_DEL_REF(lhs_node);
 
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
-    const char* operator = strdup(p->token.tkn_text);
+    const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
 
     Xen_Instance* rhs_node = parser_or(p);
@@ -1006,7 +1007,7 @@ Xen_Instance* parser_attr(Parser* p) {
   if (p->token.tkn_type != TKN_IDENTIFIER) {
     return NULL;
   }
-  const char* ident = strdup(p->token.tkn_text);
+  const char* ident = Xen_CString_Dup(p->token.tkn_text);
   if (!ident) {
     return NULL;
   }

@@ -12,35 +12,45 @@
 #include "list.h"
 #include "logs.h"
 #include "macros.h"
+#include "xen_cstrings.h"
 
-static char *__log_type(log_types type) {
+static char* __log_type(log_types type) {
   switch (type) {
-  case ERROR: return "ERROR";
-  case WARNING: return "WARNING";
-  case INFO: return "INFO";
-  default: return "Undefined";
+  case ERROR:
+    return "ERROR";
+  case WARNING:
+    return "WARNING";
+  case INFO:
+    return "INFO";
+  default:
+    return "Undefined";
   }
 }
 
-static char *__log_type_color(log_types type) {
+static char* __log_type_color(log_types type) {
   switch (type) {
-  case ERROR: return ROJO;
-  case WARNING: return AMARILLO;
-  case INFO: return VERDE;
-  default: return RESET;
+  case ERROR:
+    return ROJO;
+  case WARNING:
+    return AMARILLO;
+  case INFO:
+    return VERDE;
+  default:
+    return RESET;
   }
 }
 
-static void strip_ansi_escape(char *str) {
-  char *src = str;
-  char *dst = str;
+static void strip_ansi_escape(char* str) {
+  char* src = str;
+  char* dst = str;
   while (*src) {
     if (*src == '\x1B' && *(src + 1) == '[') {
       src += 2;
       while (*src && !((*src >= '@' && *src <= '~'))) {
         src++;
       }
-      if (*src) src++;
+      if (*src)
+        src++;
     } else {
       *dst++ = *src++;
     }
@@ -48,18 +58,19 @@ static void strip_ansi_escape(char *str) {
   *dst = '\0';
 }
 
-int is_loged(LIST_ptr object, char *match) {
+int is_loged(LIST_ptr object, char* match) {
   LIST_ptr log = object ? object : global_logs;
 
   NODE_ptr node = NULL;
   FOR_EACH(&node, *log) {
-    log_struct *log_value = (log_struct *)node->point;
-    if (strcmp(log_value->source, match) == 0) return 1;
+    log_struct* log_value = (log_struct*)node->point;
+    if (strcmp(log_value->source, match) == 0)
+      return 1;
   }
   return 0;
 }
 
-void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
+void log_add(LIST_ptr object, log_types type, char* source, char* format, ...) {
   LIST_ptr log = object ? object : global_logs;
 
   va_list args;
@@ -89,7 +100,8 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
       i++;
       while (format[i] && format[i] != '}' && j < BUFSIZ - 1)
         clean_format[j++] = format[i++];
-      if (format[i] == '}') i++;
+      if (format[i] == '}')
+        i++;
       sel_pos[sel_count][0] = start;
       sel_pos[sel_count][1] = j;
       sel_count++;
@@ -103,7 +115,8 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
   int offset = vsnprintf(logbuf, BUFSIZ - 1, clean_format, args);
   va_end(args);
 
-  if (offset >= BUFSIZ - 1) return;
+  if (offset >= BUFSIZ - 1)
+    return;
 
   if (strchr(format, '|') || sel_count > 0) {
     offset += snprintf(logbuf + offset, BUFSIZ - offset - 1, "\n");
@@ -126,9 +139,9 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
   memset(underline, ' ', visual_len);
   underline[visual_len] = '\0';
 
-  char *cursor = logbuf;
+  char* cursor = logbuf;
   while ((cursor = strchr(cursor, '|')) != NULL) {
-    char *start = cursor;
+    char* start = cursor;
     cursor++;
 
     int n = 0;
@@ -146,7 +159,7 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
         underline[u] = '^';
       }
 
-      size_t len = strlen(cursor + 1);
+      size_t len = Xen_CString_Len(cursor + 1);
       memmove(start, cursor + 1, len + 1);
       offset -= (cursor + 1 - start);
       cursor = start;
@@ -158,17 +171,18 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
   va_start(args, format);
   for (int s = 0; s < sel_count; s++) {
     int len = sel_pos[s][1] - sel_pos[s][0];
-    if (len <= 0 || len >= BUFSIZ) continue;
+    if (len <= 0 || len >= BUFSIZ)
+      continue;
 
     char temp_fmt[BUFSIZ], temp_arg_text[BUFSIZ];
     strncpy(temp_fmt, &clean_format[sel_pos[s][0]], len);
     temp_fmt[len] = '\0';
 
     vsnprintf(temp_arg_text, BUFSIZ, temp_fmt, args);
-    char *found = strstr(logbuf, temp_arg_text);
+    char* found = strstr(logbuf, temp_arg_text);
     if (found) {
       int real_start = found - logbuf;
-      int real_end = real_start + strlen(temp_arg_text);
+      int real_end = real_start + Xen_CString_Len(temp_arg_text);
 
       int vis_start = visual_map[real_start];
       int vis_end = visual_map[real_end];
@@ -183,13 +197,14 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
   va_end(args);
 
   if (strchr(underline, '^')) {
-    if (offset + strlen(underline) < BUFSIZ - 1) {
+    if (offset + Xen_CString_Len(underline) < BUFSIZ - 1) {
       snprintf(logbuf + offset, BUFSIZ - offset - 1, "%s", underline);
     }
   }
 
   time_t current_time;
-  if (time(&current_time) == (time_t)-1) return;
+  if (time(&current_time) == (time_t)-1)
+    return;
 
   log_struct new_log_struct;
   strncpy(new_log_struct.source, source, LOG_SOURCE_LEN - 1);
@@ -201,11 +216,11 @@ void log_add(LIST_ptr object, log_types type, char *source, char *format, ...) {
   list_push_back(log, &new_log_struct, sizeof(log_struct));
 }
 
-void log_add_errno(LIST_ptr log, log_types type, char *source) {
+void log_add_errno(LIST_ptr log, log_types type, char* source) {
   log_add(log, type, source, "errno(%d) %s", errno, strerror(errno));
 }
 
-void log_get(LIST_ptr object, char *log_out, size_t bufsiz) {
+void log_get(LIST_ptr object, char* log_out, size_t bufsiz) {
   LIST_ptr log = object ? object : global_logs;
 
   int offset = 0;
@@ -218,26 +233,30 @@ void log_get(LIST_ptr object, char *log_out, size_t bufsiz) {
   NODE_ptr log_node = NULL;
   FOR_EACH(&log_node, *log) {
     int written = 0;
-    log_struct *log_value = (log_struct *)log_node->point;
+    log_struct* log_value = (log_struct*)log_node->point;
     if (strcmp(previus_source, log_value->source) != 0 ||
         previus_log_type != log_value->level) {
-      struct tm *tm_info = localtime(&log_value->tm);
-      if (!tm_info) continue;
-      written =
-          snprintf(logbuf + offset, bufsiz - offset,
-                   "\n[%s%s" RESET "] [" VERDE "%d/%d/%d %d:%d:%d" RESET "] %s\n",
-                   __log_type_color(log_value->level), __log_type(log_value->level),
-                   tm_info->tm_mday, tm_info->tm_mon, tm_info->tm_year, tm_info->tm_hour,
-                   tm_info->tm_min, tm_info->tm_sec, log_value->source);
-      if (written < 0 || (size_t)written >= bufsiz - offset) break;
+      struct tm* tm_info = localtime(&log_value->tm);
+      if (!tm_info)
+        continue;
+      written = snprintf(
+          logbuf + offset, bufsiz - offset,
+          "\n[%s%s" RESET "] [" VERDE "%d/%d/%d %d:%d:%d" RESET "] %s\n",
+          __log_type_color(log_value->level), __log_type(log_value->level),
+          tm_info->tm_mday, tm_info->tm_mon, tm_info->tm_year, tm_info->tm_hour,
+          tm_info->tm_min, tm_info->tm_sec, log_value->source);
+      if (written < 0 || (size_t)written >= bufsiz - offset)
+        break;
       offset += written;
       strncpy(previus_source, log_value->source, LOG_SOURCE_LEN);
       previus_source[LOG_SOURCE_LEN - 1] = '\0';
       previus_log_type = log_value->level;
     }
 
-    written = snprintf(logbuf + offset, bufsiz - offset, "%s\n", log_value->content);
-    if (written < 0 || (size_t)written >= bufsiz - offset) break;
+    written =
+        snprintf(logbuf + offset, bufsiz - offset, "%s\n", log_value->content);
+    if (written < 0 || (size_t)written >= bufsiz - offset)
+      break;
     offset += written;
   }
   strncpy(log_out, logbuf, bufsiz - 1);
@@ -246,7 +265,8 @@ void log_get(LIST_ptr object, char *log_out, size_t bufsiz) {
 
 void log_show(LIST_ptr object) {
   LIST_ptr log = object ? object : global_logs;
-  if (!log->head) return;
+  if (!log->head)
+    return;
   char logs_text[65536];
   log_get(log, logs_text, 65536);
   printf("%s\n", logs_text);
@@ -257,10 +277,11 @@ void log_show_and_clear(LIST_ptr log) {
   log_clear(log);
 }
 
-void log_file_save(LIST_ptr object, char *filename) {
+void log_file_save(LIST_ptr object, char* filename) {
   LIST_ptr log = object ? object : global_logs;
-  FILE *log_file = fopen(filename, "w");
-  if (!log_file) return;
+  FILE* log_file = fopen(filename, "w");
+  if (!log_file)
+    return;
   char logs_text[65536];
   log_get(log, logs_text, 65536);
   strip_ansi_escape(logs_text);

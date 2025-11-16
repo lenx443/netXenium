@@ -5,6 +5,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -14,7 +15,7 @@ struct __Implement* __implement_new(char* impl_name) {
   if (!impl) {
     return NULL;
   }
-  impl->__impl_name = strdup(impl_name);
+  impl->__impl_name = Xen_CString_Dup(impl_name);
   if (!impl->__impl_name) {
     Xen_Dealloc(impl);
     return NULL;

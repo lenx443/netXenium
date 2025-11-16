@@ -35,18 +35,20 @@
  */
 
 #include <signal.h>
-#include <string.h>
 
 #include "program.h"
+#include "xen_cstrings.h"
 #include "xen_life.h"
 
-int main(int argc, char **argv) {
-  if (!Xen_Init(argc, argv)) { return 1; }
+int main(int argc, char** argv) {
+  if (!Xen_Init(argc, argv)) {
+    return 1;
+  }
   if (argc > 1) {
-    program.name = strdup(argv[1]);
+    program.name = Xen_CString_Dup(argv[1]);
     load_script(argv[1]);
   } else {
-    program.name = strdup(argv[0]);
+    program.name = Xen_CString_Dup(argv[0]);
     signal(SIGINT, SIG_IGN);
     shell_loop();
   }

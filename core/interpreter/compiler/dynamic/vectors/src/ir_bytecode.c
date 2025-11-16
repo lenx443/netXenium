@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "attrs.h"
 #include "block_list.h"
@@ -10,6 +9,7 @@
 #include "vm_consts.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 
@@ -106,7 +106,7 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
         if (c_inst) {
           Xen_Instance* string = Xen_Attr_Raw(c_inst);
           if (string) {
-            val = strdup(Xen_String_As_CString(string));
+            val = Xen_CString_Dup(Xen_String_As_CString(string));
             Xen_DEL_REF(string);
           }
           Xen_DEL_REF(c_inst);

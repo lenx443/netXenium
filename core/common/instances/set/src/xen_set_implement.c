@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -111,7 +112,7 @@ static Xen_Instance* set_string(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   Xen_Set* set = (Xen_Set*)self;
-  char* buffer = strdup("<Set(");
+  char* buffer = Xen_CString_Dup("<Set(");
   if (!buffer) {
     Xen_DEL_REF(self_id);
     Xen_DEL_REF(stack);
@@ -127,7 +128,7 @@ static Xen_Instance* set_string(ctx_id_t id, Xen_Instance* self,
       Xen_Dealloc(buffer);
       return NULL;
     }
-    const char* value = strdup(Xen_String_As_CString(value_string));
+    const char* value = Xen_CString_Dup(Xen_String_As_CString(value_string));
     if (!value) {
       Xen_DEL_REF(self_id);
       Xen_DEL_REF(stack);
@@ -136,7 +137,7 @@ static Xen_Instance* set_string(ctx_id_t id, Xen_Instance* self,
       return NULL;
     }
     Xen_DEL_REF(value_string);
-    buflen += strlen(value) + 2;
+    buflen += Xen_CString_Len(value) + 2;
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
       Xen_DEL_REF(self_id);

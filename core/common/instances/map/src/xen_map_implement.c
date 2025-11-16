@@ -10,6 +10,7 @@
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -116,7 +117,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   Xen_Map* map = (Xen_Map*)self;
-  char* buffer = strdup("<Map(");
+  char* buffer = Xen_CString_Dup("<Map(");
   if (!buffer) {
     Xen_DEL_REF(self_id);
     Xen_DEL_REF(stack);
@@ -143,7 +144,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       Xen_Dealloc(buffer);
       return NULL;
     }
-    const char* key = strdup(Xen_String_As_CString(key_string));
+    const char* key = Xen_CString_Dup(Xen_String_As_CString(key_string));
     if (!key) {
       Xen_DEL_REF(self_id);
       Xen_DEL_REF(stack);
@@ -153,7 +154,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       Xen_Dealloc(buffer);
       return NULL;
     }
-    const char* value = strdup(Xen_String_As_CString(value_string));
+    const char* value = Xen_CString_Dup(Xen_String_As_CString(value_string));
     if (!value) {
       Xen_DEL_REF(self_id);
       Xen_DEL_REF(stack);
@@ -167,7 +168,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     Xen_DEL_REF(value_string);
     Xen_DEL_REF(key_string);
     Xen_DEL_REF(value_inst);
-    buflen += strlen(key) + strlen(value) + 2;
+    buflen += Xen_CString_Len(key) + Xen_CString_Len(value) + 2;
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
       Xen_DEL_REF(self_id);

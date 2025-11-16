@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "attrs.h"
 #include "bytecode.h"
@@ -9,6 +8,7 @@
 #include "program_code.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 
@@ -84,7 +84,7 @@ void bc_print(ProgramCode_t pc) {
       if (c_inst) {
         Xen_Instance* string = Xen_Attr_Raw(c_inst);
         if (string) {
-          val = strdup(Xen_String_As_CString(string));
+          val = Xen_CString_Dup(Xen_String_As_CString(string));
           Xen_DEL_REF(string);
         }
         Xen_DEL_REF(c_inst);

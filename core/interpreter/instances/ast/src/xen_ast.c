@@ -1,11 +1,14 @@
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "attrs.h"
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_ast_implement.h"
 #include "xen_ast_instance.h"
+#include "xen_cstrings.h"
 #include "xen_nil.h"
 #include "xen_vector.h"
 
@@ -16,14 +19,14 @@ Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
     return NULL;
   }
   if (name) {
-    ast->name = strdup(name);
+    ast->name = Xen_CString_Dup(name);
     if (!ast->name) {
       Xen_DEL_REF(ast);
       return NULL;
     }
   }
   if (value) {
-    ast->value = strdup(value);
+    ast->value = Xen_CString_Dup(value);
     if (!ast->value) {
       Xen_DEL_REF(ast);
       return NULL;
@@ -95,12 +98,28 @@ static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
 
   const char* name = Xen_AST_Node_Name(ast);
   const char* value = Xen_AST_Node_Value(ast);
-  printf("%s", name ? name : "node");
-  if (value)
-    printf("='%s'\n", value);
-  else
+  if (name) {
+    char* name_raw = Xen_CString_As_Raw(name);
+    if (name_raw) {
+      printf("%s", name_raw);
+      Xen_Dealloc(name_raw);
+    } else {
+      printf("%s", name);
+    }
+  } else {
+    printf("Node");
+  }
+  if (value) {
+    char* value_raw = Xen_CString_As_Raw(value);
+    if (value_raw) {
+      printf("='%s'\n", value_raw);
+      Xen_Dealloc(value_raw);
+    } else {
+      printf("='%s'\n", value);
+    }
+  } else {
     printf("\n");
-
+  }
   Xen_Instance* children = Xen_AST_Node_Children(ast);
   size_t n = Xen_SIZE(children);
 

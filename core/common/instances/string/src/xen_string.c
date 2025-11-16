@@ -5,6 +5,7 @@
 
 #include "instance.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
@@ -19,7 +20,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
   if (!string) {
     return NULL;
   }
-  string->__size = strlen(cstring);
+  string->__size = Xen_CString_Len(cstring);
   string->characters = Xen_Alloc(string->__size + 1);
   if (!string->characters) {
     __instance_free((Xen_Instance*)string);

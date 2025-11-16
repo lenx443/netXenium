@@ -12,6 +12,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -64,13 +65,19 @@ static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
-  char* buffer = Xen_Alloc(strlen(string->characters) + 3);
+  char* raw_string = Xen_CString_As_Raw(string->characters);
+  if (!raw_string) {
+    return NULL;
+  }
+  char* buffer = Xen_Alloc(Xen_CString_Len(raw_string) + 3);
   if (!buffer) {
+    Xen_Dealloc(raw_string);
     return NULL;
   }
   strcpy(buffer, "'");
-  strcat(buffer, string->characters);
+  strcat(buffer, raw_string);
   strcat(buffer, "'");
+  Xen_Dealloc(raw_string);
   Xen_Instance* raw = Xen_String_From_CString(buffer);
   if (!raw) {
     Xen_Dealloc(buffer);

@@ -6,6 +6,7 @@
 #include "list.h"
 #include "logs.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 
 LIST_ptr list_new() {
   LIST_ptr list = Xen_Alloc(sizeof(LIST));
@@ -179,7 +180,7 @@ int list_push_back_string(LIST_ptr list, char* str) {
 }
 
 int list_push_back_string_node(LIST_ptr list, const char* str) {
-  int size = strlen(str) + 1;
+  int size = Xen_CString_Len(str) + 1;
   if (!list_push_back(list, str, size))
     return 0;
   return 1;

@@ -6,6 +6,7 @@
 #include "instance.h"
 #include "vm.h"
 #include "xen_boolean_implement.h"
+#include "xen_cstrings.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -130,7 +131,7 @@ const char* Xen_Attr_String_Str(Xen_Instance* inst) {
   if (!string) {
     return NULL;
   }
-  const char* string_str = strdup(Xen_String_As_CString(string));
+  const char* string_str = Xen_CString_Dup(Xen_String_As_CString(string));
   if (!string_str) {
     Xen_DEL_REF(string);
     return NULL;
@@ -180,7 +181,7 @@ const char* Xen_Attr_String_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
   if (!string) {
     return NULL;
   }
-  const char* string_str = strdup(Xen_String_As_CString(string));
+  const char* string_str = Xen_CString_Dup(Xen_String_As_CString(string));
   if (!string_str) {
     Xen_DEL_REF(string);
     return NULL;
@@ -222,7 +223,7 @@ const char* Xen_Attr_Raw_Str(Xen_Instance* inst) {
   if (!raw) {
     return NULL;
   }
-  const char* raw_str = strdup(Xen_String_As_CString(raw));
+  const char* raw_str = Xen_CString_Dup(Xen_String_As_CString(raw));
   if (!raw_str) {
     Xen_DEL_REF(raw);
     return NULL;
@@ -271,7 +272,7 @@ const char* Xen_Attr_Raw_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
   if (!raw) {
     return NULL;
   }
-  const char* raw_str = strdup(Xen_String_As_CString(raw));
+  const char* raw_str = Xen_CString_Dup(Xen_String_As_CString(raw));
   if (!raw_str) {
     Xen_DEL_REF(raw);
     return NULL;
