@@ -902,7 +902,15 @@ int compile_expr_list(Compiler* c, Xen_Instance* node) {
     }
     Xen_DEL_REF(expr);
   }
-  if (!emit(MAKE_TUPLE, Xen_AST_Node_Children_Size(node))) {
+  if (Xen_AST_Node_Value_Cmp(node, "tuple") == 0) {
+    if (!emit(MAKE_TUPLE, Xen_AST_Node_Children_Size(node))) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Value_Cmp(node, "vector") == 0) {
+    if (!emit(MAKE_VECTOR, Xen_AST_Node_Children_Size(node))) {
+      return 0;
+    }
+  } else {
     return 0;
   }
   return 1;

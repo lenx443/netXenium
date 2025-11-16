@@ -14,7 +14,7 @@ static inline void skip_newline(Parser* p) {
   }
 }
 
-static inline void skip_newline_if_before_is(Parser* p, Lexer_Token token) {
+static inline int skip_newline_if_before_is(Parser* p, Lexer_Token token) {
   int pos = p->lexer->pos;
   Lexer_Token tkn = p->token;
   while (p->token.tkn_type == TKN_NEWLINE) {
@@ -24,11 +24,13 @@ static inline void skip_newline_if_before_is(Parser* p, Lexer_Token token) {
       strcmp(p->token.tkn_text, token.tkn_text) != 0) {
     p->lexer->pos = pos;
     p->token = tkn;
+    return 0;
   }
+  return 1;
 }
 
-static inline void skip_newline_if_callback(Parser* p,
-                                            bool (*callback)(Parser*)) {
+static inline int skip_newline_if_callback(Parser* p,
+                                           bool (*callback)(Parser*)) {
   int pos = p->lexer->pos;
   Lexer_Token tkn = p->token;
   while (p->token.tkn_type == TKN_NEWLINE) {
@@ -37,7 +39,9 @@ static inline void skip_newline_if_callback(Parser* p,
   if (!callback(p)) {
     p->lexer->pos = pos;
     p->token = tkn;
+    return 0;
   }
+  return 1;
 }
 
 static bool is_stmt(Parser*);
@@ -141,8 +145,12 @@ bool is_factor(Parser* p) {
   return is_unary(p) || is_primary(p);
 }
 
+bool is_list(Parser* p) {
+  return p->token.tkn_type == TKN_QUESTION || is_factor(p);
+}
+
 bool is_assigment(Parser* p) {
-  return is_factor(p);
+  return is_list(p);
 }
 
 bool is_suffix(Parser* p) {
@@ -683,14 +691,34 @@ Xen_Instance* parser_or(Parser* p) {
 }
 
 Xen_Instance* parser_list(Parser* p) {
+  int vector = 0;
+  if (p->token.tkn_type == TKN_QUESTION) {
+    vector = 1;
+    parser_next(p);
+    skip_newline_if_callback(p, is_expr);
+  }
   Xen_Instance* expr_head = parser_or(p);
   if (!expr_head) {
     return NULL;
   }
   if (p->token.tkn_type != TKN_COMMA) {
+    if (vector) {
+      Xen_Instance* list = Xen_AST_Node_New("List", "vector");
+      if (!list) {
+        Xen_DEL_REF(expr_head);
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(list, expr_head)) {
+        Xen_DEL_REF(expr_head);
+        Xen_DEL_REF(list);
+        return NULL;
+      }
+      Xen_DEL_REF(expr_head);
+      return list;
+    }
     return expr_head;
   }
-  Xen_Instance* list = Xen_AST_Node_New("List", NULL);
+  Xen_Instance* list = Xen_AST_Node_New("List", vector ? "vector" : "tuple");
   if (!list) {
     Xen_DEL_REF(expr_head);
     return NULL;

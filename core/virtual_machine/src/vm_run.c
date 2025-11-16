@@ -219,6 +219,33 @@ static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(tuple);
 }
 
+static void op_make_vector(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
+  if (!vals_array) {
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t idx = oparg; idx > 0; --idx) {
+    Xen_Instance* val = vm_stack_pop(&ctx->ctx_stack);
+    vals_array[idx - 1] = val;
+  }
+  Xen_Instance* vector = Xen_Vector_From_Array(oparg, vals_array);
+  if (!vector) {
+    for (uint8_t idx = 0; idx < oparg; idx++) {
+      Xen_DEL_REF(vals_array[idx]);
+    }
+    Xen_Dealloc(vals_array);
+    ctx->ctx_error = 1;
+    return;
+  }
+  for (uint8_t idx = 0; idx < oparg; idx++) {
+    Xen_DEL_REF(vals_array[idx]);
+  }
+  Xen_Dealloc(vals_array);
+  vm_stack_push(&ctx->ctx_stack, vector);
+  Xen_DEL_REF(vector);
+}
+
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance** args_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!args_array) {
@@ -650,6 +677,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [STORE_INDEX] = op_store_index,
     [STORE_ATTR] = op_store_attr,
     [MAKE_TUPLE] = op_make_tuple,
+    [MAKE_VECTOR] = op_make_vector,
     [CALL] = op_call,
     [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,
