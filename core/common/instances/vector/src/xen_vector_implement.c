@@ -60,6 +60,7 @@ static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
     while ((value = Xen_Attr_Next(iter)) != NULL) {
       if (!Xen_Vector_Push(self, value)) {
         Xen_DEL_REF(value);
+        Xen_DEL_REF(iter);
         return NULL;
       }
       Xen_DEL_REF(value);

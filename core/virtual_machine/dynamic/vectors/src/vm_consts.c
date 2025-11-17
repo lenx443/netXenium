@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #include "instance.h"
 #include "vm_consts.h"

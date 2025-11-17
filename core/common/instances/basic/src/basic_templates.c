@@ -19,9 +19,6 @@
 Xen_Instance* Xen_Basic_String(ctx_id_t id, Xen_Instance* self,
                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if_nil_eval(self) {
-    return NULL;
-  }
   char* addr = Xen_CString_From_Pointer(self);
   if (!addr) {
     return NULL;

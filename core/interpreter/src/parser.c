@@ -698,6 +698,13 @@ Xen_Instance* parser_list(Parser* p) {
     parser_next(p);
     skip_newline_if_callback(p, is_expr);
   }
+  if (!is_expr(p)) {
+    Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL);
+    if (!expr_nil) {
+      return NULL;
+    }
+    return expr_nil;
+  }
   Xen_Instance* expr_head = parser_or(p);
   if (!expr_head) {
     return NULL;
