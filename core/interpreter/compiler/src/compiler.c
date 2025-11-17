@@ -145,6 +145,7 @@ static int compile_expr(Compiler*, Xen_Instance*);
 static int compile_expr_primary(Compiler*, Xen_Instance*);
 static int compile_expr_primary_string(Compiler*, Xen_Instance*);
 static int compile_expr_primary_number(Compiler*, Xen_Instance*);
+static int compile_expr_primary_nil(Compiler*);
 static int compile_expr_primary_literal(Compiler*, Xen_Instance*);
 static int compile_expr_primary_property(Compiler*, Xen_Instance*);
 static int compile_expr_primary_parent(Compiler*, Xen_Instance*);
@@ -157,7 +158,6 @@ static int compile_expr_primary_suffix_attr(Compiler*, Xen_Instance*);
 static int compile_expr_unary(Compiler*, Xen_Instance*);
 static int compile_expr_binary(Compiler*, Xen_Instance*);
 static int compile_expr_list(Compiler*, Xen_Instance*);
-static int compile_expr_nil(Compiler*);
 
 static int compile_assignment(Compiler*, Xen_Instance*);
 static int compile_assignment_expr(Compiler*, Xen_Instance*);
@@ -694,11 +694,6 @@ int compile_expr(Compiler* c, Xen_Instance* node) {
       Xen_DEL_REF(expr);
       return 0;
     }
-  } else if (Xen_AST_Node_Name_Cmp(expr, "Nil") == 0) {
-    if (!compile_expr_nil(c)) {
-      Xen_DEL_REF(expr);
-      return 0;
-    }
   } else {
     Xen_DEL_REF(expr);
     return 0;
@@ -719,6 +714,11 @@ int compile_expr_primary(Compiler* c, Xen_Instance* node) {
     }
   } else if (Xen_AST_Node_Name_Cmp(primary, "Number") == 0) {
     if (!compile_expr_primary_number(c, primary)) {
+      Xen_DEL_REF(primary);
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(primary, "Nil") == 0) {
+    if (!compile_expr_primary_nil(c)) {
       Xen_DEL_REF(primary);
       return 0;
     }
@@ -787,6 +787,17 @@ int compile_expr_primary_number(Compiler* c, Xen_Instance* node) {
   }
   Xen_DEL_REF(number);
   if (!emit(PUSH, (uint8_t)co_idx)) {
+    return 0;
+  }
+  return 1;
+}
+
+int compile_expr_primary_nil(Compiler* c) {
+  Xen_ssize_t co_idx = co_push_instance(nil);
+  if (co_idx == -1) {
+    return 0;
+  }
+  if (!emit(PUSH, co_idx)) {
     return 0;
   }
   return 1;
@@ -1407,17 +1418,6 @@ int compile_expr_list(Compiler* c, Xen_Instance* node) {
     return 1;
   }
   return 0;
-}
-
-int compile_expr_nil(Compiler* c) {
-  Xen_ssize_t co_idx = co_push_instance(nil);
-  if (co_idx == -1) {
-    return 0;
-  }
-  if (!emit(PUSH, co_idx)) {
-    return 0;
-  }
-  return 1;
 }
 
 int compile_assignment(Compiler* c, Xen_Instance* node) {

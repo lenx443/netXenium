@@ -29,6 +29,7 @@ typedef enum {
   TKN_ATTR,
   TKN_COMMA,
   TKN_QUESTION,
+  TKN_DOUBLE_QUESTION,
   TKN_ADD,
   TKN_MINUS,
   TKN_MUL,

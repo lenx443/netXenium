@@ -437,9 +437,17 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token.tkn_text[1] = '\0';
   } else if (c == '?') {
     lexer->pos++;
-    token.tkn_type = TKN_QUESTION;
-    token.tkn_text[0] = '?';
-    token.tkn_text[1] = '\0';
+    if (lexer->src[lexer->pos] == '?') {
+      lexer->pos++;
+      token.tkn_type = TKN_DOUBLE_QUESTION;
+      token.tkn_text[0] = '?';
+      token.tkn_text[2] = '?';
+      token.tkn_text[3] = '\0';
+    } else {
+      token.tkn_type = TKN_QUESTION;
+      token.tkn_text[0] = '?';
+      token.tkn_text[1] = '\0';
+    }
   } else if (c == '+') {
     lexer->pos++;
     token.tkn_type = TKN_ADD;

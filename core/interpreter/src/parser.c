@@ -58,6 +58,7 @@ static Xen_Instance* parser_stmt_list(Parser*);
 static Xen_Instance* parser_stmt(Parser*);
 static Xen_Instance* parser_string(Parser*);
 static Xen_Instance* parser_number(Parser*);
+static Xen_Instance* parser_nil(Parser*);
 static Xen_Instance* parser_literal(Parser*);
 static Xen_Instance* parser_property(Parser*);
 static Xen_Instance* parser_parent(Parser*);
@@ -127,7 +128,8 @@ bool is_expr(Parser* p) {
 
 bool is_primary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_STRING || token == TKN_NUMBER || token == TKN_IDENTIFIER ||
+  if (token == TKN_STRING || token == TKN_NUMBER ||
+      token == TKN_DOUBLE_QUESTION || token == TKN_IDENTIFIER ||
       token == TKN_PROPERTY || token == TKN_LPARENT)
     return true;
   return false;
@@ -257,6 +259,18 @@ Xen_Instance* parser_number(Parser* p) {
   return number;
 }
 
+Xen_Instance* parser_nil(Parser* p) {
+  if (p->token.tkn_type != TKN_DOUBLE_QUESTION) {
+    return NULL;
+  }
+  Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL);
+  if (!expr_nil) {
+    return NULL;
+  }
+  parser_next(p);
+  return expr_nil;
+}
+
 Xen_Instance* parser_literal(Parser* p) {
   if (p->token.tkn_type != TKN_IDENTIFIER)
     return NULL;
@@ -329,6 +343,8 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_string(p);
   } else if (p->token.tkn_type == TKN_NUMBER) {
     value = parser_number(p);
+  } else if (p->token.tkn_type == TKN_DOUBLE_QUESTION) {
+    value = parser_nil(p);
   } else if (p->token.tkn_type == TKN_IDENTIFIER) {
     value = parser_literal(p);
   } else if (p->token.tkn_type == TKN_PROPERTY) {
@@ -697,13 +713,6 @@ Xen_Instance* parser_list(Parser* p) {
     vector = 1;
     parser_next(p);
     skip_newline_if_callback(p, is_expr);
-  }
-  if (!is_expr(p)) {
-    Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL);
-    if (!expr_nil) {
-      return NULL;
-    }
-    return expr_nil;
   }
   Xen_Instance* expr_head = parser_or(p);
   if (!expr_head) {
