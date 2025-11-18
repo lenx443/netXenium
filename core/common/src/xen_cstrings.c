@@ -5,13 +5,13 @@
 #include "xen_cstrings.h"
 #include "xen_typedefs.h"
 
-char* Xen_CString_From_Pointer(void* ptr) {
-  char* buf = Xen_Alloc(2 + sizeof(void*) * 2 + 1);
+Xen_string_t Xen_CString_From_Pointer(void* ptr) {
+  Xen_string_t buf = Xen_Alloc(2 + sizeof(void*) * 2 + 1);
   if (!buf)
     return NULL;
 
   static const char hex[] = "0123456789abcdef";
-  uintptr_t v = (uintptr_t)ptr;
+  Xen_uintptr_t v = (Xen_uintptr_t)ptr;
   char* p = buf;
 
   *p++ = '0';
@@ -19,7 +19,7 @@ char* Xen_CString_From_Pointer(void* ptr) {
 
   int started = 0;
   for (int i = (sizeof(void*) * 2) - 1; i >= 0; i--) {
-    uint8_t nibble = (v >> (i * 4)) & 0xF;
+    Xen_uint8_t nibble = (v >> (i * 4)) & 0xF;
     if (nibble != 0 || started) {
       *p++ = hex[nibble];
       started = 1;
@@ -33,19 +33,19 @@ char* Xen_CString_From_Pointer(void* ptr) {
   return buf;
 }
 
-char* Xen_CString_As_Raw(const char* str) {
+Xen_string_t Xen_CString_As_Raw(Xen_c_string_t str) {
   if (!str)
     return NULL;
-  size_t capacity = 64;
-  char* out = (char*)Xen_Alloc(capacity);
+  Xen_size_t capacity = 64;
+  Xen_string_t out = (Xen_string_t)Xen_Alloc(capacity);
   if (!out)
     return NULL;
-  size_t len = 0;
+  Xen_size_t len = 0;
   const unsigned char* p = (const unsigned char*)str;
   while (*p) {
-    unsigned char c = *p;
-    const char* escape = NULL;
-    size_t esc_len = 0;
+    char c = *p;
+    Xen_c_string_t escape = NULL;
+    Xen_size_t esc_len = 0;
     char buf[4];
     switch (c) {
     case '\\':
@@ -105,7 +105,7 @@ char* Xen_CString_As_Raw(const char* str) {
       break;
     }
     if (len + esc_len + 1 > capacity) {
-      size_t new_capacity = (capacity * 2) + esc_len + 1;
+      Xen_size_t new_capacity = (capacity * 2) + esc_len + 1;
       char* tmp = Xen_Realloc(out, new_capacity);
       if (!tmp) {
         Xen_Dealloc(out);
@@ -123,7 +123,7 @@ char* Xen_CString_As_Raw(const char* str) {
   return out;
 }
 
-Xen_size_t Xen_CString_Len(const char* str) {
+Xen_size_t Xen_CString_Len(Xen_c_string_t str) {
   if (!str) {
     return 0;
   }
@@ -134,12 +134,12 @@ Xen_size_t Xen_CString_Len(const char* str) {
   return (Xen_size_t)(p - str);
 }
 
-char* Xen_CString_Dup(const char* str) {
+Xen_string_t Xen_CString_Dup(Xen_c_string_t str) {
   if (!str) {
     return NULL;
   }
   Xen_size_t len = Xen_CString_Len(str) + 1;
-  char* dup = (char*)Xen_Alloc(len);
+  Xen_string_t dup = (Xen_string_t)Xen_Alloc(len);
   if (!dup) {
     return NULL;
   }

@@ -264,6 +264,27 @@ static void op_make_vector_from_iterable(RunContext_ptr ctx,
   Xen_DEL_REF(vector);
 }
 
+static void op_make_map(RunContext_ptr ctx, uint8_t oparg) {
+  Xen_Instance* map = Xen_Map_New();
+  if (!map) {
+    ERROR;
+  }
+  for (Xen_uint8_t i = 0; i < oparg; i++) {
+    Xen_Instance* value = STACK_POP;
+    Xen_Instance* key = STACK_POP;
+    if (!Xen_Map_Push_Pair(map, (Xen_Map_Pair){key, value})) {
+      Xen_DEL_REF(key);
+      Xen_DEL_REF(value);
+      Xen_DEL_REF(map);
+      ERROR;
+    }
+    Xen_DEL_REF(key);
+    Xen_DEL_REF(value);
+  }
+  STACK_PUSH(map);
+  Xen_DEL_REF(map);
+}
+
 static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_Instance** args_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!args_array) {
@@ -664,6 +685,7 @@ static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
     [MAKE_TUPLE] = op_make_tuple,
     [MAKE_VECTOR] = op_make_vector,
     [MAKE_VECTOR_FROM_ITERABLE] = op_make_vector_from_iterable,
+    [MAKE_MAP] = op_make_map,
     [CALL] = op_call,
     [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,

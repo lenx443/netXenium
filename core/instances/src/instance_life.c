@@ -2,7 +2,6 @@
 #include "xen_boolean_implement.h"
 #include "xen_map_implement.h"
 #include "xen_number_implement.h"
-#include "xen_set_implement.h"
 #include "xen_string_implement.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_iterator_implement.h"
@@ -27,7 +26,6 @@ Instance_Life Instances[] = {
     {Xen_Tuple_Iterator_Init, Xen_Tuple_Iterator_Finish},
     {Xen_Map_Init, Xen_Map_Finish},
     {Xen_Boolean_Init, Xen_Boolean_Finish},
-    {Xen_Set_Init, Xen_Set_Finish},
 };
 
 int Xen_Instance_Init() {

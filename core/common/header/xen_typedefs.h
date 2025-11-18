@@ -43,18 +43,6 @@ typedef uint16_t Xen_uint16_t;
 typedef uint32_t Xen_uint32_t;
 typedef uint64_t Xen_uint64_t;
 
-#define XEN_CHAR_SIZE 1
-#define XEN_UCHAR_SIZE 1
-
-#define XEN_CHAR_MIN -128
-#define XEN_CHAR_MAX 127
-
-#define XEN_UCHAR_MIN 0
-#define XEN_UCHAR_MAX 255
-
-typedef int8_t Xen_char_t;
-typedef uint8_t Xen_uchar_t;
-
 #define XEN_SHORT_SIZE 2
 #define XEN_USHORT_SIZE 2
 
@@ -152,14 +140,19 @@ typedef int32_t Xen_ssize_t;
 #define XEN_UINTPTR_MIN 0
 #define XEN_UINTPTR_MAX UINTPTR_MAX
 
-typedef intptr_t xen_intptr_t;
-typedef uintptr_t xen_uintptr_t;
+typedef intptr_t Xen_intptr_t;
+typedef uintptr_t Xen_uintptr_t;
 
-#define XEN_STRING_SIZE ((Xen_size_t)sizeof(Xen_char_t*))
-#define XEN_USTRING_SIZE ((Xen_size_t)sizeof(Xen_uchar_t*))
+#define XEN_STRING_SIZE ((Xen_size_t)sizeof(char*))
+#define XEN_SSTRING_SIZE ((Xen_size_t)sizeof(signed char*))
+#define XEN_USTRING_SIZE ((Xen_size_t)sizeof(unsigned char*))
 
-typedef Xen_char_t* Xen_string_t;
-typedef Xen_uchar_t* Xen_ustring_t;
+typedef char* Xen_string_t;
+typedef const char* Xen_c_string_t;
+typedef signed char* Xen_sstring_t;
+typedef const signed char* Xen_c_sstring_t;
+typedef unsigned char* Xen_ustring_t;
+typedef const unsigned char* Xen_c_ustring_t;
 
 #define XEN_BOOL_SIZE 1
 

@@ -24,5 +24,6 @@ int Xen_Map_Push_Map(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Map_Get(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Map_Get_Str(Xen_Instance*, const char*);
 Xen_Instance* Xen_Map_Keys(Xen_Instance*);
+int Xen_Map_Has(Xen_Instance*, Xen_Instance*);
 
 #endif

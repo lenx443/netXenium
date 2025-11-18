@@ -1,0 +1,63 @@
+user_list = vector()
+option = 0
+
+println("=== Basic Store System ===")
+
+while option != 3 => {
+  println("--- Menu ---")
+  println("1 - Store User")
+  println("2 - Search User")
+  println("3 - Exit")
+  println("------------")
+  print("option? ")
+  option = number(readline())
+  if option == 1 => {
+    println("- Store User")
+    print("name? ")
+    name = readline()
+    print("age? ")
+    age = number(readline())
+    print("mail? ")
+    mail = readline()
+    if name and mail and age > 12 => {
+      user_list\push({
+        name  ->  name,
+        age   ->  age,
+        mail  ->  mail
+      })
+    } else => {
+      println("Invalid User Data")
+    }
+  } elif option == 2 => {
+    println("- Search User")
+    print("name? ")
+    name = readline()
+    match, idx = 0, 0
+    while not match and idx < size(user_list) => {
+      if user_list[idx]["name"] == name => {
+        match = 1
+      } else => {
+        idx = idx + 1
+      }
+    }
+    if match => {
+      data = user_list[idx]
+      println("=== Result ===")
+      println("name: ", data["name"])
+      println("age: ",  data["age"])
+      println("mail: ", data["mail"])
+      println("==============")
+    } else => {
+      println("User not Found!")
+    }
+  } elif option == 3 => {
+    println("- Exiting")
+    exit()
+  } else => {
+    println("Invalid Option")
+    print("Exit? ")
+    if readline()\lower() == "y" => {
+      exit()
+    }
+  }
+}

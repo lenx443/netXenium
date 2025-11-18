@@ -10,14 +10,13 @@
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_boolean.h"
 #include "xen_cstrings.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_set.h"
-#include "xen_set_implement.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
@@ -86,20 +85,20 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Attr_Index_Size_Get(args, 0);
-    if (Xen_IMPL(stack) != &Xen_Set_Implement) {
+    if (Xen_IMPL(stack) != &Xen_Map_Implement) {
       Xen_DEL_REF(self_id);
       Xen_DEL_REF(stack);
       return NULL;
     }
   }
   if (!stack) {
-    stack = Xen_Set_New();
+    stack = Xen_Map_New();
     if (!stack) {
       Xen_DEL_REF(self_id);
       return NULL;
     }
   } else {
-    if (Xen_Set_Has(stack, self_id)) {
+    if (Xen_Map_Has(stack, self_id)) {
       Xen_Instance* string = Xen_String_From_CString("<Map(...)>");
       if (!string) {
         Xen_DEL_REF(self_id);
@@ -111,7 +110,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       return string;
     }
   }
-  if (!Xen_Set_Push(stack, self_id)) {
+  if (!Xen_Map_Push_Pair(stack, (Xen_Map_Pair){self_id, nil})) {
     Xen_DEL_REF(self_id);
     Xen_DEL_REF(stack);
     return NULL;
@@ -234,6 +233,21 @@ static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return value;
 }
 
+static Xen_Instance* map_opr_has(ctx_id_t id, Xen_Instance* self,
+                                 Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 0);
+  if (Xen_Map_Has(self, value)) {
+    Xen_DEL_REF(value);
+    return Xen_True;
+  }
+  Xen_DEL_REF(value);
+  return Xen_False;
+}
+
 static Xen_Instance* map_push(ctx_id_t id, Xen_Instance* self,
                               Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
@@ -278,6 +292,7 @@ int Xen_Map_Init() {
   }
   if (!Xen_VM_Store_Native_Function(props, "__get_index", map_opr_get_index,
                                     nil) ||
+      !Xen_VM_Store_Native_Function(props, "__has", map_opr_has, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     Xen_DEL_REF(props);
     return 0;

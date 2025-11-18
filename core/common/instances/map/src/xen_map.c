@@ -144,7 +144,7 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
 
 Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   if (!key || !Xen_IMPL(key)->__hash) {
-    return 0;
+    return NULL;
   }
   Xen_Map* map = (Xen_Map*)map_inst;
   Xen_Instance* hash_inst =
@@ -198,4 +198,42 @@ Xen_Instance* Xen_Map_Keys(Xen_Instance* map) {
     return NULL;
   }
   return Xen_ADD_REF(((Xen_Map*)map)->map_keys);
+}
+
+int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
+  if (!key || !Xen_IMPL(key)->__hash) {
+    return 0;
+  }
+  Xen_Map* map = (Xen_Map*)map_inst;
+  Xen_Instance* hash_inst =
+      Xen_VM_Call_Native_Function(key->__impl->__hash, key, nil, nil);
+  if (!hash_inst || Xen_Nil_Eval(hash_inst)) {
+    return 0;
+  }
+
+  unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
+  Xen_DEL_REF(hash_inst);
+  struct __Map_Node* current = map->map_buckets[hash_index];
+  while (current) {
+    Xen_Instance* eval = nil;
+    if (Xen_IMPL(key) == &Xen_String_Implement) {
+      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
+          strcmp(((Xen_String*)current->key)->characters,
+                 ((Xen_String*)key)->characters) == 0) {
+        eval = Xen_True;
+      } else {
+        eval = Xen_False;
+      }
+    } else {
+      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
+      if (!eval) {
+        return 0;
+      }
+    }
+    if (eval == Xen_True) {
+      return 1;
+    }
+    current = current->next;
+  }
+  return 0;
 }

@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -62,6 +63,7 @@ static Xen_Instance* parser_nil(Parser*);
 static Xen_Instance* parser_literal(Parser*);
 static Xen_Instance* parser_property(Parser*);
 static Xen_Instance* parser_parent(Parser*);
+static Xen_Instance* parser_map(Parser*);
 static Xen_Instance* parser_expr(Parser*);
 static Xen_Instance* parser_primary(Parser*);
 static Xen_Instance* parser_unary(Parser*);
@@ -130,7 +132,7 @@ bool is_primary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
   if (token == TKN_STRING || token == TKN_NUMBER ||
       token == TKN_DOUBLE_QUESTION || token == TKN_IDENTIFIER ||
-      token == TKN_PROPERTY || token == TKN_LPARENT)
+      token == TKN_PROPERTY || token == TKN_LPARENT || token == TKN_LBRACE)
     return true;
   return false;
 }
@@ -323,6 +325,188 @@ Xen_Instance* parser_parent(Parser* p) {
   return parent;
 }
 
+Xen_Instance* parser_map(Parser* p) {
+  if (p->token.tkn_type != TKN_LBRACE) {
+    return NULL;
+  }
+  Xen_Instance* map = Xen_AST_Node_New("Map", NULL);
+  if (!map) {
+    return NULL;
+  }
+  parser_next(p);
+  skip_newline(p);
+  if (p->token.tkn_type == TKN_RBRACE) {
+    parser_next(p);
+    return map;
+  }
+  Xen_Instance* element_head = Xen_AST_Node_New("MapElement", NULL);
+  if (!element_head) {
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  if (p->token.tkn_type == TKN_LBRACKET) {
+    parser_next(p);
+    skip_newline(p);
+    Xen_Instance* key = parser_primary(p);
+    if (!key) {
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    skip_newline(p);
+    if (p->token.tkn_type != TKN_RBRACKET) {
+      Xen_DEL_REF(key);
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    parser_next(p);
+    if (!Xen_AST_Node_Push_Child(element_head, key)) {
+      Xen_DEL_REF(key);
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    Xen_DEL_REF(key);
+  } else if (p->token.tkn_type == TKN_IDENTIFIER) {
+    Xen_Instance* literal = Xen_AST_Node_New("Literal", p->token.tkn_text);
+    if (!literal) {
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    parser_next(p);
+    if (!Xen_AST_Node_Push_Child(element_head, literal)) {
+      Xen_DEL_REF(literal);
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    Xen_DEL_REF(literal);
+  } else {
+    Xen_DEL_REF(element_head);
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  skip_newline(p);
+  if (p->token.tkn_type == TKN_ARROW) {
+    parser_next(p);
+    skip_newline(p);
+    Xen_Instance* expr_node = parser_or(p);
+    if (!expr_node) {
+      return NULL;
+    }
+    Xen_Instance* expr = Xen_AST_Node_Wrap(expr_node, "Expr");
+    if (!expr) {
+      Xen_DEL_REF(expr_node);
+      return NULL;
+    }
+    Xen_DEL_REF(expr_node);
+    if (!Xen_AST_Node_Push_Child(element_head, expr)) {
+      Xen_DEL_REF(expr);
+      Xen_DEL_REF(element_head);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    Xen_DEL_REF(expr);
+  }
+  skip_newline(p);
+  if (!Xen_AST_Node_Push_Child(map, element_head)) {
+    Xen_DEL_REF(element_head);
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  Xen_DEL_REF(element_head);
+  while (p->token.tkn_type == TKN_COMMA) {
+    parser_next(p);
+    skip_newline(p);
+    Xen_Instance* element = Xen_AST_Node_New("MapElement", NULL);
+    if (!element) {
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    if (p->token.tkn_type == TKN_LBRACKET) {
+      parser_next(p);
+      skip_newline(p);
+      Xen_Instance* key = parser_primary(p);
+      if (!key) {
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      skip_newline(p);
+      if (p->token.tkn_type != TKN_RBRACKET) {
+        Xen_DEL_REF(key);
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      parser_next(p);
+      if (!Xen_AST_Node_Push_Child(element, key)) {
+        Xen_DEL_REF(key);
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      Xen_DEL_REF(key);
+    } else if (p->token.tkn_type == TKN_IDENTIFIER) {
+      Xen_Instance* literal = Xen_AST_Node_New("Literal", p->token.tkn_text);
+      if (!literal) {
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      parser_next(p);
+      if (!Xen_AST_Node_Push_Child(element, literal)) {
+        Xen_DEL_REF(literal);
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      Xen_DEL_REF(literal);
+    } else {
+      Xen_DEL_REF(element);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    skip_newline(p);
+    if (p->token.tkn_type == TKN_ARROW) {
+      parser_next(p);
+      skip_newline(p);
+      Xen_Instance* expr_node = parser_or(p);
+      if (!expr_node) {
+        return NULL;
+      }
+      Xen_Instance* expr = Xen_AST_Node_Wrap(expr_node, "Expr");
+      if (!expr) {
+        Xen_DEL_REF(expr_node);
+        return NULL;
+      }
+      Xen_DEL_REF(expr_node);
+      if (!Xen_AST_Node_Push_Child(element, expr)) {
+        Xen_DEL_REF(expr);
+        Xen_DEL_REF(element);
+        Xen_DEL_REF(map);
+        return NULL;
+      }
+      Xen_DEL_REF(expr);
+    }
+    skip_newline(p);
+    if (!Xen_AST_Node_Push_Child(map, element)) {
+      Xen_DEL_REF(element);
+      Xen_DEL_REF(map);
+      return NULL;
+    }
+    Xen_DEL_REF(element);
+  }
+  if (p->token.tkn_type != TKN_RBRACE) {
+    Xen_DEL_REF(map);
+    return NULL;
+  }
+  parser_next(p);
+  return map;
+}
+
 Xen_Instance* parser_expr(Parser* p) {
   Xen_Instance* value = parser_list(p);
   if (!value) {
@@ -351,6 +535,8 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_property(p);
   } else if (p->token.tkn_type == TKN_LPARENT) {
     value = parser_parent(p);
+  } else if (p->token.tkn_type == TKN_LBRACE) {
+    value = parser_map(p);
   }
   if (!value) {
     return NULL;

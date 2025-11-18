@@ -47,8 +47,6 @@ include_directories(
   core/common/instances/tuple/tuple_iterator/types/header/
   core/common/instances/method/include/
   core/common/instances/method/types/header/
-  core/common/instances/set/include/
-  core/common/instances/set/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -139,10 +137,6 @@ set(SOURCES
   # implementacion del tipo `method`
   core/common/instances/method/src/xen_method_implement.c
   core/common/instances/method/src/xen_method.c
-
-  # implementacion del tipo `set`
-  core/common/instances/set/src/xen_set_implement.c
-  core/common/instances/set/src/xen_set.c
 
   # Implementacion del tipo `AST`
   core/interpreter/instances/ast/src/xen_ast.c

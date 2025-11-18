@@ -3,9 +3,9 @@
 
 #include "xen_typedefs.h"
 
-char* Xen_CString_From_Pointer(void*);
-char* Xen_CString_As_Raw(const char*);
-Xen_size_t Xen_CString_Len(const char*);
-char* Xen_CString_Dup(const char*);
+Xen_string_t Xen_CString_From_Pointer(void*);
+Xen_string_t Xen_CString_As_Raw(Xen_c_string_t);
+Xen_size_t Xen_CString_Len(Xen_c_string_t);
+Xen_string_t Xen_CString_Dup(Xen_c_string_t);
 
 #endif
