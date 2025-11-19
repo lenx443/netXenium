@@ -34,7 +34,7 @@ void ir_free(const IR_Bytecode_Array_ptr ir) {
   Xen_Dealloc(ir);
 }
 
-int ir_emit(IR_Bytecode_Array_ptr ir, uint8_t opcode, uint8_t oparg) {
+int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg) {
   IR_Instruct_t instr = {opcode, oparg, 0, NULL, 0};
   if (!ir) {
     error("El arreglo de bytecode esta vacío");
@@ -81,16 +81,16 @@ int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode,
 void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
   IR_Bytecode_Array_ptr code = block->instr_array;
   for (Xen_size_t i = 0; i < code->ir_size; i++) {
-    printf("%d %ld %s", code->ir_array[i].instr_num, i,
+    printf("%ld %ld %s", code->ir_array[i].instr_num, i,
            Instruct_Info_Table[code->ir_array[i].opcode].name);
     if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
         INSTRUCT_FLAG_CO_NAME) {
       if (!consts) {
-        printf(" %d (name?)\n", code->ir_array[i].oparg);
+        printf(" %ld (name?)\n", code->ir_array[i].oparg);
       } else {
         Xen_Instance* c_name =
             Xen_Attr_Index_Size_Get(consts->c_names, code->ir_array[i].oparg);
-        printf(" %d (%s)\n", code->ir_array[i].oparg,
+        printf(" %ld (%s)\n", code->ir_array[i].oparg,
                c_name ? Xen_String_As_CString(c_name) : "Null");
         if (c_name)
           Xen_DEL_REF(c_name);
@@ -98,7 +98,7 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
     } else if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
                INSTRUCT_FLAG_CO_INSTANCE) {
       if (!consts) {
-        printf(" %d (instance?)\n", code->ir_array[i].oparg);
+        printf(" %ld (instance?)\n", code->ir_array[i].oparg);
       } else {
         char* val = NULL;
         Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(consts->c_instances,
@@ -111,7 +111,7 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
           }
           Xen_DEL_REF(c_inst);
         }
-        printf(" %d (%s)\n", code->ir_array[i].oparg, val ? val : "Null");
+        printf(" %ld (%s)\n", code->ir_array[i].oparg, val ? val : "Null");
         if (val)
           Xen_Dealloc(val);
       }
@@ -119,10 +119,10 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
                INSTRUCT_FLAG_ARG) {
       if (code->ir_array[i].is_jump && block->ready) {
         printf(
-            " %d\n",
+            " %ld\n",
             code->ir_array[i].jump_block->instr_array->ir_array[0].instr_num);
       } else {
-        printf(" %d\n", code->ir_array[i].oparg);
+        printf(" %ld\n", code->ir_array[i].oparg);
       }
     } else {
       printf("\n");

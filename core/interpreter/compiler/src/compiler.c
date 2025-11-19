@@ -1,14 +1,13 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "attrs.h"
 #include "block_list.h"
 #include "bytecode.h"
 #include "compiler.h"
+#include "compiler_ext.h"
 #include "instance.h"
 #include "ir_bytecode.h"
-#include "ir_instruct.h"
 #include "lexer.h"
 #include "operators.h"
 #include "parser.h"
@@ -20,6 +19,7 @@
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_boolean.h"
+#include "xen_cstrings.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -30,6 +30,7 @@
 typedef struct {
   block_list_ptr b_list;
   block_node_ptr* b_current;
+  struct LoopContext_Stack** loop_stack;
   uint8_t mode;
 } Compiler;
 
@@ -50,6 +51,15 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
     printf("Current token: %d '%s'\n", parser.token.tkn_type,
            parser.token.tkn_text);
     printf("Pos: %ld\n", lexer.pos);
+    Xen_ssize_t start =
+        (Xen_ssize_t)(lexer.pos - 32) < 0 ? 0 : (lexer.pos - 32);
+    Xen_size_t end = (lexer.pos + 32) > Xen_CString_Len(lexer.src)
+                         ? Xen_CString_Len(lexer.src)
+                         : (lexer.pos + 32);
+    for (Xen_size_t i = (Xen_size_t)start; i < end; i++) {
+      putchar(lexer.src[i]);
+    }
+    printf("\n");
 #endif
     return NULL;
   }
@@ -136,6 +146,12 @@ static inline B_PTR __B_MAKE_CURRENT(Compiler* c) {
   B_SET_CURRENT(node);
   return node;
 }
+
+struct LoopContext_Stack {
+  B_PTR b_break;
+  B_PTR b_continue;
+  struct LoopContext_Stack* next;
+};
 
 static int compile_program(Compiler*, Xen_Instance*);
 
@@ -662,6 +678,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       return NULL;
     }
     for (Xen_size_t idx = 0; idx < count; idx++) {
+      struct Compiler_LoopContext {};
       Xen_DEL_REF(values[idx]);
     }
     Xen_Dealloc(values);
@@ -779,7 +796,7 @@ int compile_expr_primary_string(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(string);
-  if (!emit(PUSH, (uint8_t)co_idx)) {
+  if (!emit(PUSH, co_idx)) {
     return 0;
   }
   return 1;
@@ -796,7 +813,7 @@ int compile_expr_primary_number(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   Xen_DEL_REF(number);
-  if (!emit(PUSH, (uint8_t)co_idx)) {
+  if (!emit(PUSH, co_idx)) {
     return 0;
   }
   return 1;
@@ -818,7 +835,7 @@ int compile_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD, (uint8_t)co_idx)) {
+  if (!emit(LOAD, co_idx)) {
     return 0;
   }
   return 1;
@@ -829,7 +846,7 @@ int compile_expr_primary_property(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD_PROP, (uint8_t)co_idx)) {
+  if (!emit(LOAD_PROP, co_idx)) {
     return 0;
   }
   return 1;
@@ -867,7 +884,7 @@ int compile_expr_primary_map(Compiler* c, Xen_Instance* node) {
     }
     Xen_DEL_REF(element);
   }
-  if (!emit(MAKE_MAP, (uint8_t)count)) {
+  if (!emit(MAKE_MAP, count)) {
     return 0;
   }
   return 1;
@@ -895,7 +912,7 @@ int compile_expr_primary_map_element(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(literal);
-    if (!emit(PUSH, (uint8_t)co_idx)) {
+    if (!emit(PUSH, co_idx)) {
       Xen_DEL_REF(key);
       return 0;
     }
@@ -921,7 +938,7 @@ int compile_expr_primary_map_element(Compiler* c, Xen_Instance* node) {
       Xen_DEL_REF(key);
       return 0;
     }
-    if (!emit(PUSH, (uint8_t)co_idx)) {
+    if (!emit(PUSH, co_idx)) {
       Xen_DEL_REF(key);
       return 0;
     }
@@ -1024,14 +1041,14 @@ int compile_expr_primary_suffix_call(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     Xen_DEL_REF(kw_tuple);
-    if (!emit(PUSH, (uint8_t)co_idx)) {
+    if (!emit(PUSH, co_idx)) {
       return 0;
     }
-    if (!emit(CALL_KW, (uint8_t)Xen_AST_Node_Children_Size(node))) {
+    if (!emit(CALL_KW, Xen_AST_Node_Children_Size(node))) {
       return 0;
     }
   } else {
-    if (!emit(CALL, (uint8_t)Xen_AST_Node_Children_Size(node))) {
+    if (!emit(CALL, Xen_AST_Node_Children_Size(node))) {
       return 0;
     }
   }
@@ -1115,7 +1132,7 @@ int compile_expr_primary_suffix_attr(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD_ATTR, (uint8_t)co_idx)) {
+  if (!emit(LOAD_ATTR, co_idx)) {
     return 0;
   }
   return 1;
@@ -1379,55 +1396,55 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
     }
     Xen_DEL_REF(expr2);
     if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_POW)) {
+      if (!emit(BINARYOP, Xen_OPR_POW)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_MUL)) {
+      if (!emit(BINARYOP, Xen_OPR_MUL)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_DIV)) {
+      if (!emit(BINARYOP, Xen_OPR_DIV)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_MOD)) {
+      if (!emit(BINARYOP, Xen_OPR_MOD)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_ADD)) {
+      if (!emit(BINARYOP, Xen_OPR_ADD)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_SUB)) {
+      if (!emit(BINARYOP, Xen_OPR_SUB)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_LT)) {
+      if (!emit(BINARYOP, Xen_OPR_LT)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_LE)) {
+      if (!emit(BINARYOP, Xen_OPR_LE)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_GT)) {
+      if (!emit(BINARYOP, Xen_OPR_GT)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_GE)) {
+      if (!emit(BINARYOP, Xen_OPR_GE)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_EQ)) {
+      if (!emit(BINARYOP, Xen_OPR_EQ)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_NE)) {
+      if (!emit(BINARYOP, Xen_OPR_NE)) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
-      if (!emit(BINARYOP, (uint8_t)Xen_OPR_HAS)) {
+      if (!emit(BINARYOP, Xen_OPR_HAS)) {
         return 0;
       }
     } else {
@@ -1634,7 +1651,7 @@ int compile_assignment_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE, (uint8_t)co_idx)) {
+  if (!emit(STORE, co_idx)) {
     return 0;
   }
   return 1;
@@ -1645,7 +1662,7 @@ int compile_assignment_expr_primary_property(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE_PROP, (uint8_t)co_idx)) {
+  if (!emit(STORE_PROP, co_idx)) {
     return 0;
   }
   return 1;
@@ -1756,7 +1773,7 @@ int compile_assignment_expr_primary_suffix_attr(Compiler* c,
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE_ATTR, (uint8_t)co_idx)) {
+  if (!emit(STORE_ATTR, co_idx)) {
     return 0;
   }
   return 1;
@@ -1794,23 +1811,23 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
   }
   if (starred) {
     if (starred_index == 0) {
-      if (!emit(SEQ_UNPACK_END, (uint8_t)count)) {
+      if (!emit(SEQ_UNPACK_END, count)) {
         return 0;
       }
     } else if (starred_index == (Xen_ssize_t)count - 1) {
-      if (!emit(SEQ_UNPACK_START, (uint8_t)count)) {
+      if (!emit(SEQ_UNPACK_START, count)) {
         return 0;
       }
     } else {
-      if (!emit(SEQ_UNPACK_END, (uint8_t)(count - starred_index))) {
+      if (!emit(SEQ_UNPACK_END, (count - starred_index))) {
         return 0;
       }
-      if (!emit(SEQ_UNPACK_START, (uint8_t)(starred_index + 1))) {
+      if (!emit(SEQ_UNPACK_START, (starred_index + 1))) {
         return 0;
       }
     }
   } else {
-    if (!emit(SEQ_UNPACK, (uint8_t)count)) {
+    if (!emit(SEQ_UNPACK, count)) {
       return 0;
     }
   }
@@ -2091,71 +2108,7 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
 
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
-  Compiler c = {b_list, b_current, mode};
+  struct LoopContext_Stack* loop_stack;
+  Compiler c = {b_list, b_current, &loop_stack, mode};
   return compile_program(&c, ast);
-}
-
-int blocks_linealizer(block_list_ptr blocks) {
-  if (!blocks)
-    return 0;
-  block_node_ptr current_block = blocks->head;
-  int n = 0;
-  while (current_block) {
-    if (current_block->instr_array->ir_size == 0) {
-      if (!ir_emit(current_block->instr_array, NOP, 0)) {
-        return 0;
-      }
-    }
-    for (Xen_size_t i = 0; i < current_block->instr_array->ir_size; i++) {
-      current_block->instr_array->ir_array[i].instr_num = n++;
-    }
-    current_block->ready = 1;
-    current_block = current_block->next;
-  }
-  return 1;
-}
-
-int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
-  pc->code = bc_new();
-  if (!pc->code) {
-    return 0;
-  }
-  pc->consts = vm_consts_from_values(blocks->consts->c_names,
-                                     blocks->consts->c_instances);
-  if (!pc->consts) {
-    bc_free(pc->code);
-    return 0;
-  }
-  Xen_ssize_t depth = 0;
-  Xen_ssize_t effect = 0;
-  block_node_ptr b_iter = blocks->head;
-  while (b_iter) {
-    if (!b_iter->ready) {
-      b_iter = b_iter->next;
-      continue;
-    }
-    for (size_t i_iter = 0; i_iter < b_iter->instr_array->ir_size; i_iter++) {
-      IR_Instruct_t inst = b_iter->instr_array->ir_array[i_iter];
-      if (inst.is_jump) {
-        if (!bc_emit(pc->code, inst.opcode,
-                     inst.jump_block->instr_array->ir_array[0].instr_num)) {
-          bc_free(pc->code);
-          vm_consts_free(pc->consts);
-          return 0;
-        }
-      } else {
-        if (!bc_emit(pc->code, inst.opcode, inst.oparg)) {
-          bc_free(pc->code);
-          vm_consts_free(pc->consts);
-          return 0;
-        }
-      }
-      effect += Instruct_Info_Table[inst.opcode].stack_effect(inst.oparg);
-      if (effect > depth)
-        depth = effect;
-    }
-    b_iter = b_iter->next;
-  }
-  pc->stack_depth = depth;
-  return 1;
 }

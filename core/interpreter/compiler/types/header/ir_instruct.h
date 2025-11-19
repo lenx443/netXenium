@@ -1,16 +1,16 @@
 #ifndef __IR_ISNTRUCT_H__
 #define __IR_ISNTRUCT_H__
 
-#include <stdint.h>
+#include "xen_typedefs.h"
 
 struct block_node;
 
 struct IR_Instruct {
-  uint8_t opcode;
-  uint8_t oparg;
-  uint8_t is_jump;
+  Xen_uint8_t opcode;
+  Xen_ulong_t oparg;
+  Xen_uint8_t is_jump;
   struct block_node* jump_block;
-  int instr_num;
+  Xen_ulong_t instr_num;
 };
 
 typedef struct IR_Instruct IR_Instruct_t;

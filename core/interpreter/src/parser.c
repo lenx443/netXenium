@@ -9,6 +9,7 @@
 #include "xen_ast.h"
 #include "xen_cstrings.h"
 #include "xen_nil.h"
+#include "xen_typedefs.h"
 
 static inline void skip_newline(Parser* p) {
   while (p->token.tkn_type == TKN_NEWLINE) {
@@ -54,6 +55,7 @@ static bool is_factor(Parser*);
 static bool is_assigment(Parser*);
 static bool is_suffix(Parser*);
 static bool is_keyword(Parser*);
+static bool is_flow_keyword(Parser*);
 
 static Xen_Instance* parser_stmt_list(Parser*);
 static Xen_Instance* parser_stmt(Parser*);
@@ -87,6 +89,7 @@ static Xen_Instance* parser_if_stmt(Parser*);
 static Xen_Instance* parser_while_stmt(Parser*);
 static Xen_Instance* parser_for_stmt(Parser*);
 static Xen_Instance* parser_block(Parser*);
+static Xen_Instance* parser_flow_stmt(Parser*);
 
 void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
@@ -170,6 +173,18 @@ bool is_keyword(Parser* p) {
     return true;
   }
   return false;
+}
+
+bool is_flow_keyword(Parser* p) {
+  Lexer_Token_Type type = p->token.tkn_type;
+  Xen_string_t text = p->token.tkn_text;
+  if (type != TKN_KEYWORD) {
+    return 0;
+  }
+  if (strcmp(text, "break") == 0 || strcmp(text, "continue") == 0) {
+    return 1;
+  }
+  return 0;
 }
 
 Xen_Instance* parser_stmt_list(Parser* p) {
@@ -1236,6 +1251,9 @@ Xen_Instance* parser_keyword(Parser* p) {
   if (strcmp(p->token.tkn_text, "for") == 0) {
     return parser_for_stmt(p);
   }
+  if (is_flow_keyword(p)) {
+    return parser_flow_stmt(p);
+  }
   return NULL;
 }
 
@@ -1496,4 +1514,16 @@ Xen_Instance* parser_block(Parser* p) {
     Xen_DEL_REF(stmt);
   }
   return block;
+}
+
+Xen_Instance* parser_flow_stmt(Parser* p) {
+  if (!is_flow_keyword(p)) {
+    return NULL;
+  }
+  Xen_Instance* flow = Xen_AST_Node_New("FlowStatement", p->token.tkn_text);
+  if (!flow) {
+    return NULL;
+  }
+  parser_next(p);
+  return flow;
 }

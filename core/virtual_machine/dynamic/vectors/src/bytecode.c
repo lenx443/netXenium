@@ -67,36 +67,42 @@ int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg) {
 void bc_print(ProgramCode_t pc) {
   Bytecode_Array_ptr code = pc.code;
   for (Xen_size_t i = 0; i < code->bc_size; i++) {
-    printf("%ld %s", i, Instruct_Info_Table[code->bc_array[i].bci_opcode].name);
-    if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
-        INSTRUCT_FLAG_CO_NAME) {
-      Xen_Instance* c_name = Xen_Attr_Index_Size_Get(
-          pc.consts->c_names, code->bc_array[i].bci_oparg);
-      printf(" %d (%s)\n", code->bc_array[i].bci_oparg,
-             c_name ? Xen_String_As_CString(c_name) : "Null");
-      if (c_name)
-        Xen_DEL_REF(c_name);
-    } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
-               INSTRUCT_FLAG_CO_INSTANCE) {
-      char* val = NULL;
-      Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(
-          pc.consts->c_instances, code->bc_array[i].bci_oparg);
-      if (c_inst) {
-        Xen_Instance* string = Xen_Attr_Raw(c_inst);
-        if (string) {
-          val = Xen_CString_Dup(Xen_String_As_CString(string));
-          Xen_DEL_REF(string);
+    if (code->bc_array[i].bci_opcode <= HALT) {
+      printf("%ld %s", i,
+             Instruct_Info_Table[code->bc_array[i].bci_opcode].name);
+      if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
+          INSTRUCT_FLAG_CO_NAME) {
+        Xen_Instance* c_name = Xen_Attr_Index_Size_Get(
+            pc.consts->c_names, code->bc_array[i].bci_oparg);
+        printf(" %d (%s)\n", code->bc_array[i].bci_oparg,
+               c_name ? Xen_String_As_CString(c_name) : "Null");
+        if (c_name)
+          Xen_DEL_REF(c_name);
+      } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
+                 INSTRUCT_FLAG_CO_INSTANCE) {
+        char* val = NULL;
+        Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(
+            pc.consts->c_instances, code->bc_array[i].bci_oparg);
+        if (c_inst) {
+          Xen_Instance* string = Xen_Attr_Raw(c_inst);
+          if (string) {
+            val = Xen_CString_Dup(Xen_String_As_CString(string));
+            Xen_DEL_REF(string);
+          }
+          Xen_DEL_REF(c_inst);
         }
-        Xen_DEL_REF(c_inst);
+        printf(" %d (%s)\n", code->bc_array[i].bci_oparg, val ? val : "Null");
+        if (val)
+          Xen_Dealloc(val);
+      } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
+                 INSTRUCT_FLAG_ARG) {
+        printf(" %d\n", code->bc_array[i].bci_oparg);
+      } else {
+        printf("\n");
       }
-      printf(" %d (%s)\n", code->bc_array[i].bci_oparg, val ? val : "Null");
-      if (val)
-        Xen_Dealloc(val);
-    } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
-               INSTRUCT_FLAG_ARG) {
-      printf(" %d\n", code->bc_array[i].bci_oparg);
     } else {
-      printf("\n");
+      printf("%ld %02X %u\n", i, code->bc_array[i].bci_opcode,
+             code->bc_array[i].bci_oparg);
     }
   }
 }

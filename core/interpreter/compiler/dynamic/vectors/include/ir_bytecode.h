@@ -5,6 +5,7 @@
 
 #include "ir_instruct.h"
 #include "vm_consts.h"
+#include "xen_typedefs.h"
 
 struct block_node;
 struct block_list;
@@ -21,8 +22,8 @@ typedef IR_Bytecode_Array_t* IR_Bytecode_Array_ptr;
 
 IR_Bytecode_Array_ptr ir_new();
 void ir_free(const IR_Bytecode_Array_ptr);
-int ir_emit(IR_Bytecode_Array_ptr, uint8_t, uint8_t);
-int ir_emit_jump(IR_Bytecode_Array_ptr, uint8_t, struct block_node*);
+Xen_int_t ir_emit(IR_Bytecode_Array_ptr, Xen_uint8_t, Xen_ulong_t);
+Xen_int_t ir_emit_jump(IR_Bytecode_Array_ptr, Xen_uint8_t, struct block_node*);
 
 #ifndef NDEBUG
 void ir_print_block(struct block_node*, vm_Consts_ptr);

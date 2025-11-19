@@ -3,23 +3,25 @@
 
 #include "ir_bytecode.h"
 #include "vm_consts.h"
+#include "xen_typedefs.h"
 
 struct block_node {
   IR_Bytecode_Array_ptr instr_array;
-  struct block_node *next;
+  struct block_node* next;
   int ready;
 };
 
 struct block_list {
   vm_Consts_ptr consts;
-  struct block_node *head;
-  struct block_node *tail;
+  Xen_ulong_t total_offset;
+  struct block_node* head;
+  struct block_node* tail;
 };
 
 typedef struct block_node block_node_t;
-typedef block_node_t *block_node_ptr;
+typedef block_node_t* block_node_ptr;
 typedef struct block_list block_list_t;
-typedef block_list_t *block_list_ptr;
+typedef block_list_t* block_list_ptr;
 
 block_node_ptr block_new();
 void block_free(block_node_ptr);

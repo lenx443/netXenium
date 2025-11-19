@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "attrs.h"
+#include "bc_instruct.h"
 #include "bytecode.h"
 #include "implement.h"
 #include "instance.h"
@@ -30,13 +31,15 @@
   ctx->ctx_error = 1;                                                          \
   return;
 
+#define JUMP(ip) ctx->ctx_ip = ip
+
 #define STACK_PUSH(inst) vm_stack_push(&ctx->ctx_stack, inst);
 #define STACK_POP vm_stack_pop(&ctx->ctx_stack)
 
 static void op_nop([[maybe_unused]] RunContext_ptr ctx,
-                   [[maybe_unused]] uint8_t oparg) {}
+                   [[maybe_unused]] Xen_ulong_t oparg) {}
 
-static void op_push(RunContext_ptr ctx, uint8_t oparg) {
+static void op_push(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* c_inst =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
   if (!c_inst) {
@@ -46,13 +49,13 @@ static void op_push(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(c_inst);
 }
 
-static void op_pop(RunContext_ptr ctx, uint8_t oparg) {
+static void op_pop(RunContext_ptr ctx, Xen_ulong_t oparg) {
   for (uint8_t i = 0; i < oparg; i++) {
     Xen_DEL_REF(STACK_POP);
   }
 }
 
-static void op_load(RunContext_ptr ctx, uint8_t oparg) {
+static void op_load(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* c_name =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -69,7 +72,7 @@ static void op_load(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
+static void op_load_prop(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* c_name =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -86,7 +89,8 @@ static void op_load_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_load_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_load_index(RunContext_ptr ctx,
+                          [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* index = STACK_POP;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
@@ -101,7 +105,7 @@ static void op_load_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_load_attr(RunContext_ptr ctx, uint8_t oparg) {
+static void op_load_attr(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* attr =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
@@ -117,7 +121,7 @@ static void op_load_attr(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(attr);
 }
 
-static void op_store(RunContext_ptr ctx, uint8_t oparg) {
+static void op_store(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* c_name =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -137,7 +141,7 @@ static void op_store(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_store_prop(RunContext_ptr ctx, uint8_t oparg) {
+static void op_store_prop(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* c_name =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -154,7 +158,8 @@ static void op_store_prop(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_store_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_store_index(RunContext_ptr ctx,
+                           [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* index = STACK_POP;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
@@ -169,7 +174,7 @@ static void op_store_index(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(index);
 }
 
-static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
+static void op_store_attr(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
   Xen_Instance* attr =
@@ -185,7 +190,7 @@ static void op_store_attr(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(attr);
 }
 
-static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
+static void op_make_tuple(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!vals_array) {
     ERROR;
@@ -210,7 +215,7 @@ static void op_make_tuple(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(tuple);
 }
 
-static void op_make_vector(RunContext_ptr ctx, uint8_t oparg) {
+static void op_make_vector(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!vals_array) {
     ERROR;
@@ -236,7 +241,7 @@ static void op_make_vector(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_make_vector_from_iterable(RunContext_ptr ctx,
-                                         [[maybe_unused]] uint8_t oparg) {
+                                         [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
@@ -264,7 +269,7 @@ static void op_make_vector_from_iterable(RunContext_ptr ctx,
   Xen_DEL_REF(vector);
 }
 
-static void op_make_map(RunContext_ptr ctx, uint8_t oparg) {
+static void op_make_map(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* map = Xen_Map_New();
   if (!map) {
     ERROR;
@@ -285,7 +290,7 @@ static void op_make_map(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(map);
 }
 
-static void op_call(RunContext_ptr ctx, uint8_t oparg) {
+static void op_call(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance** args_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!args_array) {
     ERROR;
@@ -325,7 +330,7 @@ static void op_call(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(args);
 }
 
-static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
+static void op_call_kw(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* kw_names = STACK_POP;
   Xen_Instance* kwargs = Xen_Map_New();
   if (!kwargs) {
@@ -391,7 +396,7 @@ static void op_call_kw(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(kwargs);
 }
 
-static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
+static void op_binaryop(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* second = STACK_POP;
   Xen_Instance* first = STACK_POP;
   Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
@@ -407,7 +412,7 @@ static void op_binaryop(RunContext_ptr ctx, uint8_t oparg) {
 }
 
 static void op_unary_positive(RunContext_ptr ctx,
-                              [[maybe_unused]] uint8_t oparg) {
+                              [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
   if (!method) {
@@ -432,7 +437,7 @@ static void op_unary_positive(RunContext_ptr ctx,
 }
 
 static void op_unary_negative(RunContext_ptr ctx,
-                              [[maybe_unused]] uint8_t oparg) {
+                              [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
   if (!method) {
@@ -456,7 +461,8 @@ static void op_unary_negative(RunContext_ptr ctx,
   Xen_DEL_REF(inst);
 }
 
-static void op_unary_not(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_unary_not(RunContext_ptr ctx,
+                         [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
   if (!method) {
@@ -480,14 +486,15 @@ static void op_unary_not(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(inst);
 }
 
-static void op_copy(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_copy(RunContext_ptr ctx, [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* val = STACK_POP;
   STACK_PUSH(val);
   STACK_PUSH(val);
   Xen_DEL_REF(val);
 }
 
-static void op_print_top(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_print_top(RunContext_ptr ctx,
+                         [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* val = STACK_POP;
   STACK_PUSH(val);
   if_nil_eval(val) {
@@ -501,35 +508,36 @@ static void op_print_top(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(val);
 }
 
-static void op_jump(RunContext_ptr ctx, uint8_t oparg) {
-  ctx->ctx_ip = oparg;
+static void op_jump(RunContext_ptr ctx, Xen_ulong_t oparg) {
+  JUMP(oparg);
 }
 
-static void op_jump_if_true(RunContext_ptr ctx, uint8_t oparg) {
+static void op_jump_if_true(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* cond = STACK_POP;
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
     ctx->ctx_error = 1;
   }
   if (evl == Xen_True) {
-    ctx->ctx_ip = oparg;
+    JUMP(oparg);
   }
   Xen_DEL_REF(cond);
 }
 
-static void op_jump_if_false(RunContext_ptr ctx, uint8_t oparg) {
+static void op_jump_if_false(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* cond = STACK_POP;
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
     ctx->ctx_error = 1;
   }
   if (evl == Xen_False) {
-    ctx->ctx_ip = oparg;
+    JUMP(oparg);
   }
   Xen_DEL_REF(cond);
 }
 
-static void op_iter_get(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
+static void op_iter_get(RunContext_ptr ctx,
+                        [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
@@ -541,13 +549,13 @@ static void op_iter_get(RunContext_ptr ctx, [[maybe_unused]] uint8_t oparg) {
   Xen_DEL_REF(iter);
 }
 
-static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
+static void op_iter_for(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* iter = STACK_POP;
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
     Xen_DEL_REF(iter);
     STACK_PUSH(nil);
-    ctx->ctx_ip = oparg;
+    JUMP(oparg);
     return;
   }
   Xen_DEL_REF(iter);
@@ -555,7 +563,7 @@ static void op_iter_for(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(rsult);
 }
 
-static void op_seq_unpack(RunContext_ptr ctx, uint8_t oparg) {
+static void op_seq_unpack(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -578,7 +586,7 @@ static void op_seq_unpack(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(seq);
 }
 
-static void op_seq_unpack_start(RunContext_ptr ctx, uint8_t oparg) {
+static void op_seq_unpack_start(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -624,7 +632,7 @@ static void op_seq_unpack_start(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(seq);
 }
 
-static void op_seq_unpack_end(RunContext_ptr ctx, uint8_t oparg) {
+static void op_seq_unpack_end(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -636,8 +644,8 @@ static void op_seq_unpack_end(RunContext_ptr ctx, uint8_t oparg) {
     Xen_DEL_REF(seq);
     ERROR;
   }
-  for (Xen_ssize_t i = seq_size; i > (Xen_ssize_t)seq_size - (oparg - 1); --i) {
-    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
+  for (Xen_size_t i = seq_size; i-- > (Xen_size_t)seq_size - (oparg - 1);) {
+    Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i);
     if (!val) {
       Xen_DEL_REF(seq);
       ERROR;
@@ -670,7 +678,7 @@ static void op_seq_unpack_end(RunContext_ptr ctx, uint8_t oparg) {
   Xen_DEL_REF(seq);
 }
 
-static void (*Dispatcher[HALT])(RunContext_ptr, uint8_t) = {
+static void (*Dispatcher[HALT])(RunContext_ptr, Xen_ulong_t) = {
     [NOP] = op_nop,
     [PUSH] = op_push,
     [POP] = op_pop,
@@ -732,7 +740,20 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
       previous_op = Instruct_Info_Table[instr.bci_opcode].name;
       previous_offset = ctx->ctx_ip - 1;
 #endif
-      Dispatcher[instr.bci_opcode](ctx, instr.bci_oparg);
+      Xen_ulong_t oparg = instr.bci_oparg;
+      if (instr.bci_oparg == 0xFF) {
+        if (pc.code->bc_size - ctx->ctx_ip < XEN_ULONG_SIZE) {
+          ctx->ctx_error = 1;
+          break;
+        }
+        oparg = 0;
+        for (Xen_size_t i = 0; i < XEN_ULONG_SIZE; i++) {
+          bc_Instruct_t extend_arg_instr = pc.code->bc_array[ctx->ctx_ip++];
+          oparg |= ((Xen_ulong_t)extend_arg_instr.bci_oparg) << (8 * i);
+          ctx->ctx_jump_offset++;
+        }
+      }
+      Dispatcher[instr.bci_opcode](ctx, oparg);
     }
     if (ctx->ctx_error) {
 #ifndef NDEBUG

@@ -21,7 +21,8 @@ struct RunContext {
   Xen_Instance* ctx_args;
   Xen_Instance* ctx_kwargs;
   struct __Instance* ctx_instances;
-  uint32_t ctx_ip;
+  Xen_ulong_t ctx_ip;
+  Xen_ulong_t ctx_jump_offset;
   bool ctx_running;
   bool ctx_error;
 };
