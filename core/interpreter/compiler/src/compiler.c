@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -30,7 +31,7 @@
 typedef struct {
   block_list_ptr b_list;
   block_node_ptr* b_current;
-  struct LoopContext_Stack** loop_stack;
+  struct CompileContext_Stack** cc_stack;
   uint8_t mode;
 } Compiler;
 
@@ -134,6 +135,13 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #define B_SET_CURRENT(block) *c->b_current = block
 #define B_MAKE_CURRENT() __B_MAKE_CURRENT(c)
 
+#define CC struct CompileContext
+#define CCS struct CompileContext_Stack
+#define CCS_ptr struct CompileContext_Stack*
+#define CC_TOP (*c->cc_stack)->context
+#define CCS_PUSH(lc) compile_context_stack_push(c->cc_stack, lc)
+#define CCS_POP compile_context_stack_pop(c->cc_stack)
+
 static inline B_PTR __B_MAKE_CURRENT(Compiler* c) {
   B_PTR node = B_NEW();
   if (!node) {
@@ -147,11 +155,39 @@ static inline B_PTR __B_MAKE_CURRENT(Compiler* c) {
   return node;
 }
 
-struct LoopContext_Stack {
+struct CompileContext {
   B_PTR b_break;
   B_PTR b_continue;
-  struct LoopContext_Stack* next;
 };
+
+struct CompileContext_Stack {
+  struct CompileContext context;
+  struct CompileContext_Stack* next;
+};
+
+static int compile_context_stack_push(struct CompileContext_Stack**,
+                                      struct CompileContext);
+static void compile_context_stack_pop(struct CompileContext_Stack**);
+
+int compile_context_stack_push(struct CompileContext_Stack** ccs,
+                               struct CompileContext cc) {
+  assert(ccs != NULL);
+  CCS_ptr ccs_new = Xen_Alloc(sizeof(CCS));
+  if (!ccs_new) {
+    return 0;
+  }
+  ccs_new->context = cc;
+  ccs_new->next = *ccs;
+  *ccs = ccs_new;
+  return 1;
+}
+
+void compile_context_stack_pop(struct CompileContext_Stack** ccs) {
+  assert(ccs != NULL && *ccs != NULL);
+  CCS_ptr temp = *ccs;
+  *ccs = (*ccs)->next;
+  Xen_Dealloc(temp);
+}
 
 static int compile_program(Compiler*, Xen_Instance*);
 
@@ -201,7 +237,10 @@ static int compile_while_statement(Compiler*, Xen_Instance*);
 
 static int compile_for_statement(Compiler*, Xen_Instance*);
 
+static int compile_flow_statement(Compiler*, Xen_Instance*);
+
 int compile_program(Compiler* c, Xen_Instance* node) {
+
   Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
   if (!stmt_list) {
     return 0;
@@ -258,6 +297,11 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
     }
   } else if (Xen_AST_Node_Name_Cmp(stmt, "ForStatement") == 0) {
     if (!compile_for_statement(c, stmt)) {
+      Xen_DEL_REF(stmt);
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(stmt, "FlowStatement") == 0) {
+    if (!compile_flow_statement(c, stmt)) {
       Xen_DEL_REF(stmt);
       return 0;
     }
@@ -2017,11 +2061,18 @@ int compile_while_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(if_false_block);
     return 0;
   }
-  if (!compile_block(c, wdo)) {
+  if (!CCS_PUSH(((CC){if_false_block, init_block}))) {
     Xen_DEL_REF(wdo);
     B_FREE(if_false_block);
     return 0;
   }
+  if (!compile_block(c, wdo)) {
+    Xen_DEL_REF(wdo);
+    B_FREE(if_false_block);
+    CCS_POP;
+    return 0;
+  }
+  CCS_POP;
   Xen_DEL_REF(wdo);
   if (!emit_jump(JUMP, init_block)) {
     B_FREE(if_false_block);
@@ -2085,11 +2136,18 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(end_block);
     return 0;
   }
-  if (!compile_block(c, block)) {
+  if (!CCS_PUSH(((CC){end_block, for_block}))) {
     Xen_DEL_REF(block);
     B_FREE(end_block);
     return 0;
   }
+  if (!compile_block(c, block)) {
+    Xen_DEL_REF(block);
+    B_FREE(end_block);
+    CCS_POP;
+    return 0;
+  }
+  CCS_POP;
   Xen_DEL_REF(block);
   if (!emit_jump(JUMP, for_block)) {
     B_FREE(end_block);
@@ -2106,9 +2164,29 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
   return 1;
 }
 
+int compile_flow_statement(Compiler* c, Xen_Instance* node) {
+  if (Xen_AST_Node_Value_Cmp(node, "break") == 0) {
+    if (!emit_jump(JUMP, CC_TOP.b_break)) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Value_Cmp(node, "continue") == 0) {
+    if (!emit_jump(JUMP, CC_TOP.b_continue)) {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+  return 1;
+}
+
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
-  struct LoopContext_Stack* loop_stack;
+  struct CompileContext_Stack* loop_stack = NULL;
   Compiler c = {b_list, b_current, &loop_stack, mode};
-  return compile_program(&c, ast);
+  if (!compile_program(&c, ast)) {
+    assert(loop_stack == NULL);
+    return 0;
+  }
+  assert(loop_stack == NULL);
+  return 1;
 }
