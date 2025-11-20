@@ -52,12 +52,11 @@ while option != 3 => {
     }
   } elif option == 3 => {
     println("- Exiting")
-    exit()
+    break
   } else => {
     println("Invalid Option")
     print("Exit? ")
-    if readline()\lower() == "y" => {
-      exit()
-    }
+    if readline()\lower() == "y" => exit()
+    else => continue
   }
 }

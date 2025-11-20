@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "gc_header.h"
+
 typedef uint8_t Xen_Instance_Flag;
 
 #define _WITH_JOIN(a, b) a##b
@@ -23,6 +25,7 @@ typedef uint8_t Xen_Instance_Flag;
          _WITH_UNIQUE(_ctx_, __LINE__).active = 0)
 
 #define Xen_INSTANCE_HEAD                                                      \
+  struct __GC_Header __gc;                                                     \
   size_t __refers;                                                             \
   struct __Implement* __impl;                                                  \
   size_t __size;                                                               \

@@ -22,6 +22,8 @@ if(SHELL_BASIC)
 endif()
 
 include_directories(
+  core/garbage_collector/include/
+  core/garbage_collector/types/header
   core/include/
   core/common/header/
   core/common/include/
@@ -82,6 +84,9 @@ set(SOURCES
   core/src/xen_life.c
   core/src/program.c
   core/src/read_string_utf8.c
+
+  # Recolector De Basura
+  core/garbage_collector/src/xen_gc.c
 
   # Codigo Commun
   core/common/src/xen_alloc.c
