@@ -82,7 +82,6 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
                        (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 4));
   } else
     ctx_new->ctx_kwargs = NULL;
-  ctx_new->ctx_instances = Xen_Map_New();
   Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
                      (Xen_GCHeader**)&ctx_new->ctx_instances,
                      (Xen_GCHeader*)Xen_Map_New());

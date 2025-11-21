@@ -18,6 +18,7 @@ void Xen_GC_Trace_GCHeader(struct __GC_Header*);
 void Xen_GC_Trace(struct __GC_Header*);
 void Xen_GC_Mark();
 void Xen_GC_Sweep();
+void Xen_GC_Shutdown();
 
 static inline void Xen_GC_Write_Field(struct __GC_Header* parent,
                                       struct __GC_Header** field,

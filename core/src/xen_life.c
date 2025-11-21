@@ -45,5 +45,5 @@ void Xen_Finish() {
   Xen_Dealloc(program.name);
   vm_destroy();
   log_free(NULL);
-  Xen_GC_Collect();
+  Xen_GC_Shutdown();
 }

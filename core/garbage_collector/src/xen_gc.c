@@ -34,13 +34,14 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
                                void (*fn_destroy)(struct __GC_Header**)) {
   assert(size >= sizeof(struct __GC_Header));
   struct __GC_Header* h = (struct __GC_Header*)Xen_Alloc(size);
+  Xen_GC_Push_Root(h);
 
   h->color = GC_WHITE;
   h->generation = GC_YOUNG;
   h->age = 0;
   h->size = size;
-  h->trace = fn_trace;
-  h->destroy = fn_destroy;
+  h->trace = NULL;
+  h->destroy = NULL;
 
   h->prev = NULL;
   h->next = __gc_heap.young;
@@ -53,10 +54,11 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   __gc_heap.pressure += size;
 
   if (__gc_heap.pressure > __gc_heap.threshold) {
-    Xen_GC_Push_Root(h);
     Xen_GC_Collect();
-    Xen_GC_Pop_Root();
   }
+  h->trace = fn_trace;
+  h->destroy = fn_destroy;
+  Xen_GC_Pop_Root();
   return h;
 }
 
@@ -152,4 +154,10 @@ void Xen_GC_Sweep() {
 
     curr = next;
   }
+}
+
+void Xen_GC_Shutdown() {
+  Xen_GC_Collect();
+  assert(__gc_heap.pressure == 0);
+  assert(__gc_heap.total_bytes == 0);
 }
