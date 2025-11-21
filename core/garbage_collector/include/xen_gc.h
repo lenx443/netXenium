@@ -11,6 +11,7 @@ struct __GC_Header* Xen_GC_New(Xen_size_t, void (*)(struct __GC_Header*),
 void Xen_GC_Collect();
 void Xen_GC_Push_Root(struct __GC_Header*);
 void Xen_GC_Pop_Root();
+void Xen_GC_Pop_Roots(Xen_size_t);
 void Xen_GC_Push_Gray(struct __GC_Header*);
 struct __GC_Header* Xen_GC_Pop_Gray();
 void Xen_GC_Trace_GCHeader(struct __GC_Header*);

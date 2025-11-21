@@ -6,12 +6,14 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_nil.h"
@@ -22,7 +24,15 @@
 #include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
 #include "xen_tuple_iterator.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
+
+static void tuple_trace(Xen_GCHeader* h) {
+  Xen_Tuple* tuple = (Xen_Tuple*)h;
+  for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)tuple->instances[i]);
+  }
+}
 
 static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
                                  Xen_Instance* args, Xen_Instance* kwargs) {
@@ -39,9 +49,6 @@ static Xen_Instance* tuple_destroy(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
-  for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
-    Xen_DEL_REF(tuple->instances[i]);
-  }
   Xen_Dealloc(tuple->instances);
   return nil;
 }
@@ -59,40 +66,35 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Attr_Index_Size_Get(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
       return NULL;
     }
   }
+  Xen_size_t roots = 0;
   if (!stack) {
     stack = Xen_Map_New();
     if (!stack) {
-      Xen_DEL_REF(self_id);
       return NULL;
     }
+    roots++;
   } else {
     if (Xen_Map_Has(stack, self_id)) {
       Xen_Instance* string = Xen_String_From_CString("<Tuple(...)>");
       if (!string) {
-        Xen_DEL_REF(self_id);
-        Xen_DEL_REF(stack);
+        Xen_GC_Pop_Roots(roots);
         return NULL;
       }
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
+      Xen_GC_Pop_Roots(roots);
       return string;
     }
   }
   if (!Xen_Map_Push_Pair(stack, (Xen_Map_Pair){self_id, nil})) {
-    Xen_DEL_REF(self_id);
-    Xen_DEL_REF(stack);
+    Xen_GC_Pop_Roots(roots);
     return NULL;
   }
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   char* buffer = Xen_CString_Dup("<Tuple(");
   if (!buffer) {
-    Xen_DEL_REF(self_id);
-    Xen_DEL_REF(stack);
+    Xen_GC_Pop_Roots(roots);
     return NULL;
   }
   Xen_size_t buflen = 8;
@@ -100,25 +102,20 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* value_inst = Xen_Tuple_Peek_Index(self, i);
     Xen_Instance* value_string = Xen_Attr_Raw_Stack(value_inst, stack);
     if (!value_string) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = Xen_CString_Dup(Xen_String_As_CString(value_string));
     if (!value) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
-      Xen_DEL_REF(value_string);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
-    Xen_DEL_REF(value_string);
     buflen += Xen_CString_Len(value);
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc((void*)value);
       Xen_Dealloc(buffer);
       return NULL;
@@ -130,8 +127,7 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
       buflen += 2;
       char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
-        Xen_DEL_REF(self_id);
-        Xen_DEL_REF(stack);
+        Xen_GC_Pop_Roots(roots);
         Xen_Dealloc(buffer);
         return NULL;
       }
@@ -139,8 +135,7 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
       strcat(buffer, ", ");
     }
   }
-  Xen_DEL_REF(self_id);
-  Xen_DEL_REF(stack);
+  Xen_GC_Pop_Roots(roots);
   buflen += 2;
   char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {
@@ -175,7 +170,7 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
   if (index >= self->__size) {
     return NULL;
   }
-  return Xen_ADD_REF(((Xen_Tuple*)self)->instances[index]);
+  return ((Xen_Tuple*)self)->instances[index];
 }
 
 static Xen_Instance* tuple_iter(ctx_id_t id, Xen_Instance* self,
@@ -185,10 +180,11 @@ static Xen_Instance* tuple_iter(ctx_id_t id, Xen_Instance* self,
 }
 
 Xen_Implement Xen_Tuple_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "tuple",
     .__inst_size = sizeof(struct Xen_Tuple_Instance),
     .__inst_default_flags = 0x00,
+    .__inst_trace = tuple_trace,
     .__props = NULL,
     .__alloc = tuple_alloc,
     .__create = NULL,
@@ -211,13 +207,13 @@ int Xen_Tuple_Init() {
   if (!Xen_VM_Store_Native_Function(props, "__get_index", tuple_opr_get_index,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__iter", tuple_iter, nil)) {
-    Xen_DEL_REF(props);
     return 0;
   }
   Xen_Tuple_Implement.__props = props;
+  Xen_GC_Push_Root((Xen_GCHeader*)props);
   return 1;
 }
 
 void Xen_Tuple_Finish() {
-  Xen_DEL_REF(Xen_Tuple_Implement.__props);
+  Xen_GC_Pop_Root();
 }

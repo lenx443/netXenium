@@ -1,5 +1,7 @@
 #include "xen_tuple_iterator.h"
+#include "gc_header.h"
 #include "instance.h"
+#include "xen_gc.h"
 #include "xen_nil.h"
 #include "xen_tuple_iterator_implement.h"
 #include "xen_tuple_iterator_instance.h"
@@ -10,7 +12,8 @@ Xen_Instance* Xen_Tuple_Iterator_New(Xen_Instance* tuple) {
   if (!it) {
     return NULL;
   }
-  it->tuple = Xen_ADD_REF(tuple);
+  Xen_GC_Write_Field((Xen_GCHeader*)it, (Xen_GCHeader**)&it->tuple,
+                     (Xen_GCHeader*)tuple);
   it->index = 0;
   return (Xen_Instance*)it;
 }

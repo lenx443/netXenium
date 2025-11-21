@@ -9,21 +9,6 @@
 
 typedef uint8_t Xen_Instance_Flag;
 
-#define _WITH_JOIN(a, b) a##b
-#define _WITH_UNIQUE(a, b) _WITH_JOIN(a, b)
-
-#define WITH_INSTANCE(var, expr)                                               \
-  for (struct {                                                                \
-         int active;                                                           \
-         Xen_Instance* val;                                                    \
-       } _WITH_UNIQUE(_ctx_, __LINE__) = {1, (expr)};                          \
-       _WITH_UNIQUE(_ctx_, __LINE__).active;                                   \
-       (Xen_DEL_REF(_WITH_UNIQUE(_ctx_, __LINE__).val),                        \
-        _WITH_UNIQUE(_ctx_, __LINE__).active = 0))                             \
-    for (Xen_Instance* var = _WITH_UNIQUE(_ctx_, __LINE__).val;                \
-         _WITH_UNIQUE(_ctx_, __LINE__).active;                                 \
-         _WITH_UNIQUE(_ctx_, __LINE__).active = 0)
-
 #define Xen_INSTANCE_HEAD                                                      \
   struct __GC_Header __gc;                                                     \
   struct __Implement* __impl;                                                  \

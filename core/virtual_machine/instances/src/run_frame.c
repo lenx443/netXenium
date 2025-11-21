@@ -1,12 +1,11 @@
 #include "run_frame.h"
 #include "basic.h"
+#include "callable.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
-#include "vm_stack.h"
-#include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -22,7 +21,15 @@ static void frame_trace(Xen_GCHeader* h) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_caller);
   }
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_self);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack);
+  if (ctx->ctx_code) {
+    if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
+      Xen_GC_Trace_GCHeader(
+          (Xen_GCHeader*)ctx->ctx_code->code.consts->c_instances);
+      Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code->code.consts->c_names);
+    }
+  }
+  if (ctx->ctx_stack)
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack);
   if (ctx->ctx_args) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_args);
   }
@@ -50,31 +57,36 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
   if (!Xen_Tuple_Peek_Index(args, 0))
     ctx_new->ctx_closure = nil;
   else
-    ctx_new->ctx_closure = Xen_Tuple_Get_Index(args, 0);
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
+                       (Xen_GCHeader**)&ctx_new->ctx_closure,
+                       (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 0));
   if (!Xen_Tuple_Peek_Index(args, 1))
     ctx_new->ctx_caller = NULL;
   else
-    ctx_new->ctx_caller = Xen_Tuple_Get_Index(args, 1);
-  ctx_new->ctx_self = Xen_Tuple_Get_Index(args, 2);
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
+                       (Xen_GCHeader**)&ctx_new->ctx_caller,
+                       (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 1));
+  Xen_GC_Write_Field((Xen_GCHeader*)ctx_new, (Xen_GCHeader**)&ctx_new->ctx_self,
+                     (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 2));
   ctx_new->ctx_code = NULL;
   ctx_new->ctx_stack = NULL;
   if (Xen_Tuple_Peek_Index(args, 3)) {
-    ctx_new->ctx_args = Xen_Tuple_Get_Index(args, 3);
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
+                       (Xen_GCHeader**)&ctx_new->ctx_args,
+                       (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 3));
   } else
     ctx_new->ctx_args = NULL;
   if (Xen_Tuple_Peek_Index(args, 4)) {
-    ctx_new->ctx_kwargs = Xen_Tuple_Get_Index(args, 4);
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
+                       (Xen_GCHeader**)&ctx_new->ctx_kwargs,
+                       (Xen_GCHeader*)Xen_Tuple_Get_Index(args, 4));
   } else
     ctx_new->ctx_kwargs = NULL;
   ctx_new->ctx_instances = Xen_Map_New();
+  Xen_GC_Write_Field((Xen_GCHeader*)ctx_new,
+                     (Xen_GCHeader**)&ctx_new->ctx_instances,
+                     (Xen_GCHeader*)Xen_Map_New());
   if (!ctx_new->ctx_instances) {
-    Xen_DEL_REF(ctx_new->ctx_closure);
-    if (ctx_new->ctx_caller)
-      Xen_DEL_REF(ctx_new->ctx_caller);
-    Xen_DEL_REF(ctx_new->ctx_self);
-    if (ctx_new->ctx_args)
-      Xen_DEL_REF(ctx_new->ctx_args);
-    Xen_DEL_REF(ctx_new);
     return NULL;
   }
   ctx_new->ctx_ip = 0;
@@ -86,16 +98,6 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
 static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
                                    Xen_INSTANCE* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  struct RunContext* ctx = (struct RunContext*)self;
-  Xen_DEL_REF(ctx->ctx_instances);
-  Xen_DEL_REF(ctx->ctx_closure);
-  if (ctx->ctx_caller)
-    Xen_DEL_REF(ctx->ctx_caller);
-  Xen_DEL_REF(ctx->ctx_self);
-  if (ctx->ctx_args)
-    Xen_DEL_REF(ctx->ctx_args);
-  if (ctx->ctx_kwargs)
-    Xen_DEL_REF(ctx->ctx_kwargs);
   return nil;
 }
 

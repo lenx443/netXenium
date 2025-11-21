@@ -65,10 +65,6 @@ Xen_Instance* Xen_Number_Copy(Xen_Instance* n_inst) {
   if (!r)
     return NULL;
   r->digits = Xen_Alloc(n->size * sizeof(uint32_t));
-  if (!r->digits) {
-    Xen_DEL_REF(r);
-    return NULL;
-  }
   for (Xen_size_t i = 0; i < n->size; i++) {
     r->digits[i] = n->digits[i];
   }
@@ -89,10 +85,6 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!zero->digits) {
-      Xen_DEL_REF(zero);
-      return NULL;
-    }
     zero->digits[0] = 0;
     zero->size = 1;
     zero->sign = 0;
@@ -105,10 +97,6 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
     return NULL;
 
   res->digits = (uint32_t*)Xen_Alloc(n->size * sizeof(uint32_t));
-  if (!res->digits) {
-    Xen_DEL_REF(res);
-    return NULL;
-  }
   memcpy(res->digits, n->digits, n->size * sizeof(uint32_t));
   res->size = n->size;
   res->sign = n->sign;
@@ -172,7 +160,6 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
   }
 
   if (base < 2 || base > 36) {
-    Xen_DEL_REF(z);
     return NULL;
   }
 
@@ -187,15 +174,10 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
   }
 
   if (end == start) {
-    Xen_DEL_REF(z);
     return NULL;
   }
 
   z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
   z->digits[0] = 0;
   z->size = 1;
 
@@ -209,7 +191,6 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
       Xen_Dealloc(z->digits);
       z->digits = NULL;
       z->size = 0;
-      Xen_DEL_REF(z);
       return NULL;
     }
 
@@ -224,13 +205,6 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
       uint32_t limb = (uint32_t)(carry & 0xFFFFFFFFu);
       uint32_t* nd =
           (uint32_t*)Xen_Realloc(z->digits, (z->size + 1) * sizeof(uint32_t));
-      if (!nd) {
-        Xen_Dealloc(z->digits);
-        z->digits = NULL;
-        z->size = 0;
-        Xen_DEL_REF(z);
-        return NULL;
-      }
       z->digits = nd;
       z->digits[z->size] = limb;
       z->size += 1;
@@ -264,10 +238,6 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -284,11 +254,6 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
   }
 
   z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
-
   z->digits[0] = mag;
   z->size = 1;
   z->sign = sign;
@@ -308,10 +273,6 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -328,10 +289,6 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
   }
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -357,10 +314,6 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -377,10 +330,6 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
   }
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -406,10 +355,6 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -419,10 +364,6 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
   uint64_t mag = (uint64_t)value;
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -448,10 +389,6 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -468,10 +405,6 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
   }
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -497,10 +430,6 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -510,10 +439,6 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
   unsigned long long mag = (unsigned long long)value;
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -539,10 +464,6 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -559,10 +480,6 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
   }
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -588,10 +505,6 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!z->digits) {
-      Xen_DEL_REF(z);
-      return NULL;
-    }
     z->digits[0] = 0;
     z->size = 1;
     z->sign = 0;
@@ -602,10 +515,6 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
   unsigned long long mag = value;
 
   z->digits = (uint32_t*)Xen_Alloc(2 * sizeof(uint32_t));
-  if (!z->digits) {
-    Xen_DEL_REF(z);
-    return NULL;
-  }
 
   size_t n = 0;
   while (mag != 0) {
@@ -918,10 +827,6 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!zero->digits) {
-      Xen_DEL_REF(zero);
-      return NULL;
-    }
     zero->digits[0] = 0;
     zero->size = 1;
     zero->sign = 0;
@@ -984,10 +889,6 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!zero->digits) {
-      Xen_DEL_REF(zero);
-      return NULL;
-    }
     zero->digits[0] = 0;
     zero->size = 1;
     zero->sign = 0;
@@ -1052,10 +953,6 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!zero->digits) {
-      Xen_DEL_REF(zero);
-      return NULL;
-    }
     zero->digits[0] = 0;
     zero->size = 1;
     zero->sign = 0;
@@ -1093,12 +990,6 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   }
 
   res->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-  if (!res->digits) {
-    Xen_DEL_REF(res);
-    Xen_Dealloc(remainder);
-    return NULL;
-  }
-
   res->digits[0] = remainder_val;
   if (remainder_val == 0) {
     res->size = 0;
@@ -1116,11 +1007,9 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   if (!base_inst || !exp_inst)
     return NULL;
 
-  Xen_Instance* zero = Xen_Number_From_CString("0", 10);
   Xen_Instance* one = Xen_Number_From_CString("1", 10);
 
   if (Xen_Number_Is_Zero(exp_inst)) {
-    Xen_DEL_REF(zero);
     return one;
   }
 
@@ -1131,23 +1020,15 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   while (!Xen_Number_Is_Zero(exp)) {
     if (Xen_Number_Is_Odd(exp)) {
       Xen_Instance* tmp = Xen_Number_Mul(result, base);
-      Xen_DEL_REF(result);
       result = tmp;
     }
 
     Xen_Instance* tmp_base = Xen_Number_Mul(base, base);
-    Xen_DEL_REF(base);
     base = tmp_base;
 
     Xen_Instance* tmp_exp = Xen_Number_Div2(exp);
-    Xen_DEL_REF(exp);
     exp = tmp_exp;
   }
-
-  Xen_DEL_REF(exp);
-  Xen_DEL_REF(zero);
-  Xen_DEL_REF(base);
-  Xen_DEL_REF(one);
 
   ((Xen_Number*)result)->sign = ((Xen_Number*)base_inst)->sign;
   return result;
@@ -1208,12 +1089,6 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   }
 
   result->digits = (uint32_t*)Xen_Alloc(i * sizeof(uint32_t));
-  if (!result->digits) {
-    Xen_DEL_REF(result);
-    Xen_Dealloc(res_digits);
-    return NULL;
-  }
-
   memcpy(result->digits, res_digits, i * sizeof(uint32_t));
   result->size = i;
   result->sign = a->sign;
@@ -1245,10 +1120,6 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     if (!zero)
       return NULL;
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-    if (!zero->digits) {
-      Xen_DEL_REF(zero);
-      return NULL;
-    }
     zero->digits[0] = 0;
     zero->size = 1;
     zero->sign = 0;

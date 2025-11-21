@@ -36,7 +36,7 @@ static int __args_set_handle(const char* name, Xen_INSTANCE* inst) {
 
 static Xen_INSTANCE* __args_get_handle(const char* name) {
   (void)name;
-  return Xen_ADD_REF(vm->root_context->ctx_args);
+  return vm->root_context->ctx_args;
 }
 
 static struct Xen_RegisterStream streams[] = {

@@ -22,10 +22,6 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
   }
   string->__size = Xen_CString_Len(cstring);
   string->characters = Xen_Alloc(string->__size + 1);
-  if (!string->characters) {
-    __instance_free((Xen_Instance*)string);
-    return NULL;
-  }
   strncpy(string->characters, cstring, string->__size + 1);
   return (Xen_INSTANCE*)string;
 }
@@ -38,10 +34,6 @@ Xen_Instance* Xen_String_From_Char(char c) {
   }
   string->__size = 1;
   string->characters = Xen_Alloc(string->__size + 1);
-  if (!string->characters) {
-    __instance_free((Xen_Instance*)string);
-    return NULL;
-  }
   string->characters[0] = c;
   string->characters[1] = '\0';
   return (Xen_Instance*)string;

@@ -6,6 +6,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -13,6 +14,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -32,10 +34,8 @@ static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
     Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
     Xen_Instance* rsult = Xen_Attr_String(val);
     if (!rsult) {
-      Xen_DEL_REF(val);
       return NULL;
     }
-    Xen_DEL_REF(val);
     return rsult;
   }
   Xen_String* string = (Xen_String*)Xen_Instance_Alloc(&Xen_String_Implement);
@@ -58,7 +58,7 @@ static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
 static Xen_Instance* string_string(ctx_id_t id, Xen_Instance* self,
                                    Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  return Xen_ADD_REF(self);
+  return self;
 }
 
 static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
@@ -116,10 +116,8 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) == 0) {
-    Xen_DEL_REF(val);
     return Xen_True;
   }
-  Xen_DEL_REF(val);
   return Xen_False;
 }
 
@@ -132,10 +130,8 @@ static Xen_Instance* string_opr_ne(ctx_id_t id, Xen_Instance* self,
 
   Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) != 0) {
-    Xen_DEL_REF(val);
     return Xen_True;
   }
-  Xen_DEL_REF(val);
   return Xen_False;
 }
 
@@ -243,7 +239,7 @@ static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
 }
 
 struct __Implement Xen_String_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = 0x00,
@@ -275,13 +271,13 @@ int Xen_String_Init() {
       !Xen_VM_Store_Native_Function(props, "__boolean", string_boolean, nil) ||
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil)) {
-    Xen_DEL_REF(Xen_String_Implement.__props);
     return 0;
   }
   Xen_String_Implement.__props = props;
+  Xen_GC_Push_Root((Xen_GCHeader*)props);
   return 1;
 }
 
 void Xen_String_Finish() {
-  Xen_DEL_REF(Xen_String_Implement.__props);
+  Xen_GC_Pop_Root();
 }

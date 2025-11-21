@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 #include "gc_header.h"
 #include "gc_heap.h"
@@ -34,10 +34,6 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
                                void (*fn_destroy)(struct __GC_Header**)) {
   assert(size >= sizeof(struct __GC_Header));
   struct __GC_Header* h = (struct __GC_Header*)Xen_Alloc(size);
-  if (!h) {
-    puts("Fatal: No memory");
-    abort();
-  }
 
   h->color = GC_WHITE;
   h->generation = GC_YOUNG;
@@ -79,6 +75,12 @@ void Xen_GC_Push_Root(struct __GC_Header* inst) {
 void Xen_GC_Pop_Root() {
   assert(__gc_roots_count > 0);
   __gc_roots_count--;
+}
+
+void Xen_GC_Pop_Roots(Xen_size_t count) {
+  for (Xen_size_t i = 0; i < count; i++) {
+    Xen_GC_Pop_Root();
+  }
 }
 
 void Xen_GC_Push_Gray(struct __GC_Header* inst) {

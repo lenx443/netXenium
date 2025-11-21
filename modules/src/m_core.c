@@ -26,12 +26,10 @@ static Xen_Instance* fn_exit(ctx_id_t id, Xen_Instance* self,
   } else if (Xen_SIZE(args) == 1) {
     Xen_Instance* exit_code = Xen_Attr_Index_Size_Get(args, 0);
     if (Xen_IMPL(exit_code) != &Xen_Number_Implement) {
-      Xen_DEL_REF(exit_code);
       return NULL;
     }
     program.closed = 1;
     program.exit_code = Xen_Number_As_Int(exit_code);
-    Xen_DEL_REF(exit_code);
     return nil;
   }
   program.closed = 1;
@@ -52,16 +50,12 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
     }
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string) {
-      Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_DEL_REF(inst);
     if (Xen_IMPL(string) != &Xen_String_Implement) {
-      Xen_DEL_REF(string);
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
-    Xen_DEL_REF(string);
     return nil;
   }
   Xen_Instance* out_reg = xen_register_prop_get("__out", id);
@@ -70,16 +64,12 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   }
   Xen_Instance* string = Xen_Attr_String(out_reg);
   if (!string) {
-    Xen_DEL_REF(out_reg);
     return NULL;
   }
-  Xen_DEL_REF(out_reg);
   if (Xen_IMPL(string) != &Xen_String_Implement) {
-    Xen_DEL_REF(string);
     return NULL;
   }
   fputs(Xen_String_As_CString(string), stdout);
-  Xen_DEL_REF(string);
   return nil;
 }
 
@@ -90,16 +80,12 @@ static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string) {
-      Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_DEL_REF(inst);
     if (Xen_IMPL(string) != &Xen_String_Implement) {
-      Xen_DEL_REF(string);
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
-    Xen_DEL_REF(string);
   }
   return nil;
 }
@@ -111,16 +97,12 @@ static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string || Xen_Nil_Eval(string)) {
-      Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_DEL_REF(inst);
     if (Xen_IMPL(string) != &Xen_String_Implement) {
-      Xen_DEL_REF(string);
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
-    Xen_DEL_REF(string);
   }
   fputc('\n', stdout);
   return nil;
@@ -165,10 +147,8 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* size = Xen_Number_From_Int64(Xen_SIZE(inst));
   if (!size) {
-    Xen_DEL_REF(inst);
     return NULL;
   }
-  Xen_DEL_REF(inst);
   return size;
 }
 
@@ -181,10 +161,8 @@ static Xen_Instance* fn_id(ctx_id_t id, Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* r_id = Xen_Number_From_Pointer(inst);
   if (!r_id) {
-    Xen_DEL_REF(inst);
     return NULL;
   }
-  Xen_DEL_REF(inst);
   return r_id;
 }
 

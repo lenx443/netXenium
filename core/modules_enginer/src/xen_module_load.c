@@ -20,10 +20,8 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   }
   if (!Xen_Map_Push_Map(vm->root_context->ctx_instances,
                         ((Xen_Module*)mod_inst)->mod_map)) {
-    Xen_DEL_REF(mod_inst);
     return 0;
   }
-  Xen_DEL_REF(mod_inst);
   return 1;
 }
 
@@ -41,10 +39,8 @@ int Xen_Module_Load_Startup() {
       }
       if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
                                  (Xen_Map_Pair_Str){mod->mod_name, mod_inst})) {
-        Xen_DEL_REF(mod_inst);
         return 0;
       }
-      Xen_DEL_REF(mod_inst);
     }
   }
   return 1;

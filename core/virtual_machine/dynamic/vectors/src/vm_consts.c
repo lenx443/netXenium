@@ -21,22 +21,15 @@ vm_Consts_ptr vm_consts_new() {
   }
   consts->c_instances = Xen_Vector_New();
   if (!consts->c_instances) {
-    Xen_DEL_REF(consts->c_names);
     return NULL;
   }
   if (!Xen_Vector_Push(consts->c_instances, nil)) {
-    Xen_DEL_REF(consts->c_instances);
-    Xen_DEL_REF(consts->c_names);
     return NULL;
   }
   if (!Xen_Vector_Push(consts->c_instances, Xen_True)) {
-    Xen_DEL_REF(consts->c_instances);
-    Xen_DEL_REF(consts->c_names);
     return NULL;
   }
   if (!Xen_Vector_Push(consts->c_instances, Xen_False)) {
-    Xen_DEL_REF(consts->c_instances);
-    Xen_DEL_REF(consts->c_names);
     return NULL;
   }
   return consts;
@@ -48,8 +41,8 @@ vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
   if (!consts) {
     return NULL;
   }
-  consts->c_names = Xen_ADD_REF(c_names);
-  consts->c_instances = Xen_ADD_REF(c_instances);
+  consts->c_names = c_names;
+  consts->c_instances = c_instances;
   return consts;
 }
 
@@ -63,10 +56,8 @@ Xen_ssize_t vm_consts_push_name(vm_Consts_ptr consts, const char* c_name) {
   }
   Xen_size_t index = Xen_SIZE(consts->c_names);
   if (!Xen_Vector_Push(consts->c_names, c_name_inst)) {
-    Xen_DEL_REF(c_name_inst);
     return -1;
   }
-  Xen_DEL_REF(c_name_inst);
   return index;
 }
 
@@ -95,8 +86,6 @@ void vm_consts_free(vm_Consts_ptr consts) {
   if (!consts) {
     return;
   }
-  Xen_DEL_REF(consts->c_names);
-  Xen_DEL_REF(consts->c_instances);
   Xen_Dealloc(consts);
   consts = NULL;
 }

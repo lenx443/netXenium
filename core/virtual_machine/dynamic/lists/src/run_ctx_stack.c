@@ -29,12 +29,10 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
   ctx_stack_new->ctx =
       (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, nil, 0);
   if (!ctx_stack_new->ctx) {
-    Xen_DEL_REF(alloc_args);
     Xen_Dealloc(ctx_stack_new);
     return 0;
   }
   Xen_GC_Push_Root((Xen_GCHeader*)ctx_stack_new->ctx);
-  Xen_DEL_REF(alloc_args);
   ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
   ctx_stack_new->next = NULL;
   if (*ctx_stack) {
@@ -56,7 +54,7 @@ int run_context_stack_push_refer(RunContext_Stack_ptr* ctx_stack,
     return 0;
   }
   ctx_stack_new->ctx = refer;
-  Xen_GC_Push_Root(refer);
+  Xen_GC_Push_Root((Xen_GCHeader*)refer);
   ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
   ctx_stack_new->next = NULL;
   if (*ctx_stack) {

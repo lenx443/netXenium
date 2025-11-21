@@ -21,14 +21,12 @@ Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
   if (name) {
     ast->name = Xen_CString_Dup(name);
     if (!ast->name) {
-      Xen_DEL_REF(ast);
       return NULL;
     }
   }
   if (value) {
     ast->value = Xen_CString_Dup(value);
     if (!ast->value) {
-      Xen_DEL_REF(ast);
       return NULL;
     }
   }
@@ -64,7 +62,7 @@ size_t Xen_AST_Node_Children_Size(Xen_Instance* ast) {
 }
 
 Xen_Instance* Xen_AST_Node_Children(Xen_Instance* ast) {
-  return Xen_ADD_REF(((Xen_AST_Node*)ast)->children);
+  return ((Xen_AST_Node*)ast)->children;
 }
 
 Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
@@ -78,7 +76,6 @@ Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
     return NULL;
   }
   if (!Xen_AST_Node_Push_Child(rsult, node)) {
-    Xen_DEL_REF(rsult);
     return NULL;
   }
   return rsult;
@@ -130,10 +127,7 @@ static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
   for (size_t i = 0; i < n; i++) {
     Xen_Instance* child = Xen_Attr_Index_Size_Get(children, i);
     __AST_Node_Print(child, new_prefix, i == n - 1);
-    Xen_DEL_REF(child);
   }
-
-  Xen_DEL_REF(children);
 }
 
 void Xen_AST_Node_Print(Xen_Instance* ast) {

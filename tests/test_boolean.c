@@ -15,16 +15,12 @@ int main(int argc, char** argv) {
     Xen_Instance* string = Xen_Attr_String(boolean);
     assert(string && string != nil);
     assert(strcmp(Xen_String_As_CString(string), "true") == 0);
-    Xen_DEL_REF(string);
-    Xen_DEL_REF(boolean);
   }
   {
     Xen_Instance* boolean = Xen_False;
     Xen_Instance* string = Xen_Attr_String(boolean);
     assert(string && string != nil);
     assert(strcmp(Xen_String_As_CString(string), "false") == 0);
-    Xen_DEL_REF(string);
-    Xen_DEL_REF(boolean);
   }
   Xen_Finish();
   return 0;

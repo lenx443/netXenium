@@ -5,6 +5,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -12,6 +13,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -24,6 +26,20 @@
 
 #define XEN_MAP_CAPACITY 128
 
+static void map_trace(Xen_GCHeader* h) {
+  Xen_Map* map = (Xen_Map*)h;
+  if (map->map_buckets) {
+    for (size_t i = 0; i < map->map_capacity; i++) {
+      struct __Map_Node* current = map->map_buckets[i];
+      while (current) {
+        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->key);
+        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->value);
+        current = current->next;
+      }
+    }
+  }
+}
+
 static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
                                Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -32,10 +48,6 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   map->map_buckets = Xen_Alloc(XEN_MAP_CAPACITY * sizeof(struct __Map_Node*));
-  if (!map->map_buckets) {
-    Xen_DEL_REF(map);
-    return NULL;
-  }
   for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
     map->map_buckets[i] = NULL;
   }
@@ -43,7 +55,6 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
     map->map_buckets = NULL;
-    Xen_DEL_REF(map);
     return NULL;
   }
   map->map_capacity = XEN_MAP_CAPACITY;
@@ -54,17 +65,12 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
                                  Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
-  if (map->map_keys) {
-    Xen_DEL_REF(map->map_keys);
-  }
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
       while (current) {
         struct __Map_Node* temp = current;
         current = current->next;
-        Xen_DEL_REF(temp->key);
-        Xen_DEL_REF(temp->value);
         Xen_Dealloc(temp);
       }
     }
@@ -86,40 +92,36 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Attr_Index_Size_Get(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
       return NULL;
     }
   }
+  Xen_size_t roots = 0;
   if (!stack) {
     stack = Xen_Map_New();
     if (!stack) {
-      Xen_DEL_REF(self_id);
       return NULL;
     }
+    Xen_GC_Push_Root((Xen_GCHeader*)stack);
+    roots++;
   } else {
     if (Xen_Map_Has(stack, self_id)) {
       Xen_Instance* string = Xen_String_From_CString("<Map(...)>");
       if (!string) {
-        Xen_DEL_REF(self_id);
-        Xen_DEL_REF(stack);
+        Xen_GC_Pop_Roots(roots);
         return NULL;
       }
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
+      Xen_GC_Pop_Roots(roots);
       return string;
     }
   }
   if (!Xen_Map_Push_Pair(stack, (Xen_Map_Pair){self_id, nil})) {
-    Xen_DEL_REF(self_id);
-    Xen_DEL_REF(stack);
+    Xen_GC_Pop_Roots(roots);
     return NULL;
   }
   Xen_Map* map = (Xen_Map*)self;
   char* buffer = Xen_CString_Dup("<Map(");
   if (!buffer) {
-    Xen_DEL_REF(self_id);
-    Xen_DEL_REF(stack);
+    Xen_GC_Pop_Roots(roots);
     return NULL;
   }
   Xen_size_t buflen = 6;
@@ -128,50 +130,33 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
     Xen_Instance* key_string = Xen_Attr_Raw_Stack(key_inst, stack);
     if (!key_string) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
-      Xen_DEL_REF(value_inst);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     Xen_Instance* value_string = Xen_Attr_Raw_Stack(value_inst, stack);
     if (!value_string) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
-      Xen_DEL_REF(key_string);
-      Xen_DEL_REF(value_inst);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* key = Xen_CString_Dup(Xen_String_As_CString(key_string));
     if (!key) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
-      Xen_DEL_REF(value_string);
-      Xen_DEL_REF(key_string);
-      Xen_DEL_REF(value_inst);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = Xen_CString_Dup(Xen_String_As_CString(value_string));
     if (!value) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
-      Xen_DEL_REF(value_string);
-      Xen_DEL_REF(key_string);
-      Xen_DEL_REF(value_inst);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc((void*)key);
       Xen_Dealloc(buffer);
       return NULL;
     }
-    Xen_DEL_REF(value_string);
-    Xen_DEL_REF(key_string);
-    Xen_DEL_REF(value_inst);
     buflen += Xen_CString_Len(key) + Xen_CString_Len(value) + 2;
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
-      Xen_DEL_REF(self_id);
-      Xen_DEL_REF(stack);
+      Xen_GC_Pop_Roots(roots);
       Xen_Dealloc((void*)key);
       Xen_Dealloc((void*)value);
       Xen_Dealloc(buffer);
@@ -187,8 +172,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       buflen += 2;
       char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
-        Xen_DEL_REF(self_id);
-        Xen_DEL_REF(stack);
+        Xen_GC_Pop_Roots(roots);
         Xen_Dealloc(buffer);
         return NULL;
       }
@@ -196,8 +180,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       strcat(buffer, ", ");
     }
   }
-  Xen_DEL_REF(self_id);
-  Xen_DEL_REF(stack);
+  Xen_GC_Pop_Roots(roots);
   buflen += 2;
   char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {
@@ -226,10 +209,8 @@ static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* value = Xen_Map_Get(self, key);
   if (!value) {
-    Xen_DEL_REF(key);
     return NULL;
   }
-  Xen_DEL_REF(key);
   return value;
 }
 
@@ -241,10 +222,8 @@ static Xen_Instance* map_opr_has(ctx_id_t id, Xen_Instance* self,
   }
   Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Map_Has(self, value)) {
-    Xen_DEL_REF(value);
     return Xen_True;
   }
-  Xen_DEL_REF(value);
   return Xen_False;
 }
 
@@ -257,20 +236,17 @@ static Xen_Instance* map_push(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 1);
   if (!Xen_Map_Push_Pair(self, (Xen_Map_Pair){key, value})) {
-    Xen_DEL_REF(value);
-    Xen_DEL_REF(key);
     return NULL;
   }
-  Xen_DEL_REF(value);
-  Xen_DEL_REF(key);
   return nil;
 }
 
 struct __Implement Xen_Map_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Map",
     .__inst_size = sizeof(struct Xen_Map_Instance),
     .__inst_default_flags = 0x00,
+    .__inst_trace = map_trace,
     .__props = &Xen_Nil_Def,
     .__alloc = map_alloc,
     .__create = NULL,
@@ -294,13 +270,13 @@ int Xen_Map_Init() {
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__has", map_opr_has, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
-    Xen_DEL_REF(props);
     return 0;
   }
   Xen_Map_Implement.__props = props;
+  Xen_GC_Push_Root((Xen_GCHeader*)props);
   return 1;
 }
 
 void Xen_Map_Finish() {
-  Xen_DEL_REF(Xen_Map_Implement.__props);
+  Xen_GC_Pop_Root();
 }

@@ -5,7 +5,7 @@
 #include "xen_nil.h"
 
 struct __Implement Xen_Nil_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Nil",
     .__inst_size = sizeof(Xen_Instance),
     .__inst_default_flags = 0x00,

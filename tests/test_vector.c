@@ -8,15 +8,13 @@
 
 int main(int argc, char** argv) {
   assert(Xen_Init(argc, argv));
-  WITH_INSTANCE(foo, Xen_Number_From_Int(16))
-  WITH_INSTANCE(bar, Xen_Number_From_Int(40))
-  WITH_INSTANCE(vec, Xen_Vector_From_Array(2, (Xen_Instance*[]){foo, bar}))
-  WITH_INSTANCE(index0, Xen_Attr_Index_Size_Get(vec, 0)) {
-    assert(Xen_Number_As_Int(index0) == 16);
-    WITH_INSTANCE(index1, Xen_Attr_Index_Size_Get(vec, 1)) {
-      assert(Xen_Number_As_Int(index1) == 40);
-    }
-  }
+  Xen_Instance* foo = Xen_Number_From_Int(16);
+  Xen_Instance* bar = Xen_Number_From_Int(40);
+  Xen_Instance* vec = Xen_Vector_From_Array(2, (Xen_Instance*[]){foo, bar});
+  Xen_Instance* index0 = Xen_Attr_Index_Size_Get(vec, 0);
+  assert(Xen_Number_As_Int(index0) == 16);
+  Xen_Instance* index1 = Xen_Attr_Index_Size_Get(vec, 1);
+  assert(Xen_Number_As_Int(index1) == 40);
   Xen_Finish();
   return 0;
 }

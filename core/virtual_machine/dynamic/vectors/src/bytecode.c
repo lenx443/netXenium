@@ -76,8 +76,6 @@ void bc_print(ProgramCode_t pc) {
             pc.consts->c_names, code->bc_array[i].bci_oparg);
         printf(" %d (%s)\n", code->bc_array[i].bci_oparg,
                c_name ? Xen_String_As_CString(c_name) : "Null");
-        if (c_name)
-          Xen_DEL_REF(c_name);
       } else if (Instruct_Info_Table[code->bc_array[i].bci_opcode].flags &
                  INSTRUCT_FLAG_CO_INSTANCE) {
         char* val = NULL;
@@ -87,9 +85,7 @@ void bc_print(ProgramCode_t pc) {
           Xen_Instance* string = Xen_Attr_Raw(c_inst);
           if (string) {
             val = Xen_CString_Dup(Xen_String_As_CString(string));
-            Xen_DEL_REF(string);
           }
-          Xen_DEL_REF(c_inst);
         }
         printf(" %d (%s)\n", code->bc_array[i].bci_oparg, val ? val : "Null");
         if (val)

@@ -1,8 +1,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "gc_header.h"
 #include "instance.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_nil.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
@@ -25,7 +27,6 @@ Xen_Instance* Xen_Vector_From_Array(size_t size, Xen_Instance** array) {
   }
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Vector_Push(vector, array[i])) {
-      Xen_DEL_REF(vector);
       return NULL;
     }
   }
@@ -47,8 +48,9 @@ int Xen_Vector_Push(Xen_Instance* vector_inst, Xen_Instance* value) {
     vector->values = new_mem;
     vector->capacity = new_cap;
   }
-  vector->values[vector->__size++] = value;
-  Xen_ADD_REF(value);
+  Xen_GC_Write_Field((Xen_GCHeader*)vector,
+                     (Xen_GCHeader**)&vector->values[vector->__size++],
+                     (Xen_GCHeader*)value);
   return 1;
 }
 
@@ -68,7 +70,7 @@ Xen_Instance* Xen_Vector_Get_Index(Xen_Instance* vector, size_t index) {
   if (!vector || index >= ((Xen_Vector*)vector)->__size) {
     return NULL;
   }
-  return Xen_ADD_REF(((Xen_Vector*)vector)->values[index]);
+  return ((Xen_Vector*)vector)->values[index];
 }
 
 Xen_Instance* Xen_Vector_Peek_Index(Xen_Instance* vector, size_t index) {

@@ -35,10 +35,8 @@ bool Xen_VM_Store_Native_Function(Xen_Instance* inst_map, const char* name,
     return false;
   }
   if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, fun_inst})) {
-    Xen_DEL_REF(fun_inst);
     return false;
   }
-  Xen_DEL_REF(fun_inst);
   return true;
 }
 

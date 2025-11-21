@@ -18,10 +18,7 @@ int main(int argc, char** argv) {
   assert(Xen_Nil_NEval(text));
   Xen_Instance* args = Xen_Vector_From_Array(1, &text);
   assert(Xen_Nil_NEval(args));
-  Xen_DEL_REF(text);
   assert(Xen_Function_Call(echo_fun, args, nil) != NULL);
-  Xen_DEL_REF(args);
-  Xen_DEL_REF(echo_fun);
   Xen_Finish();
   return 0;
 }

@@ -24,7 +24,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-13724", 0);
@@ -35,7 +34,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("0xFFDD11AA66CCBB99", 0);
@@ -46,7 +44,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == INT64_MAX);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-0xFFDD11AA66CCBB99", 0);
@@ -57,7 +54,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == INT64_MIN);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("0b010110", 0);
@@ -68,7 +64,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == 22);
     assert(Xen_Number_As_Int64(foo) == 22);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-0b010110", 0);
@@ -79,7 +74,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == -22);
     assert(Xen_Number_As_Int64(foo) == -22);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("0o377", 0);
@@ -90,7 +84,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == 255);
     assert(Xen_Number_As_Int64(foo) == 255);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-0o377", 0);
@@ -101,7 +94,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == -255);
     assert(Xen_Number_As_Int64(foo) == -255);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("02000", 0);
@@ -112,7 +104,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == 1024);
     assert(Xen_Number_As_Int64(foo) == 1024);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-02000", 0);
@@ -123,7 +114,6 @@ static void test_number_from_cstring() {
     assert(Xen_Number_As_Int32(foo) == -1024);
     assert(Xen_Number_As_Int64(foo) == -1024);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -138,7 +128,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-13724", 0);
@@ -149,7 +138,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
@@ -160,7 +148,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == INT64_MAX);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-FFDD11AA66CCBB99", 16);
@@ -171,7 +158,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == INT64_MIN);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("010110", 2);
@@ -182,7 +168,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == 22);
     assert(Xen_Number_As_Int64(foo) == 22);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-010110", 2);
@@ -193,7 +178,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == -22);
     assert(Xen_Number_As_Int64(foo) == -22);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("377", 8);
@@ -204,7 +188,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == 255);
     assert(Xen_Number_As_Int64(foo) == 255);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("-377", 8);
@@ -215,7 +198,6 @@ static void test_number_from_cstring_base() {
     assert(Xen_Number_As_Int32(foo) == -255);
     assert(Xen_Number_As_Int64(foo) == -255);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -230,7 +212,6 @@ static void test_number_from_int32() {
     assert(Xen_Number_As_Int32(foo) == 13724);
     assert(Xen_Number_As_Int64(foo) == 13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int32(-13724);
@@ -241,7 +222,6 @@ static void test_number_from_int32() {
     assert(Xen_Number_As_Int32(foo) == -13724);
     assert(Xen_Number_As_Int64(foo) == -13724);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -256,7 +236,6 @@ static void test_number_from_int64() {
     assert(Xen_Number_As_Int32(foo) == INT32_MAX);
     assert(Xen_Number_As_Int64(foo) == 1372418483818485888l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int64(-1372418483818485888l);
@@ -267,7 +246,6 @@ static void test_number_from_int64() {
     assert(Xen_Number_As_Int32(foo) == INT32_MIN);
     assert(Xen_Number_As_Int64(foo) == -1372418483818485888l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -284,7 +262,6 @@ void test_number_from_int() {
     assert(Xen_Number_As_Int(foo) == 65535);
     assert(Xen_Number_As_UInt(foo) == 65535);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int(-65535);
@@ -297,7 +274,6 @@ void test_number_from_int() {
     assert(Xen_Number_As_Int(foo) == -65535);
     assert(Xen_Number_As_UInt(foo) == 0);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -314,7 +290,6 @@ void test_number_from_uint() {
     assert(Xen_Number_As_Int(foo) == 65535);
     assert(Xen_Number_As_UInt(foo) == 65535);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -331,7 +306,6 @@ void test_number_from_long() {
     assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_Long(-2747282858672828557l);
@@ -344,7 +318,6 @@ void test_number_from_long() {
     assert(Xen_Number_As_Long(foo) == -2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 0l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -361,7 +334,6 @@ void test_number_from_ulong() {
     assert(Xen_Number_As_Long(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULong(foo) == 2747282858672828557l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -380,7 +352,6 @@ void test_number_from_longlong() {
     assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
   {
     Xen_INSTANCE* foo = Xen_Number_From_LongLong(-2747282858672828557l);
@@ -395,7 +366,6 @@ void test_number_from_longlong() {
     assert(Xen_Number_As_LongLong(foo) == -2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 0l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -414,7 +384,6 @@ void test_number_from_ulonglong() {
     assert(Xen_Number_As_LongLong(foo) == 2747282858672828557l);
     assert(Xen_Number_As_ULongLong(foo) == 2747282858672828557l);
     Xen_Dealloc((void*)foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -426,8 +395,6 @@ void test_number_string() {
     Xen_Instance* foo_str = Xen_Attr_String(foo);
     assert(foo_str && Xen_Nil_NEval(foo_str));
     assert(strcmp(Xen_String_As_CString(foo_str), "27447") == 0);
-    Xen_DEL_REF(foo_str);
-    Xen_DEL_REF(foo);
   }
 }
 
@@ -441,9 +408,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_Int(1234);
@@ -453,9 +417,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_Int(1234);
@@ -465,9 +426,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_Int(0);
@@ -477,9 +435,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
@@ -489,9 +444,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_True);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
@@ -501,9 +453,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_CString("FFDD11AA66CCBB99", 16);
@@ -513,9 +462,6 @@ void test_number_opr_eq() {
     Xen_Instance* result = Xen_Operator_Eval_Pair(a, b, Xen_OPR_EQ);
     assert(result != nil);
     assert(result == Xen_False);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
 }
 
@@ -529,9 +475,6 @@ void test_number_mul() {
     Xen_Instance* result = Xen_Number_Mul(a, b);
     assert(result != NULL);
     assert(Xen_Number_As(int, result) == 1522756);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
   {
     Xen_Instance* a = Xen_Number_From_Int(1234);
@@ -541,9 +484,6 @@ void test_number_mul() {
     Xen_Instance* result = Xen_Number_Mul(a, b);
     assert(result != NULL);
     assert(Xen_Number_As(int, result) == 5332114);
-    Xen_DEL_REF(result);
-    Xen_DEL_REF(b);
-    Xen_DEL_REF(a);
   }
 }
 

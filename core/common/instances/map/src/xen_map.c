@@ -3,12 +3,14 @@
 #include <string.h>
 
 #include "attrs.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -31,7 +33,6 @@ Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs) {
   Xen_Instance* map = Xen_Map_New();
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair(map, pairs[i])) {
-      Xen_DEL_REF(map);
       return NULL;
     }
   }
@@ -43,7 +44,6 @@ Xen_Instance* Xen_Map_From_Pairs_Str_With_Size(size_t size,
   Xen_Instance* map = Xen_Map_New();
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair_Str((Xen_Instance*)map, pairs[i])) {
-      Xen_DEL_REF(map);
       return NULL;
     }
   }
@@ -63,7 +63,6 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   }
 
   unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
-  Xen_DEL_REF(hash_inst);
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
@@ -82,8 +81,9 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
       }
     }
     if (eval == Xen_True) {
-      Xen_DEL_REF(current->value);
-      current->value = Xen_ADD_REF(pair.value);
+      Xen_GC_Write_Field((Xen_GCHeader*)current,
+                         (Xen_GCHeader**)&current->value,
+                         (Xen_GCHeader*)pair.value);
       return 1;
     }
     current = current->next;
@@ -96,10 +96,10 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
     Xen_Dealloc(new_node);
     return 0;
   }
-  new_node->key = pair.key;
-  new_node->value = pair.value;
-  Xen_ADD_REF(pair.key);
-  Xen_ADD_REF(pair.value);
+  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&new_node->key,
+                     (Xen_GCHeader*)pair.key);
+  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&new_node->value,
+                     (Xen_GCHeader*)pair.value);
 
   new_node->next = map->map_buckets[hash_index];
   map->map_buckets[hash_index] = new_node;
@@ -115,10 +115,8 @@ int Xen_Map_Push_Pair_Str(Xen_Instance* map, Xen_Map_Pair_Str pair) {
     return 0;
   }
   if (!Xen_Map_Push_Pair(map, (Xen_Map_Pair){key_inst, pair.value})) {
-    Xen_DEL_REF(key_inst);
     return 0;
   }
-  Xen_DEL_REF(key_inst);
   return 1;
 }
 
@@ -131,14 +129,9 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
     Xen_Instance* key = Xen_Attr_Index_Size_Get(src_keys, i);
     Xen_Instance* value = Xen_Map_Get(map_src, key);
     if (!Xen_Map_Push_Pair(map_dst, (Xen_Map_Pair){key, value})) {
-      Xen_DEL_REF(value);
-      Xen_DEL_REF(key);
       return 0;
     }
-    Xen_DEL_REF(value);
-    Xen_DEL_REF(key);
   }
-  Xen_DEL_REF(src_keys);
   return 1;
 }
 
@@ -154,7 +147,6 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   }
 
   unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
-  Xen_DEL_REF(hash_inst);
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
@@ -173,7 +165,7 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
       }
     }
     if (eval == Xen_True) {
-      return Xen_ADD_REF(current->value);
+      return current->value;
     }
     current = current->next;
   }
@@ -189,7 +181,6 @@ Xen_Instance* Xen_Map_Get_Str(Xen_Instance* map, const char* key) {
     return NULL;
   }
   Xen_Instance* result = Xen_Map_Get(map, key_inst);
-  Xen_DEL_REF(key_inst);
   return result;
 }
 
@@ -197,7 +188,7 @@ Xen_Instance* Xen_Map_Keys(Xen_Instance* map) {
   if (!map || Xen_Nil_Eval(map)) {
     return NULL;
   }
-  return Xen_ADD_REF(((Xen_Map*)map)->map_keys);
+  return ((Xen_Map*)map)->map_keys;
 }
 
 int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
@@ -212,7 +203,6 @@ int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
   }
 
   unsigned long hash_index = Xen_Number_As_ULong(hash_inst) % map->map_capacity;
-  Xen_DEL_REF(hash_inst);
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;

@@ -5,6 +5,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -13,6 +14,7 @@
 #include "xen_boolean.h"
 #include "xen_boolean_implement.h"
 #include "xen_boolean_instance.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_nil.h"
@@ -33,7 +35,7 @@ static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
     Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
     Xen_Instance* rsult = NULL;
     if (Xen_IMPL(val) == &Xen_Number_Implement) {
-      rsult = Xen_ADD_REF(val);
+      rsult = val;
     } else if (Xen_IMPL(val) == &Xen_String_Implement) {
       const char* str = Xen_String_As_CString(val);
       int base = 0;
@@ -41,19 +43,15 @@ static Xen_Instance* number_alloc(ctx_id_t id, Xen_INSTANCE* self,
         Xen_Instance* base_inst = Xen_Map_Get_Str(kwargs, "base");
         if (base_inst) {
           if (Xen_IMPL(base_inst) != &Xen_Number_Implement) {
-            Xen_DEL_REF(base_inst);
-            Xen_DEL_REF(val);
             return NULL;
           }
           base = Xen_Number_As_Int(base_inst);
-          Xen_DEL_REF(base_inst);
         }
       }
       rsult = Xen_Number_From_CString(str, base);
     } else if (Xen_IMPL(val) == &Xen_Boolean_Implement) {
       rsult = Xen_Number_From_Int(((Xen_Boolean*)val)->value);
     }
-    Xen_DEL_REF(val);
     return rsult;
   }
   Xen_Number* num = (Xen_Number*)Xen_Instance_Alloc(&Xen_Number_Implement);
@@ -150,10 +148,8 @@ static Xen_Instance* number_opr_pow(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* exp = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Pow(self, exp);
   if (!result) {
-    Xen_DEL_REF(exp);
     return NULL;
   }
-  Xen_DEL_REF(exp);
   return result;
 }
 
@@ -167,10 +163,8 @@ static Xen_Instance* number_opr_mul(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Mul(self, num);
   if (!result) {
-    Xen_DEL_REF(num);
     return NULL;
   }
-  Xen_DEL_REF(num);
   return result;
 }
 
@@ -184,10 +178,8 @@ static Xen_Instance* number_opr_div(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Div(self, num);
   if (!result) {
-    Xen_DEL_REF(num);
     return NULL;
   }
-  Xen_DEL_REF(num);
   return result;
 }
 
@@ -201,10 +193,8 @@ static Xen_Instance* number_opr_mod(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Mod(self, num);
   if (!result) {
-    Xen_DEL_REF(num);
     return NULL;
   }
-  Xen_DEL_REF(num);
   return result;
 }
 
@@ -218,10 +208,8 @@ static Xen_Instance* number_opr_add(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Add(self, num);
   if (!result) {
-    Xen_DEL_REF(num);
     return NULL;
   }
-  Xen_DEL_REF(num);
   return result;
 }
 
@@ -235,10 +223,8 @@ static Xen_Instance* number_opr_sub(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
   Xen_Instance* result = Xen_Number_Sub(self, num);
   if (!result) {
-    Xen_DEL_REF(num);
     return NULL;
   }
-  Xen_DEL_REF(num);
   return result;
 }
 
@@ -252,10 +238,8 @@ static Xen_Instance* number_opr_eq(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) == 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -269,10 +253,8 @@ static Xen_Instance* number_opr_ne(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) != 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -286,10 +268,8 @@ static Xen_Instance* number_opr_lt(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) < 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -303,10 +283,8 @@ static Xen_Instance* number_opr_le(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) <= 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -320,10 +298,8 @@ static Xen_Instance* number_opr_gt(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) > 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -337,10 +313,8 @@ static Xen_Instance* number_opr_ge(ctx_id_t id, Xen_Instance* self,
   Xen_Instance* a = self;
   Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
   if (Xen_Number_Cmp(a, b) >= 0) {
-    Xen_DEL_REF(b);
     return Xen_True;
   }
-  Xen_DEL_REF(b);
   return Xen_False;
 }
 
@@ -348,7 +322,7 @@ static Xen_Instance* number_prop_positive(ctx_id_t id, Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  return Xen_ADD_REF(self);
+  return self;
 }
 
 static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
@@ -361,7 +335,7 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
     size_n--;
   }
   if (size_n == 0 || n->sign == 0) {
-    return (Xen_Instance*)Xen_ADD_REF(n);
+    return (Xen_Instance*)n;
   }
   Xen_Number* r =
       (Xen_Number*)__instance_new(&Xen_Number_Implement, nil, nil, 0);
@@ -369,10 +343,6 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   r->digits = Xen_Alloc(size_n * sizeof(uint32_t));
-  if (!r->digits) {
-    Xen_DEL_REF(r);
-    return NULL;
-  }
   for (Xen_size_t i = 0; i < size_n; i++) {
     r->digits[i] = n->digits[i];
   }
@@ -382,7 +352,6 @@ static Xen_Instance* number_prop_negative(ctx_id_t id, Xen_Instance* self,
   } else if (n->sign == -1) {
     r->sign = 1;
   } else {
-    Xen_DEL_REF(r);
     return NULL;
   }
   return (Xen_Instance*)r;
@@ -398,10 +367,11 @@ static Xen_Instance* number_prop_not(ctx_id_t id, Xen_Instance* self,
 }
 
 struct __Implement Xen_Number_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
     .__inst_size = sizeof(struct Xen_Number_Instance),
     .__inst_default_flags = 0x00,
+    .__inst_trace = NULL,
     .__props = &Xen_Nil_Def,
     .__alloc = number_alloc,
     .__create = number_create,
@@ -439,13 +409,13 @@ int Xen_Number_Init() {
       !Xen_VM_Store_Native_Function(props, "__negative", number_prop_negative,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil)) {
-    Xen_DEL_REF(props);
     return 0;
   }
   Xen_Number_Implement.__props = props;
+  Xen_GC_Push_Root((Xen_GCHeader*)props);
   return 1;
 }
 
 void Xen_Number_Finish() {
-  Xen_DEL_REF(Xen_Number_Implement.__props);
+  Xen_GC_Pop_Root();
 }

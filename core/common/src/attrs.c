@@ -107,7 +107,6 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
     }
   }
   if (Xen_IMPL(string) != &Xen_String_Implement) {
-    Xen_DEL_REF(string);
     return NULL;
   }
   return string;
@@ -123,10 +122,8 @@ const char* Xen_Attr_String_Str(Xen_Instance* inst) {
   }
   const char* string_str = Xen_CString_Dup(Xen_String_As_CString(string));
   if (!string_str) {
-    Xen_DEL_REF(string);
     return NULL;
   }
-  Xen_DEL_REF(string);
   return string_str;
 }
 
@@ -143,21 +140,17 @@ Xen_Instance* Xen_Attr_String_Stack(Xen_Instance* inst, Xen_Instance* stack) {
     if (Xen_IMPL(inst)->__string == NULL) {
       string = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
       if (!string) {
-        Xen_DEL_REF(args);
         return NULL;
       }
     } else {
       string = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__string, inst, args,
                                            nil);
       if (!string) {
-        Xen_DEL_REF(args);
         return NULL;
       }
     }
   }
-  Xen_DEL_REF(args);
   if (Xen_IMPL(string) != &Xen_String_Implement) {
-    Xen_DEL_REF(string);
     return NULL;
   }
   return string;
@@ -173,10 +166,8 @@ const char* Xen_Attr_String_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
   }
   const char* string_str = Xen_CString_Dup(Xen_String_As_CString(string));
   if (!string_str) {
-    Xen_DEL_REF(string);
     return NULL;
   }
-  Xen_DEL_REF(string);
   return string_str;
 }
 
@@ -199,7 +190,6 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
     }
   }
   if (Xen_IMPL(raw) != &Xen_String_Implement) {
-    Xen_DEL_REF(raw);
     return NULL;
   }
   return raw;
@@ -215,10 +205,8 @@ const char* Xen_Attr_Raw_Str(Xen_Instance* inst) {
   }
   const char* raw_str = Xen_CString_Dup(Xen_String_As_CString(raw));
   if (!raw_str) {
-    Xen_DEL_REF(raw);
     return NULL;
   }
-  Xen_DEL_REF(raw);
   return raw_str;
 }
 
@@ -235,20 +223,16 @@ Xen_Instance* Xen_Attr_Raw_Stack(Xen_Instance* inst, Xen_Instance* stack) {
     if (Xen_IMPL(inst)->__string == NULL) {
       raw = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
       if (!raw) {
-        Xen_DEL_REF(args);
         return NULL;
       }
     } else {
       raw = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__raw, inst, args, nil);
       if (!raw) {
-        Xen_DEL_REF(args);
         return NULL;
       }
     }
   }
-  Xen_DEL_REF(args);
   if (Xen_IMPL(raw) != &Xen_String_Implement) {
-    Xen_DEL_REF(raw);
     return NULL;
   }
   return raw;
@@ -264,10 +248,8 @@ const char* Xen_Attr_Raw_Stack_Str(Xen_Instance* inst, Xen_Instance* stack) {
   }
   const char* raw_str = Xen_CString_Dup(Xen_String_As_CString(raw));
   if (!raw_str) {
-    Xen_DEL_REF(raw);
     return NULL;
   }
-  Xen_DEL_REF(raw);
   return raw_str;
 }
 
@@ -280,7 +262,6 @@ Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
     return NULL;
   }
   if (Xen_IMPL(boolean) != &Xen_Boolean_Implement) {
-    Xen_DEL_REF(boolean);
     return NULL;
   }
   return boolean;
@@ -296,10 +277,8 @@ Xen_Instance* Xen_Attr_Index_Get(Xen_Instance* inst, Xen_Instance* index) {
   }
   Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__get_index", args, nil);
   if (!ret) {
-    Xen_DEL_REF(args);
     return NULL;
   }
-  Xen_DEL_REF(args);
   return ret;
 }
 
@@ -313,10 +292,8 @@ Xen_Instance* Xen_Attr_Index_Size_Get(Xen_Instance* inst, Xen_size_t index) {
   }
   Xen_Instance* ret = Xen_Attr_Index_Get(inst, index_inst);
   if (!ret) {
-    Xen_DEL_REF(index_inst);
     return NULL;
   }
-  Xen_DEL_REF(index_inst);
   return ret;
 }
 
@@ -331,11 +308,8 @@ int Xen_Attr_Index_Set(Xen_Instance* inst, Xen_Instance* index,
   }
   Xen_Instance* ret = Xen_Method_Attr_Str_Call(inst, "__set_index", args, nil);
   if (!ret) {
-    Xen_DEL_REF(args);
     return 0;
   }
-  Xen_DEL_REF(args);
-  Xen_DEL_REF(ret);
   return 1;
 }
 
@@ -349,10 +323,8 @@ int Xen_Attr_Index_Size_Set(Xen_Instance* inst, Xen_size_t index,
     return 0;
   }
   if (!Xen_Attr_Index_Set(inst, index_inst, val)) {
-    Xen_DEL_REF(index_inst);
     return 0;
   }
-  Xen_DEL_REF(index_inst);
   return 1;
 }
 

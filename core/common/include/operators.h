@@ -21,7 +21,5 @@ typedef enum {
 } Xen_Opr;
 
 Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance*, Xen_Instance*, Xen_Opr);
-Xen_Instance* Xen_Operator_Eval_Pair_Steal2(Xen_Instance*, Xen_Instance*,
-                                            Xen_Opr);
 
 #endif
