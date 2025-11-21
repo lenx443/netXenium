@@ -1,15 +1,34 @@
 #include "run_frame.h"
 #include "basic.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "vm_stack.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+
+static void frame_trace(Xen_GCHeader* h) {
+  struct RunContext* ctx = (struct RunContext*)h;
+  if_nil_neval(ctx->ctx_closure) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_closure);
+  }
+  if (ctx->ctx_caller) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_caller);
+  }
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_self);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack);
+  if (ctx->ctx_args) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_args);
+  }
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_kwargs);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances);
+}
 
 static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
                                  Xen_Instance* args, Xen_Instance* kwargs) {
@@ -38,7 +57,7 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
     ctx_new->ctx_caller = Xen_Tuple_Get_Index(args, 1);
   ctx_new->ctx_self = Xen_Tuple_Get_Index(args, 2);
   ctx_new->ctx_code = NULL;
-  vm_stack_start(&ctx_new->ctx_stack);
+  ctx_new->ctx_stack = NULL;
   if (Xen_Tuple_Peek_Index(args, 3)) {
     ctx_new->ctx_args = Xen_Tuple_Get_Index(args, 3);
   } else
@@ -59,7 +78,6 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
     return NULL;
   }
   ctx_new->ctx_ip = 0;
-  ctx_new->ctx_jump_offset = 0;
   ctx_new->ctx_running = 0;
   ctx_new->ctx_error = 0;
   return (Xen_Instance*)ctx_new;
@@ -78,7 +96,6 @@ static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
     Xen_DEL_REF(ctx->ctx_args);
   if (ctx->ctx_kwargs)
     Xen_DEL_REF(ctx->ctx_kwargs);
-  vm_stack_free(&ctx->ctx_stack);
   return nil;
 }
 
@@ -93,10 +110,11 @@ static Xen_Instance* frame_string(ctx_id_t id, Xen_Instance* self,
 }
 
 struct __Implement Xen_Run_Frame = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "RunFrame",
     .__inst_size = sizeof(struct RunContext),
     .__inst_default_flags = 0x00,
+    .__inst_trace = frame_trace,
     .__props = &Xen_Nil_Def,
     .__alloc = frame_alloc,
     .__create = NULL,

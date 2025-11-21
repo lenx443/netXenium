@@ -1,4 +1,5 @@
 #include "block_list.h"
+#include "program_code.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_typedefs.h"

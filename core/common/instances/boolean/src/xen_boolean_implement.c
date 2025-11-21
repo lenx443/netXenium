@@ -3,12 +3,14 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -23,10 +25,8 @@ static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
     Xen_Instance* boolean = Xen_Attr_Boolean(inst);
     if (!boolean) {
-      Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_DEL_REF(inst);
     return boolean;
   }
   return Xen_False;
@@ -67,11 +67,11 @@ static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* boolean_boolean(ctx_id_t id, Xen_Instance* self,
                                      Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  return Xen_ADD_REF(self);
+  return self;
 }
 
 Xen_Implement Xen_Boolean_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Boolean",
     .__inst_size = sizeof(struct Xen_Boolean_Instance),
     .__inst_default_flags = 0x00,
@@ -97,13 +97,13 @@ int Xen_Boolean_Init() {
     return 0;
   }
   if (!Xen_VM_Store_Native_Function(props, "__boolean", boolean_boolean, nil)) {
-    Xen_DEL_REF(props);
     return 0;
   }
   Xen_Boolean_Implement.__props = props;
+  Xen_GC_Push_Root((Xen_GCHeader*)props);
   return 1;
 }
 
 void Xen_Boolean_Finish() {
-  Xen_DEL_REF(Xen_Boolean_Implement.__props);
+  Xen_GC_Pop_Root();
 }

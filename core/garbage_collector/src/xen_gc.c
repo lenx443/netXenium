@@ -71,7 +71,7 @@ void Xen_GC_Collect() {
 }
 
 void Xen_GC_Push_Root(struct __GC_Header* inst) {
-  assert(__gc_roots_count >= __XEN_GC_MAX_ROOTS__);
+  assert(__gc_roots_count < __XEN_GC_MAX_ROOTS__);
   assert(inst != NULL);
   __gc_roots[__gc_roots_count++] = inst;
 }
@@ -82,7 +82,7 @@ void Xen_GC_Pop_Root() {
 }
 
 void Xen_GC_Push_Gray(struct __GC_Header* inst) {
-  assert(__gc_gray_stack_count >= __XEN_GC_MAX_GRAY__);
+  assert(__gc_gray_stack_count < __XEN_GC_MAX_GRAY__);
   assert(inst != NULL);
   if (inst->color != GC_WHITE) {
     return;
@@ -94,6 +94,13 @@ void Xen_GC_Push_Gray(struct __GC_Header* inst) {
 struct __GC_Header* Xen_GC_Pop_Gray() {
   assert(__gc_gray_stack_count > 0);
   return __gc_gray_stack[--__gc_gray_stack_count];
+}
+
+void Xen_GC_Trace_GCHeader(struct __GC_Header* h) {
+  assert(h != NULL);
+  if (h->color == GC_WHITE) {
+    Xen_GC_Push_Gray(h);
+  }
 }
 
 void Xen_GC_Trace(struct __GC_Header* inst) {

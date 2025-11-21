@@ -1,11 +1,19 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "implement.h"
 #include "instance.h"
+#include "implement.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_map.h"
+#include <assert.h>
+
+Xen_Instance* Xen_Instance_Alloc(Xen_Implement* impl) {
+  assert(impl != NULL);
+  Xen_Instance* inst = (Xen_Instance*)Xen_GC_New(
+      impl->__inst_size, impl->__inst_trace, __instance_free);
+  inst->__impl = impl;
+  inst->__size = 0;
+  inst->__flags = 0;
+  return inst;
+}
 
 struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
                                   Xen_INSTANCE* kwargs,
@@ -38,7 +46,8 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   return inst;
 }
 
-void __instance_free(struct __Instance* inst) {
+void __instance_free(Xen_GCHeader** h) {
+  Xen_Instance* inst = *(Xen_Instance**)h;
   if (!inst) {
     return;
   }
@@ -46,8 +55,7 @@ void __instance_free(struct __Instance* inst) {
     if (inst->__impl->__destroy)
       inst->__impl->__destroy(0, inst, NULL, NULL);
     if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-      Xen_DEL_REF(((Xen_INSTANCE_MAPPED*)inst)->__map);
     }
-    Xen_Dealloc(inst);
+    Xen_Dealloc(*h);
   }
 }

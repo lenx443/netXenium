@@ -26,7 +26,6 @@ typedef uint8_t Xen_Instance_Flag;
 
 #define Xen_INSTANCE_HEAD                                                      \
   struct __GC_Header __gc;                                                     \
-  size_t __refers;                                                             \
   struct __Implement* __impl;                                                  \
   size_t __size;                                                               \
   Xen_Instance_Flag __flags;
@@ -39,8 +38,7 @@ typedef uint8_t Xen_Instance_Flag;
 
 #define Xen_INSTANCE_MAPPED struct __Instance_Mapped
 
-#define Xen_INSTANCE_SET(refers, impl, flags)                                  \
-  .__refers = refers, .__impl = impl, .__flags = (flags)
+#define Xen_INSTANCE_SET(impl, flags) .__impl = impl, .__flags = (flags)
 
 #define XEN_INSTANCE_FLAG_STATIC (1 << 0)
 #define XEN_INSTANCE_FLAG_MAPPED (1 << 1)
@@ -51,44 +49,13 @@ typedef uint8_t Xen_Instance_Flag;
 Xen_INSTANCE{Xen_INSTANCE_HEAD};
 Xen_INSTANCE_MAPPED{Xen_INSTANCE_MAPPED_HEAD};
 
+Xen_INSTANCE* Xen_Instance_Alloc(struct __Implement*);
 Xen_INSTANCE* __instance_new(struct __Implement*, Xen_INSTANCE*, Xen_INSTANCE*,
                              Xen_Instance_Flag);
-void __instance_free(Xen_INSTANCE*);
+void __instance_free(Xen_GCHeader**);
 
 typedef Xen_INSTANCE Xen_Instance;
 typedef Xen_INSTANCE_MAPPED Xen_Instance_Mapped;
-
-static inline void __DEL_REF(void* inst) {
-  if (inst && ((struct __Instance*)inst)->__refers > 0) {
-    if (--(((struct __Instance*)inst)->__refers) == 0)
-      __instance_free((struct __Instance*)(inst));
-  }
-}
-
-#ifndef XEN_DEBUG_REFERS
-#define Xen_ADD_REF(inst)                                                      \
-  ((inst) ? (((struct __Instance*)(inst))->__refers++, (inst)) : (inst))
-#define Xen_DEL_REF(inst) __DEL_REF((void*)inst)
-#else
-#define Xen_ADD_REF(inst)                                                      \
-  ((inst)                                                                      \
-       ? (((struct __Instance*)(inst))->__refers++,                            \
-          printf("[ADD_REF] %s=%p ref=%zd at %s:%d\n", #inst, inst,            \
-                 ((struct __Instance*)(inst))->__refers, __FILE__, __LINE__),  \
-          (inst))                                                              \
-       : (inst))
-
-#define Xen_DEL_REF(inst)                                                      \
-  do {                                                                         \
-    if (inst) {                                                                \
-      printf("[DEL_REF] %s=%p ref=%zd at %s:%d\n", #inst, (Xen_Instance*)inst, \
-             ((struct __Instance*)(inst))->__refers, __FILE__, __LINE__);      \
-      ((struct __Instance*)(inst))->__refers--;                                \
-      if (((struct __Instance*)(inst))->__refers <= 0)                         \
-        __instance_free((struct __Instance*)(inst));                           \
-    }                                                                          \
-  } while (0)
-#endif
 
 static inline struct __Implement* Xen_IMPL(void* inst) {
   return (((struct __Instance*)inst)->__impl);

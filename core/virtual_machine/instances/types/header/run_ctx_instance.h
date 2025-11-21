@@ -17,12 +17,11 @@ struct RunContext {
   Xen_Instance* ctx_caller;
   Xen_Instance* ctx_self;
   CALLABLE_ptr ctx_code;
-  struct vm_Stack ctx_stack;
+  struct vm_Stack* ctx_stack;
   Xen_Instance* ctx_args;
   Xen_Instance* ctx_kwargs;
   struct __Instance* ctx_instances;
   Xen_ulong_t ctx_ip;
-  Xen_ulong_t ctx_jump_offset;
   bool ctx_running;
   bool ctx_error;
 };

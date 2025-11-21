@@ -1,14 +1,20 @@
 #include "xen_function_implement.h"
 #include "basic.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
-#include "xen_alloc.h"
 #include "xen_function_instance.h"
+#include "xen_gc.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+
+static void function_trace(Xen_GCHeader* h) {
+  Xen_Function_ptr inst = (Xen_Function_ptr)h;
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->closure);
+}
 
 static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
                                     Xen_Instance* args, Xen_Instance* kwargs) {
@@ -30,7 +36,6 @@ static Xen_Instance* function_destroy(ctx_id_t id, struct __Instance* self,
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
   if (inst->fun_callable)
     callable_free(inst->fun_callable);
-  if_nil_neval(inst->closure) Xen_DEL_REF(inst->closure);
   return nil;
 }
 
@@ -61,10 +66,11 @@ static Xen_Instance* function_string(ctx_id_t id, Xen_Instance* self,
 }
 
 struct __Implement Xen_Function_Implement = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
+    Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Function",
     .__inst_size = sizeof(Xen_Function),
     .__inst_default_flags = 0x00,
+    .__inst_trace = function_trace,
     .__props = &Xen_Nil_Def,
     .__alloc = function_alloc,
     .__create = NULL,

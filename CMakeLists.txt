@@ -65,6 +65,7 @@ include_directories(
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
+  core/instances/types/header/
   core/instances/types/include/
   core/register_enginer/include/
   core/register_enginer/types/header/
@@ -201,7 +202,6 @@ set(SOURCES
   core/instances/src/instance_life.c
 
   # Implementacion de estaructura `Instance`
-  core/instances/types/src/implement.c
   core/instances/types/src/instance.c
 
   # motor de registros

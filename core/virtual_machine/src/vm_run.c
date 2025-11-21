@@ -15,6 +15,7 @@
 #include "vm_stack.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_method_implement.h"
@@ -33,8 +34,8 @@
 
 #define JUMP(ip) ctx->ctx_ip = ip
 
-#define STACK_PUSH(inst) vm_stack_push(&ctx->ctx_stack, inst);
-#define STACK_POP vm_stack_pop(&ctx->ctx_stack)
+#define STACK_PUSH(inst) vm_stack_push(ctx->ctx_stack, inst);
+#define STACK_POP vm_stack_pop(ctx->ctx_stack)
 
 static void op_nop([[maybe_unused]] RunContext_ptr ctx,
                    [[maybe_unused]] Xen_ulong_t oparg) {}
@@ -722,9 +723,8 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
-    if (!vm_stack_init(&ctx->ctx_stack, pc.stack_depth + 1)) {
-      return NULL;
-    }
+    ctx->ctx_stack = vm_stack_new(pc.stack_depth + 1);
+    Xen_GC_Write_Field(ctx, &ctx->ctx_stack, vm_stack_new(pc.stack_depth + 1));
 #ifndef NDEBUG
     const char* previous_op = "No-OP";
     Xen_ssize_t previous_offset = -1;
@@ -762,12 +762,12 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
 #endif
       ctx->ctx_running = 0;
       ctx->ctx_error = 0;
-      vm_stack_free(&ctx->ctx_stack);
+      ctx->ctx_stack = NULL;
       return NULL;
     }
     ctx->ctx_running = 0;
     ctx->ctx_error = 0;
-    vm_stack_free(&ctx->ctx_stack);
+    ctx->ctx_stack = NULL;
     return nil;
   }
   return NULL;

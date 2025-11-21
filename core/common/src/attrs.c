@@ -13,7 +13,6 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_tuple.h"
-#include "xen_vector.h"
 
 Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   if (!inst || !attr) {
@@ -25,17 +24,15 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   if (!Xen_IMPL(inst)->__get_attr) {
     return NULL;
   }
-  Xen_Instance* args = Xen_Vector_From_Array(1, &attr);
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &attr);
   if (!args) {
     return NULL;
   }
   Xen_Instance* result =
       Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__get_attr, inst, args, nil);
   if (!result) {
-    Xen_DEL_REF(args);
     return NULL;
   }
-  Xen_DEL_REF(args);
   return result;
 }
 
@@ -49,10 +46,8 @@ Xen_Instance* Xen_Attr_Get_Str(Xen_Instance* inst, const char* attr) {
   }
   Xen_Instance* result = Xen_Attr_Get(inst, attr_inst);
   if (!result) {
-    Xen_DEL_REF(attr_inst);
     return NULL;
   }
-  Xen_DEL_REF(attr_inst);
   return result;
 }
 
@@ -66,18 +61,15 @@ int Xen_Attr_Set(Xen_Instance* inst, Xen_Instance* attr, Xen_Instance* val) {
   if (!Xen_IMPL(inst)->__set_attr) {
     return 0;
   }
-  Xen_Instance* args = Xen_Vector_From_Array(2, (Xen_Instance*[]){attr, val});
+  Xen_Instance* args = Xen_Tuple_From_Array(2, (Xen_Instance*[]){attr, val});
   if (!args) {
     return 0;
   }
   Xen_Instance* result =
       Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__set_attr, inst, args, nil);
   if (!result) {
-    Xen_DEL_REF(args);
     return 0;
   }
-  Xen_DEL_REF(result);
-  Xen_DEL_REF(args);
   return 1;
 }
 
@@ -90,10 +82,8 @@ int Xen_Attr_Set_Str(Xen_Instance* inst, const char* attr, Xen_Instance* val) {
     return 0;
   }
   if (!Xen_Attr_Set(inst, attr_inst, val)) {
-    Xen_DEL_REF(attr_inst);
     return 0;
   }
-  Xen_DEL_REF(attr_inst);
   return 1;
 }
 

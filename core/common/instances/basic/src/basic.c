@@ -1,13 +1,22 @@
 #include "basic.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+
+static void basic_trace(Xen_GCHeader* h) {
+  struct __Implement* impl = (struct __Implement*)h;
+  if_nil_neval(impl->__props) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__props);
+  }
+}
 
 static Xen_Instance* basic_create(ctx_id_t id, struct __Instance* self,
                                   Xen_Instance* args, Xen_Instance* kwargs) {
@@ -16,7 +25,6 @@ static Xen_Instance* basic_create(ctx_id_t id, struct __Instance* self,
   impl->__impl_name = NULL;
   impl->__props = Xen_Map_New();
   if (!impl->__props) {
-    Xen_DEL_REF(impl);
     return NULL;
   }
   impl->__inst_size = sizeof(struct __Instance);
@@ -34,8 +42,6 @@ static Xen_Instance* basic_destroy(ctx_id_t id, struct __Instance* self,
   struct __Implement* impl = (struct __Implement*)self;
   if (!impl)
     return NULL;
-  if (impl->__props)
-    Xen_DEL_REF(impl->__props);
   if (impl->__impl_name)
     Xen_Dealloc(impl->__impl_name);
   return nil;
@@ -53,10 +59,8 @@ static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
     Xen_Instance* rsult =
         Xen_VM_Call_Native_Function(impl->__create, inst, args, kwargs);
     if (!rsult) {
-      Xen_DEL_REF(inst);
       return NULL;
     }
-    Xen_DEL_REF(rsult);
   }
   return inst;
 }
@@ -72,10 +76,11 @@ static Xen_Instance* basic_string(ctx_id_t id, Xen_Instance* self,
 }
 
 struct __Implement Xen_Basic = {
-    Xen_INSTANCE_SET(0, &Xen_Basic, 0),
+    Xen_INSTANCE_SET(&Xen_Basic, 0),
     .__impl_name = "Basic",
     .__inst_size = sizeof(struct __Implement),
     .__inst_default_flags = 0x00,
+    .__inst_trace = basic_trace,
     .__props = &Xen_Nil_Def,
     .__create = basic_create,
     .__destroy = basic_destroy,
