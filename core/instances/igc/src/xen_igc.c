@@ -44,15 +44,23 @@ static struct __IGC_Roots* __igc_roots_new() {
   return roots;
 }
 
-static void __igc_roots_ensure_capacity() {
-  if (__igc_roots_list->count < __igc_roots_list->cap) {
+static void __igc_roots_ensure_capacity(struct __IGC_Roots* roots) {
+  if (roots->count < roots->cap) {
     return;
   }
-  Xen_size_t cap = __igc_roots_list->cap ? __igc_roots_list->cap * 2
-                                         : __XEN_IGC_INITIAL_ROOTS_CAP__;
-  __igc_roots_list->roots =
-      Xen_Realloc(__igc_roots_list->roots, cap * sizeof(Xen_GCHeader*));
-  __igc_roots_list->cap = cap;
+  Xen_size_t cap = roots->cap ? roots->cap * 2 : __XEN_IGC_INITIAL_ROOTS_CAP__;
+  roots->roots = Xen_Realloc(roots->roots, cap * sizeof(Xen_GCHeader*));
+  roots->cap = cap;
+}
+
+static void __igc_roots_push(struct __IGC_Roots* roots, Xen_GCHeader* h) {
+  __igc_roots_ensure_capacity(roots);
+  roots->roots[roots->count++] = h;
+}
+
+static void __igc_roots_pop(struct __IGC_Roots* roots) {
+  assert(roots->count > 0);
+  roots->count--;
 }
 
 void Xen_IGC_Init() {
@@ -65,11 +73,23 @@ void Xen_IGC_Finish() {
 }
 
 void Xen_IGC_Push(Xen_Instance* inst) {
-  __igc_roots_ensure_capacity();
-  __igc_roots_list->roots[__igc_roots_list->count++] = (Xen_GCHeader*)inst;
+  __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)inst);
 }
 
 void Xen_IGC_Pop() {
-  assert(__igc_roots_list->count > 0);
-  __igc_roots_list->count--;
+  __igc_roots_pop(__igc_roots_list);
+}
+
+struct __IGC_Roots* Xen_IGC_Fork_New() {
+  struct __IGC_Roots* fork = __igc_roots_new();
+  __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)fork);
+  return fork;
+}
+
+void Xen_IGC_Fork_Push(struct __IGC_Roots* f, Xen_Instance* inst) {
+  __igc_roots_push(f, (Xen_GCHeader*)inst);
+}
+
+void Xen_IGC_Fork_Pop(struct __IGC_Roots* f) {
+  __igc_roots_pop(f);
 }

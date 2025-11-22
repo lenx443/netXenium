@@ -1,5 +1,6 @@
 #include "instance_life.h"
 #include "xen_boolean_implement.h"
+#include "xen_igc.h"
 #include "xen_map_implement.h"
 #include "xen_number_implement.h"
 #include "xen_string_implement.h"
@@ -29,11 +30,13 @@ Instance_Life Instances[] = {
 };
 
 int Xen_Instance_Init() {
+  impls_maps = Xen_IGC_Fork_New();
   for (Xen_size_t i = 0; i < sizeof(Instances) / sizeof(*Instances); i++) {
     if (!Instances[i].init()) {
       while (i-- > 0) {
         Instances[i].finish();
       }
+      Xen_IGC_Pop();
       return 0;
     }
   }
@@ -44,4 +47,7 @@ void Xen_Instance_Finish() {
   for (Xen_size_t i = sizeof(Instances) / sizeof(*Instances); i-- > 0;) {
     Instances[i].finish();
   }
+  Xen_IGC_Pop();
 }
+
+Xen_IGC_Fork* impls_maps = NULL;

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "gc_header.h"
 #include "gc_heap.h"
@@ -35,12 +36,10 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   struct __GC_Header* h = (struct __GC_Header*)Xen_Alloc(size);
   Xen_GC_Push_Root(h);
 
+  memset(h, 0, size);
   h->color = GC_WHITE;
   h->generation = GC_YOUNG;
-  h->age = 0;
   h->size = size;
-  h->trace = NULL;
-  h->destroy = NULL;
 
   h->prev = NULL;
   h->next = __gc_heap.young;

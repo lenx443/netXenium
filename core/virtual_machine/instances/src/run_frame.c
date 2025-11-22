@@ -35,7 +35,8 @@ static void frame_trace(Xen_GCHeader* h) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_args);
   }
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_kwargs);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances);
+  if (ctx->ctx_instances)
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances);
 }
 
 static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
@@ -79,6 +80,7 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
                         Xen_Tuple_Get_Index(args, 4));
   } else
     ctx_new->ctx_kwargs = NULL;
+  ctx_new->ctx_instances = NULL;
   Xen_IGC_WRITE_FIELD(ctx_new, ctx_new->ctx_instances, Xen_Map_New());
   if (!ctx_new->ctx_instances) {
     Xen_IGC_Pop();

@@ -9,6 +9,7 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "instance_life.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
@@ -272,10 +273,8 @@ int Xen_Vector_Init() {
     return 0;
   }
   Xen_Vector_Implement.__props = props;
-  Xen_GC_Push_Root((Xen_GCHeader*)props);
+  Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Vector_Finish() {
-  Xen_GC_Pop_Root();
-}
+void Xen_Vector_Finish() {}

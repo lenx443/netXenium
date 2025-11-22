@@ -8,6 +8,7 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "instance_life.h"
 #include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
@@ -28,6 +29,7 @@
 
 static void map_trace(Xen_GCHeader* h) {
   Xen_Map* map = (Xen_Map*)h;
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys);
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
@@ -273,10 +275,8 @@ int Xen_Map_Init() {
     return 0;
   }
   Xen_Map_Implement.__props = props;
-  Xen_GC_Push_Root((Xen_GCHeader*)props);
+  Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Map_Finish() {
-  Xen_GC_Pop_Root();
-}
+void Xen_Map_Finish() {}
