@@ -1,8 +1,10 @@
 #include "operators.h"
 #include "attrs.h"
 #include "instance.h"
+#include "xen_igc.h"
 #include "xen_method.h"
 #include "xen_nil.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
 
 static const char* Operators_Map[Xen_OPR_END] = {
@@ -18,17 +20,23 @@ Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
   if (op >= Xen_OPR_END) {
     return NULL;
   }
+  Xen_size_t roots = 0;
   Xen_Instance* method = Xen_Attr_Get_Str(first, Operators_Map[op]);
   if (!method) {
     return NULL;
   }
+  Xen_IGC_XPUSH(method, roots);
   Xen_Instance* args = Xen_Vector_From_Array(1, &second);
   if (!args) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
+  Xen_IGC_XPUSH(args, roots);
   Xen_Instance* result = Xen_Method_Call(method, args, nil);
   if (!result) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
+  Xen_IGC_XPOP(roots);
   return result;
 }

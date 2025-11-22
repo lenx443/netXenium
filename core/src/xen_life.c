@@ -7,6 +7,7 @@
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_module_load.h"
 
@@ -14,6 +15,7 @@ int Xen_Init(int argc, char** argv) {
   program.argv = argv + 1;
   program.argc = argc - 1;
 
+  Xen_IGC_Init();
   global_logs = list_new();
   if (!global_logs) {
     return 0;
@@ -45,5 +47,6 @@ void Xen_Finish() {
   Xen_Dealloc(program.name);
   vm_destroy();
   log_free(NULL);
+  Xen_IGC_Finish();
   Xen_GC_Shutdown();
 }

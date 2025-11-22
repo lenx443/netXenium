@@ -2,8 +2,8 @@
 #include "implement.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
-#include <assert.h>
 
 Xen_Instance* Xen_Instance_Alloc(Xen_Implement* impl) {
   assert(impl != NULL);
@@ -27,11 +27,13 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     if (!inst) {
       return NULL;
     }
+    Xen_IGC_Push(inst);
   } else {
     inst = Xen_Instance_Alloc(impl);
     if (!inst) {
       return NULL;
     }
+    Xen_IGC_Push(inst);
     inst->__flags = flags;
     inst->__flags |= impl->__inst_default_flags;
   }
@@ -39,10 +41,11 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
     mapped->__map = Xen_Map_New();
     if (!mapped->__map) {
-      Xen_Dealloc(inst);
+      Xen_IGC_Pop();
       return NULL;
     }
   }
+  Xen_IGC_Pop();
   return inst;
 }
 

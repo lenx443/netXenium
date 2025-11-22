@@ -32,7 +32,6 @@ Xen_size_t __gc_gray_stack_count = 0;
 struct __GC_Header* Xen_GC_New(Xen_size_t size,
                                void (*fn_trace)(struct __GC_Header*),
                                void (*fn_destroy)(struct __GC_Header**)) {
-  assert(size >= sizeof(struct __GC_Header));
   struct __GC_Header* h = (struct __GC_Header*)Xen_Alloc(size);
   Xen_GC_Push_Root(h);
 

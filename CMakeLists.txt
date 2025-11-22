@@ -67,6 +67,7 @@ include_directories(
   core/instances/include
   core/instances/types/header/
   core/instances/types/include/
+  core/instances/igc/include/
   core/register_enginer/include/
   core/register_enginer/types/header/
   core/modules_enginer/include/
@@ -80,7 +81,7 @@ include_directories(
 )
 
 set(SOURCES
-  # Codigo fuente donde del nucleo
+  # Codigo fuente del nucleo
   # del proyecto.
   core/src/xen_life.c
   core/src/program.c
@@ -200,6 +201,9 @@ set(SOURCES
 
   # Codigo de Instancias
   core/instances/src/instance_life.c
+
+  # Recolector de Basura de Instancias
+  core/instances/igc/src/xen_igc.c
 
   # Implementacion de estaructura `Instance`
   core/instances/types/src/instance.c

@@ -1,9 +1,8 @@
 #include "xen_method.h"
 #include "attrs.h"
-#include "gc_header.h"
 #include "instance.h"
 #include "xen_function_implement.h"
-#include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_method_implement.h"
 #include "xen_method_instance.h"
 #include "xen_nil.h"
@@ -21,10 +20,8 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   if (!method) {
     return NULL;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)method, (Xen_GCHeader**)&method->function,
-                     (Xen_GCHeader*)function);
-  Xen_GC_Write_Field((Xen_GCHeader*)method, (Xen_GCHeader**)&method->self,
-                     (Xen_GCHeader*)self);
+  Xen_IGC_WRITE_FIELD(method, method->function, function);
+  Xen_IGC_WRITE_FIELD(method, method->self, self);
   return (Xen_Instance*)method;
 }
 
@@ -49,10 +46,13 @@ Xen_Instance* Xen_Method_Attr_Call(Xen_Instance* inst, Xen_Instance* attr,
   if (!method) {
     return NULL;
   }
+  Xen_IGC_Push(method);
   Xen_Instance* ret = Xen_Method_Call(method, args, kwargs);
   if (!ret) {
+    Xen_IGC_Pop();
     return NULL;
   }
+  Xen_IGC_Pop();
   return ret;
 }
 
@@ -66,9 +66,12 @@ Xen_Instance* Xen_Method_Attr_Str_Call(Xen_Instance* inst, const char* attr,
   if (!attr_inst) {
     return NULL;
   }
+  Xen_IGC_Push(attr_inst);
   Xen_Instance* ret = Xen_Method_Attr_Call(inst, attr_inst, args, kwargs);
   if (!ret) {
+    Xen_IGC_Pop();
     return NULL;
   }
+  Xen_IGC_Pop();
   return ret;
 }
