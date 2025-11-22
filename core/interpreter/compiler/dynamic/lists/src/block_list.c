@@ -2,6 +2,7 @@
 #include "logs.h"
 #include "vm_consts.h"
 #include "xen_alloc.h"
+#include "xen_igc.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Block list", msg, ##__VA_ARGS__)
 
@@ -41,6 +42,8 @@ block_list_ptr block_list_new() {
     Xen_Dealloc(new_list);
     return NULL;
   }
+  Xen_IGC_Push(new_list->consts->c_names);
+  Xen_IGC_Push(new_list->consts->c_instances);
   new_list->head = NULL;
   new_list->tail = NULL;
   return new_list;
@@ -64,6 +67,7 @@ void block_list_free(block_list_ptr blocks) {
     error("lista de bloques nula");
     return;
   }
+  Xen_IGC_XPOP(2);
   vm_consts_free(blocks->consts);
   block_node_ptr current = blocks->head;
   while (current) {

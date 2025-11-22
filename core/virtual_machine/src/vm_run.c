@@ -170,8 +170,6 @@ static void op_make_tuple(RunContext_ptr ctx, Xen_ulong_t oparg) {
     Xen_Dealloc(vals_array);
     ERROR;
   }
-  for (uint8_t idx = 0; idx < oparg; idx++) {
-  }
   Xen_Dealloc(vals_array);
   STACK_PUSH(tuple);
 }

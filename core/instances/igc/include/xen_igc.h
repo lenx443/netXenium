@@ -25,7 +25,7 @@ void Xen_IGC_Fork_Pop(Xen_IGC_Fork*);
 
 #define Xen_IGC_XPOP(x)                                                        \
   do {                                                                         \
-    for (Xen_size_t i = 0; i < (x); i++) {                                     \
+    for (Xen_size_t __i__ = 0; __i__ < (x); __i__++) {                         \
       Xen_IGC_Pop();                                                           \
     }                                                                          \
   } while (0)
@@ -51,7 +51,7 @@ static inline void Xen_IGC_Write_Field(Xen_Instance* parent,
 
 #define Xen_IGC_FORK_XPOP(f, x)                                                \
   do {                                                                         \
-    for (Xen_size_t i = 0; i < (x); i++) {                                     \
+    for (Xen_size_t __i__ = 0; __i__ < (x); __i__++) {                         \
       Xen_IGC_Fork_Pop((f));                                                   \
     }                                                                          \
   } while (0)

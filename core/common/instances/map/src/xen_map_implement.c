@@ -15,6 +15,7 @@
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -29,7 +30,8 @@
 
 static void map_trace(Xen_GCHeader* h) {
   Xen_Map* map = (Xen_Map*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys);
+  if (map->map_keys)
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys);
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
@@ -49,6 +51,7 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   if (!map) {
     return NULL;
   }
+  Xen_IGC_Push((Xen_Instance*)map);
   map->map_buckets = Xen_Alloc(XEN_MAP_CAPACITY * sizeof(struct __Map_Node*));
   for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
     map->map_buckets[i] = NULL;
@@ -57,9 +60,11 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
     map->map_buckets = NULL;
+    Xen_IGC_Pop();
     return NULL;
   }
   map->map_capacity = XEN_MAP_CAPACITY;
+  Xen_IGC_Pop();
   return (Xen_Instance*)map;
 }
 

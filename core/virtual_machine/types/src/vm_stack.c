@@ -8,9 +8,11 @@
 #include "xen_typedefs.h"
 
 static void vm_stack_trace(Xen_GCHeader* h) {
-  struct vm_Stack* stack = *(struct vm_Stack**)h;
-  for (Xen_size_t i = 0; &stack->stack_head[i] < stack->stack_top; i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)stack->stack_head[i]);
+  struct vm_Stack* stack = (struct vm_Stack*)h;
+  if (stack->stack_head) {
+    for (Xen_size_t i = 0; &stack->stack_head[i] < stack->stack_top; i++) {
+      Xen_GC_Trace_GCHeader((Xen_GCHeader*)stack->stack_head[i]);
+    }
   }
 }
 
