@@ -7,6 +7,7 @@
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_function_implement.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_method.h"
@@ -59,21 +60,28 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
+  Xen_size_t roots = 0;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
   if (Xen_IMPL(key) != &Xen_String_Implement) {
     return NULL;
   }
+  Xen_IGC_XPUSH(key, roots);
   Xen_Instance* attr = Xen_Map_Get(Xen_IMPL(self)->__props, key);
   if (!attr) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
+  Xen_IGC_XPUSH(attr, roots);
   if (Xen_IMPL(attr) == &Xen_Function_Implement) {
     Xen_Instance* method = Xen_Method_New(attr, self);
     if (!method) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
+    Xen_IGC_XPOP(roots);
     return method;
   }
+  Xen_IGC_XPOP(roots);
   return attr;
 }
 
@@ -93,9 +101,11 @@ Xen_Instance* Xen_Basic_Set_Attr_Static(ctx_id_t id, Xen_Instance* self,
   if (Xen_IMPL(key) != &Xen_String_Implement) {
     return NULL;
   }
+  Xen_IGC_Push(key);
   Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
   if (!Xen_Map_Push_Pair(Xen_IMPL(self)->__props, (Xen_Map_Pair){key, value})) {
     return NULL;
   }
+  Xen_IGC_Pop();
   return nil;
 }

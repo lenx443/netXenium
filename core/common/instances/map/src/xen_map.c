@@ -11,6 +11,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_map_instance.h"
@@ -31,22 +32,26 @@ Xen_Instance* Xen_Map_New() {
 
 Xen_Instance* Xen_Map_From_Pairs_With_Size(size_t size, Xen_Map_Pair* pairs) {
   Xen_Instance* map = Xen_Map_New();
+  Xen_IGC_Push(map);
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair(map, pairs[i])) {
       return NULL;
     }
   }
+  Xen_IGC_Pop();
   return (Xen_Instance*)map;
 }
 
 Xen_Instance* Xen_Map_From_Pairs_Str_With_Size(size_t size,
                                                Xen_Map_Pair_Str* pairs) {
   Xen_Instance* map = Xen_Map_New();
+  Xen_IGC_Push(map);
   for (size_t i = 0; i < size; i++) {
     if (!Xen_Map_Push_Pair_Str((Xen_Instance*)map, pairs[i])) {
       return NULL;
     }
   }
+  Xen_IGC_Pop();
   return (Xen_Instance*)map;
 }
 

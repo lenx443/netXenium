@@ -6,6 +6,7 @@
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"
 
@@ -26,12 +27,15 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
     Xen_Dealloc(ctx_stack_new);
     return 0;
   }
+  Xen_IGC_Push(alloc_args);
   ctx_stack_new->ctx =
       (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, nil, 0);
   if (!ctx_stack_new->ctx) {
+    Xen_IGC_Pop();
     Xen_Dealloc(ctx_stack_new);
     return 0;
   }
+  Xen_IGC_Pop();
   Xen_GC_Push_Root((Xen_GCHeader*)ctx_stack_new->ctx);
   ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
   ctx_stack_new->next = NULL;

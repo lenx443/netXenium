@@ -12,6 +12,7 @@
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_function.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -34,9 +35,12 @@ bool Xen_VM_Store_Native_Function(Xen_Instance* inst_map, const char* name,
   if (!fun_inst) {
     return false;
   }
+  Xen_IGC_Push(fun_inst);
   if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, fun_inst})) {
+    Xen_IGC_Pop();
     return false;
   }
+  Xen_IGC_Pop();
   return true;
 }
 

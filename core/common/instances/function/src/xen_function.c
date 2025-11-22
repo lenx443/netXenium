@@ -6,6 +6,7 @@
 #include "xen_function_implement.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_nil.h"
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
@@ -38,8 +39,7 @@ Xen_INSTANCE* Xen_Function_From_Program(ProgramCode_t pc_fun,
     return NULL;
   }
   if_nil_neval(closure) {
-    Xen_GC_Write_Field((Xen_GCHeader*)fun, (Xen_GCHeader**)&fun->closure,
-                       (Xen_GCHeader*)closure);
+    Xen_IGC_WRITE_FIELD(fun, fun->closure, closure);
   }
   return (Xen_INSTANCE*)fun;
 }

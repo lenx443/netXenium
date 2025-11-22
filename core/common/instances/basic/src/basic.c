@@ -7,6 +7,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -55,13 +56,16 @@ static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
   if (!inst) {
     return NULL;
   }
+  Xen_IGC_Push(inst);
   if (impl->__create) {
     Xen_Instance* rsult =
         Xen_VM_Call_Native_Function(impl->__create, inst, args, kwargs);
     if (!rsult) {
+      Xen_IGC_Pop();
       return NULL;
     }
   }
+  Xen_IGC_Pop();
   return inst;
 }
 
