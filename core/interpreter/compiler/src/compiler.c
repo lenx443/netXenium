@@ -23,6 +23,7 @@
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -401,31 +402,39 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
     if (!primary) {
       return NULL;
     }
+    Xen_IGC_Push(primary);
     if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__positive", nil, nil);
       if (!result) {
+        Xen_IGC_Pop();
         *error = -1;
         return NULL;
       }
+      Xen_IGC_Pop();
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__negative", nil, nil);
       if (!result) {
+        Xen_IGC_Pop();
         *error = -1;
         return NULL;
       }
+      Xen_IGC_Pop();
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__not", nil, nil);
       if (!result) {
+        Xen_IGC_Pop();
         *error = -1;
         return NULL;
       }
+      Xen_IGC_Pop();
       return result;
     } else {
+      Xen_IGC_Pop();
       *error = 0;
       return NULL;
     }
@@ -452,139 +461,176 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = -1;
       return NULL;
     }
+    Xen_size_t roots = 0;
     Xen_Instance* lhs_expr = compile_expr_constant(error, lhs);
     if (!lhs_expr) {
       return NULL;
     }
+    Xen_IGC_XPUSH(lhs_expr, roots);
     Xen_Instance* rhs_expr = compile_expr_constant(error, rhs);
     if (!rhs_expr) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
+    Xen_IGC_XPUSH(rhs_expr, roots);
     if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_POW);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_MUL);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_DIV);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_MOD);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_ADD);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_SUB);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_LT);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_LE);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_GT);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_GE);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_EQ);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_NE);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "and") == 0) {
       Xen_Instance* lhs_bool = Xen_Attr_Boolean(lhs_expr);
       if (!lhs_bool) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
       if (lhs_bool == Xen_True) {
+        Xen_IGC_XPOP(roots);
         return rhs_expr;
       }
+      Xen_IGC_XPOP(roots);
       return lhs_expr;
     } else if (Xen_AST_Node_Value_Cmp(node, "or") == 0) {
       Xen_Instance* lhs_bool = Xen_Attr_Boolean(lhs_expr);
       if (!lhs_bool) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
       if (lhs_bool == Xen_False) {
+        Xen_IGC_XPOP(roots);
         return rhs_expr;
       }
+      Xen_IGC_XPOP(roots);
       return lhs_expr;
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_HAS);
       if (!result) {
+        Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
       }
+      Xen_IGC_XPOP(roots);
       return result;
     } else {
+      Xen_IGC_XPOP(roots);
       *error = 0;
       return NULL;
     }
@@ -595,21 +641,26 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = -1;
       return 0;
     }
+    Xen_size_t roots = 0;
     for (Xen_size_t idx = 0; idx < count; idx++) {
       Xen_Instance* expr = Xen_AST_Node_Get_Child(node, idx);
       Xen_Instance* value = compile_expr_constant(error, expr);
       if (!value) {
+        Xen_IGC_XPOP(roots);
         Xen_Dealloc(values);
         return NULL;
       }
       values[idx] = value;
+      Xen_IGC_XPUSH(value, roots);
     }
     Xen_Instance* result = Xen_Tuple_From_Array(count, values);
     if (!result) {
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc(values);
       *error = -1;
       return NULL;
     }
+    Xen_IGC_XPOP(roots);
     Xen_Dealloc(values);
     return result;
   } else if (Xen_AST_Node_Name_Cmp(node, "Nil") == 0) {

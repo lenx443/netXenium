@@ -66,16 +66,19 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
   }
   Xen_Instance* stack = NULL;
   if (Xen_SIZE(args) > 1) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Attr_Index_Size_Get(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
   }
   if (!stack) {
     stack = Xen_Map_New();
     if (!stack) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
     Xen_IGC_XPUSH(stack, roots);

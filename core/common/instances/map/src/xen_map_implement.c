@@ -89,46 +89,49 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
 static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
                                 Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_size_t roots = 0;
   Xen_Instance* self_id = Xen_Number_From_Pointer(self);
   if (!self_id) {
     return NULL;
   }
+  Xen_IGC_XPUSH(self_id, roots);
   Xen_Instance* stack = NULL;
   if (Xen_SIZE(args) > 1) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Attr_Index_Size_Get(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
   }
-  Xen_size_t roots = 0;
   if (!stack) {
     stack = Xen_Map_New();
     if (!stack) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
-    Xen_GC_Push_Root((Xen_GCHeader*)stack);
-    roots++;
+    Xen_IGC_XPUSH(stack, roots);
   } else {
     if (Xen_Map_Has(stack, self_id)) {
       Xen_Instance* string = Xen_String_From_CString("<Map(...)>");
       if (!string) {
-        Xen_GC_Pop_Roots(roots);
+        Xen_IGC_XPOP(roots);
         return NULL;
       }
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       return string;
     }
   }
   if (!Xen_Map_Push_Pair(stack, (Xen_Map_Pair){self_id, nil})) {
-    Xen_GC_Pop_Roots(roots);
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
   Xen_Map* map = (Xen_Map*)self;
   char* buffer = Xen_CString_Dup("<Map(");
   if (!buffer) {
-    Xen_GC_Pop_Roots(roots);
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
   Xen_size_t buflen = 6;
@@ -137,25 +140,25 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
     Xen_Instance* key_string = Xen_Attr_Raw_Stack(key_inst, stack);
     if (!key_string) {
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     Xen_Instance* value_string = Xen_Attr_Raw_Stack(value_inst, stack);
     if (!value_string) {
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* key = Xen_CString_Dup(Xen_String_As_CString(key_string));
     if (!key) {
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc(buffer);
       return NULL;
     }
     const char* value = Xen_CString_Dup(Xen_String_As_CString(value_string));
     if (!value) {
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc((void*)key);
       Xen_Dealloc(buffer);
       return NULL;
@@ -163,7 +166,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
     buflen += Xen_CString_Len(key) + Xen_CString_Len(value) + 2;
     char* temp = Xen_Realloc(buffer, buflen);
     if (!temp) {
-      Xen_GC_Pop_Roots(roots);
+      Xen_IGC_XPOP(roots);
       Xen_Dealloc((void*)key);
       Xen_Dealloc((void*)value);
       Xen_Dealloc(buffer);
@@ -179,7 +182,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       buflen += 2;
       char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {
-        Xen_GC_Pop_Roots(roots);
+        Xen_IGC_XPOP(roots);
         Xen_Dealloc(buffer);
         return NULL;
       }
@@ -187,7 +190,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
       strcat(buffer, ", ");
     }
   }
-  Xen_GC_Pop_Roots(roots);
+  Xen_IGC_XPOP(roots);
   buflen += 2;
   char* temp = Xen_Realloc(buffer, buflen);
   if (!temp) {
