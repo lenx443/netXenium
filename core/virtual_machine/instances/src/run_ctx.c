@@ -1,4 +1,5 @@
 #include "run_ctx.h"
+#include "callable.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
 #include "run_frame.h"
@@ -9,7 +10,8 @@
 
 Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
                           Xen_Instance* self, Xen_Instance* args,
-                          Xen_Instance* kwargs, Xen_Instance* instances) {
+                          Xen_Instance* kwargs, Xen_Instance* instances,
+                          CALLABLE_ptr code) {
   RunContext_ptr ctx =
       (RunContext_ptr)__instance_new(&Xen_Run_Frame, nil, nil, 0);
   if (!ctx) {
@@ -19,7 +21,6 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
   ctx->ctx_flags = CTX_FLAG_PROPS;
   ctx->ctx_id = 0;
   ctx->ctx_retval = NULL;
-  ctx->ctx_code = NULL;
   ctx->ctx_stack = NULL;
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
@@ -53,6 +54,11 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     return NULL;
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_instances, instances);
+  if (!code) {
+    ctx->ctx_code = NULL;
+  } else {
+    ctx->ctx_code = code;
+  }
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
 }

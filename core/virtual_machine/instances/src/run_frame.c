@@ -40,6 +40,9 @@ static void frame_trace(Xen_GCHeader* h) {
   }
   if (ctx->ctx_instances)
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances);
+  if (ctx->ctx_code) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code);
+  }
 }
 
 static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,

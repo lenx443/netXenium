@@ -46,7 +46,7 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
                                           Xen_Instance* kwargs) {
   Xen_Instance* ctx =
       Xen_Ctx_New(Xen_VM_Current_Ctx() ? Xen_VM_Current_Ctx() : nil, nil, self,
-                  args, kwargs, NULL);
+                  args, kwargs, NULL, callable_new_native(func));
   if (!ctx) {
     return NULL;
   }
@@ -94,7 +94,7 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
       Xen_Ctx_New(run_context_stack_peek_top(&vm->vm_ctx_stack)
                       ? run_context_stack_peek_top(&vm->vm_ctx_stack)
                       : nil,
-                  closure, self, args, kwargs, NULL);
+                  closure, self, args, kwargs, NULL, callable);
   if (!ctx_inst) {
     return 0;
   }

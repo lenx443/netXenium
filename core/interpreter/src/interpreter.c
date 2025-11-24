@@ -24,7 +24,7 @@ Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
   printf("== Running ==\n");
 #endif
   Xen_Instance* ctx_inst =
-      Xen_Ctx_New(nil, nil, nil, nil, nil, vm->globals_instances);
+      Xen_Ctx_New(nil, nil, nil, nil, nil, vm->globals_instances, code);
   if (!ctx_inst) {
     return NULL;
   }
@@ -33,7 +33,6 @@ Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
   }
   RunContext_ptr ctx =
       (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
-  ctx->ctx_code = code;
   Xen_Instance* retval = vm_run_ctx(ctx);
   if (!retval) {
     callable_free(code);

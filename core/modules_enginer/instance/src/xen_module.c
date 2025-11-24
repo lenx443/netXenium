@@ -1,18 +1,16 @@
 #include "xen_module.h"
 #include "callable.h"
-#include "gc_header.h"
 #include "instance.h"
-#include "run_frame.h"
+#include "run_ctx.h"
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_function.h"
-#include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_module_implement.h"
 #include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
-#include "xen_vector.h"
 
 Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
   Xen_Module* module =
@@ -20,21 +18,14 @@ Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
   if (!module) {
     return NULL;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)module, (Xen_GCHeader**)&module->mod_map,
-                     (Xen_GCHeader*)mod_map);
-  Xen_GC_Write_Field((Xen_GCHeader*)module,
-                     (Xen_GCHeader**)&module->mod_context,
-                     (Xen_GCHeader*)mod_context);
+  Xen_IGC_WRITE_FIELD(module, module->mod_map, mod_map);
+  Xen_IGC_WRITE_FIELD(module, module->mod_context, mod_context);
   return (Xen_Instance*)module;
 }
 
 Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
-  Xen_Instance* ctx_args = Xen_Vector_From_Array(
-      6, (Xen_Instance*[]){nil, nil, nil, nil, nil, Xen_Map_New()});
-  if (!ctx_args) {
-    return NULL;
-  }
-  Xen_Instance* mod_ctx = __instance_new(&Xen_Run_Frame, ctx_args, nil, 0);
+  Xen_Instance* mod_ctx = Xen_Ctx_New(nil, nil, nil, nil, nil, NULL,
+                                      callable_new_native(mod_def.mod_init));
   if (!mod_ctx) {
     return NULL;
   }

@@ -1,6 +1,7 @@
 #ifndef __CALLABLE_H__
 #define __CALLABLE_H__
 
+#include "gc_header.h"
 #include "program_code.h"
 
 struct __Instance;
@@ -20,6 +21,7 @@ enum Callable_Type {
 };
 
 struct Callable {
+  Xen_GCHeader gc;
   enum Callable_Type callable_type;
   union {
     Xen_Native_Func native_callable;
@@ -33,6 +35,5 @@ typedef CALLABLE* CALLABLE_ptr;
 
 CALLABLE_ptr callable_new_native(Xen_Native_Func);
 CALLABLE_ptr callable_new_code(ProgramCode_t);
-void callable_free(CALLABLE_ptr);
 
 #endif
