@@ -13,6 +13,7 @@ struct RunContext {
   Xen_INSTANCE_HEAD;
   uint8_t ctx_flags;
   ctx_id_t ctx_id;
+  Xen_Instance* ctx_retval;
   Xen_Instance* ctx_closure;
   Xen_Instance* ctx_caller;
   Xen_Instance* ctx_self;

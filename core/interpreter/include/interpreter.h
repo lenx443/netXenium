@@ -1,8 +1,9 @@
 #ifndef __INTERPRETER_H__
 #define __INTERPRETER_H__
 
+#include "instance.h"
 #include <stdint.h>
 
-int interpreter(const char*, uint8_t);
+Xen_Instance* interpreter(const char*, uint8_t);
 
 #endif

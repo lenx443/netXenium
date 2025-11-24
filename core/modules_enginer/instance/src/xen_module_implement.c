@@ -6,9 +6,14 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
+#include "xen_map.h"
+#include "xen_map_implement.h"
 #include "xen_module_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+#include "xen_string_implement.h"
+#include "xen_tuple.h"
 
 static void module_trace(Xen_GCHeader* h) {
   Xen_Module* module = (Xen_Module*)h;
@@ -46,6 +51,31 @@ static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
+Xen_Instance* module_get_attr(ctx_id_t id, Xen_Instance* self,
+                              Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  Xen_Module* module = (Xen_Module*)self;
+  if (module->mod_map == NULL || Xen_Nil_Eval(module->mod_map) ||
+      Xen_IMPL(module->mod_map) != &Xen_Map_Implement) {
+    return NULL;
+  }
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(key) != &Xen_String_Implement) {
+    return NULL;
+  }
+  Xen_IGC_Push(key);
+  Xen_Instance* attr = Xen_Map_Get(module->mod_map, key);
+  if (!attr) {
+    Xen_IGC_Pop();
+    return NULL;
+  }
+  Xen_IGC_Pop();
+  return attr;
+}
+
 struct __Implement Xen_Module_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Module",
@@ -60,4 +90,5 @@ struct __Implement Xen_Module_Implement = {
     .__raw = module_string,
     .__callable = NULL,
     .__hash = NULL,
+    .__get_attr = module_get_attr,
 };

@@ -11,7 +11,6 @@
 #define VM_CHECK_ID(id) ((run_ctx_id(Xen_VM_Current_Ctx())) == (id))
 
 Xen_Instance* Xen_VM_Current_Ctx();
-Xen_Instance* Xen_VM_Root_Ctx();
 bool Xen_VM_Store_Global(const char*, Xen_Instance*);
 bool Xen_VM_Store_Native_Function(Xen_Instance*, const char*, Xen_Native_Func,
                                   Xen_Instance*);

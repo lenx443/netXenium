@@ -2,18 +2,11 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
-#include "run_frame.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
-#include "xen_igc.h"
-#include "xen_nil.h"
-#include "xen_tuple.h"
 
-int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
-                           Xen_Instance* closure, Xen_Instance* caller,
-                           struct __Instance* self, Xen_Instance* args,
-                           Xen_Instance* kwargs) {
+int run_context_stack_push(RunContext_Stack_ptr* ctx_stack, Xen_Instance* ctx) {
   if (!ctx_stack) {
     return 0;
   }
@@ -21,21 +14,7 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack,
   if (!ctx_stack_new) {
     return 0;
   }
-  Xen_Instance* alloc_args = Xen_Tuple_From_Array(
-      5, (Xen_Instance*[]){caller, closure, self, args, kwargs});
-  if (!alloc_args) {
-    Xen_Dealloc(ctx_stack_new);
-    return 0;
-  }
-  Xen_IGC_Push(alloc_args);
-  ctx_stack_new->ctx =
-      (RunContext_ptr)__instance_new(&Xen_Run_Frame, alloc_args, nil, 0);
-  if (!ctx_stack_new->ctx) {
-    Xen_IGC_Pop();
-    Xen_Dealloc(ctx_stack_new);
-    return 0;
-  }
-  Xen_IGC_Pop();
+  ctx_stack_new->ctx = (RunContext_ptr)ctx;
   Xen_GC_Push_Root((Xen_GCHeader*)ctx_stack_new->ctx);
   ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
   ctx_stack_new->next = NULL;
@@ -71,7 +50,7 @@ int run_context_stack_push_refer(RunContext_Stack_ptr* ctx_stack,
 }
 
 Xen_Instance* run_context_stack_peek_top(RunContext_Stack_ptr* ctx_stack) {
-  if (!ctx_stack) {
+  if (!ctx_stack || !*ctx_stack) {
     return NULL;
   }
   return (Xen_Instance*)(*ctx_stack)->ctx;

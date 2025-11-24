@@ -20,12 +20,8 @@ Xen_Instance* Xen_VM_Current_Ctx() {
   return run_context_stack_peek_top(&vm->vm_ctx_stack);
 }
 
-Xen_Instance* Xen_VM_Root_Ctx() {
-  return (Xen_Instance*)vm->root_context;
-}
-
 bool Xen_VM_Store_Global(const char* name, Xen_Instance* val) {
-  return Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
+  return Xen_Map_Push_Pair_Str(vm->globals_instances,
                                (Xen_Map_Pair_Str){name, val});
 }
 
@@ -48,9 +44,13 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
                                           Xen_INSTANCE* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
-  if (!run_context_stack_push(&vm->vm_ctx_stack, Xen_VM_Current_Ctx(),
-                              (Xen_Instance*)vm->root_context, self, args,
-                              kwargs)) {
+  Xen_Instance* ctx =
+      Xen_Ctx_New(Xen_VM_Current_Ctx() ? Xen_VM_Current_Ctx() : nil, nil, self,
+                  args, kwargs, NULL);
+  if (!ctx) {
+    return NULL;
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx)) {
     return NULL;
   }
   Xen_Instance* ret =
@@ -90,9 +90,15 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   if (!callable) {
     return 0;
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack,
-                              run_context_stack_peek_top(&vm->vm_ctx_stack),
-                              closure, self, args, kwargs)) {
+  Xen_Instance* ctx_inst =
+      Xen_Ctx_New(run_context_stack_peek_top(&vm->vm_ctx_stack)
+                      ? run_context_stack_peek_top(&vm->vm_ctx_stack)
+                      : nil,
+                  closure, self, args, kwargs, NULL);
+  if (!ctx_inst) {
+    return 0;
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
     return 0;
   }
   RunContext_ptr ctx =

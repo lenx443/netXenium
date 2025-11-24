@@ -11,6 +11,7 @@
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_register_stream.h"
+#include "xen_vector.h"
 
 static int __expose_set_handle(const char* name, Xen_INSTANCE* inst) {
   if (!Xen_Map_Push_Pair_Str(vm->global_props,
@@ -36,7 +37,7 @@ static int __args_set_handle(const char* name, Xen_INSTANCE* inst) {
 
 static Xen_INSTANCE* __args_get_handle(const char* name) {
   (void)name;
-  return vm->root_context->ctx_args;
+  return Xen_Vector_New();
 }
 
 static struct Xen_RegisterStream streams[] = {

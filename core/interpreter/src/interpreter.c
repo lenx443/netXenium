@@ -3,32 +3,43 @@
 
 #include "callable.h"
 #include "compiler.h"
+#include "instance.h"
 #include "interpreter.h"
-#include "logs.h"
-#include "program.h"
+#include "run_ctx.h"
+#include "run_ctx_instance.h"
+#include "run_ctx_stack.h"
 #include "vm_def.h"
 #include "vm_run.h"
+#include "xen_nil.h"
 
-#define error(msg, ...) log_add(NULL, ERROR, program.name, msg, ##__VA_ARGS__)
-
-int interpreter(const char* text_code, uint8_t compile_mode) {
+Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
   if (!text_code) {
-    error("Codigo invalido");
-    return 0;
+    return NULL;
   }
   CALLABLE_ptr code = compiler(text_code, compile_mode);
   if (!code) {
-    return 0;
+    return NULL;
   }
 #ifndef NDEBUG
   printf("== Running ==\n");
 #endif
-  vm->root_context->ctx_code = code;
-  if (vm_run_ctx(vm->root_context) == NULL) {
+  Xen_Instance* ctx_inst =
+      Xen_Ctx_New(nil, nil, nil, nil, nil, vm->globals_instances);
+  if (!ctx_inst) {
+    return NULL;
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
+    return NULL;
+  }
+  RunContext_ptr ctx =
+      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
+  ctx->ctx_code = code;
+  Xen_Instance* retval = vm_run_ctx(ctx);
+  if (!retval) {
     callable_free(code);
-    return 0;
+    return NULL;
   }
   callable_free(code);
-  log_show_and_clear(NULL);
-  return 1;
+  run_context_stack_pop_top(&vm->vm_ctx_stack);
+  return retval;
 }

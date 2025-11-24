@@ -9,6 +9,7 @@
 
 #define Xen_COMPILE_PROGRAM 0
 #define Xen_COMPILE_REPL 1
+#define Xen_COMPILE_FUNCTION 2
 
 CALLABLE_ptr compiler(const char*, uint8_t);
 int ast_compile(block_list_ptr, block_node_ptr*, uint8_t, Xen_Instance*);

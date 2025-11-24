@@ -29,8 +29,8 @@ Xen_Instance* Xen_Module_New(Xen_Instance* mod_map, Xen_Instance* mod_context) {
 }
 
 Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
-  Xen_Instance* ctx_args =
-      Xen_Vector_From_Array(5, (Xen_Instance*[]){nil, nil, nil, nil, nil});
+  Xen_Instance* ctx_args = Xen_Vector_From_Array(
+      6, (Xen_Instance*[]){nil, nil, nil, nil, nil, Xen_Map_New()});
   if (!ctx_args) {
     return NULL;
   }

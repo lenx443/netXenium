@@ -9,7 +9,6 @@
 #include "program.h"
 #include "run_ctx.h"
 #include "xen_alloc.h"
-#include "xen_igc.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"

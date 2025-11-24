@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(NetXenium)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow")
+set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -Wcast-function-type -Wstrict-prototypes -Wmissing-prototypes")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
@@ -12,7 +12,7 @@ set(C_STANDARD 99)
 
 if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
-  add_compile_options(-fsanitize=address,leak)
+  add_compile_options(-fsanitize=address,leak,undefined)
   link_libraries(-fsanitize=address,leak,undefined)
 endif()
 
@@ -221,6 +221,7 @@ set(SOURCES
 
   # modulos
   modules/src/m_core.c
+  modules/src/m_interpreter.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

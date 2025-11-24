@@ -14,9 +14,7 @@
 #include "operators.h"
 #include "parser.h"
 #include "program_code.h"
-#include "vm.h"
 #include "vm_consts.h"
-#include "vm_def.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
@@ -113,7 +111,6 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
     return NULL;
   }
   block_list_free(blocks);
-  Xen_VM_Ctx_Clear(vm->root_context);
   CALLABLE_ptr code = callable_new_code(pc);
   if (!code) {
     vm_consts_free(pc.consts);
@@ -244,7 +241,6 @@ static int compile_for_statement(Compiler*, Xen_Instance*);
 static int compile_flow_statement(Compiler*, Xen_Instance*);
 
 int compile_program(Compiler* c, Xen_Instance* node) {
-
   Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
   if (!stmt_list) {
     return 0;
@@ -255,6 +251,11 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     }
   } else {
     return 0;
+  }
+  if (COMPILE_MODE == Xen_COMPILE_PROGRAM || COMPILE_MODE == Xen_COMPILE_REPL) {
+    if (!emit(RETURN, 0)) {
+      return 0;
+    }
   }
   return 1;
 }
@@ -1610,23 +1611,23 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
   }
   if (starred) {
     if (starred_index == 0) {
-      if (!emit(SEQ_UNPACK_END, count)) {
+      if (!emit(LIST_UNPACK_END, count)) {
         return 0;
       }
     } else if (starred_index == (Xen_ssize_t)count - 1) {
-      if (!emit(SEQ_UNPACK_START, count)) {
+      if (!emit(LIST_UNPACK_START, count)) {
         return 0;
       }
     } else {
-      if (!emit(SEQ_UNPACK_END, (count - starred_index))) {
+      if (!emit(LIST_UNPACK_END, (count - starred_index))) {
         return 0;
       }
-      if (!emit(SEQ_UNPACK_START, (starred_index + 1))) {
+      if (!emit(LIST_UNPACK_START, (starred_index + 1))) {
         return 0;
       }
     }
   } else {
-    if (!emit(SEQ_UNPACK, count)) {
+    if (!emit(LIST_UNPACK, count)) {
       return 0;
     }
   }

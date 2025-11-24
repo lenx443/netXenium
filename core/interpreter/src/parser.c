@@ -8,7 +8,6 @@
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_cstrings.h"
-#include "xen_nil.h"
 #include "xen_typedefs.h"
 
 static inline void skip_newline(Parser* p) {
@@ -187,9 +186,7 @@ Xen_Instance* parser_stmt_list(Parser* p) {
   if (!stmt_list) {
     return NULL;
   }
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
+  skip_newline(p);
   if (!is_stmt(p)) {
     return stmt_list;
   }
@@ -457,7 +454,7 @@ Xen_Instance* parser_expr(Parser* p) {
 }
 
 Xen_Instance* parser_primary(Parser* p) {
-  Xen_Instance* value = nil;
+  Xen_Instance* value = NULL;
   if (p->token.tkn_type == TKN_STRING) {
     value = parser_string(p);
   } else if (p->token.tkn_type == TKN_NUMBER) {

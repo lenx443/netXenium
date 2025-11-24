@@ -28,9 +28,10 @@ static STACK_EFFECT(jump_if_true_stack_effect, -1);
 static STACK_EFFECT(jump_if_false_stack_effect, -1);
 static STACK_EFFECT(iter_get_stack_effect, 0);
 static STACK_EFFECT(iter_for_stack_effect, 0);
-static STACK_EFFECT(seq_unpack_stack_effect, oparg - 1);
-static STACK_EFFECT(seq_unpack_start_stack_effect, oparg - 1);
-static STACK_EFFECT(seq_unpack_end_stack_effect, oparg - 1);
+static STACK_EFFECT(list_unpack_stack_effect, oparg - 1);
+static STACK_EFFECT(list_unpack_start_stack_effect, oparg - 1);
+static STACK_EFFECT(list_unpack_end_stack_effect, oparg - 1);
+static STACK_EFFECT(return_stack_effect, 0);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [NOP] = {"", nop_stack_effect, 0},
@@ -67,9 +68,11 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
                        INSTRUCT_FLAG_ARG},
     [ITER_GET] = {"ITER_GET", iter_get_stack_effect, 0},
     [ITER_FOR] = {"ITER_FOR", iter_for_stack_effect, INSTRUCT_FLAG_ARG},
-    [SEQ_UNPACK] = {"SEQ_UNPACK", seq_unpack_stack_effect, INSTRUCT_FLAG_ARG},
-    [SEQ_UNPACK_START] = {"SEQ_UNPACK_START", seq_unpack_start_stack_effect,
-                          INSTRUCT_FLAG_ARG},
-    [SEQ_UNPACK_END] = {"SEQ_UNPACK_END", seq_unpack_end_stack_effect,
-                        INSTRUCT_FLAG_ARG},
+    [LIST_UNPACK] = {"LIST_UNPACK", list_unpack_stack_effect,
+                     INSTRUCT_FLAG_ARG},
+    [LIST_UNPACK_START] = {"LIST_UNPACK_START", list_unpack_start_stack_effect,
+                           INSTRUCT_FLAG_ARG},
+    [LIST_UNPACK_END] = {"LIST_UNPACK_END", list_unpack_end_stack_effect,
+                         INSTRUCT_FLAG_ARG},
+    [RETURN] = {"RETURN", return_stack_effect, INSTRUCT_FLAG_CO_INSTANCE},
 };

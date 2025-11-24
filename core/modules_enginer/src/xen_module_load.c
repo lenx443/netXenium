@@ -18,7 +18,7 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   if (!mod_inst) {
     return 0;
   }
-  if (!Xen_Map_Push_Map(vm->root_context->ctx_instances,
+  if (!Xen_Map_Push_Map(vm->globals_instances,
                         ((Xen_Module*)mod_inst)->mod_map)) {
     return 0;
   }
@@ -37,7 +37,7 @@ int Xen_Module_Load_Startup() {
       if (!mod_inst) {
         return 0;
       }
-      if (!Xen_Map_Push_Pair_Str(vm->root_context->ctx_instances,
+      if (!Xen_Map_Push_Pair_Str(vm->globals_instances,
                                  (Xen_Map_Pair_Str){mod->mod_name, mod_inst})) {
         return 0;
       }

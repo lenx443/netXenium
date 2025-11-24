@@ -217,11 +217,34 @@ static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_IGC_Push(key);
   Xen_Instance* value = Xen_Map_Get(self, key);
   if (!value) {
+    Xen_IGC_Pop();
     return NULL;
   }
+  Xen_IGC_Pop();
   return value;
+}
+
+static Xen_Instance* map_opr_set_index(ctx_id_t id, Xen_Instance* self,
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_size_t roots = 0;
+  Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_IGC_XPUSH(key, roots);
+  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 1);
+  Xen_IGC_XPUSH(value, roots);
+  if (!Xen_Map_Push_Pair(self, (Xen_Map_Pair){key, value})) {
+    Xen_IGC_XPOP(roots);
+    return NULL;
+  }
+  Xen_IGC_XPOP(roots);
+  return nil;
 }
 
 static Xen_Instance* map_opr_has(ctx_id_t id, Xen_Instance* self,
@@ -277,6 +300,8 @@ int Xen_Map_Init() {
     return 0;
   }
   if (!Xen_VM_Store_Native_Function(props, "__get_index", map_opr_get_index,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__set_index", map_opr_set_index,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__has", map_opr_has, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {

@@ -382,7 +382,7 @@ struct __Implement Xen_Number_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
-int Xen_Number_Init() {
+int Xen_Number_Init(void) {
   if (!Xen_VM_Store_Global("number", (Xen_Instance*)&Xen_Number_Implement)) {
     return 0;
   }
@@ -415,4 +415,4 @@ int Xen_Number_Init() {
   return 1;
 }
 
-void Xen_Number_Finish() {}
+void Xen_Number_Finish(void) {}

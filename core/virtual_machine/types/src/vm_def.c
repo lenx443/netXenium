@@ -9,9 +9,7 @@
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_map.h"
-#include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_tuple.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
@@ -39,32 +37,27 @@ bool vm_create() {
     }
     args_array[i] = arg_value;
   }
-  Xen_Instance* args = Xen_Tuple_From_Array(program.argc, args_array);
-  if (!args) {
-    Xen_Dealloc(vm);
-    Xen_Dealloc(args_array);
-    return 0;
-  }
-  for (int i = 0; i < program.argc; i++) {
-  }
   Xen_Dealloc(args_array);
-  if (!run_context_stack_push(&vm->vm_ctx_stack, nil, nil, nil, args, nil)) {
-    Xen_Dealloc(vm);
-    return 0;
-  }
-  vm->root_context =
-      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
   vm->modules_contexts = Xen_Map_New();
   if (!vm->modules_contexts) {
     run_context_stack_free(&vm->vm_ctx_stack);
     Xen_Dealloc(vm);
   }
   Xen_GC_Push_Root((Xen_GCHeader*)vm->modules_contexts);
-  vm->global_props = Xen_Map_New();
-  if (!vm->global_props) {
+  vm->globals_instances = Xen_Map_New();
+  if (!vm->globals_instances) {
     Xen_GC_Pop_Root();
     run_context_stack_free(&vm->vm_ctx_stack);
     Xen_Dealloc(vm);
+    return 0;
+  }
+  Xen_GC_Push_Root((Xen_GCHeader*)vm->globals_instances);
+  vm->global_props = Xen_Map_New();
+  if (!vm->global_props) {
+    Xen_GC_Pop_Roots(2);
+    run_context_stack_free(&vm->vm_ctx_stack);
+    Xen_Dealloc(vm);
+    return 0;
   }
   Xen_GC_Push_Root((Xen_GCHeader*)vm->global_props);
   return 1;
@@ -73,7 +66,7 @@ bool vm_create() {
 void vm_destroy() {
   if (!vm)
     return;
-  Xen_GC_Pop_Roots(2);
+  Xen_GC_Pop_Roots(3);
   run_context_stack_free(&vm->vm_ctx_stack);
   Xen_Dealloc(vm);
 }

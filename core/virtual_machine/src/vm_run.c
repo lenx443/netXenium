@@ -4,7 +4,6 @@
 #include "attrs.h"
 #include "bc_instruct.h"
 #include "bytecode.h"
-#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
@@ -16,7 +15,7 @@
 #include "vm_stack.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
-#include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_method_implement.h"
@@ -422,7 +421,7 @@ static void op_iter_for(RunContext_ptr ctx, Xen_ulong_t oparg) {
   STACK_PUSH(rsult);
 }
 
-static void op_seq_unpack(RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_list_unpack(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -440,7 +439,7 @@ static void op_seq_unpack(RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
 }
 
-static void op_seq_unpack_start(RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_list_unpack_start(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -473,7 +472,7 @@ static void op_seq_unpack_start(RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
 }
 
-static void op_seq_unpack_end(RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_list_unpack_end(RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -506,6 +505,13 @@ static void op_seq_unpack_end(RunContext_ptr ctx, Xen_ulong_t oparg) {
   STACK_PUSH(new_seq);
 }
 
+static void op_return(RunContext_ptr ctx, Xen_ulong_t oparg) {
+  Xen_Instance* ret_val =
+      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
+  ctx->ctx_retval = ret_val;
+  ctx->ctx_running = 0;
+}
+
 static void (*Dispatcher[HALT])(RunContext_ptr, Xen_ulong_t) = {
     [NOP] = op_nop,
     [PUSH] = op_push,
@@ -535,9 +541,10 @@ static void (*Dispatcher[HALT])(RunContext_ptr, Xen_ulong_t) = {
     [JUMP_IF_FALSE] = op_jump_if_false,
     [ITER_GET] = op_iter_get,
     [ITER_FOR] = op_iter_for,
-    [SEQ_UNPACK] = op_seq_unpack,
-    [SEQ_UNPACK_START] = op_seq_unpack_start,
-    [SEQ_UNPACK_END] = op_seq_unpack_end,
+    [LIST_UNPACK] = op_list_unpack,
+    [LIST_UNPACK_START] = op_list_unpack_start,
+    [LIST_UNPACK_END] = op_list_unpack_end,
+    [RETURN] = op_return,
 };
 
 Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
@@ -550,9 +557,7 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
   } else if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
     ctx->ctx_running = 1;
     ProgramCode_t pc = ctx->ctx_code->code;
-    ctx->ctx_stack = vm_stack_new(pc.stack_depth + 1);
-    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHeader**)&ctx->ctx_stack,
-                       (Xen_GCHeader*)vm_stack_new(pc.stack_depth + 1));
+    Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack, vm_stack_new(pc.stack_depth + 1));
 #ifndef NDEBUG
     const char* previous_op = "No-OP";
     Xen_ssize_t previous_offset = -1;
@@ -590,12 +595,15 @@ Xen_Instance* vm_run_ctx(RunContext_ptr ctx) {
       ctx->ctx_running = 0;
       ctx->ctx_error = 0;
       ctx->ctx_stack = NULL;
+      ctx->ctx_retval = NULL;
       return NULL;
     }
     ctx->ctx_running = 0;
     ctx->ctx_error = 0;
     ctx->ctx_stack = NULL;
-    return nil;
+    Xen_Instance* retval = ctx->ctx_retval;
+    ctx->ctx_retval = NULL;
+    return retval;
   }
   return NULL;
 }
