@@ -25,7 +25,7 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   return 1;
 }
 
-int Xen_Module_Load_Startup() {
+int Xen_Module_Load_Startup(void) {
   for (int i = 0; xen_startup_modules[i] != NULL; i++) {
     struct Xen_Module_Def* mod = xen_startup_modules[i];
     if (strcmp(mod->mod_name, "core") == 0) {

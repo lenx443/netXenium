@@ -62,7 +62,8 @@ vm_Consts_ptr vm_consts_new(void) {
 
 vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
                                     struct __Instance* c_instances) {
-  vm_Consts_ptr consts = Xen_Alloc(sizeof(vm_Consts));
+  vm_Consts_ptr consts = (vm_Consts_ptr)Xen_GC_New(
+      sizeof(vm_Consts), vm_consts_trace, vm_consts_destroy);
   if (!consts) {
     return NULL;
   }
