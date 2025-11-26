@@ -24,11 +24,7 @@ static void frame_trace(Xen_GCHeader* h) {
   }
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_self);
   if (ctx->ctx_code) {
-    if (ctx->ctx_code->callable_type == CALL_BYTECODE_PROGRAM) {
-      Xen_GC_Trace_GCHeader(
-          (Xen_GCHeader*)ctx->ctx_code->code.consts->c_instances);
-      Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code->code.consts->c_names);
-    }
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code->code.consts);
   }
   if (ctx->ctx_stack)
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack);

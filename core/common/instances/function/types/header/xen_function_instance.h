@@ -3,10 +3,13 @@
 
 #include "callable.h"
 #include "instance.h"
+#include "xen_typedefs.h"
 
 struct Xen_Function_Instance {
   Xen_INSTANCE_HEAD;
-  CALLABLE_ptr fun_callable;
+  Xen_uint8_t fun_type;
+  CALLABLE_ptr fun_code;
+  Xen_Native_Func fun_native;
   Xen_Instance* closure;
 };
 

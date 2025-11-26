@@ -6,7 +6,6 @@
 #include "instance.h"
 #include "interpreter.h"
 #include "run_ctx.h"
-#include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
 #include "vm_def.h"
 #include "vm_run.h"
@@ -31,14 +30,10 @@ Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
   if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
     return NULL;
   }
-  RunContext_ptr ctx =
-      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
-  Xen_Instance* retval = vm_run_ctx(ctx);
+  Xen_Instance* retval = vm_run_top();
   if (!retval) {
-    callable_free(code);
     return NULL;
   }
-  callable_free(code);
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   return retval;
 }

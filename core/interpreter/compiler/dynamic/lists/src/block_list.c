@@ -1,12 +1,14 @@
 #include "block_list.h"
+#include "gc_header.h"
 #include "logs.h"
 #include "vm_consts.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_igc.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Block list", msg, ##__VA_ARGS__)
 
-block_node_ptr block_new() {
+block_node_ptr block_new(void) {
   block_node_ptr new_block = Xen_Alloc(sizeof(block_node_t));
   if (!new_block) {
     error("Memoria insuficiente");
@@ -31,7 +33,7 @@ void block_free(block_node_ptr block) {
   Xen_Dealloc(block);
 }
 
-block_list_ptr block_list_new() {
+block_list_ptr block_list_new(void) {
   block_list_ptr new_list = Xen_Alloc(sizeof(block_list_t));
   if (!new_list) {
     error("Memoria insuficiente");
@@ -42,8 +44,7 @@ block_list_ptr block_list_new() {
     Xen_Dealloc(new_list);
     return NULL;
   }
-  Xen_IGC_Push(new_list->consts->c_names);
-  Xen_IGC_Push(new_list->consts->c_instances);
+  Xen_GC_Push_Root((Xen_GCHeader*)new_list->consts);
   new_list->head = NULL;
   new_list->tail = NULL;
   return new_list;
@@ -67,8 +68,7 @@ void block_list_free(block_list_ptr blocks) {
     error("lista de bloques nula");
     return;
   }
-  Xen_IGC_XPOP(2);
-  vm_consts_free(blocks->consts);
+  Xen_GC_Pop_Root();
   block_node_ptr current = blocks->head;
   while (current) {
     block_node_ptr next = current->next;

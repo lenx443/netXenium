@@ -4,7 +4,9 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "run_ctx_stack.h"
 #include "vm.h"
+#include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -66,7 +68,10 @@ static Xen_Instance* basic_callable(ctx_id_t id, struct __Instance* self,
     }
   }
   Xen_IGC_Pop();
-  return inst;
+  vm_stack_push(((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+                    ->ctx_stack,
+                inst);
+  return nil;
 }
 
 static Xen_Instance* basic_string(ctx_id_t id, Xen_Instance* self,

@@ -16,7 +16,7 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 
-Xen_Instance* Xen_VM_Current_Ctx() {
+Xen_Instance* Xen_VM_Current_Ctx(void) {
   return run_context_stack_peek_top(&vm->vm_ctx_stack);
 }
 
@@ -44,22 +44,10 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
                                           Xen_INSTANCE* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
-  Xen_Instance* ctx =
-      Xen_Ctx_New(Xen_VM_Current_Ctx() ? Xen_VM_Current_Ctx() : nil, nil, self,
-                  args, kwargs, NULL, callable_new_native(func));
-  if (!ctx) {
-    return NULL;
-  }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx)) {
-    return NULL;
-  }
-  Xen_Instance* ret =
-      func(run_ctx_id(Xen_VM_Current_Ctx()), self, args, kwargs);
+  Xen_Instance* ret = func(0, self, args, kwargs);
   if (!ret) {
-    run_context_stack_pop_top(&vm->vm_ctx_stack);
     return NULL;
   }
-  run_context_stack_pop_top(&vm->vm_ctx_stack);
   return ret;
 }
 
@@ -116,12 +104,9 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   if (!Xen_VM_New_Ctx_Callable(callable, closure, self, args, kwargs)) {
     return NULL;
   }
-  Xen_Instance* ret =
-      vm_run_ctx((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack));
+  Xen_Instance* ret = vm_run_top();
   if (!ret) {
-    run_context_stack_pop_top(&vm->vm_ctx_stack);
     return NULL;
   }
-  run_context_stack_pop_top(&vm->vm_ctx_stack);
   return ret;
 }

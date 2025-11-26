@@ -21,7 +21,6 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
   ctx->ctx_flags = CTX_FLAG_PROPS;
   ctx->ctx_id = 0;
   ctx->ctx_retval = NULL;
-  ctx->ctx_stack = NULL;
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
   ctx->ctx_error = 0;
@@ -59,6 +58,8 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
   } else {
     ctx->ctx_code = code;
   }
+  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack,
+                      vm_stack_new(code->code.stack_depth + 1));
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
 }

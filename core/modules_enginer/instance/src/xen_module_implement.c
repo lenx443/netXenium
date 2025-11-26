@@ -19,8 +19,6 @@ static void module_trace(Xen_GCHeader* h) {
   Xen_Module* module = (Xen_Module*)h;
   if_nil_neval(module->mod_map)
       Xen_GC_Trace_GCHeader((Xen_GCHeader*)module->mod_map);
-  if_nil_neval(module->mod_context)
-      Xen_GC_Trace_GCHeader((Xen_GCHeader*)module->mod_context);
 }
 
 static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
@@ -31,7 +29,6 @@ static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
     return NULL;
   }
   module->mod_map = nil;
-  module->mod_context = nil;
   return (Xen_Instance*)module;
 }
 
@@ -51,8 +48,8 @@ static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-Xen_Instance* module_get_attr(ctx_id_t id, Xen_Instance* self,
-                              Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_get_attr(ctx_id_t id, Xen_Instance* self,
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Module* module = (Xen_Module*)self;
   if (module->mod_map == NULL || Xen_Nil_Eval(module->mod_map) ||

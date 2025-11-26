@@ -1,7 +1,11 @@
 #include "xen_method.h"
 #include "attrs.h"
 #include "instance.h"
+#include "run_ctx_stack.h"
+#include "vm_def.h"
+#include "vm_run.h"
 #include "xen_function_implement.h"
+#include "xen_function_instance.h"
 #include "xen_igc.h"
 #include "xen_method_implement.h"
 #include "xen_method_instance.h"
@@ -25,14 +29,29 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   return (Xen_Instance*)method;
 }
 
-Xen_Instance* Xen_Method_Call(Xen_Instance* method, Xen_Instance* args,
+Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
                               Xen_Instance* kwargs) {
-  if (Xen_IMPL(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method_inst) != &Xen_Method_Implement) {
     return NULL;
   }
-  Xen_Instance* ret = Xen_Method_Implement.__callable(0, method, args, kwargs);
-  if (!ret) {
-    return NULL;
+  Xen_Method* method = (Xen_Method*)method_inst;
+  Xen_Function_ptr fun = (Xen_Function_ptr)method->function;
+  Xen_Instance* ret = NULL;
+  if (fun->fun_type == 1) {
+    Xen_Instance* fun_ctx = Xen_Ctx_New(nil, fun->closure, method->self, args,
+                                        kwargs, NULL, fun->fun_code);
+    if (!run_context_stack_push(&vm->vm_ctx_stack, fun_ctx)) {
+      return NULL;
+    }
+    ret = vm_run(((RunContext_ptr)fun_ctx)->ctx_id);
+    if (!ret) {
+      return NULL;
+    }
+  } else if (fun->fun_type == 2) {
+    ret = fun->fun_native(0, method->self, args, kwargs);
+    if (!ret) {
+      return NULL;
+    }
   }
   return ret;
 }

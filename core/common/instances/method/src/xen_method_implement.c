@@ -5,7 +5,8 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
-#include "vm.h"
+#include "run_ctx_stack.h"
+#include "vm_def.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
 #include "xen_method_instance.h"
@@ -47,8 +48,24 @@ static Xen_Instance* method_callable(ctx_id_t id, struct __Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
   Xen_Function_ptr function = (Xen_Function_ptr)method->function;
-  return Xen_VM_Call_Callable(function->fun_callable, function->closure,
-                              method->self, args, kwargs);
+  if (function->fun_type == 1) {
+    Xen_Instance* new_ctx = Xen_Ctx_New(
+        run_context_stack_peek_top(&vm->vm_ctx_stack), function->closure,
+        method->self, args, kwargs, NULL, function->fun_code);
+    if (!run_context_stack_push(&vm->vm_ctx_stack, new_ctx)) {
+      return NULL;
+    }
+  } else if (function->fun_type == 2) {
+    Xen_Instance* ret = function->fun_native(0, method->self, args, kwargs);
+    if (!ret) {
+      return NULL;
+    }
+    vm_stack_push(
+        ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+            ->ctx_stack,
+        ret);
+  }
+  return nil;
 }
 
 Xen_Implement Xen_Method_Implement = {

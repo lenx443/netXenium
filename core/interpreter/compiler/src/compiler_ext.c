@@ -1,7 +1,9 @@
 #include "block_list.h"
+#include "gc_header.h"
 #include "program_code.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
 #include "xen_typedefs.h"
 
 #ifndef EXT_ARG_OP
@@ -63,6 +65,7 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
     bc_free(pc->code);
     return 0;
   }
+  Xen_GC_Push_Root((Xen_GCHeader*)pc->consts);
 
   Xen_size_t total_ir_count = 0;
   block_node_ptr btmp = blocks->head;
@@ -170,6 +173,7 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
 
   Xen_Dealloc(reloc_table);
   Xen_Dealloc(real_offset);
+  Xen_GC_Pop_Root();
   return 1;
 
 error:
@@ -180,13 +184,13 @@ error:
   if (pc->code)
     bc_free(pc->code);
   if (pc->consts)
-    vm_consts_free(pc->consts);
+    Xen_GC_Pop_Root();
   return 0;
 
 error_alloc:
   if (pc->code)
     bc_free(pc->code);
   if (pc->consts)
-    vm_consts_free(pc->consts);
+    Xen_GC_Pop_Root();
   return 0;
 }

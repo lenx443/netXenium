@@ -65,23 +65,23 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #endif
     return NULL;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)ast_program);
+  Xen_IGC_Push(ast_program);
 #ifndef NDEBUG
   Xen_AST_Node_Print(ast_program);
 #endif
   block_list_ptr blocks = block_list_new();
   if (!blocks) {
-    Xen_GC_Pop_Root();
+    Xen_IGC_Pop();
     return NULL;
   }
   block_node_ptr main_block = block_new();
   if (!main_block) {
-    Xen_GC_Pop_Root();
+    Xen_IGC_Pop();
     block_list_free(blocks);
     return NULL;
   }
   if (!block_list_push_node(blocks, main_block)) {
-    Xen_GC_Pop_Root();
+    Xen_IGC_Pop();
     block_free(main_block);
     block_list_free(blocks);
     return NULL;
@@ -93,30 +93,35 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #ifndef NDEBUG
     printf("Compiler Error\n");
 #endif
-    Xen_GC_Pop_Root();
+    Xen_IGC_Pop();
     block_list_free(blocks);
     return NULL;
   }
-  Xen_GC_Pop_Root();
+  Xen_IGC_Pop();
   if (!blocks_linealizer(blocks)) {
     block_list_free(blocks);
     return NULL;
   }
 #ifndef NDEBUG
-  ir_print(blocks);
+//  ir_print(blocks);
 #endif
   ProgramCode_t pc;
   if (!blocks_compiler(blocks, &pc)) {
     block_list_free(blocks);
     return NULL;
   }
+  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts);
   block_list_free(blocks);
-  CALLABLE_ptr code = callable_new_code(pc);
+#ifndef NDEBUG
+  bc_print(pc);
+#endif
+  CALLABLE_ptr code = callable_new(pc);
   if (!code) {
-    vm_consts_free(pc.consts);
+    Xen_GC_Pop_Root();
     bc_free(pc.code);
     return NULL;
   }
+  Xen_GC_Pop_Root();
   return code;
 }
 

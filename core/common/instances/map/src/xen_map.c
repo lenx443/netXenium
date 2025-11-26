@@ -22,7 +22,7 @@
 #include "xen_string_instance.h"
 #include "xen_vector.h"
 
-Xen_Instance* Xen_Map_New() {
+Xen_Instance* Xen_Map_New(void) {
   Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, nil, 0);
   if (!map) {
     return NULL;
@@ -119,9 +119,12 @@ int Xen_Map_Push_Pair_Str(Xen_Instance* map, Xen_Map_Pair_Str pair) {
   if (!key_inst) {
     return 0;
   }
+  Xen_IGC_Push(key_inst);
   if (!Xen_Map_Push_Pair(map, (Xen_Map_Pair){key_inst, pair.value})) {
+    Xen_IGC_Pop();
     return 0;
   }
+  Xen_IGC_Pop();
   return 1;
 }
 
@@ -185,7 +188,13 @@ Xen_Instance* Xen_Map_Get_Str(Xen_Instance* map, const char* key) {
   if (!key_inst) {
     return NULL;
   }
+  Xen_IGC_Push(key_inst);
   Xen_Instance* result = Xen_Map_Get(map, key_inst);
+  if (!result) {
+    Xen_IGC_Pop();
+    return NULL;
+  }
+  Xen_IGC_Pop();
   return result;
 }
 

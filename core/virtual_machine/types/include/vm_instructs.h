@@ -15,6 +15,7 @@
 #define INSTRUCT_FLAG_CO_NAME (1 << 0)
 #define INSTRUCT_FLAG_CO_INSTANCE (1 << 1)
 #define INSTRUCT_FLAG_ARG (1 << 2)
+#define INSTRUCT_FLAG_MAYBE_PUSH_FRAME (1 << 3)
 
 enum vm_Instruct {
   NOP = 0,

@@ -1,37 +1,62 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "gc_header.h"
 #include "instance.h"
 #include "vm_consts.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_gc.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-vm_Consts_ptr vm_consts_new() {
-  vm_Consts_ptr consts = Xen_Alloc(sizeof(vm_Consts));
+static void vm_consts_trace(Xen_GCHeader* h) {
+  vm_Consts_ptr consts = (vm_Consts_ptr)h;
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_names);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_instances);
+}
+
+static void vm_consts_destroy(Xen_GCHeader** h) {
+  Xen_Dealloc(*h);
+}
+
+vm_Consts_ptr vm_consts_new(void) {
+  vm_Consts_ptr consts = (vm_Consts_ptr)Xen_GC_New(
+      sizeof(vm_Consts), vm_consts_trace, vm_consts_destroy);
   if (!consts) {
     return NULL;
   }
-  consts->c_names = Xen_Vector_New();
-  if (!consts->c_names) {
+  Xen_GC_Push_Root((Xen_GCHeader*)consts);
+  Xen_Instance* c_names = Xen_Vector_New();
+  if (!c_names) {
+    Xen_GC_Pop_Root();
     return NULL;
   }
-  consts->c_instances = Xen_Vector_New();
-  if (!consts->c_instances) {
+  Xen_Instance* c_instances = Xen_Vector_New();
+  if (!c_instances) {
+    Xen_GC_Pop_Root();
     return NULL;
   }
-  if (!Xen_Vector_Push(consts->c_instances, nil)) {
+  if (!Xen_Vector_Push(c_instances, nil)) {
+    Xen_GC_Pop_Root();
     return NULL;
   }
-  if (!Xen_Vector_Push(consts->c_instances, Xen_True)) {
+  if (!Xen_Vector_Push(c_instances, Xen_True)) {
+    Xen_GC_Pop_Root();
     return NULL;
   }
-  if (!Xen_Vector_Push(consts->c_instances, Xen_False)) {
+  if (!Xen_Vector_Push(c_instances, Xen_False)) {
+    Xen_GC_Pop_Root();
     return NULL;
   }
+  Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHeader**)&consts->c_names,
+                     (Xen_GCHeader*)c_names);
+  Xen_GC_Write_Field((Xen_GCHeader*)consts,
+                     (Xen_GCHeader**)&consts->c_instances,
+                     (Xen_GCHeader*)c_instances);
+  Xen_GC_Pop_Root();
   return consts;
 }
 
@@ -80,12 +105,4 @@ Xen_ssize_t vm_consts_push_instance(vm_Consts_ptr consts,
     return -1;
   }
   return index;
-}
-
-void vm_consts_free(vm_Consts_ptr consts) {
-  if (!consts) {
-    return;
-  }
-  Xen_Dealloc(consts);
-  consts = NULL;
 }
