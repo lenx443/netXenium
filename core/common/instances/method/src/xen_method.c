@@ -48,7 +48,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
       return NULL;
     }
   } else if (fun->fun_type == 2) {
-    ret = fun->fun_native(0, method->self, args, kwargs);
+    ret = fun->fun_native(method->self, args, kwargs);
     if (!ret) {
       return NULL;
     }

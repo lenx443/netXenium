@@ -3,7 +3,6 @@
 #include "compiler.h"
 #include "instance.h"
 #include "interpreter.h"
-#include "run_ctx.h"
 #include "xen_igc.h"
 #include "xen_module_types.h"
 #include "xen_number.h"
@@ -12,8 +11,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
-static Xen_Instance* fn_interpreter(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_interpreter(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_size_t roots = 0;
   Xen_Instance* code = Xen_Tuple_Get_Index(args, 0);

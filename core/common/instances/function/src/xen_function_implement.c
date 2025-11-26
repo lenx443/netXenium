@@ -22,8 +22,8 @@ static void function_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->closure);
 }
 
-static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* function_alloc(struct __Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst =
       (Xen_Function_ptr)Xen_Instance_Alloc(&Xen_Function_Implement);
@@ -37,14 +37,14 @@ static Xen_Instance* function_alloc(ctx_id_t id, struct __Instance* self,
   return (Xen_Instance*)inst;
 }
 
-static Xen_Instance* function_destroy(ctx_id_t id, struct __Instance* self,
+static Xen_Instance* function_destroy(struct __Instance* self,
                                       Xen_Instance* args,
                                       Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   return nil;
 }
 
-static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
+static Xen_Instance* function_callable(struct __Instance* self,
                                        Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
@@ -57,7 +57,7 @@ static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
       return NULL;
     }
   } else if (inst->fun_type == 2) {
-    Xen_Instance* ret = inst->fun_native(0, nil, args, kwargs);
+    Xen_Instance* ret = inst->fun_native(nil, args, kwargs);
     if (!ret) {
       return NULL;
     }
@@ -69,8 +69,8 @@ static Xen_Instance* function_callable(ctx_id_t id, struct __Instance* self,
   return nil;
 }
 
-static Xen_Instance* function_string(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* function_string(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Instance* string = Xen_String_From_CString("<Function>");
   if (!string) {

@@ -17,8 +17,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
-Xen_Instance* Xen_Basic_String(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args, Xen_Instance* kwargs) {
+Xen_Instance* Xen_Basic_String(Xen_Instance* self, Xen_Instance* args,
+                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   char* addr = Xen_CString_From_Pointer(self);
   if (!addr) {
@@ -48,8 +48,7 @@ Xen_Instance* Xen_Basic_String(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
-                                        Xen_Instance* args,
+Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
@@ -85,8 +84,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(ctx_id_t id, Xen_Instance* self,
   return attr;
 }
 
-Xen_Instance* Xen_Basic_Set_Attr_Static(ctx_id_t id, Xen_Instance* self,
-                                        Xen_Instance* args,
+Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||

@@ -10,7 +10,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
@@ -35,8 +34,8 @@ static void vector_trace(Xen_GCHeader* h) {
   }
 }
 
-static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_alloc(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -50,8 +49,8 @@ static Xen_Instance* vector_alloc(ctx_id_t id, Xen_Instance* self,
   return (Xen_Instance*)vector;
 }
 
-static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -74,16 +73,16 @@ static Xen_Instance* vector_create(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* vector_destroy(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_destroy(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
   Xen_Dealloc(vector->values);
   return nil;
 }
 
-static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_string(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_size_t roots = 0;
   Xen_Instance* self_id = Xen_Number_From_Pointer(self);
@@ -187,7 +186,7 @@ static Xen_Instance* vector_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
+static Xen_Instance* vector_opr_get_index(Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -203,13 +202,13 @@ static Xen_Instance* vector_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return ((Xen_Vector*)self)->values[index];
 }
 
-static Xen_Instance* vector_iter(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_iter(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_Vector_Iterator_New(self);
 }
 
-static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
+static Xen_Instance* vector_opr_set_index(Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -229,8 +228,8 @@ static Xen_Instance* vector_opr_set_index(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* vector_push(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* vector_push(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
     return NULL;
@@ -260,7 +259,7 @@ struct __Implement Xen_Vector_Implement = {
     .__set_attr = NULL,
 };
 
-int Xen_Vector_Init() {
+int Xen_Vector_Init(void) {
   if (!Xen_VM_Store_Global("vector", (Xen_Instance*)&Xen_Vector_Implement)) {
     return 0;
   }
@@ -281,4 +280,4 @@ int Xen_Vector_Init() {
   return 1;
 }
 
-void Xen_Vector_Finish() {}
+void Xen_Vector_Finish(void) {}

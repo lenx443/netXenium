@@ -19,8 +19,8 @@ static void method_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)method->self);
 }
 
-static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)Xen_Instance_Alloc(&Xen_Method_Implement);
   if (!method) {
@@ -31,19 +31,19 @@ static Xen_Instance* method_alloc(ctx_id_t id, struct __Instance* self,
   return (Xen_Instance*)method;
 }
 
-static Xen_Instance* method_destroy(ctx_id_t id, struct __Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* method_destroy(struct __Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return nil;
 }
 
-static Xen_Instance* method_string(ctx_id_t id, struct __Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* method_string(struct __Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_String_From_CString("<Method>");
 }
 
-static Xen_Instance* method_callable(ctx_id_t id, struct __Instance* self,
+static Xen_Instance* method_callable(struct __Instance* self,
                                      Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
@@ -56,7 +56,7 @@ static Xen_Instance* method_callable(ctx_id_t id, struct __Instance* self,
       return NULL;
     }
   } else if (function->fun_type == 2) {
-    Xen_Instance* ret = function->fun_native(0, method->self, args, kwargs);
+    Xen_Instance* ret = function->fun_native(method->self, args, kwargs);
     if (!ret) {
       return NULL;
     }

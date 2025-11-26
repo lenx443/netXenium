@@ -44,7 +44,7 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
                                           Xen_INSTANCE* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
-  Xen_Instance* ret = func(0, self, args, kwargs);
+  Xen_Instance* ret = func(self, args, kwargs);
   if (!ret) {
     return NULL;
   }

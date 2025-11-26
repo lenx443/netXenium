@@ -8,6 +8,8 @@
 #include "m_core.h"
 #include "program.h"
 #include "run_ctx.h"
+#include "run_ctx_instance.h"
+#include "vm.h"
 #include "xen_alloc.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
@@ -18,8 +20,8 @@
 #include "xen_string_implement.h"
 #include "xen_typedefs.h"
 
-static Xen_Instance* fn_exit(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -37,8 +39,8 @@ static Xen_Instance* fn_exit(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_echo(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -58,7 +60,8 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
     fputs(Xen_String_As_CString(string), stdout);
     return nil;
   }
-  Xen_Instance* out_reg = xen_register_prop_get("__out", id);
+  Xen_Instance* out_reg = xen_register_prop_get(
+      "__out", ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_id);
   if (!out_reg) {
     return NULL;
   }
@@ -73,8 +76,8 @@ static Xen_Instance* fn_echo(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
-                              Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_print(Xen_Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
@@ -90,8 +93,8 @@ static Xen_Instance* fn_print(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_println(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
     Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
@@ -108,8 +111,8 @@ static Xen_Instance* fn_println(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* fn_readline(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_readline(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   char* buffer = NULL;
   Xen_size_t bufsiz = 0;
@@ -138,8 +141,8 @@ static Xen_Instance* fn_readline(ctx_id_t id, Xen_Instance* self,
   return rsult;
 }
 
-static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
-                             Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* fn_size(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
     return NULL;
@@ -152,7 +155,7 @@ static Xen_Instance* fn_size(ctx_id_t id, Xen_Instance* self,
   return size;
 }
 
-static Xen_Instance* fn_id(ctx_id_t id, Xen_Instance* self, Xen_Instance* args,
+static Xen_Instance* fn_id(Xen_Instance* self, Xen_Instance* args,
                            Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {

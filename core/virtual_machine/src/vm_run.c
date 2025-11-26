@@ -263,7 +263,7 @@ static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (Xen_IMPL(callable)->__callable == NULL) {
     ERROR;
   }
-  if (!Xen_IMPL(callable)->__callable(ctx->ctx_id, callable, args, nil)) {
+  if (!Xen_IMPL(callable)->__callable(callable, args, nil)) {
     ERROR;
   }
 }
@@ -301,7 +301,7 @@ static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (Xen_IMPL(callable)->__callable == NULL) {
     ERROR;
   }
-  if (!Xen_IMPL(callable)->__callable(ctx->ctx_id, callable, args, kwargs)) {
+  if (!Xen_IMPL(callable)->__callable(callable, args, kwargs)) {
     ERROR;
   }
 }

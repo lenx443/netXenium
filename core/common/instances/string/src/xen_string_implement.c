@@ -6,16 +6,13 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
-#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
-#include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -26,8 +23,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_alloc(Xen_INSTANCE* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -47,8 +44,8 @@ static Xen_Instance* string_alloc(ctx_id_t id, Xen_INSTANCE* self,
   return (Xen_Instance*)string;
 }
 
-static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_destroy(Xen_INSTANCE* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
   if (string->characters)
@@ -56,14 +53,14 @@ static Xen_Instance* string_destroy(ctx_id_t id, Xen_INSTANCE* self,
   return nil;
 }
 
-static Xen_Instance* string_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_string(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return self;
 }
 
-static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_raw(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_String* string = (Xen_String*)self;
   char* raw_string = Xen_CString_As_Raw(string->characters);
@@ -88,8 +85,8 @@ static Xen_Instance* string_raw(ctx_id_t id, Xen_Instance* self,
   return raw;
 }
 
-static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_hash(Xen_INSTANCE* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   unsigned long hash = Xen_String_Hash(self);
   Xen_INSTANCE* hash_inst = Xen_Number_From_ULong(hash);
@@ -99,8 +96,8 @@ static Xen_Instance* string_hash(ctx_id_t id, Xen_INSTANCE* self,
   return hash_inst;
 }
 
-static Xen_Instance* string_boolean(ctx_id_t id, Xen_INSTANCE* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_boolean(Xen_INSTANCE* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (((Xen_String*)self)->characters) {
     return Xen_True;
@@ -108,8 +105,8 @@ static Xen_Instance* string_boolean(ctx_id_t id, Xen_INSTANCE* self,
   return Xen_False;
 }
 
-static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_opr_eq(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
@@ -122,8 +119,8 @@ static Xen_Instance* string_opr_eq(ctx_id_t id, Xen_Instance* self,
   return Xen_False;
 }
 
-static Xen_Instance* string_opr_ne(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_opr_ne(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
@@ -136,7 +133,7 @@ static Xen_Instance* string_opr_ne(ctx_id_t id, Xen_Instance* self,
   return Xen_False;
 }
 
-static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
+static Xen_Instance* string_opr_get_index(Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
@@ -157,8 +154,8 @@ static Xen_Instance* string_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return character;
 }
 
-static Xen_Instance* string_opr_add(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_opr_add(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1)
     return NULL;
@@ -168,8 +165,8 @@ static Xen_Instance* string_opr_add(ctx_id_t id, Xen_Instance* self,
   return Xen_String_From_Concat(self, str);
 }
 
-static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* string_opr_mul(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1)
     return NULL;
@@ -197,8 +194,7 @@ static Xen_Instance* string_opr_mul(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
-                                       Xen_Instance* args,
+static Xen_Instance* string_prop_upper(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   char* buffer = Xen_Alloc(Xen_SIZE(self) + 1);
@@ -218,8 +214,7 @@ static Xen_Instance* string_prop_upper(ctx_id_t id, Xen_Instance* self,
   return result;
 }
 
-static Xen_Instance* string_prop_lower(ctx_id_t id, Xen_Instance* self,
-                                       Xen_Instance* args,
+static Xen_Instance* string_prop_lower(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   char* buffer = Xen_Alloc(Xen_SIZE(self) + 1);
@@ -255,7 +250,7 @@ struct __Implement Xen_String_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
-int Xen_String_Init() {
+int Xen_String_Init(void) {
   if (!Xen_VM_Store_Global("string", (Xen_Instance*)&Xen_String_Implement)) {
     return 0;
   }
@@ -279,4 +274,4 @@ int Xen_String_Init() {
   return 1;
 }
 
-void Xen_String_Finish() {}
+void Xen_String_Finish(void) {}

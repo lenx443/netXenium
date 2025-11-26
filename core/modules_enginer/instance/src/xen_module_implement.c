@@ -4,7 +4,6 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
@@ -21,8 +20,8 @@ static void module_trace(Xen_GCHeader* h) {
       Xen_GC_Trace_GCHeader((Xen_GCHeader*)module->mod_map);
 }
 
-static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Module* module = (Xen_Module*)Xen_Instance_Alloc(&Xen_Module_Implement);
   if (!module) {
@@ -32,14 +31,14 @@ static Xen_Instance* module_alloc(ctx_id_t id, Xen_Instance* self,
   return (Xen_Instance*)module;
 }
 
-static Xen_Instance* module_destroy(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_destroy(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return nil;
 }
 
-static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_string(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Module>");
   if (!string) {
@@ -48,8 +47,8 @@ static Xen_Instance* module_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* module_get_attr(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Module* module = (Xen_Module*)self;
   if (module->mod_map == NULL || Xen_Nil_Eval(module->mod_map) ||

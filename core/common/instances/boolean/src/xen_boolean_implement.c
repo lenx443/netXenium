@@ -6,7 +6,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
@@ -16,8 +15,8 @@
 #include "xen_number.h"
 #include "xen_string.h"
 
-static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* boolean_alloc(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) > 1) {
     return NULL;
@@ -32,8 +31,8 @@ static Xen_Instance* boolean_alloc(ctx_id_t id, Xen_Instance* self,
   return Xen_False;
 }
 
-static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
-                                    Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* boolean_string(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Boolean* boolean = (Xen_Boolean*)self;
   Xen_Instance* string = NULL;
@@ -53,8 +52,8 @@ static Xen_Instance* boolean_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* boolean_hash(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   unsigned long hash = (unsigned long)((Xen_Boolean*)self)->value;
   Xen_Instance* hash_number = Xen_Number_From_ULong(hash);
@@ -64,8 +63,8 @@ static Xen_Instance* boolean_hash(ctx_id_t id, Xen_Instance* self,
   return hash_number;
 }
 
-static Xen_Instance* boolean_boolean(ctx_id_t id, Xen_Instance* self,
-                                     Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* boolean_boolean(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return self;
 }
@@ -86,7 +85,7 @@ Xen_Implement Xen_Boolean_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
-int Xen_Boolean_Init() {
+int Xen_Boolean_Init(void) {
   if (!Xen_VM_Store_Global("boolean", (Xen_Instance*)&Xen_Boolean_Implement) ||
       !Xen_VM_Store_Global("true", Xen_True) ||
       !Xen_VM_Store_Global("false", Xen_False)) {
@@ -104,4 +103,4 @@ int Xen_Boolean_Init() {
   return 1;
 }
 
-void Xen_Boolean_Finish() {}
+void Xen_Boolean_Finish(void) {}

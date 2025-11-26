@@ -34,6 +34,5 @@ Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
   if (!retval) {
     return NULL;
   }
-  run_context_stack_pop_top(&vm->vm_ctx_stack);
   return retval;
 }

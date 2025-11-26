@@ -65,7 +65,7 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
       return NULL;
     }
   } else if (fun->fun_type == 2) {
-    ret = fun->fun_native(0, nil, args, kwargs);
+    ret = fun->fun_native(nil, args, kwargs);
     if (!ret) {
       return NULL;
     }

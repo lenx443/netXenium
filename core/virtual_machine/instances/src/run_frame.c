@@ -4,7 +4,6 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -41,8 +40,8 @@ static void frame_trace(Xen_GCHeader* h) {
   }
 }
 
-static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct RunContext* ctx_new =
       (struct RunContext*)Xen_Instance_Alloc(&Xen_Run_Frame);
@@ -68,14 +67,14 @@ static Xen_Instance* frame_alloc(ctx_id_t id, Xen_INSTANCE* self,
   return (Xen_Instance*)ctx_new;
 }
 
-static Xen_Instance* frame_destroy(ctx_id_t id, Xen_INSTANCE* self,
-                                   Xen_INSTANCE* args, Xen_Instance* kwargs) {
+static Xen_Instance* frame_destroy(Xen_INSTANCE* self, Xen_INSTANCE* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return nil;
 }
 
-static Xen_Instance* frame_string(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* frame_string(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Instance* string = Xen_String_From_CString("<Context-Frame>");
   if (!string) {

@@ -23,7 +23,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   }
   struct __Instance* inst;
   if (impl->__alloc) {
-    inst = impl->__alloc(0, NULL, args, kwargs);
+    inst = impl->__alloc(NULL, args, kwargs);
     if (!inst) {
       return NULL;
     }
@@ -56,7 +56,7 @@ void __instance_free(Xen_GCHeader** h) {
   }
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy)
-      inst->__impl->__destroy(0, inst, NULL, NULL);
+      inst->__impl->__destroy(inst, NULL, NULL);
     if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     }
     Xen_Dealloc(*h);

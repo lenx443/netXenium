@@ -10,7 +10,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
@@ -36,8 +35,8 @@ static void tuple_trace(Xen_GCHeader* h) {
   }
 }
 
-static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* tuple_alloc(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)Xen_Instance_Alloc(&Xen_Tuple_Implement);
   if (!tuple) {
@@ -47,16 +46,16 @@ static Xen_Instance* tuple_alloc(ctx_id_t id, Xen_Instance* self,
   return (Xen_Instance*)tuple;
 }
 
-static Xen_Instance* tuple_destroy(ctx_id_t id, Xen_Instance* self,
-                                   Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* tuple_destroy(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
   Xen_Dealloc(tuple->instances);
   return nil;
 }
 
-static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
-                                  Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* tuple_string(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_size_t roots = 0;
   Xen_Instance* self_id = Xen_Number_From_Pointer(self);
@@ -160,8 +159,7 @@ static Xen_Instance* tuple_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
-                                         Xen_Instance* args,
+static Xen_Instance* tuple_opr_get_index(Xen_Instance* self, Xen_Instance* args,
                                          Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1) {
@@ -178,8 +176,8 @@ static Xen_Instance* tuple_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return ((Xen_Tuple*)self)->instances[index];
 }
 
-static Xen_Instance* tuple_iter(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* tuple_iter(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   return Xen_Tuple_Iterator_New(self);
 }
@@ -201,7 +199,7 @@ Xen_Implement Xen_Tuple_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
-int Xen_Tuple_Init() {
+int Xen_Tuple_Init(void) {
   if (!Xen_VM_Store_Global("tuple", (Xen_Instance*)&Xen_Tuple_Implement)) {
     return 0;
   }
@@ -219,4 +217,4 @@ int Xen_Tuple_Init() {
   return 1;
 }
 
-void Xen_Tuple_Finish() {}
+void Xen_Tuple_Finish(void) {}

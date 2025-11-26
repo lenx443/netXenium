@@ -7,11 +7,10 @@
 struct __Instance;
 
 #define NATIVE_CLEAR_ARG_NEVER_USE                                             \
-  (void)(id);                                                                  \
   (void)(self);                                                                \
   (void)(args);                                                                \
   (void)(kwargs);
-typedef struct __Instance* (*Xen_Native_Func)(unsigned long, struct __Instance*,
+typedef struct __Instance* (*Xen_Native_Func)(struct __Instance*,
                                               struct __Instance*,
                                               struct __Instance*);
 

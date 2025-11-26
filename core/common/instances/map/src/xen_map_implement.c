@@ -9,7 +9,6 @@
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
@@ -44,8 +43,8 @@ static void map_trace(Xen_GCHeader* h) {
   }
 }
 
-static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
-                               Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_alloc(Xen_Instance* self, Xen_Instance* args,
+                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)Xen_Instance_Alloc(&Xen_Map_Implement);
   if (!map) {
@@ -68,8 +67,8 @@ static Xen_Instance* map_alloc(ctx_id_t id, Xen_Instance* self,
   return (Xen_Instance*)map;
 }
 
-static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_destroy(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
   if (map->map_buckets) {
@@ -86,8 +85,8 @@ static Xen_Instance* map_destroy(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
-                                Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_size_t roots = 0;
   Xen_Instance* self_id = Xen_Number_From_Pointer(self);
@@ -209,8 +208,7 @@ static Xen_Instance* map_string(ctx_id_t id, Xen_Instance* self,
   return string;
 }
 
-static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
-                                       Xen_Instance* args,
+static Xen_Instance* map_opr_get_index(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 1) {
@@ -227,8 +225,7 @@ static Xen_Instance* map_opr_get_index(ctx_id_t id, Xen_Instance* self,
   return value;
 }
 
-static Xen_Instance* map_opr_set_index(ctx_id_t id, Xen_Instance* self,
-                                       Xen_Instance* args,
+static Xen_Instance* map_opr_set_index(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 2) {
@@ -247,8 +244,8 @@ static Xen_Instance* map_opr_set_index(ctx_id_t id, Xen_Instance* self,
   return nil;
 }
 
-static Xen_Instance* map_opr_has(ctx_id_t id, Xen_Instance* self,
-                                 Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_opr_has(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 1) {
     return NULL;
@@ -260,8 +257,8 @@ static Xen_Instance* map_opr_has(ctx_id_t id, Xen_Instance* self,
   return Xen_False;
 }
 
-static Xen_Instance* map_push(ctx_id_t id, Xen_Instance* self,
-                              Xen_Instance* args, Xen_Instance* kwargs) {
+static Xen_Instance* map_push(Xen_Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 2) {
     return NULL;
@@ -291,7 +288,7 @@ struct __Implement Xen_Map_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
-int Xen_Map_Init() {
+int Xen_Map_Init(void) {
   if (!Xen_VM_Store_Global("map", (Xen_Instance*)&Xen_Map_Implement)) {
     return 0;
   }
@@ -312,4 +309,4 @@ int Xen_Map_Init() {
   return 1;
 }
 
-void Xen_Map_Finish() {}
+void Xen_Map_Finish(void) {}
