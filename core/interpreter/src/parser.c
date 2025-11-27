@@ -750,11 +750,6 @@ Xen_Instance* parser_function(Parser* p) {
   }
   parser_next(p);
   skip_newline(p);
-  if (p->token.tkn_type != TKN_LPARENT) {
-    return NULL;
-  }
-  parser_next(p);
-  skip_newline(p);
   Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL);
   if (!func) {
     return NULL;
@@ -763,37 +758,33 @@ Xen_Instance* parser_function(Parser* p) {
   if (!args) {
     return NULL;
   }
-  if (p->token.tkn_type == TKN_RPARENT) {
+  if (p->token.tkn_type == TKN_LPARENT) {
     parser_next(p);
-    if (!Xen_AST_Node_Push_Child(func, args)) {
-      return NULL;
-    }
-  } else {
-    Xen_Instance* arg_head = parser_function_arg_assignment(p);
-    if (!arg_head) {
-      return NULL;
-    }
-    if (!Xen_AST_Node_Push_Child(args, arg_head)) {
-      return NULL;
-    }
     skip_newline(p);
-    while (p->token.tkn_type != TKN_RPARENT) {
-      Xen_Instance* arg_tail = parser_function_arg_tail(p);
-      if (!arg_tail) {
+    if (p->token.tkn_type != TKN_RPARENT) {
+      Xen_Instance* arg_head = parser_function_arg_assignment(p);
+      if (!arg_head) {
         return NULL;
       }
-      if (!Xen_AST_Node_Push_Child(args, arg_tail)) {
+      if (!Xen_AST_Node_Push_Child(args, arg_head)) {
         return NULL;
       }
       skip_newline(p);
-    }
-    if (!Xen_AST_Node_Push_Child(func, args)) {
-      return NULL;
+      while (p->token.tkn_type != TKN_RPARENT) {
+        Xen_Instance* arg_tail = parser_function_arg_tail(p);
+        if (!arg_tail) {
+          return NULL;
+        }
+        if (!Xen_AST_Node_Push_Child(args, arg_tail)) {
+          return NULL;
+        }
+        skip_newline(p);
+      }
     }
     parser_next(p);
+    skip_newline(p);
   }
-  skip_newline(p);
-  if (!func) {
+  if (!Xen_AST_Node_Push_Child(func, args)) {
     return NULL;
   }
   if (p->token.tkn_type == TKN_LBRACE) {
@@ -874,6 +865,24 @@ Xen_Instance* parser_function_arg_assignment(Parser* p) {
       return NULL;
     }
     Xen_Dealloc((void*)operator);
+    return assignm;
+  } else if (p->token.tkn_type == TKN_BLOCK) {
+    Xen_Instance* rhs = parser_function(p);
+    if (!rhs) {
+      return NULL;
+    }
+
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    if (!assignm) {
+      return NULL;
+    }
+
+    if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
+      return NULL;
+    }
     return assignm;
   }
   return lhs;
@@ -1115,6 +1124,24 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
       return NULL;
     }
     Xen_Dealloc((void*)operator);
+    return assignm;
+  } else if (p->token.tkn_type == TKN_BLOCK) {
+    Xen_Instance* rhs = parser_function(p);
+    if (!rhs) {
+      return NULL;
+    }
+
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    if (!assignm) {
+      return NULL;
+    }
+
+    if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
+      return NULL;
+    }
     return assignm;
   }
   return lhs;

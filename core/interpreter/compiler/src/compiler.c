@@ -1083,6 +1083,10 @@ compile_expr_primary_suffix_call_arg_assignment(Compiler* c,
     if (!compile_expr(c, rhs)) {
       return NULL;
     }
+  } else if (Xen_AST_Node_Name_Cmp(rhs, "FunctionExpr") == 0) {
+    if (!compile_expr_function(c, rhs)) {
+      return 0;
+    }
   } else {
     return NULL;
   }
@@ -1519,6 +1523,10 @@ Xen_Instance* compile_expr_function_arg_assigment(Compiler* c,
   if (Xen_AST_Node_Name_Cmp(rhs, "Expr") == 0) {
     if (!compile_expr(c, rhs)) {
       return NULL;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(rhs, "FunctionExpr") == 0) {
+    if (!compile_expr_function(c, rhs)) {
+      return 0;
     }
   } else {
     return NULL;

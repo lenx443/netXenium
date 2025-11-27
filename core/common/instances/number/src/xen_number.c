@@ -1030,7 +1030,11 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
     exp = tmp_exp;
   }
 
-  ((Xen_Number*)result)->sign = ((Xen_Number*)base_inst)->sign;
+  if (Xen_Number_Is_Odd(exp_inst)) {
+    ((Xen_Number*)result)->sign = ((Xen_Number*)base_inst)->sign;
+  } else {
+    ((Xen_Number*)result)->sign = 1;
+  }
   return result;
 }
 
