@@ -69,6 +69,16 @@ static Xen_Instance* boolean_boolean(Xen_Instance* self, Xen_Instance* args,
   return self;
 }
 
+static Xen_Instance* boolean_not(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Boolean* boolean = (Xen_Boolean*)self;
+  if (!boolean->value) {
+    return Xen_True;
+  }
+  return Xen_False;
+}
+
 Xen_Implement Xen_Boolean_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Boolean",
@@ -95,7 +105,8 @@ int Xen_Boolean_Init(void) {
   if (!props) {
     return 0;
   }
-  if (!Xen_VM_Store_Native_Function(props, "__boolean", boolean_boolean, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__boolean", boolean_boolean, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__not", boolean_not, nil)) {
     return 0;
   }
   Xen_Boolean_Implement.__props = props;

@@ -9,6 +9,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "operators.h"
+#include "program.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
 #include "vm.h"
@@ -656,22 +657,34 @@ static int vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
 
 Xen_Instance* vm_run(Xen_size_t id) {
   VM_Run vmr = {id, NULL, 0};
+#ifndef NDEBUG
+  const char* previous_op = "No-OP";
+  Xen_ssize_t previous_offset = -1;
+#endif
   while (
       (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
       ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
           id &&
-      !vmr.halt) {
+      !vmr.halt && !program.closed) {
     RunContext_ptr ctx =
         (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
     if (ctx->ctx_error) {
       run_context_stack_pop_top(&vm->vm_ctx_stack);
+#ifndef NDEBUG
+      printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
+             previous_offset);
+#endif
       return NULL;
     }
     if (!ctx->ctx_running) {
       run_context_stack_pop_top(&vm->vm_ctx_stack);
       continue;
     }
-    vm_run_instruct(&vmr, (Xen_Instance*)ctx);
+    int opcode = vm_run_instruct(&vmr, (Xen_Instance*)ctx);
+#ifndef NDEBUG
+    previous_op = Instruct_Info_Table[opcode].name;
+    previous_offset = ctx->ctx_ip - 1;
+#endif
   }
   return vmr.retval;
 }
