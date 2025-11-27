@@ -34,6 +34,7 @@ static STACK_EFFECT(list_unpack_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_start_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_end_stack_effect, oparg - 1);
 static STACK_EFFECT(return_stack_effect, 0);
+static STACK_EFFECT(return_top_stack_effect, -1);
 
 struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [NOP] = {"", nop_stack_effect, 0},
@@ -82,4 +83,5 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [LIST_UNPACK_END] = {"LIST_UNPACK_END", list_unpack_end_stack_effect,
                          INSTRUCT_FLAG_ARG},
     [RETURN] = {"RETURN", return_stack_effect, INSTRUCT_FLAG_CO_INSTANCE},
+    [RETURN_TOP] = {"RETURN_TOP", return_top_stack_effect, 0},
 };

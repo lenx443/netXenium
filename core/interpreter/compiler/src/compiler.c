@@ -305,6 +305,8 @@ static int compile_for_statement(Compiler*, Xen_Instance*);
 
 static int compile_flow_statement(Compiler*, Xen_Instance*);
 
+static int compile_return_statement(Compiler*, Xen_Instance*);
+
 int compile_program(Compiler* c, Xen_Instance* node) {
   if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
     if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
@@ -374,6 +376,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
     }
   } else if (Xen_AST_Node_Name_Cmp(stmt, "FlowStatement") == 0) {
     if (!compile_flow_statement(c, stmt)) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(stmt, "ReturnStatement") == 0) {
+    if (!compile_return_statement(c, stmt)) {
       return 0;
     }
   } else {
@@ -2126,6 +2132,31 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   return 1;
+}
+
+int compile_return_statement(Compiler* c, Xen_Instance* node) {
+  if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
+    if (Xen_AST_Node_Children_Size(node) == 0) {
+      if (!emit(RETURN, 0)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Children_Size(node) == 1) {
+      Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+        return 0;
+      }
+      if (!compile_expr(c, expr)) {
+        return 0;
+      }
+      if (!emit(RETURN_TOP, 0)) {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+    return 1;
+  }
+  return 0;
 }
 
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,

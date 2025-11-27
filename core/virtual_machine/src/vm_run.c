@@ -8,7 +8,6 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
-#include "logs.h"
 #include "operators.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
@@ -565,10 +564,23 @@ static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(new_seq);
 }
 
-static void op_return([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                      Xen_ulong_t oparg) {
+static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* ret =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
+  Xen_size_t current_id = ctx->ctx_id;
+  run_context_stack_pop_top(&vm->vm_ctx_stack);
+  RunContext_ptr ctx_top =
+      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
+  if (ctx_top && current_id > vmr->ctx_id) {
+    vm_stack_push(ctx_top->ctx_stack, ret);
+  } else {
+    vmr->retval = ret;
+  }
+}
+
+static void op_return_top(VM_Run* vmr, RunContext_ptr ctx,
+                          [[maybe_unused]] Xen_ulong_t oparg) {
+  Xen_Instance* ret = STACK_POP;
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   RunContext_ptr ctx_top =
@@ -615,6 +627,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [LIST_UNPACK_START] = op_list_unpack_start,
     [LIST_UNPACK_END] = op_list_unpack_end,
     [RETURN] = op_return,
+    [RETURN_TOP] = op_return_top,
 };
 
 static int vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {

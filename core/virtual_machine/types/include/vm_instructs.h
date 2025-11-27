@@ -52,6 +52,7 @@ enum vm_Instruct {
   LIST_UNPACK_START,
   LIST_UNPACK_END,
   RETURN,
+  RETURN_TOP,
   HALT,
 };
 
