@@ -14,8 +14,8 @@
 
 #define INSTRUCT_FLAG_CO_NAME (1 << 0)
 #define INSTRUCT_FLAG_CO_INSTANCE (1 << 1)
-#define INSTRUCT_FLAG_ARG (1 << 2)
-#define INSTRUCT_FLAG_MAYBE_PUSH_FRAME (1 << 3)
+#define INSTRUCT_FLAG_CO_CALLABLE (1 << 2)
+#define INSTRUCT_FLAG_ARG (1 << 3)
 
 enum vm_Instruct {
   NOP = 0,
@@ -33,6 +33,8 @@ enum vm_Instruct {
   MAKE_VECTOR,
   MAKE_VECTOR_FROM_ITERABLE,
   MAKE_MAP,
+  MAKE_FUNCTION,
+  MAKE_FUNCTION_NARGS,
   CALL,
   CALL_KW,
   BINARYOP,

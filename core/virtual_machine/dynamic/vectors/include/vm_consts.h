@@ -9,17 +9,23 @@
 
 struct __Instance;
 
+struct Callable;
+struct Callable_Vector;
+
 typedef struct {
   Xen_GCHeader gc;
   struct __Instance* c_names;
   struct __Instance* c_instances;
+  struct Callable_Vector* c_callables;
 } vm_Consts;
 
 typedef vm_Consts* vm_Consts_ptr;
 
 vm_Consts_ptr vm_consts_new(void);
-vm_Consts_ptr vm_consts_from_values(struct __Instance*, struct __Instance*);
+vm_Consts_ptr vm_consts_from_values(struct __Instance*, struct __Instance*,
+                                    struct Callable_Vector*);
 Xen_ssize_t vm_consts_push_name(vm_Consts_ptr, const char*);
 Xen_ssize_t vm_consts_push_instance(vm_Consts_ptr, struct __Instance*);
+Xen_ssize_t vm_consts_push_callable(vm_Consts_ptr, struct Callable*);
 
 #endif

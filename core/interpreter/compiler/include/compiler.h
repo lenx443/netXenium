@@ -12,6 +12,7 @@
 #define Xen_COMPILE_FUNCTION 2
 
 CALLABLE_ptr compiler(const char*, uint8_t);
+CALLABLE_ptr compiler_function(Xen_Instance*);
 int ast_compile(block_list_ptr, block_node_ptr*, uint8_t, Xen_Instance*);
 
 #endif

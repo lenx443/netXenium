@@ -51,6 +51,7 @@ static bool is_expr(Parser*);
 static bool is_primary(Parser*);
 static bool is_unary(Parser*);
 static bool is_factor(Parser*);
+static bool is_list(Parser*);
 static bool is_assigment(Parser*);
 static bool is_suffix(Parser*);
 static bool is_keyword(Parser*);
@@ -75,6 +76,7 @@ static Xen_Instance* parser_relational(Parser*);
 static Xen_Instance* parser_not(Parser*);
 static Xen_Instance* parser_and(Parser*);
 static Xen_Instance* parser_or(Parser*);
+static Xen_Instance* parser_function(Parser*);
 static Xen_Instance* parser_list(Parser*);
 static Xen_Instance* parser_suffix(Parser*);
 static Xen_Instance* parser_assignment(Parser*);
@@ -148,7 +150,8 @@ bool is_factor(Parser* p) {
 }
 
 bool is_list(Parser* p) {
-  return p->token.tkn_type == TKN_QUESTION || is_factor(p);
+  return p->token.tkn_type == TKN_QUESTION || p->token.tkn_type == TKN_BLOCK ||
+         is_factor(p);
 }
 
 bool is_assigment(Parser* p) {
@@ -363,7 +366,7 @@ Xen_Instance* parser_map(Parser* p) {
   if (p->token.tkn_type == TKN_ARROW) {
     parser_next(p);
     skip_newline(p);
-    Xen_Instance* expr_node = parser_or(p);
+    Xen_Instance* expr_node = parser_function(p);
     if (!expr_node) {
       return NULL;
     }
@@ -417,7 +420,7 @@ Xen_Instance* parser_map(Parser* p) {
     if (p->token.tkn_type == TKN_ARROW) {
       parser_next(p);
       skip_newline(p);
-      Xen_Instance* expr_node = parser_or(p);
+      Xen_Instance* expr_node = parser_function(p);
       if (!expr_node) {
         return NULL;
       }
@@ -738,6 +741,79 @@ Xen_Instance* parser_or(Parser* p) {
   return left;
 }
 
+Xen_Instance* parser_function(Parser* p) {
+  if (p->token.tkn_type != TKN_BLOCK) {
+    return parser_or(p);
+  }
+  parser_next(p);
+  skip_newline(p);
+  if (p->token.tkn_type != TKN_LPARENT) {
+    return NULL;
+  }
+  parser_next(p);
+  Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL);
+  if (!func) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_AST_Node_New("Args", NULL);
+  if (!args) {
+    return NULL;
+  }
+  if (p->token.tkn_type == TKN_RPARENT) {
+    parser_next(p);
+    if (!Xen_AST_Node_Push_Child(func, args)) {
+      return NULL;
+    }
+  } else {
+    Xen_Instance* arg_head = parser_arg_assignment(p);
+    if (!arg_head) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(args, arg_head)) {
+      return NULL;
+    }
+    while (p->token.tkn_type != TKN_RPARENT) {
+      Xen_Instance* arg_tail = parser_arg_tail(p);
+      if (!arg_tail) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(args, arg_tail)) {
+        return NULL;
+      }
+    }
+    if (!Xen_AST_Node_Push_Child(func, args)) {
+      return NULL;
+    }
+    parser_next(p);
+  }
+  if (!func) {
+    return NULL;
+  }
+  if (p->token.tkn_type == TKN_LBRACE) {
+    parser_next(p);
+    Xen_Instance* stmt_list = parser_stmt_list(p);
+    if (!stmt_list) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(func, stmt_list)) {
+      return NULL;
+    }
+    if (p->token.tkn_type != TKN_RBRACE) {
+      return NULL;
+    }
+    parser_next(p);
+  } else {
+    Xen_Instance* stmt = parser_stmt(p);
+    if (!stmt) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(func, stmt)) {
+      return NULL;
+    }
+  }
+  return func;
+}
+
 Xen_Instance* parser_list(Parser* p) {
   int vector = 0;
   if (p->token.tkn_type == TKN_QUESTION) {
@@ -745,7 +821,7 @@ Xen_Instance* parser_list(Parser* p) {
     parser_next(p);
     skip_newline_if_callback(p, is_expr);
   }
-  Xen_Instance* expr_head = parser_or(p);
+  Xen_Instance* expr_head = parser_function(p);
   if (!expr_head) {
     return NULL;
   }
@@ -776,7 +852,7 @@ Xen_Instance* parser_list(Parser* p) {
     if (!is_expr(p)) {
       return list;
     }
-    Xen_Instance* expr = parser_or(p);
+    Xen_Instance* expr = parser_function(p);
     if (!expr) {
       return NULL;
     }
@@ -1171,10 +1247,9 @@ Xen_Instance* parser_block(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
-  Xen_Instance* block = Xen_AST_Node_New("Block", NULL);
+  skip_newline(p);
+  Xen_Instance* block = NULL;
+  block = Xen_AST_Node_New("Block", NULL);
   if (!block) {
     return NULL;
   }

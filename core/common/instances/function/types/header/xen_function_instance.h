@@ -11,6 +11,9 @@ struct Xen_Function_Instance {
   CALLABLE_ptr fun_code;
   Xen_Native_Func fun_native;
   Xen_Instance* closure;
+  Xen_Instance* args_names;
+  Xen_Instance* args_default_values;
+  Xen_ssize_t args_requireds;
 };
 
 typedef struct Xen_Function_Instance Xen_Function;

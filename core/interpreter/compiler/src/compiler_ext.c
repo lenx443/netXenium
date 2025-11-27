@@ -60,7 +60,8 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
     return 0;
 
   pc->consts = vm_consts_from_values(blocks->consts->c_names,
-                                     blocks->consts->c_instances);
+                                     blocks->consts->c_instances,
+                                     blocks->consts->c_callables);
   if (!pc->consts) {
     bc_free(pc->code);
     return 0;

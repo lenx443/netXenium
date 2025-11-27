@@ -112,6 +112,9 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
           Xen_Dealloc(val);
       }
     } else if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
+               INSTRUCT_FLAG_CO_CALLABLE) {
+      printf(" %ld (Callable)\n", code->ir_array[i].oparg);
+    } else if (Instruct_Info_Table[code->ir_array[i].opcode].flags &
                INSTRUCT_FLAG_ARG) {
       if (code->ir_array[i].is_jump && block->ready) {
         printf(

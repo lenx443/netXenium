@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "callable.h"
 #include "gc_header.h"
 #include "instance.h"
 #include "vm_consts.h"
@@ -16,6 +17,7 @@ static void vm_consts_trace(Xen_GCHeader* h) {
   vm_Consts_ptr consts = (vm_Consts_ptr)h;
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_names);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_instances);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_callables);
 }
 
 static void vm_consts_destroy(Xen_GCHeader** h) {
@@ -51,24 +53,35 @@ vm_Consts_ptr vm_consts_new(void) {
     Xen_GC_Pop_Root();
     return NULL;
   }
+  CALLABLE_Vector_ptr c_callables = callable_vector_new();
   Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHeader**)&consts->c_names,
                      (Xen_GCHeader*)c_names);
   Xen_GC_Write_Field((Xen_GCHeader*)consts,
                      (Xen_GCHeader**)&consts->c_instances,
                      (Xen_GCHeader*)c_instances);
+  Xen_GC_Write_Field((Xen_GCHeader*)consts,
+                     (Xen_GCHeader**)&consts->c_callables,
+                     (Xen_GCHeader*)c_callables);
   Xen_GC_Pop_Root();
   return consts;
 }
 
 vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
-                                    struct __Instance* c_instances) {
+                                    struct __Instance* c_instances,
+                                    CALLABLE_Vector_ptr c_callables) {
   vm_Consts_ptr consts = (vm_Consts_ptr)Xen_GC_New(
       sizeof(vm_Consts), vm_consts_trace, vm_consts_destroy);
   if (!consts) {
     return NULL;
   }
-  consts->c_names = c_names;
-  consts->c_instances = c_instances;
+  Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHeader**)&consts->c_names,
+                     (Xen_GCHeader*)c_names);
+  Xen_GC_Write_Field((Xen_GCHeader*)consts,
+                     (Xen_GCHeader**)&consts->c_instances,
+                     (Xen_GCHeader*)c_instances);
+  Xen_GC_Write_Field((Xen_GCHeader*)consts,
+                     (Xen_GCHeader**)&consts->c_callables,
+                     (Xen_GCHeader*)c_callables);
   return consts;
 }
 
@@ -105,5 +118,15 @@ Xen_ssize_t vm_consts_push_instance(vm_Consts_ptr consts,
   if (!Xen_Vector_Push(consts->c_instances, c_instance)) {
     return -1;
   }
+  return index;
+}
+
+Xen_ssize_t vm_consts_push_callable(vm_Consts_ptr consts,
+                                    CALLABLE_ptr callable) {
+  if (!consts || !callable) {
+    return false;
+  }
+  Xen_size_t index = consts->c_callables->count;
+  callable_vector_push(consts->c_callables, callable);
   return index;
 }

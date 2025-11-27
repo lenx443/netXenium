@@ -24,6 +24,7 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
+#include "xen_vector_iterator.h"
 
 #define XEN_MAP_CAPACITY 128
 
@@ -257,6 +258,13 @@ static Xen_Instance* map_opr_has(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
+static Xen_Instance* map_iter(Xen_Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Map* map = (Xen_Map*)self;
+  return Xen_Vector_Iterator_New(map->map_keys);
+}
+
 static Xen_Instance* map_push(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
@@ -301,6 +309,7 @@ int Xen_Map_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__set_index", map_opr_set_index,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__has", map_opr_has, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__iter", map_iter, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     return 0;
   }

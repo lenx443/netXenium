@@ -1,8 +1,8 @@
 #include "xen_function.h"
+#include "attrs.h"
 #include "callable.h"
 #include "gc_header.h"
 #include "instance.h"
-#include "program_code.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm_def.h"
@@ -11,7 +11,10 @@
 #include "xen_function_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_tuple.h"
+#include "xen_typedefs.h"
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
                                        Xen_Instance* closure) {
@@ -29,21 +32,69 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
   return (Xen_INSTANCE*)fun;
 }
 
-Xen_INSTANCE* Xen_Function_From_Program(ProgramCode_t pc_fun,
-                                        Xen_Instance* closure) {
+Xen_INSTANCE*
+Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure,
+                           Xen_Instance* args_names_list,
+                           Xen_Instance* args_default_values_list) {
+  if (Xen_SIZE(args_names_list) < Xen_SIZE(args_default_values_list)) {
+    return NULL;
+  }
+  Xen_size_t roots = 0;
   Xen_Function* fun =
       (Xen_Function*)__instance_new(&Xen_Function_Implement, nil, nil, 0);
   if (!fun) {
     return NULL;
   }
+  Xen_IGC_XPUSH((Xen_Instance*)fun, roots);
   fun->fun_type = 1;
-  fun->fun_code = callable_new(pc_fun);
-  if (!fun->fun_code) {
+  Xen_Instance* args_names = Xen_Map_New();
+  if (!args_names) {
+    Xen_IGC_XPOP(roots);
     return NULL;
   }
-  if_nil_neval(closure) {
-    Xen_IGC_WRITE_FIELD(fun, fun->closure, closure);
+  Xen_IGC_XPUSH(args_names, roots);
+  Xen_Instance* args_names_it = Xen_Attr_Iter(args_names_list);
+  if (!args_names_it) {
+    Xen_IGC_XPOP(roots);
+    return NULL;
   }
+  Xen_IGC_XPUSH(args_names_it, roots);
+  Xen_Instance* arg_name = NULL;
+  while ((arg_name = Xen_Attr_Next(args_names_it)) != NULL) {
+    if (!Xen_Map_Push_Pair(args_names, (Xen_Map_Pair){arg_name, nil})) {
+      Xen_IGC_XPOP(roots);
+      return NULL;
+    }
+  }
+  Xen_Instance* args_default_values = Xen_Map_New();
+  if (!args_default_values) {
+    Xen_IGC_XPOP(roots);
+    return NULL;
+  }
+  Xen_IGC_XPUSH(args_default_values, roots);
+  if (Xen_SIZE(args_default_values_list) != 0) {
+    Xen_size_t start_index =
+        Xen_SIZE(args_names_list) - Xen_SIZE(args_default_values_list);
+    for (Xen_size_t i = 0; i < Xen_SIZE(args_default_values_list); i++) {
+      Xen_Instance* default_name =
+          Xen_Tuple_Get_Index(args_names_list, start_index + i);
+      Xen_Instance* default_value =
+          Xen_Tuple_Get_Index(args_default_values_list, i);
+      if (!Xen_Map_Push_Pair(args_default_values,
+                             (Xen_Map_Pair){default_name, default_value})) {
+        Xen_IGC_XPOP(roots);
+        return NULL;
+      }
+    }
+  }
+  Xen_GC_Write_Field((Xen_GCHeader*)fun, (Xen_GCHeader**)&fun->fun_code,
+                     (Xen_GCHeader*)code_fun);
+  Xen_IGC_WRITE_FIELD(fun, fun->closure, closure);
+  Xen_IGC_WRITE_FIELD(fun, fun->args_names, args_names);
+  Xen_IGC_WRITE_FIELD(fun, fun->args_default_values, args_default_values);
+  fun->args_requireds =
+      Xen_SIZE(args_names) - Xen_SIZE(args_default_values_list);
+  Xen_IGC_XPOP(roots);
   return (Xen_INSTANCE*)fun;
 }
 

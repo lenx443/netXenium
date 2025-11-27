@@ -3,6 +3,7 @@
 #include "gc_header.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_typedefs.h"
 
 static void callable_trace(Xen_GCHeader* h) {
   CALLABLE_ptr callable = (CALLABLE_ptr)h;
@@ -23,4 +24,45 @@ CALLABLE_ptr callable_new(ProgramCode_t bpc) {
   }
   new_callable->code = bpc;
   return new_callable;
+}
+
+static void callable_vector_trace(Xen_GCHeader* h) {
+  CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)h;
+  for (Xen_size_t i = 0; i < cv->count; i++) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)cv->callables[i]);
+  }
+}
+
+static void callable_vector_destroy(Xen_GCHeader** h) {
+  CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)*h;
+  Xen_Dealloc(cv->callables);
+  Xen_Dealloc(*h);
+}
+
+CALLABLE_Vector_ptr callable_vector_new(void) {
+  CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)Xen_GC_New(
+      sizeof(CALLABLE_Vector), callable_vector_trace, callable_vector_destroy);
+  cv->callables = NULL;
+  cv->count = 0;
+  cv->cap = 0;
+  return cv;
+}
+
+void callable_vector_push(CALLABLE_Vector_ptr cv, CALLABLE_ptr callable) {
+  assert(cv && callable);
+  if (cv->count >= cv->cap) {
+    Xen_size_t new_cap = cv->cap ? cv->cap * 2 : 4;
+    cv->callables = Xen_Realloc(cv->callables, new_cap * sizeof(CALLABLE_ptr));
+    cv->cap = new_cap;
+  }
+  Xen_GC_Write_Field((Xen_GCHeader*)cv,
+                     (Xen_GCHeader**)&cv->callables[cv->count++],
+                     (Xen_GCHeader*)callable);
+}
+
+CALLABLE_ptr callable_vector_get(CALLABLE_Vector_ptr cv, Xen_size_t idx) {
+  if (idx >= cv->count) {
+    return NULL;
+  }
+  return cv->callables[idx];
 }

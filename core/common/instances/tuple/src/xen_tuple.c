@@ -10,6 +10,8 @@
 #include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
 #include "xen_typedefs.h"
+#include "xen_vector_implement.h"
+#include "xen_vector_instance.h"
 
 Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
   if (!array) {
@@ -30,6 +32,14 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
                        (Xen_GCHeader*)array[i]);
   }
   return (Xen_Instance*)tuple;
+}
+
+Xen_Instance* Xen_Tuple_From_Vector(Xen_Instance* vector_inst) {
+  if (Xen_IMPL(vector_inst) != &Xen_Vector_Implement) {
+    return NULL;
+  }
+  Xen_Vector* vector = (Xen_Vector*)vector_inst;
+  return Xen_Tuple_From_Array(Xen_SIZE(vector), vector->values);
 }
 
 Xen_Instance* Xen_Tuple_Get_Index(Xen_Instance* tuple, Xen_size_t index) {

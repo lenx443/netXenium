@@ -5,6 +5,7 @@
 #include "attrs.h"
 #include "block_list.h"
 #include "bytecode.h"
+#include "callable.h"
 #include "compiler.h"
 #include "compiler_ext.h"
 #include "gc_header.h"
@@ -28,6 +29,7 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 typedef struct {
   block_list_ptr b_list;
@@ -103,7 +105,7 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
     return NULL;
   }
 #ifndef NDEBUG
-//  ir_print(blocks);
+  ir_print(blocks);
 #endif
   ProgramCode_t pc;
   if (!blocks_compiler(blocks, &pc)) {
@@ -113,7 +115,59 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
   Xen_GC_Push_Root((Xen_GCHeader*)pc.consts);
   block_list_free(blocks);
 #ifndef NDEBUG
-  bc_print(pc);
+//  bc_print(pc);
+#endif
+  CALLABLE_ptr code = callable_new(pc);
+  if (!code) {
+    Xen_GC_Pop_Root();
+    bc_free(pc.code);
+    return NULL;
+  }
+  Xen_GC_Pop_Root();
+  return code;
+}
+
+CALLABLE_ptr compiler_function(Xen_Instance* ast_node) {
+  block_list_ptr blocks = block_list_new();
+  if (!blocks) {
+    return NULL;
+  }
+  block_node_ptr main_block = block_new();
+  if (!main_block) {
+    block_list_free(blocks);
+    return NULL;
+  }
+  if (!block_list_push_node(blocks, main_block)) {
+    block_free(main_block);
+    block_list_free(blocks);
+    return NULL;
+  }
+#ifndef NDEBUG
+  printf("== Compiling ==\n");
+#endif
+  if (!ast_compile(blocks, &main_block, Xen_COMPILE_FUNCTION, ast_node)) {
+#ifndef NDEBUG
+    printf("Compiler Error\n");
+#endif
+    block_list_free(blocks);
+    return NULL;
+  }
+  if (!blocks_linealizer(blocks)) {
+    block_list_free(blocks);
+    return NULL;
+  }
+#ifndef NDEBUG
+  ir_print(blocks);
+#endif
+  ProgramCode_t pc;
+  if (!blocks_compiler(blocks, &pc)) {
+    block_list_free(blocks);
+    return NULL;
+  }
+  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts);
+  block_list_free(blocks);
+#ifndef NDEBUG
+//  bc_print(pc);
 #endif
   CALLABLE_ptr code = callable_new(pc);
   if (!code) {
@@ -132,6 +186,8 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
   ir_emit_jump((*c->b_current)->instr_array, opcode, block)
 #define co_push_name(name) vm_consts_push_name(c->b_list->consts, name)
 #define co_push_instance(inst) vm_consts_push_instance(c->b_list->consts, inst)
+#define co_push_callable(callable)                                             \
+  vm_consts_push_callable(c->b_list->consts, callable)
 
 #define B_PTR block_node_ptr
 #define B_NEW() block_new()
@@ -145,6 +201,7 @@ CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
 #define CCS struct CompileContext_Stack
 #define CCS_ptr struct CompileContext_Stack*
 #define CC_TOP (*c->cc_stack)->context
+#define CCS_TOP *c->cc_stack
 #define CCS_PUSH(lc) compile_context_stack_push(c->cc_stack, lc)
 #define CCS_POP compile_context_stack_pop(c->cc_stack)
 
@@ -220,6 +277,9 @@ static int compile_expr_primary_suffix_index(Compiler*, Xen_Instance*);
 static int compile_expr_primary_suffix_attr(Compiler*, Xen_Instance*);
 static int compile_expr_unary(Compiler*, Xen_Instance*);
 static int compile_expr_binary(Compiler*, Xen_Instance*);
+static int compile_expr_function(Compiler*, Xen_Instance*);
+static Xen_Instance* compile_expr_function_arg_assigment(Compiler*,
+                                                         Xen_Instance*);
 static int compile_expr_list(Compiler*, Xen_Instance*);
 
 static int compile_assignment(Compiler*, Xen_Instance*);
@@ -246,21 +306,33 @@ static int compile_for_statement(Compiler*, Xen_Instance*);
 static int compile_flow_statement(Compiler*, Xen_Instance*);
 
 int compile_program(Compiler* c, Xen_Instance* node) {
-  Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
-  if (!stmt_list) {
-    return 0;
-  }
-  if (Xen_AST_Node_Name_Cmp(stmt_list, "StatementList") == 0) {
-    if (!compile_statement_list(c, stmt_list)) {
+  if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
+    if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
+      if (!compile_statement_list(c, node)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(node, "Statement") == 0) {
+      if (!compile_statement(c, node)) {
+        return 0;
+      }
+    } else {
       return 0;
     }
   } else {
-    return 0;
-  }
-  if (COMPILE_MODE == Xen_COMPILE_PROGRAM || COMPILE_MODE == Xen_COMPILE_REPL) {
-    if (!emit(RETURN, 0)) {
+    Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
+    if (!stmt_list) {
       return 0;
     }
+    if (Xen_AST_Node_Name_Cmp(stmt_list, "StatementList") == 0) {
+      if (!compile_statement_list(c, stmt_list)) {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  }
+  if (!emit(RETURN, 0)) {
+    return 0;
   }
   return 1;
 }
@@ -692,6 +764,10 @@ int compile_expr(Compiler* c, Xen_Instance* node) {
     }
   } else if (Xen_AST_Node_Name_Cmp(expr, "Binary") == 0) {
     if (!compile_expr_binary(c, expr)) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(expr, "FunctionExpr") == 0) {
+    if (!compile_expr_function(c, expr)) {
       return 0;
     }
   } else if (Xen_AST_Node_Name_Cmp(expr, "List") == 0) {
@@ -1318,6 +1394,138 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
   return 0;
 }
 
+int compile_expr_function(Compiler* c, Xen_Instance* node) {
+  Xen_Instance* args_positionals_requireds_vector = Xen_Vector_New();
+  if (!args_positionals_requireds_vector) {
+    return 0;
+  }
+  Xen_size_t idx = 0;
+  Xen_Instance* args = Xen_AST_Node_Get_Child(node, 0);
+  if (!args) {
+    return 0;
+  }
+  for (; idx < Xen_AST_Node_Children_Size(args); idx++) {
+    Xen_Instance* arg = Xen_AST_Node_Get_Child(args, idx);
+    if (Xen_AST_Node_Name_Cmp(arg, "Expr") == 0) {
+      Xen_Instance* arg_primary = Xen_AST_Node_Get_Child(arg, 0);
+      if (Xen_AST_Node_Name_Cmp(arg_primary, "Primary") != 0 ||
+          Xen_AST_Node_Children_Size(arg_primary) != 1) {
+        return 0;
+      }
+      Xen_Instance* arg_literal = Xen_AST_Node_Get_Child(arg_primary, 0);
+      if (Xen_AST_Node_Name_Cmp(arg_literal, "Literal") != 0) {
+        return 0;
+      }
+      Xen_Instance* name =
+          Xen_String_From_CString(Xen_AST_Node_Value(arg_literal));
+      if (!name) {
+        return 0;
+      }
+      if (!Xen_Vector_Push(args_positionals_requireds_vector, name)) {
+        return 0;
+      }
+    } else {
+      break;
+    }
+  }
+  Xen_size_t args_assigment_start = idx;
+  for (; idx < Xen_AST_Node_Children_Size(args); idx++) {
+    Xen_Instance* arg = Xen_AST_Node_Get_Child(args, idx);
+    Xen_Instance* name = compile_expr_function_arg_assigment(c, arg);
+    if (!name) {
+      return 0;
+    }
+    if (!Xen_Vector_Push(args_positionals_requireds_vector, name)) {
+      return 0;
+    }
+  }
+  if (Xen_SIZE(args_positionals_requireds_vector) == 0) {
+    Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
+    if (!body) {
+      return 0;
+    }
+    CALLABLE_ptr code = compiler_function(body);
+    if (!code) {
+      return 0;
+    }
+    Xen_ssize_t co_code_idx = co_push_callable(code);
+    if (co_code_idx == -1) {
+      return 0;
+    }
+    if (!emit(MAKE_FUNCTION_NARGS, co_code_idx)) {
+      return 0;
+    }
+  } else {
+    Xen_Instance* args_positionals_requireds =
+        Xen_Tuple_From_Vector(args_positionals_requireds_vector);
+    if (!args_positionals_requireds) {
+      return 0;
+    }
+    if (!emit(MAKE_TUPLE,
+              Xen_AST_Node_Children_Size(args) - args_assigment_start)) {
+      return 0;
+    }
+    Xen_ssize_t co_args_idx = co_push_instance(args_positionals_requireds);
+    if (co_args_idx == -1) {
+      return 0;
+    }
+    if (!emit(PUSH, co_args_idx)) {
+      return 0;
+    }
+    Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
+    if (!body) {
+      return 0;
+    }
+    CALLABLE_ptr code = compiler_function(body);
+    if (!code) {
+      return 0;
+    }
+    Xen_ssize_t co_code_idx = co_push_callable(code);
+    if (co_code_idx == -1) {
+      return 0;
+    }
+    if (!emit(MAKE_FUNCTION, co_code_idx)) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+Xen_Instance* compile_expr_function_arg_assigment(Compiler* c,
+                                                  Xen_Instance* node) {
+  if (Xen_AST_Node_Name_Cmp(node, "Assignment") != 0 ||
+      Xen_AST_Node_Children_Size(node) != 2) {
+    return NULL;
+  }
+  Xen_Instance* rhs = Xen_AST_Node_Get_Child(node, 1);
+  if (Xen_AST_Node_Name_Cmp(rhs, "Expr") == 0) {
+    if (!compile_expr(c, rhs)) {
+      return NULL;
+    }
+  } else {
+    return NULL;
+  }
+  Xen_Instance* lhs_expr = Xen_AST_Node_Get_Child(node, 0);
+  if (Xen_AST_Node_Name_Cmp(lhs_expr, "Expr") != 0 ||
+      Xen_AST_Node_Children_Size(lhs_expr) != 1) {
+    return NULL;
+  }
+  Xen_Instance* lhs_primary = Xen_AST_Node_Get_Child(lhs_expr, 0);
+  if (Xen_AST_Node_Name_Cmp(lhs_primary, "Primary") != 0 ||
+      Xen_AST_Node_Children_Size(lhs_primary) != 1) {
+    return NULL;
+  }
+  Xen_Instance* lhs_literal = Xen_AST_Node_Get_Child(lhs_primary, 0);
+  if (Xen_AST_Node_Name_Cmp(lhs_literal, "Literal") != 0) {
+    return NULL;
+  }
+  Xen_Instance* name = Xen_String_From_CString(Xen_AST_Node_Value(lhs_literal));
+  if (!name) {
+    return NULL;
+  }
+  return name;
+}
+
 int compile_expr_list(Compiler* c, Xen_Instance* node) {
   int error;
   Xen_Instance* constant_value = compile_expr_constant(&error, node);
@@ -1886,11 +2094,27 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
 
 int compile_flow_statement(Compiler* c, Xen_Instance* node) {
   if (Xen_AST_Node_Value_Cmp(node, "break") == 0) {
-    if (!emit_jump(JUMP, CC_TOP.b_break)) {
+    CCS_ptr current = CCS_TOP;
+    while (current && !current->context.b_break) {
+      current = current->next;
+    }
+    if (current) {
+      if (!emit_jump(JUMP, current->context.b_break)) {
+        return 0;
+      }
+    } else {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "continue") == 0) {
-    if (!emit_jump(JUMP, CC_TOP.b_continue)) {
+    CCS_ptr current = CCS_TOP;
+    while (current && !current->context.b_continue) {
+      current = current->next;
+    }
+    if (current) {
+      if (!emit_jump(JUMP, CC_TOP.b_continue)) {
+        return 0;
+      }
+    } else {
       return 0;
     }
   } else {

@@ -4,8 +4,11 @@
 #include "attrs.h"
 #include "bc_instruct.h"
 #include "bytecode.h"
+#include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "logs.h"
 #include "operators.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
@@ -16,6 +19,8 @@
 #include "vm_stack.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_function.h"
+#include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_method.h"
@@ -241,6 +246,39 @@ static void op_make_map([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
     }
   }
   STACK_PUSH(map);
+}
+
+static void op_make_function([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+                             Xen_ulong_t oparg) {
+  CALLABLE_ptr code =
+      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  Xen_Instance* args_names = STACK_POP;
+  Xen_Instance* args_deafult_values = STACK_POP;
+  Xen_GC_Push_Root((Xen_GCHeader*)code);
+  Xen_IGC_Push(args_names);
+  Xen_IGC_Push(args_deafult_values);
+  Xen_Instance* function = Xen_Function_From_Callable(
+      code, (Xen_Instance*)ctx, args_names, args_deafult_values);
+  if (!function) {
+    Xen_IGC_XPOP(2);
+    Xen_GC_Pop_Root();
+    ERROR;
+  }
+  Xen_IGC_XPOP(2);
+  STACK_PUSH(function);
+  Xen_GC_Pop_Root();
+}
+
+static void op_make_function_nargs([[maybe_unused]] VM_Run* vmr,
+                                   RunContext_ptr ctx, Xen_ulong_t oparg) {
+  CALLABLE_ptr code =
+      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  Xen_Instance* function =
+      Xen_Function_From_Callable(code, (Xen_Instance*)ctx, nil, nil);
+  if (!function) {
+    ERROR;
+  }
+  STACK_PUSH(function);
 }
 
 static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
@@ -558,6 +596,8 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [MAKE_VECTOR] = op_make_vector,
     [MAKE_VECTOR_FROM_ITERABLE] = op_make_vector_from_iterable,
     [MAKE_MAP] = op_make_map,
+    [MAKE_FUNCTION] = op_make_function,
+    [MAKE_FUNCTION_NARGS] = op_make_function_nargs,
     [CALL] = op_call,
     [CALL_KW] = op_call_kw,
     [BINARYOP] = op_binaryop,
