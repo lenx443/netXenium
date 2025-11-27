@@ -55,17 +55,19 @@ Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure,
     return NULL;
   }
   Xen_IGC_XPUSH(args_names, roots);
-  Xen_Instance* args_names_it = Xen_Attr_Iter(args_names_list);
-  if (!args_names_it) {
-    Xen_IGC_XPOP(roots);
-    return NULL;
-  }
-  Xen_IGC_XPUSH(args_names_it, roots);
-  Xen_Instance* arg_name = NULL;
-  while ((arg_name = Xen_Attr_Next(args_names_it)) != NULL) {
-    if (!Xen_Map_Push_Pair(args_names, (Xen_Map_Pair){arg_name, nil})) {
+  if (Xen_Nil_NEval(args_names_list)) {
+    Xen_Instance* args_names_it = Xen_Attr_Iter(args_names_list);
+    if (!args_names_it) {
       Xen_IGC_XPOP(roots);
       return NULL;
+    }
+    Xen_IGC_XPUSH(args_names_it, roots);
+    Xen_Instance* arg_name = NULL;
+    while ((arg_name = Xen_Attr_Next(args_names_it)) != NULL) {
+      if (!Xen_Map_Push_Pair(args_names, (Xen_Map_Pair){arg_name, nil})) {
+        Xen_IGC_XPOP(roots);
+        return NULL;
+      }
     }
   }
   Xen_Instance* args_default_values = Xen_Map_New();

@@ -1590,10 +1590,15 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   Xen_Instance* rhs = Xen_AST_Node_Get_Child(node, 1);
-  if (Xen_AST_Node_Name_Cmp(rhs, "Expr") != 0) {
-    return 0;
-  }
-  if (!compile_expr(c, rhs)) {
+  if (Xen_AST_Node_Name_Cmp(rhs, "Expr") == 0) {
+    if (!compile_expr(c, rhs)) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(rhs, "FunctionExpr") == 0) {
+    if (!compile_expr_function(c, rhs)) {
+      return 0;
+    }
+  } else {
     return 0;
   }
   Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);

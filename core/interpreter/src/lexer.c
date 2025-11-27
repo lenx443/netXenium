@@ -47,7 +47,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         strcmp(token.tkn_text, "for") == 0 ||
         strcmp(token.tkn_text, "in") == 0 ||
         strcmp(token.tkn_text, "break") == 0 ||
-        strcmp(token.tkn_text, "continue") == 0) {
+        strcmp(token.tkn_text, "continue") == 0 ||
+        strcmp(token.tkn_text, "return") == 0) {
       token.tkn_type = TKN_KEYWORD;
     } else if (strcmp(token.tkn_text, "has") == 0) {
       token.tkn_type = TKN_HAS;

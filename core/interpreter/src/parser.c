@@ -91,6 +91,7 @@ static Xen_Instance* parser_while_stmt(Parser*);
 static Xen_Instance* parser_for_stmt(Parser*);
 static Xen_Instance* parser_block(Parser*);
 static Xen_Instance* parser_flow_stmt(Parser*);
+static Xen_Instance* parser_return_stmt(Parser*);
 
 void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
@@ -912,7 +913,6 @@ Xen_Instance* parser_assignment(Parser* p) {
   if (!lhs) {
     return NULL;
   }
-
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
     const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
@@ -938,6 +938,24 @@ Xen_Instance* parser_assignment(Parser* p) {
       return NULL;
     }
     Xen_Dealloc((void*)operator);
+    return assignm;
+  } else if (p->token.tkn_type == TKN_BLOCK) {
+    Xen_Instance* rhs = parser_function(p);
+    if (!rhs) {
+      return NULL;
+    }
+
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    if (!assignm) {
+      return NULL;
+    }
+
+    if (!Xen_AST_Node_Push_Child(assignm, lhs)) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(assignm, rhs)) {
+      return NULL;
+    }
     return assignm;
   }
   return lhs;
@@ -1093,6 +1111,9 @@ Xen_Instance* parser_keyword(Parser* p) {
   }
   if (is_flow_keyword(p)) {
     return parser_flow_stmt(p);
+  }
+  if (strcmp(p->token.tkn_text, "return") == 0) {
+    return parser_return_stmt(p);
   }
   return NULL;
 }
@@ -1288,4 +1309,25 @@ Xen_Instance* parser_flow_stmt(Parser* p) {
   }
   parser_next(p);
   return flow;
+}
+
+Xen_Instance* parser_return_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    return NULL;
+  }
+  Xen_Instance* return_stmt = Xen_AST_Node_New("ReturnStatement", NULL);
+  if (!return_stmt) {
+    return NULL;
+  }
+  parser_next(p);
+  if (is_expr(p)) {
+    Xen_Instance* expr = parser_expr(p);
+    if (!expr) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(return_stmt, expr)) {
+      return NULL;
+    }
+  }
+  return return_stmt;
 }
