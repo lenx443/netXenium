@@ -31,10 +31,13 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
+#define COMPILE_FLAG_FUNCTION_INLINE (1 << 0)
+
 typedef struct {
   block_list_ptr b_list;
   block_node_ptr* b_current;
   struct CompileContext_Stack** cc_stack;
+  uint8_t flags;
   uint8_t mode;
 } Compiler;
 
@@ -314,6 +317,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else if (Xen_AST_Node_Name_Cmp(node, "Statement") == 0) {
+      c->flags |= COMPILE_FLAG_FUNCTION_INLINE;
       if (!compile_statement(c, node)) {
         return 0;
       }
@@ -333,8 +337,10 @@ int compile_program(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   }
-  if (!emit(RETURN, 0)) {
-    return 0;
+  if ((c->flags & COMPILE_FLAG_FUNCTION_INLINE) == 0) {
+    if (!emit(RETURN, 0)) {
+      return 0;
+    }
   }
   return 1;
 }
@@ -397,8 +403,14 @@ int compile_expr_statement(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   }
-  if (!emit(POP, 1)) {
-    return 0;
+  if (c->flags & COMPILE_FLAG_FUNCTION_INLINE) {
+    if (!emit(RETURN_TOP, 0)) {
+      return 0;
+    }
+  } else {
+    if (!emit(POP, 1)) {
+      return 0;
+    }
   }
   return 1;
 }
@@ -2162,7 +2174,7 @@ int compile_return_statement(Compiler* c, Xen_Instance* node) {
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
   struct CompileContext_Stack* loop_stack = NULL;
-  Compiler c = {b_list, b_current, &loop_stack, mode};
+  Compiler c = {b_list, b_current, &loop_stack, 0, mode};
   if (!compile_program(&c, ast)) {
     assert(loop_stack == NULL);
     return 0;
