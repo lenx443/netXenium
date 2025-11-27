@@ -754,6 +754,7 @@ Xen_Instance* parser_function(Parser* p) {
     return NULL;
   }
   parser_next(p);
+  skip_newline(p);
   Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL);
   if (!func) {
     return NULL;
@@ -775,6 +776,7 @@ Xen_Instance* parser_function(Parser* p) {
     if (!Xen_AST_Node_Push_Child(args, arg_head)) {
       return NULL;
     }
+    skip_newline(p);
     while (p->token.tkn_type != TKN_RPARENT) {
       Xen_Instance* arg_tail = parser_function_arg_tail(p);
       if (!arg_tail) {
@@ -783,12 +785,14 @@ Xen_Instance* parser_function(Parser* p) {
       if (!Xen_AST_Node_Push_Child(args, arg_tail)) {
         return NULL;
       }
+      skip_newline(p);
     }
     if (!Xen_AST_Node_Push_Child(func, args)) {
       return NULL;
     }
     parser_next(p);
   }
+  skip_newline(p);
   if (!func) {
     return NULL;
   }
@@ -822,6 +826,7 @@ Xen_Instance* parser_function_arg_tail(Parser* p) {
     return NULL;
   }
   parser_next(p);
+  skip_newline(p);
   Xen_Instance* arg = parser_function_arg_assignment(p);
   if (!arg) {
     return NULL;
@@ -838,11 +843,11 @@ Xen_Instance* parser_function_arg_assignment(Parser* p) {
   if (!lhs) {
     return NULL;
   }
-
+  skip_newline(p);
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
     const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
-
+    skip_newline(p);
     Xen_Instance* rhs_node = parser_or(p);
     if (!rhs_node) {
       Xen_Dealloc((void*)operator);
@@ -1025,6 +1030,7 @@ Xen_Instance* parser_call(Parser* p) {
     return NULL;
   }
   parser_next(p);
+  skip_newline(p);
   Xen_Instance* args = Xen_AST_Node_New("Call", NULL);
   if (!args) {
     return NULL;
@@ -1040,6 +1046,7 @@ Xen_Instance* parser_call(Parser* p) {
   if (!Xen_AST_Node_Push_Child(args, arg_head)) {
     return NULL;
   }
+  skip_newline(p);
   while (p->token.tkn_type != TKN_RPARENT) {
     Xen_Instance* arg_tail = parser_arg_tail(p);
     if (!arg_tail) {
@@ -1048,6 +1055,7 @@ Xen_Instance* parser_call(Parser* p) {
     if (!Xen_AST_Node_Push_Child(args, arg_tail)) {
       return NULL;
     }
+    skip_newline(p);
   }
   parser_next(p);
   return args;
@@ -1058,6 +1066,7 @@ Xen_Instance* parser_arg_tail(Parser* p) {
     return NULL;
   }
   parser_next(p);
+  skip_newline(p);
   Xen_Instance* arg = parser_arg_assignment(p);
   if (!arg) {
     return NULL;
@@ -1074,10 +1083,11 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
   if (!lhs) {
     return NULL;
   }
-
+  skip_newline(p);
   if (p->token.tkn_type == TKN_ASSIGNMENT) {
     const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
+    skip_newline(p);
 
     Xen_Instance* rhs_node = parser_function(p);
     if (!rhs_node) {
