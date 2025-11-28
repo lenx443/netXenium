@@ -125,7 +125,7 @@ bool is_stmt(Parser* p) {
 }
 
 bool is_expr(Parser* p) {
-  if (is_factor(p))
+  if (is_list(p))
     return true;
   return false;
 }
