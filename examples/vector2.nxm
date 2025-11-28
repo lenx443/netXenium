@@ -1,0 +1,56 @@
+implement Vector2 => {
+  $__create => (vec = vector()) {
+    $self\__vec = vector(vec)
+  }
+  
+  $length => size($self\__vec)
+
+  $__get_index => (idx) $self\__vec[idx]
+
+  $__set_index => (idx, value) {
+    $self\__vec[idx] = value
+  }
+
+  $__string => {
+    result = "("
+    idx = 0
+    while idx < $self\length() => {
+      if idx != 0 => result = result + ", "
+      result = result + string($self[idx])
+      idx = idx + 1
+    }
+    result = result + ")"
+    return result
+  }
+
+  $__iter => $self\__vec\__iter()
+  
+  $push => (element) {
+    $self\__vec\push(element)
+  }
+
+  $push_iterable => (iterable = tuple()) {
+    for i in iterable => {
+      $self\push(i)
+    }
+  }
+
+  $map => (callback => (x) x) {
+    idx = 0
+    while idx < $self\length() => {
+      $self[idx] = callback($self[idx])
+      idx = idx + 1
+    }
+  }
+}
+
+vec = Vector2((1, 2, 3))
+println("1: ", vec)
+vec\push(4)
+println("2: ", vec)
+vec\map(=> (x) x * 2)
+println("3: ", vec)
+vec\push_iterable(
+  Vector2((5, 6, 7, 8))
+)
+println("4: ", vec)
