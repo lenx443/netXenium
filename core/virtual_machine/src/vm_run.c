@@ -306,28 +306,36 @@ static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (Xen_IMPL(callable)->__callable == NULL) {
     ERROR;
   }
+  Xen_IGC_Push(args);
+  Xen_IGC_Push(callable);
   if (!Xen_IMPL(callable)->__callable(callable, args, nil)) {
+    Xen_IGC_XPOP(2);
     ERROR;
   }
+  Xen_IGC_XPOP(2);
 }
 
 static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                        Xen_ulong_t oparg) {
+  Xen_size_t roots = 0;
   Xen_Instance* kw_names = STACK_POP;
   Xen_Instance* kwargs = Xen_Map_New();
   if (!kwargs) {
     ERROR;
   }
+  Xen_IGC_XPUSH(kwargs, roots);
   for (Xen_size_t idx = Xen_SIZE(kw_names); idx > 0; --idx) {
     Xen_Instance* arg = STACK_POP;
     Xen_Instance* kw_name = Xen_Attr_Index_Size_Get(kw_names, idx - 1);
     if (!Xen_Map_Push_Pair(kwargs, (Xen_Map_Pair){kw_name, arg})) {
+      Xen_IGC_XPOP(roots);
       ERROR;
     }
   }
   Xen_size_t args_count = oparg - Xen_SIZE(kw_names);
   Xen_Instance** args_array = Xen_Alloc(args_count * sizeof(Xen_Instance*));
   if (!args_array) {
+    Xen_IGC_XPOP(roots);
     ERROR;
   }
   for (uint8_t idx = args_count; idx > 0; --idx) {
@@ -336,27 +344,37 @@ static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
   Xen_Instance* args = Xen_Tuple_From_Array(args_count, args_array);
   if (!args) {
+    Xen_IGC_XPOP(roots);
     Xen_Dealloc(args_array);
     ERROR;
   }
+  Xen_IGC_XPUSH(args, roots);
   Xen_Dealloc(args_array);
   Xen_Instance* callable = STACK_POP;
   if (Xen_IMPL(callable)->__callable == NULL) {
+    Xen_IGC_XPOP(roots);
     ERROR;
   }
+  Xen_IGC_XPUSH(callable, roots);
   if (!Xen_IMPL(callable)->__callable(callable, args, kwargs)) {
+    Xen_IGC_XPOP(roots);
     ERROR;
   }
+  Xen_IGC_XPOP(roots);
 }
 
 static void op_binaryop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                         Xen_ulong_t oparg) {
   Xen_Instance* second = STACK_POP;
   Xen_Instance* first = STACK_POP;
+  Xen_IGC_Push(first);
+  Xen_IGC_Push(second);
   Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
   if (!rsult) {
+    Xen_IGC_XPOP(2);
     ERROR;
   }
+  Xen_IGC_XPOP(2);
   STACK_PUSH(rsult);
 }
 
