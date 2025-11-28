@@ -3,14 +3,12 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
-#include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 
@@ -24,18 +22,23 @@ static void basic_trace(Xen_GCHeader* h) {
 static Xen_Instance* basic_create(struct __Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  struct __Implement* impl = (struct __Implement*)self;
-  impl->__impl_name = NULL;
-  impl->__props = Xen_Map_New();
-  if (!impl->__props) {
+  struct __Implement* impl =
+      (struct __Implement*)Xen_Instance_Alloc(&Xen_Basic);
+  if (!impl) {
     return NULL;
   }
+  impl->__impl_name = NULL;
+  impl->__inst_trace = NULL;
+  impl->__props = NULL;
   impl->__inst_size = sizeof(struct __Instance);
   impl->__create = NULL;
   impl->__destroy = NULL;
+  impl->__string = NULL;
+  impl->__raw = NULL;
   impl->__callable = NULL;
   impl->__hash = NULL;
   impl->__get_attr = NULL;
+  impl->__set_attr = NULL;
   return nil;
 }
 
@@ -91,6 +94,7 @@ struct __Implement Xen_Basic = {
     .__inst_default_flags = 0x00,
     .__inst_trace = basic_trace,
     .__props = &Xen_Nil_Def,
+    .__alloc = NULL,
     .__create = basic_create,
     .__destroy = basic_destroy,
     .__string = basic_string,

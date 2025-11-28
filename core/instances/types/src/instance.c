@@ -57,8 +57,6 @@ void __instance_free(Xen_GCHeader** h) {
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy)
       inst->__impl->__destroy(inst, NULL, NULL);
-    if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-    }
     Xen_Dealloc(*h);
   }
 }

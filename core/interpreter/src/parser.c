@@ -94,6 +94,7 @@ static Xen_Instance* parser_for_stmt(Parser*);
 static Xen_Instance* parser_block(Parser*);
 static Xen_Instance* parser_flow_stmt(Parser*);
 static Xen_Instance* parser_return_stmt(Parser*);
+static Xen_Instance* parser_implement_stmt(Parser*);
 
 void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
@@ -1211,6 +1212,9 @@ Xen_Instance* parser_keyword(Parser* p) {
   if (strcmp(p->token.tkn_text, "return") == 0) {
     return parser_return_stmt(p);
   }
+  if (strcmp(p->token.tkn_text, "implement") == 0) {
+    return parser_implement_stmt(p);
+  }
   return NULL;
 }
 
@@ -1426,4 +1430,29 @@ Xen_Instance* parser_return_stmt(Parser* p) {
     }
   }
   return return_stmt;
+}
+
+Xen_Instance* parser_implement_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    return NULL;
+  }
+  parser_next(p);
+  if (p->token.tkn_type != TKN_IDENTIFIER) {
+    return NULL;
+  }
+  Xen_Instance* impl_stmt =
+      Xen_AST_Node_New("ImplementStatement", p->token.tkn_text);
+  if (!impl_stmt) {
+    return NULL;
+  }
+  parser_next(p);
+  skip_newline(p);
+  Xen_Instance* impl_body = parser_block(p);
+  if (!impl_stmt) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(impl_stmt, impl_body)) {
+    return NULL;
+  }
+  return impl_stmt;
 }

@@ -3,10 +3,16 @@
 
 #include "instance.h"
 
+Xen_Instance* Xen_Basic_New(Xen_c_string_t, Xen_Instance*);
+void Xen_Basic_Mapped_Trace(Xen_GCHeader*);
 Xen_Instance* Xen_Basic_String(Xen_Instance*, Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance*, Xen_Instance*,
                                         Xen_Instance*);
 Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance*, Xen_Instance*,
+                                        Xen_Instance*);
+Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance*, Xen_Instance*,
+                                        Xen_Instance*);
+Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance*, Xen_Instance*,
                                         Xen_Instance*);
 
 #endif

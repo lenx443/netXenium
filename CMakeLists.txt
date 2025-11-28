@@ -28,6 +28,8 @@ include_directories(
   core/common/header/
   core/common/include/
   core/common/instances/basic/include/
+  core/common/instances/basic/basic_builder/include/
+  core/common/instances/basic/basic_builder/types/header
   core/common/instances/function/include/
   core/common/instances/function/types/header/
   core/common/instances/string/include/
@@ -100,6 +102,9 @@ set(SOURCES
   # Implementacion del tipo `Basic`
   core/common/instances/basic/src/basic.c
   core/common/instances/basic/src/basic_templates.c
+
+  # Implementacion del tipo `BasicBuilder`
+  core/common/instances/basic/basic_builder/src/basic_builder_implement.c
 
   # Implementacion del tipo `Function`
   core/common/instances/function/src/xen_function_implement.c

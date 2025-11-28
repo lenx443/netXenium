@@ -2,6 +2,9 @@
 #include <stdio.h>
 
 #include "attrs.h"
+#include "basic_builder_implement.h"
+#include "basic_builder_instance.h"
+#include "basic_templates.h"
 #include "bc_instruct.h"
 #include "bytecode.h"
 #include "callable.h"
@@ -10,6 +13,7 @@
 #include "instance.h"
 #include "operators.h"
 #include "program.h"
+#include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
 #include "vm.h"
@@ -19,6 +23,7 @@
 #include "vm_stack.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_cstrings.h"
 #include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -565,6 +570,28 @@ static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(new_seq);
 }
 
+static void op_build_implement([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+                               Xen_ulong_t oparg) {
+  CALLABLE_ptr code =
+      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  Xen_Instance* name = STACK_POP;
+  Xen_Instance* builder =
+      __instance_new(&Xen_Basic_Builder_Implement, nil, nil, 0);
+  if (!builder) {
+    ERROR;
+  }
+  ((Xen_Basic_Builder*)builder)->name =
+      Xen_CString_Dup(Xen_String_As_CString(name));
+  Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
+                                      builder, nil, nil, NULL, code);
+  if (!new_ctx) {
+    ERROR;
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, new_ctx)) {
+    ERROR;
+  }
+}
+
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* ret =
       Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
@@ -590,6 +617,24 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx,
     vm_stack_push(ctx_top->ctx_stack, ret);
   } else {
     vmr->retval = ret;
+  }
+}
+
+static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
+                                      [[maybe_unused]] Xen_ulong_t oparg) {
+  Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self;
+  Xen_Instance* impl = Xen_Basic_New(builder->name, builder->__map);
+  if (!impl) {
+    ERROR
+  }
+  Xen_size_t current_id = ctx->ctx_id;
+  run_context_stack_pop_top(&vm->vm_ctx_stack);
+  RunContext_ptr ctx_top =
+      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
+  if (ctx_top && current_id > vmr->ctx_id) {
+    vm_stack_push(ctx_top->ctx_stack, impl);
+  } else {
+    vmr->retval = impl;
   }
 }
 
@@ -627,8 +672,10 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [LIST_UNPACK] = op_list_unpack,
     [LIST_UNPACK_START] = op_list_unpack_start,
     [LIST_UNPACK_END] = op_list_unpack_end,
+    [BUILD_IMPLEMENT] = op_build_implement,
     [RETURN] = op_return,
     [RETURN_TOP] = op_return_top,
+    [RETURN_BUILD_IMPLEMENT] = op_return_build_implement,
 };
 
 static int vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
