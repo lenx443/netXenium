@@ -1,4 +1,5 @@
 #include "basic.h"
+#include "attrs.h"
 #include "callable.h"
 #include "gc_header.h"
 #include "implement.h"
@@ -62,13 +63,9 @@ static Xen_Instance* basic_callable(struct __Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_Push(inst);
-  if (impl->__create) {
-    Xen_Instance* rsult =
-        Xen_VM_Call_Native_Function(impl->__create, inst, args, kwargs);
-    if (!rsult) {
-      Xen_IGC_Pop();
-      return NULL;
-    }
+  if (!Xen_Attr_Create(inst, args, kwargs)) {
+    Xen_IGC_Pop();
+    return NULL;
   }
   Xen_IGC_Pop();
   vm_stack_push(((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))

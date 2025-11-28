@@ -4,6 +4,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "run_ctx_instance.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "xen_cstrings.h"
@@ -40,10 +41,22 @@ static Xen_INSTANCE* __args_get_handle(const char* name) {
   return Xen_Vector_New();
 }
 
+static int self_set_handle(const char* name, Xen_INSTANCE* inst) {
+  (void)name;
+  (void)inst;
+  return 1;
+}
+
+static Xen_INSTANCE* self_get_handle(const char* name) {
+  (void)name;
+  return ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self;
+}
+
 static struct Xen_RegisterStream streams[] = {
     {"__expose", true, __expose_set_handle, __expose_get_handle},
     {"__expose_", false, __expose_set_handle, __expose_get_handle},
     {"__args", true, __args_set_handle, __args_get_handle},
+    {"self", true, self_set_handle, self_get_handle},
     {NULL, false, NULL, NULL},
 };
 

@@ -99,6 +99,27 @@ int Xen_Attr_Set_Str(Xen_Instance* inst, const char* attr, Xen_Instance* val) {
   return 1;
 }
 
+int Xen_Attr_Create(Xen_Instance* inst, Xen_Instance* args,
+                    Xen_Instance* kwargs) {
+  if (!inst) {
+    return 0;
+  }
+  Xen_Instance* result =
+      Xen_Method_Attr_Str_Call(inst, "__create", args, kwargs);
+  if (!result) {
+    if (Xen_IMPL(inst)->__create == NULL) {
+      return 1;
+    } else {
+      result = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__create, inst, args,
+                                           kwargs);
+      if (!result) {
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
 Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   if (!inst) {
     return NULL;

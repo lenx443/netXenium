@@ -1448,7 +1448,7 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
   parser_next(p);
   skip_newline(p);
   Xen_Instance* impl_body = parser_block(p);
-  if (!impl_stmt) {
+  if (!impl_body) {
     return NULL;
   }
   if (!Xen_AST_Node_Push_Child(impl_stmt, impl_body)) {
