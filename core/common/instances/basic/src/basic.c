@@ -5,13 +5,16 @@
 #include "implement.h"
 #include "instance.h"
 #include "run_ctx_stack.h"
-#include "vm.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_map.h"
+#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+#include "xen_string_implement.h"
+#include "xen_tuple.h"
 
 static void basic_trace(Xen_GCHeader* h) {
   struct __Implement* impl = (struct __Implement*)h;
@@ -84,6 +87,31 @@ static Xen_Instance* basic_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  struct __Implement* impl = (struct __Implement*)self;
+  if (impl->__props == NULL || Xen_Nil_Eval(impl->__props) ||
+      Xen_IMPL(impl->__props) != &Xen_Map_Implement) {
+    return NULL;
+  }
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(key) != &Xen_String_Implement) {
+    return NULL;
+  }
+  Xen_IGC_Push(key);
+  Xen_Instance* attr = Xen_Map_Get(impl->__props, key);
+  if (!attr) {
+    Xen_IGC_Pop();
+    return NULL;
+  }
+  Xen_IGC_Pop();
+  return attr;
+}
+
 struct __Implement Xen_Basic = {
     Xen_INSTANCE_SET(&Xen_Basic, 0),
     .__impl_name = "Basic",
@@ -98,4 +126,6 @@ struct __Implement Xen_Basic = {
     .__raw = basic_string,
     .__callable = basic_callable,
     .__hash = NULL,
+    .__get_attr = basic_get_attr,
+    .__set_attr = NULL,
 };

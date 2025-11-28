@@ -7,7 +7,6 @@
 #include "instance.h"
 #include "m_core.h"
 #include "program.h"
-#include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "vm.h"
 #include "xen_alloc.h"
@@ -169,15 +168,20 @@ static Xen_Instance* fn_id(Xen_Instance* self, Xen_Instance* args,
   return r_id;
 }
 
+static Xen_Instance* fn_impl(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+  return (Xen_Instance*)Xen_IMPL(inst);
+}
+
 static Xen_Module_Function_Table core_functions = {
-    {"exit", fn_exit},
-    {"echo", fn_echo},
-    {"print", fn_print},
-    {"println", fn_println},
-    {"readline", fn_readline},
-    {"size", fn_size},
-    {"id", fn_id},
-    {NULL, NULL},
+    {"exit", fn_exit},       {"echo", fn_echo},         {"print", fn_print},
+    {"println", fn_println}, {"readline", fn_readline}, {"size", fn_size},
+    {"id", fn_id},           {"impl", fn_impl},         {NULL, NULL},
 };
 
 struct Xen_Module_Def Module_Core = {
