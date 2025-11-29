@@ -234,6 +234,16 @@ static Xen_Instance* string_prop_lower(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
+static Xen_Instance* string_char_code(Xen_Instance* self, Xen_Instance* args,
+                                      Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Instance* result = Xen_Number_From_Int(Xen_String_As_Char(self));
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
 struct __Implement Xen_String_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
@@ -266,7 +276,9 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__mul", string_opr_mul, nil) ||
       !Xen_VM_Store_Native_Function(props, "__boolean", string_boolean, nil) ||
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
-      !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil)) {
+      !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
+      !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,
+                                    nil)) {
     return 0;
   }
   Xen_String_Implement.__props = props;

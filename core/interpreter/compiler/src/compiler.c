@@ -1272,30 +1272,36 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       if (!end_block) {
         return 0;
       }
-      if (!B_LIST_PUSH(end_block)) {
+      if (!emit_jump(JUMP_IF_FALSE, end_block)) {
         B_FREE(end_block);
         return 0;
       }
-      if (!emit_jump(JUMP_IF_FALSE, end_block)) {
-        return 0;
-      }
       if (!emit(POP, 1)) {
+        B_FREE(end_block);
         return 0;
       }
       Xen_Instance* expr2 = Xen_AST_Node_Get_Child(node, 1);
       if (Xen_AST_Node_Name_Cmp(expr2, "Primary") == 0) {
         if (!compile_expr_primary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else if (Xen_AST_Node_Name_Cmp(expr2, "Unary") == 0) {
         if (!compile_expr_unary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else if (Xen_AST_Node_Name_Cmp(expr2, "Binary") == 0) {
         if (!compile_expr_binary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else {
+        B_FREE(end_block);
+        return 0;
+      }
+      if (!B_LIST_PUSH(end_block)) {
+        B_FREE(end_block);
         return 0;
       }
       B_SET_CURRENT(end_block);
@@ -1325,30 +1331,36 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       if (!end_block) {
         return 0;
       }
-      if (!B_LIST_PUSH(end_block)) {
+      if (!emit_jump(JUMP_IF_TRUE, end_block)) {
         B_FREE(end_block);
         return 0;
       }
-      if (!emit_jump(JUMP_IF_TRUE, end_block)) {
-        return 0;
-      }
       if (!emit(POP, 1)) {
+        B_FREE(end_block);
         return 0;
       }
       Xen_Instance* expr2 = Xen_AST_Node_Get_Child(node, 1);
       if (Xen_AST_Node_Name_Cmp(expr2, "Primary") == 0) {
         if (!compile_expr_primary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else if (Xen_AST_Node_Name_Cmp(expr2, "Unary") == 0) {
         if (!compile_expr_unary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else if (Xen_AST_Node_Name_Cmp(expr2, "Binary") == 0) {
         if (!compile_expr_binary(c, expr2)) {
+          B_FREE(end_block);
           return 0;
         }
       } else {
+        B_FREE(end_block);
+        return 0;
+      }
+      if (!B_LIST_PUSH(end_block)) {
+        B_FREE(end_block);
         return 0;
       }
       B_SET_CURRENT(end_block);

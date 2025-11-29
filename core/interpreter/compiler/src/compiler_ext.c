@@ -104,25 +104,21 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
       IR_Instruct_t* inst = &b_iter->instr_array->ir_array[i_iter];
 
       real_offset[inst->instr_num] = pc->code->bc_size;
-
       if (inst->is_jump) {
-        Xen_ulong_t target_ir =
-            inst->jump_block->instr_array->ir_array[0].instr_num;
+        Xen_size_t argpos = pc->code->bc_size + 1;
 
-        if (target_ir >= 0xFF) {
-          if (!bc_emit(pc->code, inst->opcode, 0xFF))
-            goto error;
-          Xen_size_t argpos = pc->code->bc_size;
-          for (Xen_size_t j = 0; j < XEN_ULONG_SIZE; j++) {
-            if (!bc_emit(pc->code, EXT_ARG_OP, 0x00))
-              goto error;
-          }
-          if (!reloc_add(&reloc_table, &reloc_count, &reloc_cap, inst, argpos))
-            goto error;
-        } else {
-          if (!bc_emit(pc->code, inst->opcode, (uint8_t)target_ir))
+        if (!reloc_add(&reloc_table, &reloc_count, &reloc_cap, inst, argpos))
+          goto error;
+
+        if (!bc_emit(pc->code, inst->opcode, 0xFF)) /* 0xFF indica EXT ARG */
+          goto error;
+
+        for (Xen_size_t j = 0; j < XEN_ULONG_SIZE; j++) {
+          if (!bc_emit(pc->code, EXT_ARG_OP, 0x00))
             goto error;
         }
+
+        continue;
       } else {
         if (inst->oparg >= 0xFF) {
           if (!bc_emit(pc->code, inst->opcode, 0xFF))
