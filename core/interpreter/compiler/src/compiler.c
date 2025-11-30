@@ -1721,59 +1721,85 @@ int compile_assignment_expr(Compiler* c, Xen_Instance* node) {
 }
 
 int compile_assignment_expr_primary(Compiler* c, Xen_Instance* node) {
-  if (Xen_AST_Node_Children_Size(node) == 2) {
-    Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
-    if (Xen_AST_Node_Name_Cmp(primary, "String") == 0) {
-      if (!compile_expr_primary_string(c, primary)) {
+  if (COMPILE_MODE == Xen_COMPILE_IMPLEMENT) {
+    if (Xen_AST_Node_Children_Size(node) == 1) {
+      Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
+      if (!primary) {
         return 0;
       }
-    } else if (Xen_AST_Node_Name_Cmp(primary, "Number") == 0) {
-      if (!compile_expr_primary_number(c, primary)) {
-        return 0;
-      }
-    } else if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
-      if (!compile_expr_primary_literal(c, primary)) {
-        return 0;
-      }
-    } else if (Xen_AST_Node_Name_Cmp(primary, "Property") == 0) {
-      if (!compile_expr_primary_property(c, primary)) {
-        return 0;
-      }
-    } else if (Xen_AST_Node_Name_Cmp(primary, "Parent") == 0) {
-      if (!compile_expr_primary_parent(c, primary)) {
-        return 0;
-      }
-    } else {
-      return 0;
-    }
-    Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
-    if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") == 0) {
-      if (!compile_assignment_expr_primary_suffix(c, suffix)) {
+      if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
+        if (!compile_assignment_expr_primary_literal(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Property") == 0) {
+        if (!compile_assignment_expr_primary_property(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Parent") == 0) {
+        if (!compile_assignment_expr_primary_parent(c, primary)) {
+          return 0;
+        }
+      } else {
         return 0;
       }
     } else {
-      return 0;
-    }
-    return 1;
-  }
-  Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
-  if (!primary) {
-    return 0;
-  }
-  if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
-    if (!compile_assignment_expr_primary_literal(c, primary)) {
-      return 0;
-    }
-  } else if (Xen_AST_Node_Name_Cmp(primary, "Property") == 0) {
-    if (!compile_assignment_expr_primary_property(c, primary)) {
-      return 0;
-    }
-  } else if (Xen_AST_Node_Name_Cmp(primary, "Parent") == 0) {
-    if (!compile_assignment_expr_primary_parent(c, primary)) {
       return 0;
     }
   } else {
-    return 0;
+    if (Xen_AST_Node_Children_Size(node) == 2) {
+      Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(primary, "String") == 0) {
+        if (!compile_expr_primary_string(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Number") == 0) {
+        if (!compile_expr_primary_number(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
+        if (!compile_expr_primary_literal(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Property") == 0) {
+        if (!compile_expr_primary_property(c, primary)) {
+          return 0;
+        }
+      } else if (Xen_AST_Node_Name_Cmp(primary, "Parent") == 0) {
+        if (!compile_expr_primary_parent(c, primary)) {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+      Xen_Instance* suffix = Xen_AST_Node_Get_Child(node, 1);
+      if (Xen_AST_Node_Name_Cmp(suffix, "Suffix") == 0) {
+        if (!compile_assignment_expr_primary_suffix(c, suffix)) {
+          return 0;
+        }
+      } else {
+        return 0;
+      }
+      return 1;
+    }
+    Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
+    if (!primary) {
+      return 0;
+    }
+    if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
+      if (!compile_assignment_expr_primary_literal(c, primary)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(primary, "Property") == 0) {
+      if (!compile_assignment_expr_primary_property(c, primary)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(primary, "Parent") == 0) {
+      if (!compile_assignment_expr_primary_parent(c, primary)) {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
   }
   return 1;
 }
