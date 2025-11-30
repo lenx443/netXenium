@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "attrs.h"
+#include "basic.h"
 #include "basic_builder_implement.h"
 #include "basic_builder_instance.h"
 #include "basic_templates.h"
@@ -33,6 +34,7 @@
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
+#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_tuple_implement.h"
 #include "xen_typedefs.h"
@@ -243,13 +245,18 @@ static void op_make_map([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (!map) {
     ERROR;
   }
+  Xen_IGC_Push(map);
+  Xen_IGC_Fork* tmp = Xen_IGC_Fork_New();
   for (Xen_uint8_t i = 0; i < oparg; i++) {
     Xen_Instance* value = STACK_POP;
     Xen_Instance* key = STACK_POP;
+    Xen_IGC_Fork_Push(tmp, key);
+    Xen_IGC_Fork_Push(tmp, value);
     if (!Xen_Map_Push_Pair(map, (Xen_Map_Pair){key, value})) {
       ERROR;
     }
   }
+  Xen_IGC_XPOP(2);
   STACK_PUSH(map);
 }
 
@@ -593,9 +600,39 @@ static void op_build_implement([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   CALLABLE_ptr code =
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* name = STACK_POP;
+  Xen_Instance* base = STACK_POP;
   Xen_Instance* builder =
       __instance_new(&Xen_Basic_Builder_Implement, nil, nil, 0);
   if (!builder) {
+    ERROR;
+  }
+  if (Xen_IMPL(name) != &Xen_String_Implement || Xen_IMPL(base) != &Xen_Basic) {
+    ERROR;
+  }
+  ((Xen_Basic_Builder*)builder)->name =
+      Xen_CString_Dup(Xen_String_As_CString(name));
+  ((Xen_Basic_Builder*)builder)->base = (Xen_Implement*)base;
+  Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
+                                      builder, nil, nil, NULL, code);
+  if (!new_ctx) {
+    ERROR;
+  }
+  if (!run_context_stack_push(&vm->vm_ctx_stack, new_ctx)) {
+    ERROR;
+  }
+}
+
+static void op_build_implement_nbase([[maybe_unused]] VM_Run* vmr,
+                                     RunContext_ptr ctx, Xen_ulong_t oparg) {
+  CALLABLE_ptr code =
+      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  Xen_Instance* name = STACK_POP;
+  Xen_Instance* builder =
+      __instance_new(&Xen_Basic_Builder_Implement, nil, nil, 0);
+  if (!builder) {
+    ERROR;
+  }
+  if (Xen_IMPL(name) != &Xen_String_Implement) {
     ERROR;
   }
   ((Xen_Basic_Builder*)builder)->name =
@@ -641,7 +678,8 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx,
 static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                                       [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self;
-  Xen_Instance* impl = Xen_Basic_New(builder->name, builder->__map);
+  Xen_Instance* impl =
+      Xen_Basic_New(builder->name, builder->__map, builder->base);
   if (!impl) {
     ERROR
   }
@@ -691,6 +729,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [LIST_UNPACK_START] = op_list_unpack_start,
     [LIST_UNPACK_END] = op_list_unpack_end,
     [BUILD_IMPLEMENT] = op_build_implement,
+    [BUILD_IMPLEMENT_NBASE] = op_build_implement_nbase,
     [RETURN] = op_return,
     [RETURN_TOP] = op_return_top,
     [RETURN_BUILD_IMPLEMENT] = op_return_build_implement,

@@ -60,7 +60,7 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   return h;
 }
 
-void Xen_GC_Collect() {
+void Xen_GC_Collect(void) {
   Xen_GC_Mark();
   Xen_GC_Sweep();
   __gc_heap.pressure = 0;
@@ -72,7 +72,7 @@ void Xen_GC_Push_Root(struct __GC_Header* inst) {
   __gc_roots[__gc_roots_count++] = inst;
 }
 
-void Xen_GC_Pop_Root() {
+void Xen_GC_Pop_Root(void) {
   assert(__gc_roots_count > 0);
   __gc_roots_count--;
 }
@@ -93,7 +93,7 @@ void Xen_GC_Push_Gray(struct __GC_Header* inst) {
   __gc_gray_stack[__gc_gray_stack_count++] = inst;
 }
 
-struct __GC_Header* Xen_GC_Pop_Gray() {
+struct __GC_Header* Xen_GC_Pop_Gray(void) {
   assert(__gc_gray_stack_count > 0);
   return __gc_gray_stack[--__gc_gray_stack_count];
 }
@@ -111,7 +111,7 @@ void Xen_GC_Trace(struct __GC_Header* inst) {
   }
 }
 
-void Xen_GC_Mark() {
+void Xen_GC_Mark(void) {
   for (Xen_size_t i = 0; i < __gc_roots_count; i++) {
     if (__gc_roots[i]->color == GC_WHITE) {
       Xen_GC_Push_Gray(__gc_roots[i]);
@@ -124,7 +124,7 @@ void Xen_GC_Mark() {
   }
 }
 
-void Xen_GC_Sweep() {
+void Xen_GC_Sweep(void) {
   struct __GC_Header* curr = __gc_heap.young;
 
   while (curr) {

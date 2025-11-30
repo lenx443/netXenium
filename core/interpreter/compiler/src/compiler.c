@@ -1459,13 +1459,16 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
 }
 
 int compile_expr_function(Compiler* c, Xen_Instance* node) {
+  Xen_size_t roots = 0;
   Xen_Instance* args_positionals_requireds_vector = Xen_Vector_New();
   if (!args_positionals_requireds_vector) {
     return 0;
   }
+  Xen_IGC_XPUSH(args_positionals_requireds_vector, roots);
   Xen_size_t idx = 0;
   Xen_Instance* args = Xen_AST_Node_Get_Child(node, 0);
   if (!args) {
+    Xen_IGC_XPOP(roots);
     return 0;
   }
   for (; idx < Xen_AST_Node_Children_Size(args); idx++) {
@@ -1474,18 +1477,22 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_Instance* arg_primary = Xen_AST_Node_Get_Child(arg, 0);
       if (Xen_AST_Node_Name_Cmp(arg_primary, "Primary") != 0 ||
           Xen_AST_Node_Children_Size(arg_primary) != 1) {
+        Xen_IGC_XPOP(roots);
         return 0;
       }
       Xen_Instance* arg_literal = Xen_AST_Node_Get_Child(arg_primary, 0);
       if (Xen_AST_Node_Name_Cmp(arg_literal, "Literal") != 0) {
+        Xen_IGC_XPOP(roots);
         return 0;
       }
       Xen_Instance* name =
           Xen_String_From_CString(Xen_AST_Node_Value(arg_literal));
       if (!name) {
+        Xen_IGC_XPOP(roots);
         return 0;
       }
       if (!Xen_Vector_Push(args_positionals_requireds_vector, name)) {
+        Xen_IGC_XPOP(roots);
         return 0;
       }
     } else {
@@ -1497,61 +1504,76 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
     Xen_Instance* arg = Xen_AST_Node_Get_Child(args, idx);
     Xen_Instance* name = compile_expr_function_arg_assigment(c, arg);
     if (!name) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     if (!Xen_Vector_Push(args_positionals_requireds_vector, name)) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
   }
   if (Xen_SIZE(args_positionals_requireds_vector) == 0) {
     Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
     if (!body) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     CALLABLE_ptr code = compiler_ast(body, Xen_COMPILE_FUNCTION);
     if (!code) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     Xen_ssize_t co_code_idx = co_push_callable(code);
     if (co_code_idx == -1) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     if (!emit(MAKE_FUNCTION_NARGS, co_code_idx)) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
   } else {
     Xen_Instance* args_positionals_requireds =
         Xen_Tuple_From_Vector(args_positionals_requireds_vector);
     if (!args_positionals_requireds) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     if (!emit(MAKE_TUPLE,
               Xen_AST_Node_Children_Size(args) - args_assigment_start)) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     Xen_ssize_t co_args_idx = co_push_instance(args_positionals_requireds);
     if (co_args_idx == -1) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     if (!emit(PUSH, co_args_idx)) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
     if (!body) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     CALLABLE_ptr code = compiler_ast(body, Xen_COMPILE_FUNCTION);
     if (!code) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     Xen_ssize_t co_code_idx = co_push_callable(code);
     if (co_code_idx == -1) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
     if (!emit(MAKE_FUNCTION, co_code_idx)) {
+      Xen_IGC_XPOP(roots);
       return 0;
     }
   }
+  Xen_IGC_XPOP(roots);
   return 1;
 }
 
@@ -2226,6 +2248,24 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (!name) {
     return 0;
   }
+  Xen_Instance* base = Xen_AST_Node_Get_Child(node, 0);
+  if (!base) {
+    return 0;
+  }
+  Xen_bool_t has_base = 0;
+  if (Xen_AST_Node_Name_Cmp(base, "Base") != 0) {
+    return 0;
+  }
+  if (Xen_AST_Node_Children_Size(base) == 1) {
+    Xen_Instance* base_expr = Xen_AST_Node_Get_Child(base, 0);
+    if (Xen_AST_Node_Name_Cmp(base_expr, "Expr") != 0) {
+      return 0;
+    }
+    if (!compile_expr(c, base_expr)) {
+      return 0;
+    }
+    has_base = 1;
+  }
   Xen_ssize_t co_name_idx = co_push_instance(name);
   if (co_name_idx == -1) {
     return 0;
@@ -2233,7 +2273,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (!emit(PUSH, co_name_idx)) {
     return 0;
   }
-  Xen_Instance* body = Xen_AST_Node_Get_Child(node, 0);
+  Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
   if (!body) {
     return 0;
   }
@@ -2245,8 +2285,14 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (co_code_idx == -1) {
     return 0;
   }
-  if (!emit(BUILD_IMPLEMENT, co_code_idx)) {
-    return 0;
+  if (has_base) {
+    if (!emit(BUILD_IMPLEMENT, co_code_idx)) {
+      return 0;
+    }
+  } else {
+    if (!emit(BUILD_IMPLEMENT_NBASE, co_code_idx)) {
+      return 0;
+    }
   }
   Xen_ssize_t local_name = co_push_name(Xen_AST_Node_Value(node));
   if (local_name == -1) {

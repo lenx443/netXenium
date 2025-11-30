@@ -86,8 +86,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
       }
     }
     if (eval == Xen_True) {
-      Xen_GC_Write_Field((Xen_GCHeader*)current,
-                         (Xen_GCHeader**)&current->value,
+      Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&current->value,
                          (Xen_GCHeader*)pair.value);
       return 1;
     }

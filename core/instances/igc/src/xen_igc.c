@@ -34,7 +34,7 @@ static void __igc_roots_destroy(Xen_GCHeader** h) {
   Xen_Dealloc(*h);
 }
 
-static struct __IGC_Roots* __igc_roots_new() {
+static struct __IGC_Roots* __igc_roots_new(void) {
   struct __IGC_Roots* roots = (struct __IGC_Roots*)Xen_GC_New(
       sizeof(struct __IGC_Roots), __igc_roots_trace, __igc_roots_destroy);
   roots->roots =
@@ -63,12 +63,12 @@ static void __igc_roots_pop(struct __IGC_Roots* roots) {
   roots->count--;
 }
 
-void Xen_IGC_Init() {
+void Xen_IGC_Init(void) {
   __igc_roots_list = __igc_roots_new();
   Xen_GC_Push_Root((Xen_GCHeader*)__igc_roots_list);
 }
 
-void Xen_IGC_Finish() {
+void Xen_IGC_Finish(void) {
   Xen_GC_Pop_Root();
 }
 
@@ -76,11 +76,11 @@ void Xen_IGC_Push(Xen_Instance* inst) {
   __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)inst);
 }
 
-void Xen_IGC_Pop() {
+void Xen_IGC_Pop(void) {
   __igc_roots_pop(__igc_roots_list);
 }
 
-struct __IGC_Roots* Xen_IGC_Fork_New() {
+struct __IGC_Roots* Xen_IGC_Fork_New(void) {
   struct __IGC_Roots* fork = __igc_roots_new();
   __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)fork);
   return fork;

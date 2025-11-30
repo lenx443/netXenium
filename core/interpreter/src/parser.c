@@ -1446,6 +1446,20 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
+  Xen_Instance* base = Xen_AST_Node_New("Base", NULL);
+  if (p->token.tkn_type == TKN_COLON) {
+    parser_next(p);
+    Xen_Instance* base_expr = parser_expr(p);
+    if (!base_expr) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(base, base_expr)) {
+      return NULL;
+    }
+  }
+  if (!Xen_AST_Node_Push_Child(impl_stmt, base)) {
+    return NULL;
+  }
   skip_newline(p);
   Xen_Instance* impl_body = parser_block(p);
   if (!impl_body) {

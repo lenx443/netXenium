@@ -19,7 +19,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
-Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props) {
+Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
+                            Xen_Implement* base) {
   Xen_Implement* impl = (Xen_Implement*)__instance_new(&Xen_Basic, nil, nil, 0);
   if (!impl) {
     return NULL;
@@ -38,6 +39,9 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props) {
     }
   }
   Xen_IGC_WRITE_FIELD(impl, impl->__props, props);
+  if (base) {
+    Xen_IGC_WRITE_FIELD(impl, impl->__base, base);
+  }
   impl->__get_attr = Xen_Basic_Get_Attr_Mapped;
   impl->__set_attr = Xen_Basic_Set_Attr_Mapped;
   return (Xen_Instance*)impl;

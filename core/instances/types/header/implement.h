@@ -16,6 +16,7 @@ struct __Implement {
   Xen_Instance_Flag __inst_default_flags;
   void (*__inst_trace)(Xen_GCHeader*);
   struct __Instance* __props;
+  struct __Implement* __base;
   Xen_Native_Func __alloc;
   Xen_Native_Func __create;
   Xen_Native_Func __destroy;

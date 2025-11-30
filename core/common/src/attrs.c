@@ -15,7 +15,7 @@
 #include "xen_string_implement.h"
 #include "xen_tuple.h"
 
-Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
+Xen_Instance* Xen_Attr_Get_NBase(Xen_Instance* inst, Xen_Instance* attr) {
   if (!inst || !attr) {
     return NULL;
   }
@@ -38,6 +38,35 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   }
   Xen_IGC_Pop();
   return result;
+}
+
+Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
+  if (!inst || !attr) {
+    return NULL;
+  }
+  if (Xen_IMPL(attr) != &Xen_String_Implement) {
+    return NULL;
+  }
+  if (!Xen_IMPL(inst)->__get_attr) {
+    return NULL;
+  }
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &attr);
+  if (!args) {
+    return NULL;
+  }
+  Xen_IGC_Push(args);
+  Xen_Instance* current = inst;
+  while (current != NULL) {
+    Xen_Instance* result = Xen_VM_Call_Native_Function(
+        Xen_IMPL(current)->__get_attr, current, args, nil);
+    if (result) {
+      Xen_IGC_Pop();
+      return result;
+    }
+    current = Xen_Attr_Get_NBase(current, Xen_String_From_CString("__base"));
+  }
+  Xen_IGC_Pop();
+  return NULL;
 }
 
 Xen_Instance* Xen_Attr_Get_Str(Xen_Instance* inst, const char* attr) {

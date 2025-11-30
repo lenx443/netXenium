@@ -4,6 +4,7 @@
 #include "instance.h"
 #include "xen_typedefs.h"
 
+Xen_Instance* Xen_Attr_Get_NBase(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Attr_Get(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Attr_Get_Str(Xen_Instance*, const char*);
 int Xen_Attr_Set(Xen_Instance*, Xen_Instance*, Xen_Instance*);

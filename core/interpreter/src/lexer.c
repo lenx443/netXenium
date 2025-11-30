@@ -439,6 +439,11 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token.tkn_type = TKN_COMMA;
     token.tkn_text[0] = ',';
     token.tkn_text[1] = '\0';
+  } else if (c == ':') {
+    lexer->pos++;
+    token.tkn_type = TKN_COLON;
+    token.tkn_text[0] = ':';
+    token.tkn_text[1] = '\0';
   } else if (c == '?') {
     lexer->pos++;
     if (lexer->src[lexer->pos] == '?') {

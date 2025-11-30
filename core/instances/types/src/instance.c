@@ -4,6 +4,7 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
+#include "xen_nil.h"
 
 Xen_Instance* Xen_Instance_Alloc(Xen_Implement* impl) {
   assert(impl != NULL);
@@ -30,9 +31,6 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     Xen_IGC_Push(inst);
   } else {
     inst = Xen_Instance_Alloc(impl);
-    if (!inst) {
-      return NULL;
-    }
     Xen_IGC_Push(inst);
     inst->__flags = flags;
     inst->__flags |= impl->__inst_default_flags;
@@ -43,6 +41,18 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
     if (!mapped->__map) {
       Xen_IGC_Pop();
       return NULL;
+    }
+    if (impl->__base) {
+      Xen_Instance* base = __instance_new(impl->__base, nil, nil, 0);
+      if (!base) {
+        Xen_IGC_Pop();
+        return NULL;
+      }
+      if (!Xen_Map_Push_Pair_Str(mapped->__map,
+                                 (Xen_Map_Pair_Str){"__base", base})) {
+        Xen_IGC_Pop();
+        return NULL;
+      }
     }
   }
   Xen_IGC_Pop();
