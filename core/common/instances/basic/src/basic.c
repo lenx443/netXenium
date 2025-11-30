@@ -4,13 +4,18 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "instance_life.h"
 #include "run_ctx_stack.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
+#include "xen_boolean.h"
+#include "xen_function_implement.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
+#include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
@@ -104,13 +109,51 @@ static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_Push(key);
-  Xen_Instance* attr = Xen_Map_Get(impl->__props, key);
+  Xen_Instance* attr = Xen_Map_Get(Xen_IMPL(impl)->__props, key);
   if (!attr) {
+    attr = Xen_Map_Get(impl->__props, key);
+    if (!attr) {
+      Xen_IGC_Pop();
+      return NULL;
+    }
+  }
+  if (Xen_IMPL(attr) == &Xen_Function_Implement) {
+    Xen_Instance* method = Xen_Method_New(attr, self);
+    if (!method) {
+      Xen_IGC_Pop();
+      return NULL;
+    }
     Xen_IGC_Pop();
-    return NULL;
+    return method;
   }
   Xen_IGC_Pop();
   return attr;
+}
+
+static Xen_Instance* basic_eq(Xen_Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 0);
+  if (self == value) {
+    return Xen_True;
+  }
+  return Xen_False;
+}
+
+static Xen_Instance* basic_ne(Xen_Instance* self, Xen_Instance* args,
+                              Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 0);
+  if (self != value) {
+    return Xen_True;
+  }
+  return Xen_False;
 }
 
 struct __Implement Xen_Basic = {
@@ -130,3 +173,19 @@ struct __Implement Xen_Basic = {
     .__get_attr = basic_get_attr,
     .__set_attr = NULL,
 };
+
+int Xen_Basic_Init(void) {
+  Xen_Instance* props = Xen_Map_New();
+  if (!props) {
+    return 0;
+  }
+  if (!Xen_VM_Store_Native_Function(props, "__eq", basic_eq, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__ne", basic_ne, nil)) {
+    return 0;
+  }
+  Xen_IGC_Fork_Push(impls_maps, props);
+  Xen_Basic.__props = props;
+  return 1;
+}
+
+void Xen_Basic_Finish(void) {}

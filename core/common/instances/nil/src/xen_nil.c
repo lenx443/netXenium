@@ -2,7 +2,7 @@
 #include "instance.h"
 #include "xen_nil_implement.h"
 
-Xen_Instance* Xen_Nil() {
+Xen_Instance* Xen_Nil(void) {
   return &Xen_Nil_Def;
 }
 

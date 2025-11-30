@@ -4,8 +4,8 @@
 #include "xen_igc.h"
 #include "xen_method.h"
 #include "xen_nil.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
-#include "xen_vector.h"
 
 static const char* Operators_Map[Xen_OPR_END] = {
     [Xen_OPR_POW] = "__pow", [Xen_OPR_MUL] = "__mul", [Xen_OPR_DIV] = "__div",
@@ -26,7 +26,7 @@ Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance* first, Xen_Instance* second,
     return NULL;
   }
   Xen_IGC_XPUSH(method, roots);
-  Xen_Instance* args = Xen_Vector_From_Array(1, &second);
+  Xen_Instance* args = Xen_Tuple_From_Array(1, &second);
   if (!args) {
     Xen_IGC_XPOP(roots);
     return NULL;

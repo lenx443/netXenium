@@ -1,7 +1,9 @@
 #include "instance_life.h"
+#include "basic.h"
 #include "xen_boolean_implement.h"
 #include "xen_igc.h"
 #include "xen_map_implement.h"
+#include "xen_nil_implement.h"
 #include "xen_number_implement.h"
 #include "xen_string_implement.h"
 #include "xen_tuple_implement.h"
@@ -19,6 +21,7 @@ typedef struct {
 } Instance_Life;
 
 Instance_Life Instances[] = {
+    {Xen_Basic_Init, Xen_Basic_Finish},
     {Xen_Number_Init, Xen_Number_Finish},
     {Xen_String_Init, Xen_String_Finish},
     {Xen_Vector_Init, Xen_Vector_Finish},
@@ -27,9 +30,10 @@ Instance_Life Instances[] = {
     {Xen_Tuple_Iterator_Init, Xen_Tuple_Iterator_Finish},
     {Xen_Map_Init, Xen_Map_Finish},
     {Xen_Boolean_Init, Xen_Boolean_Finish},
+    {Xen_Nil_Init, Xen_Nil_Finish},
 };
 
-int Xen_Instance_Init() {
+int Xen_Instance_Init(void) {
   impls_maps = Xen_IGC_Fork_New();
   for (Xen_size_t i = 0; i < sizeof(Instances) / sizeof(*Instances); i++) {
     if (!Instances[i].init()) {
@@ -43,7 +47,7 @@ int Xen_Instance_Init() {
   return 1;
 }
 
-void Xen_Instance_Finish() {
+void Xen_Instance_Finish(void) {
   for (Xen_size_t i = sizeof(Instances) / sizeof(*Instances); i-- > 0;) {
     Instances[i].finish();
   }
