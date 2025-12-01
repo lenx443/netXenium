@@ -6,15 +6,21 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "instance_life.h"
 #include "run_ctx_stack.h"
+#include "vm.h"
 #include "vm_def.h"
+#include "xen_function.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
+#include "xen_method.h"
 #include "xen_method_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_vector.h"
 
 static void method_trace(Xen_GCHeader* h) {
@@ -33,6 +39,20 @@ static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
   method->function = nil;
   method->self = nil;
   return (Xen_Instance*)method;
+}
+
+static Xen_Instance* method_create(struct __Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 2) {
+    return 0;
+  }
+  Xen_Method* method = (Xen_Method*)self;
+  Xen_Instance* func = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* func_self = Xen_Tuple_Get_Index(args, 1);
+  Xen_IGC_WRITE_FIELD(method, method->function, func);
+  Xen_IGC_WRITE_FIELD(method, method->self, func_self);
+  return nil;
 }
 
 static Xen_Instance* method_destroy(struct __Instance* self, Xen_Instance* args,
@@ -139,6 +159,184 @@ static Xen_Instance* method_callable(struct __Instance* self,
   return nil;
 }
 
+static Xen_Instance* method_get_create(struct __Instance* self,
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (self == nil) {
+    if (Xen_SIZE(args) != 1) {
+      return 0;
+    }
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+    Xen_Instance* method = Xen_Attr_Get_Str(inst, "__create");
+    if (!method) {
+      if (!Xen_IMPL(inst)->__create) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(inst)->__create, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, inst);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  } else {
+    Xen_Instance* method = Xen_Attr_Get_Str(self, "__create");
+    if (!method) {
+      if (!Xen_IMPL(self)->__create) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(self)->__create, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, self);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  }
+}
+
+static Xen_Instance* method_get_string(struct __Instance* self,
+                                       Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (self == nil) {
+    if (Xen_SIZE(args) != 1) {
+      return 0;
+    }
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+    Xen_Instance* method = Xen_Attr_Get_Str(inst, "__string");
+    if (!method) {
+      if (!Xen_IMPL(inst)->__string) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(inst)->__string, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, inst);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  } else {
+    Xen_Instance* method = Xen_Attr_Get_Str(self, "__string");
+    if (!method) {
+      if (!Xen_IMPL(self)->__string) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(self)->__string, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, self);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  }
+}
+
+static Xen_Instance* method_get_raw(struct __Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (self == nil) {
+    if (Xen_SIZE(args) != 1) {
+      return 0;
+    }
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+    Xen_Instance* method = Xen_Attr_Get_Str(inst, "__raw");
+    if (!method) {
+      if (!Xen_IMPL(inst)->__raw) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(inst)->__raw, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, inst);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  } else {
+    Xen_Instance* method = Xen_Attr_Get_Str(self, "__raw");
+    if (!method) {
+      if (!Xen_IMPL(self)->__raw) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(self)->__raw, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, self);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  }
+}
+
+static Xen_Instance* method_get_hash(struct __Instance* self,
+                                     Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (self == nil) {
+    if (Xen_SIZE(args) != 1) {
+      return 0;
+    }
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+    Xen_Instance* method = Xen_Attr_Get_Str(inst, "__hash");
+    if (!method) {
+      if (!Xen_IMPL(inst)->__hash) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(inst)->__hash, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, inst);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  } else {
+    Xen_Instance* method = Xen_Attr_Get_Str(self, "__hash");
+    if (!method) {
+      if (!Xen_IMPL(self)->__hash) {
+        return NULL;
+      }
+      Xen_Instance* function =
+          Xen_Function_From_Native(Xen_IMPL(self)->__hash, nil);
+      if (!function) {
+        return NULL;
+      }
+      method = Xen_Method_New(function, self);
+      if (!method) {
+        return NULL;
+      }
+    }
+    return method;
+  }
+}
+
 Xen_Implement Xen_Method_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Method",
@@ -147,7 +345,7 @@ Xen_Implement Xen_Method_Implement = {
     .__inst_trace = method_trace,
     .__props = &Xen_Nil_Def,
     .__alloc = method_alloc,
-    .__create = NULL,
+    .__create = method_create,
     .__destroy = method_destroy,
     .__string = method_string,
     .__raw = method_string,
@@ -155,3 +353,24 @@ Xen_Implement Xen_Method_Implement = {
     .__hash = NULL,
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
+
+int Xen_Method_Init(void) {
+  if (!Xen_VM_Store_Global("method", (Xen_Instance*)&Xen_Method_Implement)) {
+    return 0;
+  }
+  Xen_Instance* props = Xen_Map_New();
+  if (!props) {
+    return 0;
+  }
+  if (!Xen_VM_Store_Native_Function(props, "create", method_get_create, nil) ||
+      !Xen_VM_Store_Native_Function(props, "string", method_get_string, nil) ||
+      !Xen_VM_Store_Native_Function(props, "raw", method_get_raw, nil) ||
+      !Xen_VM_Store_Native_Function(props, "hash", method_get_hash, nil)) {
+    return 0;
+  }
+  Xen_IGC_Fork_Push(impls_maps, props);
+  Xen_Method_Implement.__props = props;
+  return 1;
+}
+
+void Xen_Method_Finish(void) {}

@@ -5,4 +5,7 @@
 
 Xen_ImplementDef Xen_Method_Implement;
 
+int Xen_Method_Init(void);
+void Xen_Method_Finish(void);
+
 #endif

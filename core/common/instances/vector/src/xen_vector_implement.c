@@ -59,16 +59,20 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
     if (self == iterable) {
       return nil;
     }
+    Xen_IGC_Push(iterable);
     Xen_Instance* iter = Xen_Attr_Iter(iterable);
     if (!iter) {
       return NULL;
     }
+    Xen_IGC_Push(iter);
     Xen_Instance* value = NULL;
     while ((value = Xen_Attr_Next(iter)) != NULL) {
       if (!Xen_Vector_Push(self, value)) {
+        Xen_IGC_XPOP(2);
         return NULL;
       }
     }
+    Xen_IGC_XPOP(2);
   }
   return nil;
 }

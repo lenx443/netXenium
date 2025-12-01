@@ -1,8 +1,8 @@
 #include "instance_life.h"
-#include "basic.h"
 #include "xen_boolean_implement.h"
 #include "xen_igc.h"
 #include "xen_map_implement.h"
+#include "xen_method_implement.h"
 #include "xen_nil_implement.h"
 #include "xen_number_implement.h"
 #include "xen_string_implement.h"
@@ -21,7 +21,6 @@ typedef struct {
 } Instance_Life;
 
 Instance_Life Instances[] = {
-    {Xen_Basic_Init, Xen_Basic_Finish},
     {Xen_Number_Init, Xen_Number_Finish},
     {Xen_String_Init, Xen_String_Finish},
     {Xen_Vector_Init, Xen_Vector_Finish},
@@ -31,6 +30,7 @@ Instance_Life Instances[] = {
     {Xen_Map_Init, Xen_Map_Finish},
     {Xen_Boolean_Init, Xen_Boolean_Finish},
     {Xen_Nil_Init, Xen_Nil_Finish},
+    {Xen_Method_Init, Xen_Method_Finish},
 };
 
 int Xen_Instance_Init(void) {
