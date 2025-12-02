@@ -3,22 +3,29 @@
 
 #include <stdbool.h>
 
+#include "gc_header.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
+#include "xen_typedefs.h"
 
 typedef struct {
+  Xen_GCHeader gc;
   RunContext_Stack_ptr vm_ctx_stack;
   Xen_Instance* modules_contexts;
   Xen_Instance* globals_instances;
   Xen_Instance* global_props;
   ctx_id_t ctx_id_count;
+  struct {
+    Xen_bool_t active;
+    Xen_Instance* except;
+  } except;
 } VM;
 
 typedef VM* VM_ptr;
 
-bool vm_create();
-void vm_destroy();
+bool vm_create(void);
+void vm_destroy(void);
 
 extern VM_ptr vm;
 

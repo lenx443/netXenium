@@ -770,6 +770,9 @@ Xen_Instance* vm_run(Xen_size_t id) {
       ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
           id &&
       !vmr.halt && !program.closed) {
+    if (Xen_VM_Except_Active()) {
+      goto except;
+    }
     RunContext_ptr ctx =
         (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
     if (ctx->ctx_error) {
@@ -791,6 +794,16 @@ Xen_Instance* vm_run(Xen_size_t id) {
 #endif
   }
   return vmr.retval;
+
+except:
+  while (
+      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
+      ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
+          id) {
+    run_context_stack_pop_top(&vm->vm_ctx_stack);
+  }
+  Xen_VM_Except_Show();
+  return NULL;
 }
 
 Xen_Instance* vm_run_top(void) {

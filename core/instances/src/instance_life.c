@@ -1,5 +1,6 @@
 #include "instance_life.h"
 #include "xen_boolean_implement.h"
+#include "xen_except_implement.h"
 #include "xen_igc.h"
 #include "xen_map_implement.h"
 #include "xen_method_implement.h"
@@ -31,6 +32,7 @@ Instance_Life Instances[] = {
     {Xen_Boolean_Init, Xen_Boolean_Finish},
     {Xen_Nil_Init, Xen_Nil_Finish},
     {Xen_Method_Init, Xen_Method_Finish},
+    {Xen_Except_Init, Xen_Except_Finish},
 };
 
 int Xen_Instance_Init(void) {

@@ -13,10 +13,24 @@
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
-bool vm_create() {
+static void vm_def_trace([[maybe_unused]] Xen_GCHeader* h) {
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules_contexts);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_instances);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->global_props);
+  if (vm->except.active) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
+  }
+}
+
+static void vm_def_destroy(Xen_GCHeader** h) {
+  run_context_stack_free(&((VM_ptr)*h)->vm_ctx_stack);
+  Xen_Dealloc(*h);
+}
+
+bool vm_create(void) {
   if (vm != NULL)
     return 1;
-  vm = Xen_Alloc(sizeof(VM));
+  vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
   if (!vm) {
     error("No hay memoria disponible");
     return 0;
@@ -25,13 +39,11 @@ bool vm_create() {
   vm->vm_ctx_stack = NULL;
   Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));
   if (!args_array) {
-    Xen_Dealloc(vm);
     return 0;
   }
   for (int i = 0; i < program.argc; i++) {
     Xen_INSTANCE* arg_value = Xen_String_From_CString(program.argv[i]);
     if (!arg_value) {
-      Xen_Dealloc(vm);
       Xen_Dealloc(args_array);
       return 0;
     }
@@ -41,34 +53,27 @@ bool vm_create() {
   vm->modules_contexts = Xen_Map_New();
   if (!vm->modules_contexts) {
     run_context_stack_free(&vm->vm_ctx_stack);
-    Xen_Dealloc(vm);
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)vm->modules_contexts);
   vm->globals_instances = Xen_Map_New();
   if (!vm->globals_instances) {
-    Xen_GC_Pop_Root();
     run_context_stack_free(&vm->vm_ctx_stack);
-    Xen_Dealloc(vm);
     return 0;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)vm->globals_instances);
   vm->global_props = Xen_Map_New();
   if (!vm->global_props) {
-    Xen_GC_Pop_Roots(2);
     run_context_stack_free(&vm->vm_ctx_stack);
-    Xen_Dealloc(vm);
     return 0;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)vm->global_props);
+  vm->except.active = 0;
+  vm->except.except = NULL;
+  Xen_GC_Push_Root((Xen_GCHeader*)vm);
   return 1;
 }
 
-void vm_destroy() {
+void vm_destroy(void) {
   if (!vm)
     return;
-  Xen_GC_Pop_Roots(3);
-  run_context_stack_free(&vm->vm_ctx_stack);
-  Xen_Dealloc(vm);
+  Xen_GC_Pop_Root();
 }
 
 VM_ptr vm = NULL;

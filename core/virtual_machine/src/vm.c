@@ -1,8 +1,7 @@
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <unistd.h>
+#include <assert.h>
+#include <stdio.h>
 
+#include "attrs.h"
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -11,9 +10,12 @@
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
+#include "xen_except_implement.h"
+#include "xen_except_instance.h"
 #include "xen_function.h"
 #include "xen_igc.h"
 #include "xen_map.h"
+#include "xen_method.h"
 #include "xen_nil.h"
 
 Xen_Instance* Xen_VM_Current_Ctx(void) {
@@ -109,4 +111,32 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
     return NULL;
   }
   return ret;
+}
+
+void Xen_VM_Except_Show(void) {
+  Xen_Except* except = (Xen_Except*)vm->except.except;
+  puts("Unhandled exception occurred.");
+  if (except->message) {
+    fputs(except->type, stdout);
+    fputs(": ", stdout);
+    puts(except->message);
+  } else {
+    fputs("Type: ", stdout);
+    puts(except->type);
+  }
+}
+
+int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
+  assert(except_inst != NULL);
+  Xen_Instance* except =
+      Xen_Method_Attr_Str_Call(except_inst, "__except", nil, nil);
+  if (!except) {
+    return 0;
+  }
+  if (Xen_IMPL(except) != &Xen_Except_Implement) {
+    return 0;
+  }
+  vm->except.active = 1;
+  vm->except.except = except;
+  return 1;
 }
