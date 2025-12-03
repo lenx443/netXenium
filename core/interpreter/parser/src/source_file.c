@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
@@ -32,8 +34,47 @@ void Xen_Source_File_Free(Xen_Source_File* sf) {
   }
   Xen_Dealloc((void*)sf->sf_name);
   Xen_Dealloc((void*)sf->sf_content);
-  if (sf->sfl_offsets) {
-    Xen_Dealloc(sf->sfl_offsets);
-  }
+  Xen_Dealloc(sf->sfl_offsets);
   Xen_Dealloc(sf);
 }
+
+Xen_Source_Table* Xen_Source_Table_New(void) {
+  Xen_Source_Table* st = Xen_Alloc(sizeof(Xen_Source_Table));
+  st->st_files = NULL;
+  st->st_count = 0;
+  st->st_cap = 0;
+  return st;
+}
+
+Xen_size_t Xen_Source_Table_File_Push(Xen_Source_Table* st,
+                                      Xen_Source_File* sf) {
+  if (st->st_count >= st->st_cap) {
+    Xen_size_t new_cap = (st->st_cap == 0) ? 4 : st->st_cap * 2;
+    st->st_files =
+        Xen_Realloc(st->st_files, new_cap * sizeof(Xen_Source_File*));
+    st->st_cap = new_cap;
+  }
+  Xen_size_t sf_id = st->st_count;
+  st->st_files[st->st_count++] = sf;
+  return sf_id;
+}
+
+void Xen_Source_Table_Free(Xen_Source_Table* st) {
+  if (!st)
+    return;
+  for (Xen_size_t i = 0; i < st->st_count; i++) {
+    Xen_Source_File_Free(st->st_files[i]);
+  }
+  Xen_Dealloc(st->st_files);
+  Xen_Dealloc(st);
+}
+
+void Xen_Source_Table_Init(void) {
+  globals_sources = Xen_Source_Table_New();
+}
+
+void Xen_Source_Table_Finish(void) {
+  Xen_Source_Table_Free(globals_sources);
+}
+
+Xen_Source_Table* globals_sources = NULL;
