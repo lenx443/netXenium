@@ -58,6 +58,7 @@ include_directories(
   core/interpreter/instances/ast/types/header/
   core/interpreter/dynamic/vectors/include/
   core/interpreter/dynamic/trees/include/
+  core/interpreter/parser/include/
   core/interpreter/compiler/include/
   core/interpreter/compiler/types/header/
   core/interpreter/compiler/dynamic/lists/include/
@@ -163,8 +164,11 @@ set(SOURCES
   # Codigo que se encarga de procesar
   # e interpretar scripts
   core/interpreter/src/interpreter.c
-  core/interpreter/src/lexer.c
-  core/interpreter/src/parser.c
+
+  # Codige del Parser
+  core/interpreter/parser/src/lexer.c
+  core/interpreter/parser/src/parser.c
+  core/interpreter/parser/src/source_file.c
 
   # Compilador a bytecode.
   # [AST Tree]
