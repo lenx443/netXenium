@@ -15,21 +15,27 @@ static Xen_Instance* fn_interpreter(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_size_t roots = 0;
-  Xen_Instance* code = Xen_Tuple_Get_Index(args, 0);
-  if (!code) {
+  if (Xen_SIZE(args) < 2 || Xen_SIZE(args) > 3) {
     return NULL;
   }
+  Xen_Instance* name = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(name) != &Xen_String_Implement) {
+    return NULL;
+  }
+  Xen_IGC_XPUSH(name, roots);
+  Xen_Instance* code = Xen_Tuple_Get_Index(args, 1);
   if (Xen_IMPL(code) != &Xen_String_Implement) {
     return NULL;
   }
   Xen_IGC_XPUSH(code, roots);
   Xen_uint8_t mode = Xen_COMPILE_PROGRAM;
-  if (Xen_SIZE(args) == 2) {
-    Xen_Instance* mode_inst = Xen_Tuple_Get_Index(args, 1);
+  if (Xen_SIZE(args) == 3) {
+    Xen_Instance* mode_inst = Xen_Tuple_Get_Index(args, 2);
     mode = Xen_Number_As_Int(mode_inst);
   }
   Xen_IGC_XPOP(roots);
-  return interpreter(Xen_String_As_CString(code), mode);
+  return interpreter(Xen_String_As_CString(name), Xen_String_As_CString(code),
+                     mode);
 }
 
 static Xen_Module_Function_Table interpreter_functions = {

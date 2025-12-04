@@ -11,7 +11,6 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "ir_bytecode.h"
-#include "lexer.h"
 #include "operators.h"
 #include "parser.h"
 #include "program_code.h"
@@ -41,33 +40,17 @@ typedef struct {
   uint8_t mode;
 } Compiler;
 
-CALLABLE_ptr compiler(const char* text_code, uint8_t mode) {
-  if (!text_code) {
+CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
+                      uint8_t mode) {
+  if (!file_name || !file_content) {
     return NULL;
   }
 #ifndef NDEBUG
   printf("== Parsing ==\n");
 #endif
-  Lexer lexer = {text_code, 0};
-  Parser parser = {&lexer, {0, "\0"}};
-  parser_next(&parser);
-  Xen_Instance* ast_program = parser_program(&parser);
+  Xen_Instance* ast_program =
+      Xen_Parser(file_name, file_content, Xen_CString_Len(file_content));
   if (!ast_program) {
-#ifndef NDEBUG
-    printf("Parser Error\n");
-    printf("Current token: %d '%s'\n", parser.token.tkn_type,
-           parser.token.tkn_text);
-    printf("Pos: %ld\n", lexer.pos);
-    Xen_ssize_t start =
-        (Xen_ssize_t)(lexer.pos - 32) < 0 ? 0 : (lexer.pos - 32);
-    Xen_size_t end = (lexer.pos + 32) > Xen_CString_Len(lexer.src)
-                         ? Xen_CString_Len(lexer.src)
-                         : (lexer.pos + 32);
-    for (Xen_size_t i = (Xen_size_t)start; i < end; i++) {
-      putchar(lexer.src[i]);
-    }
-    printf("\n");
-#endif
     return NULL;
   }
   Xen_IGC_Push(ast_program);

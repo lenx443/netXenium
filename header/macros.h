@@ -9,5 +9,4 @@
 #define LOG_SOURCE_LEN 100
 #define LOG_CONTENT_LEN 1024
 #define PROP_NAME_LEN 1024
-#define LXR_TOKEN_TOKEN_SIZE 200
 #endif

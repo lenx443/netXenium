@@ -5,10 +5,15 @@
 #include "instance.h"
 #include "lexer.h"
 #include "parser.h"
+#include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_cstrings.h"
 #include "xen_typedefs.h"
+
+static void parser_next(Parser* p) {
+  p->token = lexer_next_token(p->lexer);
+}
 
 static inline void skip_newline(Parser* p) {
   while (p->token.tkn_type == TKN_NEWLINE) {
@@ -96,11 +101,7 @@ static Xen_Instance* parser_flow_stmt(Parser*);
 static Xen_Instance* parser_return_stmt(Parser*);
 static Xen_Instance* parser_implement_stmt(Parser*);
 
-void parser_next(Parser* p) {
-  p->token = lexer_next_token(p->lexer);
-}
-
-Xen_Instance* parser_program(Parser* p) {
+static Xen_Instance* parser_program(Parser* p) {
   Xen_Instance* program = Xen_AST_Node_New("Program", NULL);
   if (!program) {
     return NULL;
@@ -1469,4 +1470,33 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
     return NULL;
   }
   return impl_stmt;
+}
+
+Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
+                         Xen_size_t file_size) {
+  Xen_size_t sf_id = Xen_Source_Table_File_Push(
+      globals_sources, Xen_Source_File_New(file_name, file_content, file_size));
+  Lexer lexer = {sf_id, 0};
+  Parser parser = {&lexer, {0, "\0"}};
+  parser_next(&parser);
+  Xen_Instance* ast_program = parser_program(&parser);
+  if (!ast_program) {
+#ifndef NDEBUG
+    Xen_Source_File* sf = globals_sources->st_files[sf_id];
+    printf("Parser Error\n");
+    printf("Current token: %d '%s'\n", parser.token.tkn_type,
+           parser.token.tkn_text);
+    printf("Pos: %ld\n", lexer.pos);
+    Xen_ssize_t start =
+        (Xen_ssize_t)(lexer.pos - 32) < 0 ? 0 : (lexer.pos - 32);
+    Xen_size_t end =
+        (lexer.pos + 32) > sf->sf_length ? sf->sf_length : (lexer.pos + 32);
+    for (Xen_size_t i = (Xen_size_t)start; i < end; i++) {
+      putchar(sf->sf_content[i]);
+    }
+    printf("\n");
+#endif
+    return NULL;
+  }
+  return ast_program;
 }

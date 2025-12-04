@@ -10,12 +10,14 @@
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_nil.h"
+#include "xen_typedefs.h"
 
-Xen_Instance* interpreter(const char* text_code, uint8_t compile_mode) {
-  if (!text_code) {
+Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
+                          uint8_t compile_mode) {
+  if (!file_name || !file_content) {
     return NULL;
   }
-  CALLABLE_ptr code = compiler(text_code, compile_mode);
+  CALLABLE_ptr code = compiler(file_name, file_content, compile_mode);
   if (!code) {
     return NULL;
   }

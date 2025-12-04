@@ -3,15 +3,39 @@
 #include <string.h>
 
 #include "lexer.h"
+#include "source_file.h"
+#include "xen_cstrings.h"
+#include "xen_typedefs.h"
+
+static inline Xen_size_t advance(Lexer* lexer) {
+  return lexer->pos++;
+}
+
+static inline Xen_size_t xadvance(Lexer* lexer) {
+  return ++lexer->pos;
+}
+
+static inline Lexer_Token Token(Lexer_Token_Type type, Xen_c_string_t text,
+                                Xen_size_t size) {
+  if (size >= LXR_TOKEN_SIZE) {
+    size = LXR_TOKEN_SIZE - 1;
+  }
+  Lexer_Token token = {0};
+  token.tkn_type = type;
+  strncpy(token.tkn_text, text, size);
+  token.tkn_text[size] = '\0';
+  return token;
+}
 
 void skip_whitespace(Lexer* lexer) {
+  Xen_Source_File* sf = globals_sources->st_files[lexer->sf_id];
   while (1) {
-    char c = lexer->src[lexer->pos];
+    char c = sf->sf_content[lexer->pos];
     if (c == ' ' || c == '\t') {
-      lexer->pos++;
+      advance(lexer);
     } else if (c == '#') {
-      while (lexer->src[lexer->pos] && lexer->src[lexer->pos] != '\n')
-        lexer->pos++;
+      while (sf->sf_content[lexer->pos] && sf->sf_content[lexer->pos] != '\n')
+        advance(lexer);
     } else {
       break;
     }
@@ -20,76 +44,72 @@ void skip_whitespace(Lexer* lexer) {
 
 Lexer_Token lexer_next_token(Lexer* lexer) {
   skip_whitespace(lexer);
+  Xen_Source_File* sf = globals_sources->st_files[lexer->sf_id];
 
-  Lexer_Token token = {0};
-  token.tkn_type = TKN_EOF;
-  token.tkn_text[0] = '\0';
+  Lexer_Token token = Token(TKN_EOF, "", 0);
 
-  char c = lexer->src[lexer->pos];
+  char c = sf->sf_content[lexer->pos];
   if (c == '\0') {
-    token.tkn_type = TKN_EOF;
-    strcpy(token.tkn_text, "<EOF>");
+    token = Token(TKN_EOF, "<EOF>", 5);
+  } else if (c == '\n') {
+    advance(lexer);
+    lexer->line = Xen_Source_File_Line_Push(sf, lexer->pos);
+    token = Token(TKN_NEWLINE, "<New-Line>", 10);
   } else if (c == ';' || c == '\n' || c == '\r') {
-    lexer->pos++;
-    token.tkn_type = TKN_NEWLINE;
-    strcpy(token.tkn_text, "<New-Line>");
+    advance(lexer);
+    token = Token(TKN_NEWLINE, "<New-Line>", 10);
   } else if (isalpha(c) || c == '_') {
     size_t start = lexer->pos;
-    while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
-      lexer->pos++;
+    while (isalnum(sf->sf_content[lexer->pos]) ||
+           sf->sf_content[lexer->pos] == '_')
+      advance(lexer);
     size_t len = lexer->pos - start;
-    strncpy(token.tkn_text, lexer->src + start, len);
-    token.tkn_text[len] = '\0';
-    if (strcmp(token.tkn_text, "if") == 0 ||
-        strcmp(token.tkn_text, "elif") == 0 ||
-        strcmp(token.tkn_text, "else") == 0 ||
-        strcmp(token.tkn_text, "while") == 0 ||
-        strcmp(token.tkn_text, "for") == 0 ||
-        strcmp(token.tkn_text, "in") == 0 ||
-        strcmp(token.tkn_text, "break") == 0 ||
-        strcmp(token.tkn_text, "continue") == 0 ||
-        strcmp(token.tkn_text, "return") == 0 ||
-        strcmp(token.tkn_text, "implement") == 0) {
-      token.tkn_type = TKN_KEYWORD;
-    } else if (strcmp(token.tkn_text, "has") == 0) {
-      token.tkn_type = TKN_HAS;
-    } else if (strcmp(token.tkn_text, "not") == 0) {
-      token.tkn_type = TKN_NOT;
-    } else if (strcmp(token.tkn_text, "and") == 0) {
-      token.tkn_type = TKN_AND;
-    } else if (strcmp(token.tkn_text, "or") == 0) {
-      token.tkn_type = TKN_OR;
+    char buffer[len + 1];
+    strncpy(buffer, sf->sf_content + start, len);
+    buffer[len] = '\0';
+    if (strcmp(buffer, "if") == 0 || strcmp(buffer, "elif") == 0 ||
+        strcmp(buffer, "else") == 0 || strcmp(buffer, "while") == 0 ||
+        strcmp(buffer, "for") == 0 || strcmp(buffer, "in") == 0 ||
+        strcmp(buffer, "break") == 0 || strcmp(buffer, "continue") == 0 ||
+        strcmp(buffer, "return") == 0 || strcmp(buffer, "implement") == 0) {
+      token = Token(TKN_KEYWORD, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "has") == 0) {
+      token = Token(TKN_HAS, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "not") == 0) {
+      token = Token(TKN_NOT, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "and") == 0) {
+      token = Token(TKN_AND, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "or") == 0) {
+      token = Token(TKN_OR, sf->sf_content + start, len);
     } else {
-      token.tkn_type = TKN_IDENTIFIER;
+      token = Token(TKN_IDENTIFIER, sf->sf_content + start, len);
     }
   } else if (c == '$') {
-    lexer->pos++;
+    advance(lexer);
     size_t start = lexer->pos;
-    while (isalnum(lexer->src[lexer->pos]) || lexer->src[lexer->pos] == '_')
-      lexer->pos++;
+    while (isalnum(sf->sf_content[lexer->pos]) ||
+           sf->sf_content[lexer->pos] == '_')
+      advance(lexer);
     size_t len = lexer->pos - start;
-    strncpy(token.tkn_text, lexer->src + start, len);
-    token.tkn_text[len] = '\0';
-    token.tkn_type = TKN_PROPERTY;
+    token = Token(TKN_PROPERTY, sf->sf_content + start, len);
   } else if (c == '"') {
-    lexer->pos++;
+    advance(lexer);
 
     char buffer[1024];
     size_t bpos = 0;
 
-    while (lexer->src[lexer->pos] != '"') {
-      char ch = lexer->src[lexer->pos];
+    while (sf->sf_content[lexer->pos] != '"') {
+      char ch = sf->sf_content[lexer->pos];
 
       if (ch == '\0') {
-        lexer->pos++;
-        token.tkn_type = TKN_UNDEFINED;
-        strcpy(token.tkn_text, "<UNDEF>");
+        advance(lexer);
+        token = Token(TKN_UNDEFINED, "<UNDEF>", 7);
         return token;
       }
 
       if (ch == '\\') {
-        lexer->pos++;
-        ch = lexer->src[lexer->pos];
+        advance(lexer);
+        ch = sf->sf_content[lexer->pos];
         if (ch == '\0')
           break;
 
@@ -128,9 +148,9 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         case '0' ... '7': {
           int val = ch - '0';
           int count = 1;
-          while (count < 3 && lexer->src[lexer->pos + 1] >= '0' &&
-                 lexer->src[lexer->pos + 1] <= '7') {
-            val = val * 8 + (lexer->src[++lexer->pos] - '0');
+          while (count < 3 && sf->sf_content[lexer->pos + 1] >= '0' &&
+                 sf->sf_content[lexer->pos + 1] <= '7') {
+            val = val * 8 + (sf->sf_content[xadvance(lexer)] - '0');
             count++;
           }
           buffer[bpos++] = (char)val;
@@ -138,8 +158,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
 
         case 'x': {
           int val = 0;
-          while (isxdigit((unsigned char)lexer->src[lexer->pos + 1])) {
-            char c2 = lexer->src[++lexer->pos];
+          while (isxdigit((unsigned char)sf->sf_content[lexer->pos + 1])) {
+            char c2 = sf->sf_content[xadvance(lexer)];
             val = val * 16 +
                   (isdigit(c2) ? c2 - '0'
                                : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
@@ -152,10 +172,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           int digits = (ch == 'u') ? 4 : 8;
           unsigned int code = 0;
           for (int i = 0; i < digits; i++) {
-            char c2 = lexer->src[lexer->pos + 1];
+            char c2 = sf->sf_content[lexer->pos + 1];
             if (!isxdigit((unsigned char)c2))
               break;
-            lexer->pos++;
+            advance(lexer);
             code = code * 16 + (isdigit(c2) ? c2 - '0'
                                             : (isupper(c2) ? c2 - 'A' + 10
                                                            : c2 - 'a' + 10));
@@ -185,32 +205,30 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         buffer[bpos++] = ch;
       }
 
-      lexer->pos++;
+      advance(lexer);
     }
 
     buffer[bpos] = '\0';
-    strcpy(token.tkn_text, buffer);
-    token.tkn_type = TKN_STRING;
-    lexer->pos++;
+    token = Token(TKN_STRING, buffer, Xen_CString_Len(buffer));
+    advance(lexer);
   } else if (c == '\'') {
-    lexer->pos++;
+    advance(lexer);
 
     char buffer[1024];
     size_t bpos = 0;
 
-    while (lexer->src[lexer->pos] != '\'') {
-      char ch = lexer->src[lexer->pos];
+    while (sf->sf_content[lexer->pos] != '\'') {
+      char ch = sf->sf_content[lexer->pos];
 
       if (ch == '\0') {
-        lexer->pos++;
-        token.tkn_type = TKN_UNDEFINED;
-        strcpy(token.tkn_text, "<UNDEF>");
+        advance(lexer);
+        token = Token(TKN_UNDEFINED, "<UNDEF>", 7);
         return token;
       }
 
       if (ch == '\\') {
-        lexer->pos++;
-        ch = lexer->src[lexer->pos];
+        advance(lexer);
+        ch = sf->sf_content[lexer->pos];
         if (ch == '\0')
           break;
 
@@ -249,9 +267,9 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         case '0' ... '7': {
           int val = ch - '0';
           int count = 1;
-          while (count < 3 && lexer->src[lexer->pos + 1] >= '0' &&
-                 lexer->src[lexer->pos + 1] <= '7') {
-            val = val * 8 + (lexer->src[++lexer->pos] - '0');
+          while (count < 3 && sf->sf_content[lexer->pos + 1] >= '0' &&
+                 sf->sf_content[lexer->pos + 1] <= '7') {
+            val = val * 8 + (sf->sf_content[xadvance(lexer)] - '0');
             count++;
           }
           buffer[bpos++] = (char)val;
@@ -259,8 +277,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
 
         case 'x': {
           int val = 0;
-          while (isxdigit((unsigned char)lexer->src[lexer->pos + 1])) {
-            char c2 = lexer->src[++lexer->pos];
+          while (isxdigit((unsigned char)sf->sf_content[lexer->pos + 1])) {
+            char c2 = sf->sf_content[xadvance(lexer)];
             val = val * 16 +
                   (isdigit(c2) ? c2 - '0'
                                : (isupper(c2) ? c2 - 'A' + 10 : c2 - 'a' + 10));
@@ -273,10 +291,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           int digits = (ch == 'u') ? 4 : 8;
           unsigned int code = 0;
           for (int i = 0; i < digits; i++) {
-            char c2 = lexer->src[lexer->pos + 1];
+            char c2 = sf->sf_content[lexer->pos + 1];
             if (!isxdigit((unsigned char)c2))
               break;
-            lexer->pos++;
+            advance(lexer);
             code = code * 16 + (isdigit(c2) ? c2 - '0'
                                             : (isupper(c2) ? c2 - 'A' + 10
                                                            : c2 - 'a' + 10));
@@ -306,242 +324,177 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         buffer[bpos++] = ch;
       }
 
-      lexer->pos++;
+      advance(lexer);
     }
 
     buffer[bpos] = '\0';
-    strcpy(token.tkn_text, buffer);
-    token.tkn_type = TKN_STRING;
-    lexer->pos++;
+    token = Token(TKN_STRING, buffer, Xen_CString_Len(buffer));
+    advance(lexer);
   } else if (isdigit(c)) {
     if (c == '0') {
-      lexer->pos++;
-      if (lexer->src[lexer->pos] == 'x' || lexer->src[lexer->pos] == 'X') {
-        lexer->pos++;
+      advance(lexer);
+      if (sf->sf_content[lexer->pos] == 'x' ||
+          sf->sf_content[lexer->pos] == 'X') {
+        advance(lexer);
         size_t start = lexer->pos;
-        while (isxdigit(lexer->src[lexer->pos])) {
-          lexer->pos++;
+        while (isxdigit(sf->sf_content[lexer->pos])) {
+          advance(lexer);
         }
         size_t len = lexer->pos - start;
-        token.tkn_text[0] = '0';
-        token.tkn_text[1] = 'x';
-        strncpy(token.tkn_text + 2, lexer->src + start, len);
-        token.tkn_text[len + 2] = '\0';
-        token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] == 'b' ||
-                 lexer->src[lexer->pos] == 'B') {
-        lexer->pos++;
+        char buffer[len + 3];
+        strcpy(buffer, "0x");
+        if (len)
+          strcpy(buffer + 2, sf->sf_content + start);
+        token = Token(TKN_NUMBER, buffer, Xen_CString_Len(buffer));
+      } else if (sf->sf_content[lexer->pos] == 'b' ||
+                 sf->sf_content[lexer->pos] == 'B') {
+        advance(lexer);
         size_t start = lexer->pos;
-        while (lexer->src[lexer->pos] == '0' || lexer->src[lexer->pos] == '1') {
-          lexer->pos++;
+        while (sf->sf_content[lexer->pos] == '0' ||
+               sf->sf_content[lexer->pos] == '1') {
+          advance(lexer);
         }
         size_t len = lexer->pos - start;
-        token.tkn_text[0] = '0';
-        token.tkn_text[1] = 'b';
-        strncpy(token.tkn_text + 2, lexer->src + start, len);
-        token.tkn_text[len + 2] = '\0';
-        token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] == 'o' ||
-                 lexer->src[lexer->pos] == 'O') {
-        lexer->pos++;
+        char buffer[len + 3];
+        strcpy(buffer, "0b");
+        if (len)
+          strcpy(buffer + 2, sf->sf_content + start);
+        token = Token(TKN_NUMBER, buffer, Xen_CString_Len(buffer));
+      } else if (sf->sf_content[lexer->pos] == 'o' ||
+                 sf->sf_content[lexer->pos] == 'O') {
+        advance(lexer);
         size_t start = lexer->pos;
-        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] < '8') {
-          lexer->pos++;
+        while (sf->sf_content[lexer->pos] >= '0' &&
+               sf->sf_content[lexer->pos] < '8') {
+          advance(lexer);
         }
         size_t len = lexer->pos - start;
-        token.tkn_text[0] = '0';
-        token.tkn_text[1] = 'o';
-        strncpy(token.tkn_text + 2, lexer->src + start, len);
-        token.tkn_text[len + 2] = '\0';
-        token.tkn_type = TKN_NUMBER;
-      } else if (lexer->src[lexer->pos] >= '0' &&
-                 lexer->src[lexer->pos] <= '8') {
+        char buffer[len + 3];
+        strcpy(buffer, "0o");
+        if (len)
+          strcpy(buffer + 2, sf->sf_content + start);
+        token = Token(TKN_NUMBER, buffer, Xen_CString_Len(buffer));
+      } else if (sf->sf_content[lexer->pos] >= '0' &&
+                 sf->sf_content[lexer->pos] <= '8') {
         size_t start = lexer->pos;
-        while (lexer->src[lexer->pos] >= '0' && lexer->src[lexer->pos] < '8') {
-          lexer->pos++;
+        while (sf->sf_content[lexer->pos] >= '0' &&
+               sf->sf_content[lexer->pos] < '8') {
+          advance(lexer);
         }
         size_t len = lexer->pos - start;
-        token.tkn_text[0] = '0';
-        strncpy(token.tkn_text + 1, lexer->src + start, len);
-        token.tkn_text[len + 1] = '\0';
-        token.tkn_type = TKN_NUMBER;
+        char buffer[len + 2];
+        strcpy(buffer, "0");
+        strcpy(buffer + 1, sf->sf_content + start);
+        token = Token(TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else {
-        token.tkn_text[0] = '0';
-        token.tkn_text[1] = '\0';
-        token.tkn_type = TKN_NUMBER;
+        token = Token(TKN_NUMBER, "0", 1);
       }
     } else {
       size_t start = lexer->pos;
-      while (isdigit(lexer->src[lexer->pos])) {
-        lexer->pos++;
+      while (isdigit(sf->sf_content[lexer->pos])) {
+        advance(lexer);
       }
       size_t len = lexer->pos - start;
-      strncpy(token.tkn_text, lexer->src + start, len);
-      token.tkn_text[len] = '\0';
-      token.tkn_type = TKN_NUMBER;
+      token = Token(TKN_NUMBER, sf->sf_content + start, len);
     }
   } else if (c == '{') {
-    lexer->pos++;
-    token.tkn_type = TKN_LBRACE;
-    token.tkn_text[0] = '{';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_LBRACE, "{", 1);
   } else if (c == '}') {
-    lexer->pos++;
-    token.tkn_type = TKN_RBRACE;
-    token.tkn_text[0] = '}';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_RBRACE, "}", 1);
   } else if (c == '=') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '=') {
-      lexer->pos++;
-      token.tkn_type = TKN_EQ;
-      token.tkn_text[0] = '=';
-      token.tkn_text[1] = '=';
-      token.tkn_text[2] = '\0';
-    } else if (lexer->src[lexer->pos] == '>') {
-      lexer->pos++;
-      token.tkn_type = TKN_BLOCK;
-      token.tkn_text[0] = '=';
-      token.tkn_text[1] = '>';
-      token.tkn_text[2] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(TKN_EQ, "==", 2);
+    } else if (sf->sf_content[lexer->pos] == '>') {
+      advance(lexer);
+      token = Token(TKN_BLOCK, "=>", 2);
     } else {
-      token.tkn_type = TKN_ASSIGNMENT;
-      token.tkn_text[0] = '=';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_ASSIGNMENT, "=", 1);
     }
   } else if (c == '(') {
-    lexer->pos++;
-    token.tkn_type = TKN_LPARENT;
-    token.tkn_text[0] = '(';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_LPARENT, "(", 1);
   } else if (c == ')') {
-    lexer->pos++;
-    token.tkn_type = TKN_RPARENT;
-    token.tkn_text[0] = ')';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_RPARENT, ")", 1);
   } else if (c == '[') {
-    lexer->pos++;
-    token.tkn_type = TKN_LBRACKET;
-    token.tkn_text[0] = '[';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_LBRACKET, "[", 1);
   } else if (c == ']') {
-    lexer->pos++;
-    token.tkn_type = TKN_RBRACKET;
-    token.tkn_text[0] = ']';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_RBRACKET, "]", 1);
   } else if (c == '\\') {
-    lexer->pos++;
-    token.tkn_type = TKN_ATTR;
-    token.tkn_text[0] = '\\';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_ATTR, "\\", 1);
   } else if (c == ',') {
-    lexer->pos++;
-    token.tkn_type = TKN_COMMA;
-    token.tkn_text[0] = ',';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_COMMA, ",", 1);
   } else if (c == ':') {
-    lexer->pos++;
-    token.tkn_type = TKN_COLON;
-    token.tkn_text[0] = ':';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_COLON, ":", 1);
   } else if (c == '?') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '?') {
-      lexer->pos++;
-      token.tkn_type = TKN_DOUBLE_QUESTION;
-      token.tkn_text[0] = '?';
-      token.tkn_text[2] = '?';
-      token.tkn_text[3] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '?') {
+      advance(lexer);
+      token = Token(TKN_DOUBLE_QUESTION, "??", 2);
     } else {
-      token.tkn_type = TKN_QUESTION;
-      token.tkn_text[0] = '?';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_QUESTION, "?", 1);
     }
   } else if (c == '+') {
-    lexer->pos++;
-    token.tkn_type = TKN_ADD;
-    token.tkn_text[0] = '+';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_ADD, "+", 1);
   } else if (c == '-') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '>') {
-      lexer->pos++;
-      token.tkn_type = TKN_ARROW;
-      token.tkn_text[0] = '-';
-      token.tkn_text[1] = '>';
-      token.tkn_text[2] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '>') {
+      advance(lexer);
+      token = Token(TKN_ARROW, "->", 2);
     } else {
-      token.tkn_type = TKN_MINUS;
-      token.tkn_text[0] = '-';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_MINUS, "-", 1);
     }
   } else if (c == '*') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '*') {
-      lexer->pos++;
-      token.tkn_type = TKN_POW;
-      token.tkn_text[0] = '*';
-      token.tkn_text[1] = '*';
-      token.tkn_text[2] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '*') {
+      advance(lexer);
+      token = Token(TKN_POW, "**", 2);
     } else {
-      token.tkn_type = TKN_MUL;
-      token.tkn_text[0] = '*';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_MUL, "*", 1);
     }
   } else if (c == '/') {
-    lexer->pos++;
-    token.tkn_type = TKN_DIV;
-    token.tkn_text[0] = '/';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_DIV, "/", 1);
   } else if (c == '%') {
-    lexer->pos++;
-    token.tkn_type = TKN_MOD;
-    token.tkn_text[0] = '%';
-    token.tkn_text[1] = '\0';
+    advance(lexer);
+    token = Token(TKN_MOD, "%", 1);
   } else if (c == '<') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '=') {
-      lexer->pos++;
-      token.tkn_type = TKN_LE;
-      token.tkn_text[0] = '<';
-      token.tkn_text[1] = '=';
-      token.tkn_text[2] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(TKN_LE, "<=", 2);
     } else {
-      token.tkn_type = TKN_LT;
-      token.tkn_text[0] = '<';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_LT, "<", 1);
     }
   } else if (c == '>') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '=') {
-      lexer->pos++;
-      token.tkn_type = TKN_GE;
-      token.tkn_text[0] = '>';
-      token.tkn_text[1] = '=';
-      token.tkn_text[2] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(TKN_GE, ">=", 2);
     } else {
-      token.tkn_type = TKN_GT;
-      token.tkn_text[0] = '>';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_GT, ">", 1);
     }
   } else if (c == '!') {
-    lexer->pos++;
-    if (lexer->src[lexer->pos] == '=') {
-      lexer->pos++;
-      token.tkn_type = TKN_NE;
-      token.tkn_text[0] = '!';
-      token.tkn_text[1] = '=';
-      token.tkn_text[3] = '\0';
+    advance(lexer);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(TKN_NE, "!=", 2);
     } else {
-      token.tkn_type = TKN_UNDEFINED;
-      token.tkn_text[0] = '!';
-      token.tkn_text[1] = '\0';
+      token = Token(TKN_UNDEFINED, "!", 1);
     }
   } else {
-    token.tkn_text[0] = lexer->src[lexer->pos];
-    token.tkn_text[1] = '\0';
-    lexer->pos++;
-    token.tkn_type = TKN_UNDEFINED;
+    advance(lexer);
+    token = Token(TKN_UNDEFINED, &sf->sf_content[lexer->pos], 1);
   }
   return token;
 }

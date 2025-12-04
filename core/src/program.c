@@ -44,13 +44,13 @@ void load_script(char* filename) {
     program.exit_code = EXIT_FAILURE;
     return;
   }
-  if (!interpreter(file_content, Xen_COMPILE_PROGRAM)) {
+  if (!interpreter(filename, file_content, Xen_COMPILE_PROGRAM)) {
     log_show_and_clear(NULL);
   }
   Xen_Dealloc(file_content);
 }
 
-void shell_loop() {
+void shell_loop(void) {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2025" RESET "\n"
               "Type " VERDE "help" RESET " for more info\n");
   const char* home = getenv("HOME");
@@ -80,7 +80,7 @@ void shell_loop() {
       break;
     }
 #endif
-    if (!interpreter(cmd_str, Xen_COMPILE_REPL)) {
+    if (!interpreter("<stdin>", cmd_str, Xen_COMPILE_REPL)) {
       log_show_and_clear(NULL);
       Xen_Dealloc(cmd_str);
       if (program.closed)

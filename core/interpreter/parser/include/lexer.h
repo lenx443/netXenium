@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 
-#include "macros.h"
+#include "xen_typedefs.h"
+
+#define LXR_TOKEN_SIZE 200
 
 typedef enum {
   TKN_EOF = 0,
@@ -48,12 +50,13 @@ typedef enum {
 
 typedef struct {
   Lexer_Token_Type tkn_type;
-  char tkn_text[LXR_TOKEN_TOKEN_SIZE];
+  char tkn_text[LXR_TOKEN_SIZE];
 } Lexer_Token;
 
 typedef struct {
-  const char* src;
-  size_t pos;
+  Xen_size_t sf_id;
+  Xen_size_t line;
+  Xen_size_t pos;
 } Lexer;
 
 void skip_whitespace(Lexer*);

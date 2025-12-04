@@ -18,14 +18,16 @@ Xen_Source_File* Xen_Source_File_New(Xen_c_string_t file,
   return sf;
 }
 
-void Xen_Source_File_Line_Push(Xen_Source_File* sf, Xen_size_t line) {
+Xen_size_t Xen_Source_File_Line_Push(Xen_Source_File* sf, Xen_size_t line) {
   if (sf->sfl_count >= sf->sfl_cap) {
     Xen_size_t new_cap = (sf->sfl_cap == 0) ? 4 : sf->sfl_cap * 2;
     sf->sfl_offsets =
         Xen_Realloc(sf->sfl_offsets, new_cap * sizeof(Xen_size_t));
     sf->sfl_cap = new_cap;
   }
+  Xen_size_t sf_line = sf->sfl_count + 1;
   sf->sfl_offsets[sf->sfl_count++] = line;
+  return sf_line;
 }
 
 void Xen_Source_File_Free(Xen_Source_File* sf) {

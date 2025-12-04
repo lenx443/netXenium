@@ -13,7 +13,7 @@
 #define Xen_COMPILE_FUNCTION 2
 #define Xen_COMPILE_IMPLEMENT 3
 
-CALLABLE_ptr compiler(const char*, uint8_t);
+CALLABLE_ptr compiler(Xen_c_string_t, const char*, uint8_t);
 CALLABLE_ptr compiler_ast(Xen_Instance*, Xen_uint8_t);
 int ast_compile(block_list_ptr, block_node_ptr*, uint8_t, Xen_Instance*);
 

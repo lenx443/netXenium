@@ -3,13 +3,13 @@
 
 #include "instance.h"
 #include "lexer.h"
+#include "xen_typedefs.h"
 
 typedef struct {
   Lexer* lexer;
   Lexer_Token token;
 } Parser;
 
-void parser_next(Parser*);
-Xen_Instance* parser_program(Parser*);
+Xen_Instance* Xen_Parser(Xen_c_string_t, Xen_c_string_t, Xen_size_t);
 
 #endif
