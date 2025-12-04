@@ -793,6 +793,12 @@ Xen_Instance* vm_run(Xen_size_t id) {
     previous_offset = ctx->ctx_ip - 1;
 #endif
   }
+  while (
+      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
+      ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
+          id) {
+    run_context_stack_pop_top(&vm->vm_ctx_stack);
+  }
   return vmr.retval;
 
 except:
