@@ -4,6 +4,7 @@
 #include "bytecode.h"
 #include "logs.h"
 #include "program_code.h"
+#include "source_file.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_typedefs.h"
@@ -38,12 +39,13 @@ void bc_free(const Bytecode_Array_ptr bc) {
   Xen_Dealloc(bc);
 }
 
-int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg) {
+int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg,
+            Xen_Source_Address sta) {
   if (!bc) {
     error("El arreglo de bytecode esta vacío");
     return 0;
   }
-  bc_Instruct_t instr = {{opcode, oparg}};
+  bc_Instruct_t instr = {{opcode, oparg}, sta};
   if (bc->bc_size >= bc->bc_capacity) {
     int new_capacity = (bc->bc_capacity == 0) ? 8 : bc->bc_capacity * 2;
     bc_Instruct_ptr new_mem =
@@ -63,13 +65,13 @@ int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg) {
 void bc_print(ProgramCode_t pc) {
   Bytecode_Array_ptr code = pc.code;
   for (Xen_size_t i = 0; i < code->bc_size; i++) {
-    if (code->bc_array[i].bci_opcode <= HALT) {
+    if (code->bc_array[i].hdr.bci_opcode <= HALT) {
       printf("%ld %s %u\n", i,
-             Instruct_Info_Table[code->bc_array[i].bci_opcode].name,
-             code->bc_array[i].bci_oparg);
+             Instruct_Info_Table[code->bc_array[i].hdr.bci_opcode].name,
+             code->bc_array[i].hdr.bci_oparg);
     } else {
-      printf("%ld %02X %u\n", i, code->bc_array[i].bci_opcode,
-             code->bc_array[i].bci_oparg);
+      printf("%ld %02X %u\n", i, code->bc_array[i].hdr.bci_opcode,
+             code->bc_array[i].hdr.bci_oparg);
     }
   }
 }

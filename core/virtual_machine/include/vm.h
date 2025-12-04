@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
+#include "source_file.h"
 #include "vm_def.h"
 #include "xen_typedefs.h"
 
@@ -32,7 +33,7 @@ inline static Xen_bool_t Xen_VM_Except_Active(void) {
   return vm->except.active;
 }
 
-void Xen_VM_Except_Show(void);
+void Xen_VM_Except_Show(Xen_Source_Address*, Xen_size_t);
 int Xen_VM_Except_Throw(Xen_Instance*);
 
 #endif

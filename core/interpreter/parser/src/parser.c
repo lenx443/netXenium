@@ -102,7 +102,8 @@ static Xen_Instance* parser_return_stmt(Parser*);
 static Xen_Instance* parser_implement_stmt(Parser*);
 
 static Xen_Instance* parser_program(Parser* p) {
-  Xen_Instance* program = Xen_AST_Node_New("Program", NULL);
+  Xen_Instance* program =
+      Xen_AST_Node_New("Program", NULL, (Xen_Source_Address){0});
   if (!program) {
     return NULL;
   }
@@ -190,7 +191,8 @@ bool is_flow_keyword(Parser* p) {
 }
 
 Xen_Instance* parser_stmt_list(Parser* p) {
-  Xen_Instance* stmt_list = Xen_AST_Node_New("StatementList", NULL);
+  Xen_Instance* stmt_list =
+      Xen_AST_Node_New("StatementList", NULL, p->token.sta);
   if (!stmt_list) {
     return NULL;
   }
@@ -225,7 +227,7 @@ Xen_Instance* parser_stmt_list(Parser* p) {
 }
 
 Xen_Instance* parser_stmt(Parser* p) {
-  Xen_Instance* stmt = Xen_AST_Node_New("Statement", NULL);
+  Xen_Instance* stmt = Xen_AST_Node_New("Statement", NULL, p->token.sta);
   if (!stmt) {
     return NULL;
   }
@@ -245,7 +247,8 @@ Xen_Instance* parser_stmt(Parser* p) {
 Xen_Instance* parser_string(Parser* p) {
   if (p->token.tkn_type != TKN_STRING)
     return NULL;
-  Xen_Instance* string = Xen_AST_Node_New("String", p->token.tkn_text);
+  Xen_Instance* string =
+      Xen_AST_Node_New("String", p->token.tkn_text, p->token.sta);
   if (!string) {
     return NULL;
   }
@@ -256,7 +259,8 @@ Xen_Instance* parser_string(Parser* p) {
 Xen_Instance* parser_number(Parser* p) {
   if (p->token.tkn_type != TKN_NUMBER)
     return NULL;
-  Xen_Instance* number = Xen_AST_Node_New("Number", p->token.tkn_text);
+  Xen_Instance* number =
+      Xen_AST_Node_New("Number", p->token.tkn_text, p->token.sta);
   if (!number) {
     return NULL;
   }
@@ -268,7 +272,7 @@ Xen_Instance* parser_nil(Parser* p) {
   if (p->token.tkn_type != TKN_DOUBLE_QUESTION) {
     return NULL;
   }
-  Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL);
+  Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL, p->token.sta);
   if (!expr_nil) {
     return NULL;
   }
@@ -279,7 +283,8 @@ Xen_Instance* parser_nil(Parser* p) {
 Xen_Instance* parser_literal(Parser* p) {
   if (p->token.tkn_type != TKN_IDENTIFIER)
     return NULL;
-  Xen_Instance* literal = Xen_AST_Node_New("Literal", p->token.tkn_text);
+  Xen_Instance* literal =
+      Xen_AST_Node_New("Literal", p->token.tkn_text, p->token.sta);
   if (!literal) {
     return NULL;
   }
@@ -290,7 +295,8 @@ Xen_Instance* parser_literal(Parser* p) {
 Xen_Instance* parser_property(Parser* p) {
   if (p->token.tkn_type != TKN_PROPERTY)
     return NULL;
-  Xen_Instance* property = Xen_AST_Node_New("Property", p->token.tkn_text);
+  Xen_Instance* property =
+      Xen_AST_Node_New("Property", p->token.tkn_text, p->token.sta);
   if (!property) {
     return NULL;
   }
@@ -302,7 +308,7 @@ Xen_Instance* parser_parent(Parser* p) {
   if (p->token.tkn_type != TKN_LPARENT)
     return NULL;
   parser_next(p);
-  Xen_Instance* parent = Xen_AST_Node_New("Parent", NULL);
+  Xen_Instance* parent = Xen_AST_Node_New("Parent", NULL, p->token.sta);
   if (!parent) {
     return NULL;
   }
@@ -326,7 +332,7 @@ Xen_Instance* parser_map(Parser* p) {
   if (p->token.tkn_type != TKN_LBRACE) {
     return NULL;
   }
-  Xen_Instance* map = Xen_AST_Node_New("Map", NULL);
+  Xen_Instance* map = Xen_AST_Node_New("Map", NULL, p->token.sta);
   if (!map) {
     return NULL;
   }
@@ -336,7 +342,8 @@ Xen_Instance* parser_map(Parser* p) {
     parser_next(p);
     return map;
   }
-  Xen_Instance* element_head = Xen_AST_Node_New("MapElement", NULL);
+  Xen_Instance* element_head =
+      Xen_AST_Node_New("MapElement", NULL, p->token.sta);
   if (!element_head) {
     return NULL;
   }
@@ -356,7 +363,8 @@ Xen_Instance* parser_map(Parser* p) {
       return NULL;
     }
   } else if (p->token.tkn_type == TKN_IDENTIFIER) {
-    Xen_Instance* literal = Xen_AST_Node_New("Literal", p->token.tkn_text);
+    Xen_Instance* literal =
+        Xen_AST_Node_New("Literal", p->token.tkn_text, p->token.sta);
     if (!literal) {
       return NULL;
     }
@@ -390,7 +398,7 @@ Xen_Instance* parser_map(Parser* p) {
   while (p->token.tkn_type == TKN_COMMA) {
     parser_next(p);
     skip_newline(p);
-    Xen_Instance* element = Xen_AST_Node_New("MapElement", NULL);
+    Xen_Instance* element = Xen_AST_Node_New("MapElement", NULL, p->token.sta);
     if (!element) {
       return NULL;
     }
@@ -410,7 +418,8 @@ Xen_Instance* parser_map(Parser* p) {
         return NULL;
       }
     } else if (p->token.tkn_type == TKN_IDENTIFIER) {
-      Xen_Instance* literal = Xen_AST_Node_New("Literal", p->token.tkn_text);
+      Xen_Instance* literal =
+          Xen_AST_Node_New("Literal", p->token.tkn_text, p->token.sta);
       if (!literal) {
         return NULL;
       }
@@ -481,7 +490,7 @@ Xen_Instance* parser_primary(Parser* p) {
   if (!value) {
     return NULL;
   }
-  Xen_Instance* primary = Xen_AST_Node_New("Primary", NULL);
+  Xen_Instance* primary = Xen_AST_Node_New("Primary", NULL, p->token.sta);
   if (!primary) {
     return NULL;
   }
@@ -504,7 +513,8 @@ Xen_Instance* parser_unary(Parser* p) {
   if (!is_unary(p)) {
     return parser_primary(p);
   }
-  Xen_Instance* unary = Xen_AST_Node_New("Unary", p->token.tkn_text);
+  Xen_Instance* unary =
+      Xen_AST_Node_New("Unary", p->token.tkn_text, p->token.sta);
   if (!unary) {
     return NULL;
   }
@@ -526,7 +536,8 @@ Xen_Instance* parser_factor(Parser* p) {
       return NULL;
     }
     if (p->token.tkn_type == TKN_POW) {
-      Xen_Instance* binary = Xen_AST_Node_New("Binary", p->token.tkn_text);
+      Xen_Instance* binary =
+          Xen_AST_Node_New("Binary", p->token.tkn_text, p->token.sta);
       if (!binary) {
         return NULL;
       }
@@ -565,7 +576,7 @@ Xen_Instance* parser_term(Parser* p) {
       Xen_Dealloc(op);
       return NULL;
     }
-    Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
     if (!binary) {
       Xen_Dealloc(op);
       return NULL;
@@ -600,7 +611,7 @@ Xen_Instance* parser_add(Parser* p) {
       Xen_Dealloc(op);
       return NULL;
     }
-    Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
     if (!binary) {
       Xen_Dealloc(op);
       return NULL;
@@ -638,7 +649,7 @@ Xen_Instance* parser_relational(Parser* p) {
       Xen_Dealloc(op);
       return NULL;
     }
-    Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
     if (!binary) {
       Xen_Dealloc(op);
       return NULL;
@@ -661,7 +672,8 @@ Xen_Instance* parser_not(Parser* p) {
   if (p->token.tkn_type != TKN_NOT) {
     return parser_relational(p);
   }
-  Xen_Instance* unary = Xen_AST_Node_New("Unary", p->token.tkn_text);
+  Xen_Instance* unary =
+      Xen_AST_Node_New("Unary", p->token.tkn_text, p->token.sta);
   if (!unary) {
     return NULL;
   }
@@ -692,7 +704,7 @@ Xen_Instance* parser_and(Parser* p) {
       Xen_Dealloc(op);
       return NULL;
     }
-    Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
     if (!binary) {
       Xen_Dealloc(op);
       return NULL;
@@ -727,7 +739,7 @@ Xen_Instance* parser_or(Parser* p) {
       Xen_Dealloc(op);
       return NULL;
     }
-    Xen_Instance* binary = Xen_AST_Node_New("Binary", op);
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
     if (!binary) {
       Xen_Dealloc(op);
       return NULL;
@@ -752,11 +764,11 @@ Xen_Instance* parser_function(Parser* p) {
   }
   parser_next(p);
   skip_newline(p);
-  Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL);
+  Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL, p->token.sta);
   if (!func) {
     return NULL;
   }
-  Xen_Instance* args = Xen_AST_Node_New("Args", NULL);
+  Xen_Instance* args = Xen_AST_Node_New("Args", NULL, p->token.sta);
   if (!args) {
     return NULL;
   }
@@ -852,7 +864,8 @@ Xen_Instance* parser_function_arg_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", operator);
+    Xen_Instance* assignm =
+        Xen_AST_Node_New("Assignment", operator, p->token.sta);
     if (!assignm) {
       Xen_Dealloc((void*)operator);
       return NULL;
@@ -874,7 +887,7 @@ Xen_Instance* parser_function_arg_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=", p->token.sta);
     if (!assignm) {
       return NULL;
     }
@@ -903,7 +916,7 @@ Xen_Instance* parser_list(Parser* p) {
   }
   if (p->token.tkn_type != TKN_COMMA) {
     if (vector) {
-      Xen_Instance* list = Xen_AST_Node_New("List", "vector");
+      Xen_Instance* list = Xen_AST_Node_New("List", "vector", p->token.sta);
       if (!list) {
         return NULL;
       }
@@ -914,14 +927,15 @@ Xen_Instance* parser_list(Parser* p) {
     }
     return expr_head;
   }
-  Xen_Instance* list = Xen_AST_Node_New("List", vector ? "vector" : "tuple");
+  Xen_Instance* list =
+      Xen_AST_Node_New("List", vector ? "vector" : "tuple", p->token.sta);
   if (!list) {
     return NULL;
   }
   if (!Xen_AST_Node_Push_Child(list, expr_head)) {
     return NULL;
   }
-  skip_newline_if_before_is(p, (Lexer_Token){TKN_COMMA, ","});
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_COMMA, ",", {0}});
   while (p->token.tkn_type == TKN_COMMA) {
     parser_next(p);
     skip_newline_if_callback(p, is_expr);
@@ -940,7 +954,7 @@ Xen_Instance* parser_list(Parser* p) {
 }
 
 Xen_Instance* parser_suffix(Parser* p) {
-  Xen_Instance* suffix = Xen_AST_Node_New("Suffix", NULL);
+  Xen_Instance* suffix = Xen_AST_Node_New("Suffix", NULL, p->token.sta);
   if (!suffix) {
     return NULL;
   }
@@ -998,7 +1012,8 @@ Xen_Instance* parser_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", operator);
+    Xen_Instance* assignm =
+        Xen_AST_Node_New("Assignment", operator, p->token.sta);
     if (!assignm) {
       Xen_Dealloc((void*)operator);
       return NULL;
@@ -1020,7 +1035,7 @@ Xen_Instance* parser_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=", p->token.sta);
     if (!assignm) {
       return NULL;
     }
@@ -1042,7 +1057,7 @@ Xen_Instance* parser_call(Parser* p) {
   }
   parser_next(p);
   skip_newline(p);
-  Xen_Instance* args = Xen_AST_Node_New("Call", NULL);
+  Xen_Instance* args = Xen_AST_Node_New("Call", NULL, p->token.sta);
   if (!args) {
     return NULL;
   }
@@ -1111,7 +1126,8 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", operator);
+    Xen_Instance* assignm =
+        Xen_AST_Node_New("Assignment", operator, p->token.sta);
     if (!assignm) {
       Xen_Dealloc((void*)operator);
       return NULL;
@@ -1133,7 +1149,7 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
       return NULL;
     }
 
-    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=");
+    Xen_Instance* assignm = Xen_AST_Node_New("Assignment", "=", p->token.sta);
     if (!assignm) {
       return NULL;
     }
@@ -1154,7 +1170,7 @@ Xen_Instance* parser_index(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* index = Xen_AST_Node_New("Index", NULL);
+  Xen_Instance* index = Xen_AST_Node_New("Index", NULL, p->token.sta);
   if (!index) {
     return NULL;
   }
@@ -1185,7 +1201,7 @@ Xen_Instance* parser_attr(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* attr = Xen_AST_Node_New("Attr", ident);
+  Xen_Instance* attr = Xen_AST_Node_New("Attr", ident, p->token.sta);
   if (!attr) {
     Xen_Dealloc((void*)ident);
     return NULL;
@@ -1223,7 +1239,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
     return NULL;
   }
-  Xen_Instance* if_stmt = Xen_AST_Node_New("IfStatement", NULL);
+  Xen_Instance* if_stmt = Xen_AST_Node_New("IfStatement", NULL, p->token.sta);
   if (!if_stmt) {
     return NULL;
   }
@@ -1245,12 +1261,12 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   if (!Xen_AST_Node_Push_Child(if_stmt, then)) {
     return NULL;
   }
-  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "elif"});
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "elif", {0}});
   Xen_Instance* current_if = if_stmt;
   while (p->token.tkn_type == TKN_KEYWORD &&
          strcmp(p->token.tkn_text, "elif") == 0) {
     parser_next(p);
-    Xen_Instance* elif = Xen_AST_Node_New("IfStatement", NULL);
+    Xen_Instance* elif = Xen_AST_Node_New("IfStatement", NULL, p->token.sta);
     if (!elif) {
       return NULL;
     }
@@ -1276,7 +1292,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     }
     current_if = elif;
   }
-  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "else"});
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "else", {0}});
   if (p->token.tkn_type == TKN_KEYWORD &&
       strcmp(p->token.tkn_text, "else") == 0) {
     parser_next(p);
@@ -1298,7 +1314,8 @@ Xen_Instance* parser_while_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
     return NULL;
   }
-  Xen_Instance* while_stmt = Xen_AST_Node_New("WhileStatement", NULL);
+  Xen_Instance* while_stmt =
+      Xen_AST_Node_New("WhileStatement", NULL, p->token.sta);
   if (!while_stmt) {
     return NULL;
   }
@@ -1327,7 +1344,7 @@ Xen_Instance* parser_for_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
     return NULL;
   }
-  Xen_Instance* for_stmt = Xen_AST_Node_New("ForStatement", NULL);
+  Xen_Instance* for_stmt = Xen_AST_Node_New("ForStatement", NULL, p->token.sta);
   if (!for_stmt) {
     return NULL;
   }
@@ -1371,7 +1388,7 @@ Xen_Instance* parser_block(Parser* p) {
   parser_next(p);
   skip_newline(p);
   Xen_Instance* block = NULL;
-  block = Xen_AST_Node_New("Block", NULL);
+  block = Xen_AST_Node_New("Block", NULL, p->token.sta);
   if (!block) {
     return NULL;
   }
@@ -1404,7 +1421,8 @@ Xen_Instance* parser_flow_stmt(Parser* p) {
   if (!is_flow_keyword(p)) {
     return NULL;
   }
-  Xen_Instance* flow = Xen_AST_Node_New("FlowStatement", p->token.tkn_text);
+  Xen_Instance* flow =
+      Xen_AST_Node_New("FlowStatement", p->token.tkn_text, p->token.sta);
   if (!flow) {
     return NULL;
   }
@@ -1416,7 +1434,8 @@ Xen_Instance* parser_return_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
     return NULL;
   }
-  Xen_Instance* return_stmt = Xen_AST_Node_New("ReturnStatement", NULL);
+  Xen_Instance* return_stmt =
+      Xen_AST_Node_New("ReturnStatement", NULL, p->token.sta);
   if (!return_stmt) {
     return NULL;
   }
@@ -1442,12 +1461,12 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
     return NULL;
   }
   Xen_Instance* impl_stmt =
-      Xen_AST_Node_New("ImplementStatement", p->token.tkn_text);
+      Xen_AST_Node_New("ImplementStatement", p->token.tkn_text, p->token.sta);
   if (!impl_stmt) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* base = Xen_AST_Node_New("Base", NULL);
+  Xen_Instance* base = Xen_AST_Node_New("Base", NULL, p->token.sta);
   if (p->token.tkn_type == TKN_COLON) {
     parser_next(p);
     Xen_Instance* base_expr = parser_expr(p);
@@ -1476,8 +1495,8 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
                          Xen_size_t file_size) {
   Xen_size_t sf_id = Xen_Source_Table_File_Push(
       globals_sources, Xen_Source_File_New(file_name, file_content, file_size));
-  Lexer lexer = {sf_id, 0};
-  Parser parser = {&lexer, {0, "\0"}};
+  Lexer lexer = {sf_id, 1, 0, 0};
+  Parser parser = {&lexer, {0, "\0", {0}}};
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
   if (!ast_program) {

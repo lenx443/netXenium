@@ -4,6 +4,7 @@
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
+#include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_ast_instance.h"
 #include "xen_gc.h"
@@ -22,6 +23,7 @@ static Xen_Instance* ast_alloc(Xen_Instance* self, Xen_Instance* args,
   Xen_AST_Node* ast = (Xen_AST_Node*)Xen_Instance_Alloc(&Xen_AST_Implement);
   ast->name = NULL;
   ast->value = NULL;
+  ast->sta = (Xen_Source_Address){0};
   ast->children = Xen_Vector_New();
   if (!ast->children) {
     return NULL;

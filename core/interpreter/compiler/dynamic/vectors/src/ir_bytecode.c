@@ -6,6 +6,7 @@
 #include "ir_bytecode.h"
 #include "ir_instruct.h"
 #include "logs.h"
+#include "source_file.h"
 #include "vm_consts.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
@@ -15,7 +16,7 @@
 
 #define error(msg, ...) log_add(NULL, ERROR, "IR Array", msg, ##__VA_ARGS__)
 
-IR_Bytecode_Array_ptr ir_new() {
+IR_Bytecode_Array_ptr ir_new(void) {
   IR_Bytecode_Array_ptr intr_array = Xen_Alloc(sizeof(IR_Bytecode_Array_t));
   if (!intr_array) {
     error("No hay memoria disponible");
@@ -34,8 +35,9 @@ void ir_free(const IR_Bytecode_Array_ptr ir) {
   Xen_Dealloc(ir);
 }
 
-int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg) {
-  IR_Instruct_t instr = {opcode, oparg, 0, NULL, 0};
+int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg,
+            Xen_Source_Address sta) {
+  IR_Instruct_t instr = {opcode, oparg, 0, NULL, 0, sta};
   if (!ir) {
     error("El arreglo de bytecode esta vacío");
     return 0;
@@ -55,9 +57,9 @@ int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg) {
   return 1;
 }
 
-int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode,
-                 block_node_ptr block) {
-  IR_Instruct_t instr = {opcode, 0, 1, block, 0};
+int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode, block_node_ptr block,
+                 Xen_Source_Address sta) {
+  IR_Instruct_t instr = {opcode, 0, 1, block, 0, sta};
   if (!ir) {
     error("El arreglo de bytecode esta vacío");
     return 0;

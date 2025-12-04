@@ -167,9 +167,10 @@ CALLABLE_ptr compiler_ast(Xen_Instance* ast_node, Xen_uint8_t mode) {
 
 #define COMPILE_MODE c->mode
 
-#define emit(opcode, oparg) ir_emit((*c->b_current)->instr_array, opcode, oparg)
-#define emit_jump(opcode, block)                                               \
-  ir_emit_jump((*c->b_current)->instr_array, opcode, block)
+#define emit(opcode, oparg, sta)                                               \
+  ir_emit((*c->b_current)->instr_array, opcode, oparg, sta)
+#define emit_jump(opcode, block, sta)                                          \
+  ir_emit_jump((*c->b_current)->instr_array, opcode, block, sta)
 #define co_push_name(name) vm_consts_push_name(c->b_list->consts, name)
 #define co_push_instance(inst) vm_consts_push_instance(c->b_list->consts, inst)
 #define co_push_callable(callable)                                             \
@@ -249,7 +250,7 @@ static int compile_expr(Compiler*, Xen_Instance*);
 static int compile_expr_primary(Compiler*, Xen_Instance*);
 static int compile_expr_primary_string(Compiler*, Xen_Instance*);
 static int compile_expr_primary_number(Compiler*, Xen_Instance*);
-static int compile_expr_primary_nil(Compiler*);
+static int compile_expr_primary_nil(Compiler*, Xen_Instance*);
 static int compile_expr_primary_literal(Compiler*, Xen_Instance*);
 static int compile_expr_primary_property(Compiler*, Xen_Instance*);
 static int compile_expr_primary_parent(Compiler*, Xen_Instance*);
@@ -310,7 +311,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     if ((c->flags & COMPILE_FLAG_FUNCTION_INLINE) == 0) {
-      if (!emit(RETURN, 0)) {
+      if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     }
@@ -322,7 +323,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     } else {
       return 0;
     }
-    if (!emit(RETURN_BUILD_IMPLEMENT, 0)) {
+    if (!emit(RETURN_BUILD_IMPLEMENT, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else {
@@ -337,7 +338,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     } else {
       return 0;
     }
-    if (!emit(RETURN, 0)) {
+    if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -412,16 +413,16 @@ int compile_expr_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   if (COMPILE_MODE == Xen_COMPILE_REPL) {
-    if (!emit(PRINT_TOP, 0)) {
+    if (!emit(PRINT_TOP, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
   if (c->flags & COMPILE_FLAG_FUNCTION_INLINE) {
-    if (!emit(RETURN_TOP, 0)) {
+    if (!emit(RETURN_TOP, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else {
-    if (!emit(POP, 1)) {
+    if (!emit(POP, 1, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -825,7 +826,7 @@ int compile_expr_primary(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   } else if (Xen_AST_Node_Name_Cmp(primary, "Nil") == 0) {
-    if (!compile_expr_primary_nil(c)) {
+    if (!compile_expr_primary_nil(c, primary)) {
       return 0;
     }
   } else if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
@@ -869,7 +870,7 @@ int compile_expr_primary_string(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(PUSH, co_idx)) {
+  if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -884,18 +885,18 @@ int compile_expr_primary_number(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(PUSH, co_idx)) {
+  if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
 }
 
-int compile_expr_primary_nil(Compiler* c) {
+int compile_expr_primary_nil(Compiler* c, Xen_Instance* node) {
   Xen_ssize_t co_idx = co_push_instance(nil);
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(PUSH, co_idx)) {
+  if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -906,7 +907,7 @@ int compile_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD, co_idx)) {
+  if (!emit(LOAD, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -917,7 +918,7 @@ int compile_expr_primary_property(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD_PROP, co_idx)) {
+  if (!emit(LOAD_PROP, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -949,7 +950,7 @@ int compile_expr_primary_map(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   }
-  if (!emit(MAKE_MAP, count)) {
+  if (!emit(MAKE_MAP, count, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -973,7 +974,7 @@ int compile_expr_primary_map_element(Compiler* c, Xen_Instance* node) {
     if (co_idx == -1) {
       return 0;
     }
-    if (!emit(PUSH, co_idx)) {
+    if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else {
@@ -992,7 +993,7 @@ int compile_expr_primary_map_element(Compiler* c, Xen_Instance* node) {
     if (co_idx == -1) {
       return 0;
     }
-    if (!emit(PUSH, co_idx)) {
+    if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -1070,14 +1071,15 @@ int compile_expr_primary_suffix_call(Compiler* c, Xen_Instance* node) {
     if (co_idx == -1) {
       return 0;
     }
-    if (!emit(PUSH, co_idx)) {
+    if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
-    if (!emit(CALL_KW, Xen_AST_Node_Children_Size(node))) {
+    if (!emit(CALL_KW, Xen_AST_Node_Children_Size(node),
+              Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else {
-    if (!emit(CALL, Xen_AST_Node_Children_Size(node))) {
+    if (!emit(CALL, Xen_AST_Node_Children_Size(node), Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -1136,7 +1138,7 @@ int compile_expr_primary_suffix_index(Compiler* c, Xen_Instance* node) {
   } else {
     return 0;
   }
-  if (!emit(LOAD_INDEX, 0)) {
+  if (!emit(LOAD_INDEX, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1147,7 +1149,7 @@ int compile_expr_primary_suffix_attr(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(LOAD_ATTR, co_idx)) {
+  if (!emit(LOAD_ATTR, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1161,7 +1163,7 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
     if (co_idx == -1) {
       return 0;
     }
-    if (!emit(PUSH, co_idx)) {
+    if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
     return 1;
@@ -1196,15 +1198,15 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
       }
     }
     if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-      if (!emit(UNARY_POSITIVE, 0)) {
+      if (!emit(UNARY_POSITIVE, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-      if (!emit(UNARY_NEGATIVE, 0)) {
+      if (!emit(UNARY_NEGATIVE, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
-      if (!emit(UNARY_NOT, 0)) {
+      if (!emit(UNARY_NOT, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -1223,7 +1225,7 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
     if (co_idx == -1) {
       return 0;
     }
-    if (!emit(PUSH, co_idx)) {
+    if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
     return 1;
@@ -1248,18 +1250,18 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       } else {
         return 0;
       }
-      if (!emit(COPY, 0)) {
+      if (!emit(COPY, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
       B_PTR end_block = B_NEW();
       if (!end_block) {
         return 0;
       }
-      if (!emit_jump(JUMP_IF_FALSE, end_block)) {
+      if (!emit_jump(JUMP_IF_FALSE, end_block, Xen_AST_Node_STA(node))) {
         B_FREE(end_block);
         return 0;
       }
-      if (!emit(POP, 1)) {
+      if (!emit(POP, 1, Xen_AST_Node_STA(node))) {
         B_FREE(end_block);
         return 0;
       }
@@ -1307,18 +1309,18 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       } else {
         return 0;
       }
-      if (!emit(COPY, 0)) {
+      if (!emit(COPY, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
       B_PTR end_block = B_NEW();
       if (!end_block) {
         return 0;
       }
-      if (!emit_jump(JUMP_IF_TRUE, end_block)) {
+      if (!emit_jump(JUMP_IF_TRUE, end_block, Xen_AST_Node_STA(node))) {
         B_FREE(end_block);
         return 0;
       }
-      if (!emit(POP, 1)) {
+      if (!emit(POP, 1, Xen_AST_Node_STA(node))) {
         B_FREE(end_block);
         return 0;
       }
@@ -1382,55 +1384,55 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     if (Xen_AST_Node_Value_Cmp(node, "**") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_POW)) {
+      if (!emit(BINARYOP, Xen_OPR_POW, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "*") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_MUL)) {
+      if (!emit(BINARYOP, Xen_OPR_MUL, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "/") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_DIV)) {
+      if (!emit(BINARYOP, Xen_OPR_DIV, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "%") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_MOD)) {
+      if (!emit(BINARYOP, Xen_OPR_MOD, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "+") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_ADD)) {
+      if (!emit(BINARYOP, Xen_OPR_ADD, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "-") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_SUB)) {
+      if (!emit(BINARYOP, Xen_OPR_SUB, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "<") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_LT)) {
+      if (!emit(BINARYOP, Xen_OPR_LT, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "<=") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_LE)) {
+      if (!emit(BINARYOP, Xen_OPR_LE, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, ">") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_GT)) {
+      if (!emit(BINARYOP, Xen_OPR_GT, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, ">=") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_GE)) {
+      if (!emit(BINARYOP, Xen_OPR_GE, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "==") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_EQ)) {
+      if (!emit(BINARYOP, Xen_OPR_EQ, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "!=") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_NE)) {
+      if (!emit(BINARYOP, Xen_OPR_NE, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
-      if (!emit(BINARYOP, Xen_OPR_HAS)) {
+      if (!emit(BINARYOP, Xen_OPR_HAS, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -1511,7 +1513,7 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    if (!emit(MAKE_FUNCTION_NARGS, co_code_idx)) {
+    if (!emit(MAKE_FUNCTION_NARGS, co_code_idx, Xen_AST_Node_STA(node))) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -1523,7 +1525,8 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     if (!emit(MAKE_TUPLE,
-              Xen_AST_Node_Children_Size(args) - args_assigment_start)) {
+              Xen_AST_Node_Children_Size(args) - args_assigment_start,
+              Xen_AST_Node_STA(node))) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -1532,7 +1535,7 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    if (!emit(PUSH, co_args_idx)) {
+    if (!emit(PUSH, co_args_idx, Xen_AST_Node_STA(node))) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -1551,7 +1554,7 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    if (!emit(MAKE_FUNCTION, co_code_idx)) {
+    if (!emit(MAKE_FUNCTION, co_code_idx, Xen_AST_Node_STA(node))) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -1608,15 +1611,15 @@ int compile_expr_list(Compiler* c, Xen_Instance* node) {
       return 0;
     }
     if (Xen_AST_Node_Value_Cmp(node, "tuple") == 0) {
-      if (!emit(PUSH, co_idx)) {
+      if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
         return 0;
       }
       return 1;
     } else if (Xen_AST_Node_Value_Cmp(node, "vector") == 0) {
-      if (!emit(PUSH, co_idx)) {
+      if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
         return 0;
       }
-      if (!emit(MAKE_VECTOR_FROM_ITERABLE, 0)) {
+      if (!emit(MAKE_VECTOR_FROM_ITERABLE, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
       return 1;
@@ -1643,11 +1646,13 @@ int compile_expr_list(Compiler* c, Xen_Instance* node) {
       }
     }
     if (Xen_AST_Node_Value_Cmp(node, "tuple") == 0) {
-      if (!emit(MAKE_TUPLE, Xen_AST_Node_Children_Size(node))) {
+      if (!emit(MAKE_TUPLE, Xen_AST_Node_Children_Size(node),
+                Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "vector") == 0) {
-      if (!emit(MAKE_VECTOR, Xen_AST_Node_Children_Size(node))) {
+      if (!emit(MAKE_VECTOR, Xen_AST_Node_Children_Size(node),
+                Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -1792,7 +1797,7 @@ int compile_assignment_expr_primary_literal(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE, co_idx)) {
+  if (!emit(STORE, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1803,7 +1808,7 @@ int compile_assignment_expr_primary_property(Compiler* c, Xen_Instance* node) {
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE_PROP, co_idx)) {
+  if (!emit(STORE_PROP, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1884,7 +1889,7 @@ int compile_assignment_expr_primary_suffix_index(Compiler* c,
   } else {
     return 0;
   }
-  if (!emit(STORE_INDEX, 0)) {
+  if (!emit(STORE_INDEX, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1896,7 +1901,7 @@ int compile_assignment_expr_primary_suffix_attr(Compiler* c,
   if (co_idx == -1) {
     return 0;
   }
-  if (!emit(STORE_ATTR, co_idx)) {
+  if (!emit(STORE_ATTR, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -1928,23 +1933,25 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
   }
   if (starred) {
     if (starred_index == 0) {
-      if (!emit(LIST_UNPACK_END, count)) {
+      if (!emit(LIST_UNPACK_END, count, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (starred_index == (Xen_ssize_t)count - 1) {
-      if (!emit(LIST_UNPACK_START, count)) {
+      if (!emit(LIST_UNPACK_START, count, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
-      if (!emit(LIST_UNPACK_END, (count - starred_index))) {
+      if (!emit(LIST_UNPACK_END, (count - starred_index),
+                Xen_AST_Node_STA(node))) {
         return 0;
       }
-      if (!emit(LIST_UNPACK_START, (starred_index + 1))) {
+      if (!emit(LIST_UNPACK_START, (starred_index + 1),
+                Xen_AST_Node_STA(node))) {
         return 0;
       }
     }
   } else {
-    if (!emit(LIST_UNPACK, count)) {
+    if (!emit(LIST_UNPACK, count, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -2010,7 +2017,7 @@ int compile_if_statement(Compiler* c, Xen_Instance* node) {
   if (!if_false_block) {
     return 0;
   }
-  if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
+  if (!emit_jump(JUMP_IF_FALSE, if_false_block, Xen_AST_Node_STA(node))) {
     B_FREE(if_false_block);
     return 0;
   }
@@ -2033,7 +2040,7 @@ int compile_if_statement(Compiler* c, Xen_Instance* node) {
       B_FREE(if_false_block);
       return 0;
     }
-    if (!emit_jump(JUMP, end_block)) {
+    if (!emit_jump(JUMP, end_block, Xen_AST_Node_STA(node))) {
       B_FREE(end_block);
       B_FREE(if_false_block);
       return 0;
@@ -2093,7 +2100,7 @@ int compile_while_statement(Compiler* c, Xen_Instance* node) {
   if (!if_false_block) {
     return 0;
   }
-  if (!emit_jump(JUMP_IF_FALSE, if_false_block)) {
+  if (!emit_jump(JUMP_IF_FALSE, if_false_block, Xen_AST_Node_STA(node))) {
     B_FREE(if_false_block);
     return 0;
   }
@@ -2116,7 +2123,7 @@ int compile_while_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   CCS_POP;
-  if (!emit_jump(JUMP, init_block)) {
+  if (!emit_jump(JUMP, init_block, Xen_AST_Node_STA(node))) {
     B_FREE(if_false_block);
     return 0;
   }
@@ -2139,21 +2146,21 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
   if (!compile_expr(c, iterable)) {
     return 0;
   }
-  if (!emit(ITER_GET, 0)) {
+  if (!emit(ITER_GET, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
   B_PTR for_block = B_MAKE_CURRENT();
   if (!for_block) {
     return 0;
   }
-  if (!emit(COPY, 0)) {
+  if (!emit(COPY, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
   B_PTR end_block = B_NEW();
   if (!end_block) {
     return 0;
   }
-  if (!emit_jump(ITER_FOR, end_block)) {
+  if (!emit_jump(ITER_FOR, end_block, Xen_AST_Node_STA(node))) {
     B_FREE(end_block);
     return 0;
   }
@@ -2181,7 +2188,7 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   CCS_POP;
-  if (!emit_jump(JUMP, for_block)) {
+  if (!emit_jump(JUMP, for_block, Xen_AST_Node_STA(node))) {
     B_FREE(end_block);
     return 0;
   }
@@ -2190,7 +2197,7 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   B_SET_CURRENT(end_block);
-  if (!emit(POP, 2)) {
+  if (!emit(POP, 2, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
@@ -2203,7 +2210,7 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
       current = current->next;
     }
     if (current) {
-      if (!emit_jump(JUMP, current->context.b_break)) {
+      if (!emit_jump(JUMP, current->context.b_break, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -2215,7 +2222,7 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
       current = current->next;
     }
     if (current) {
-      if (!emit_jump(JUMP, CC_TOP.b_continue)) {
+      if (!emit_jump(JUMP, CC_TOP.b_continue, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -2230,7 +2237,7 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
 int compile_return_statement(Compiler* c, Xen_Instance* node) {
   if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
     if (Xen_AST_Node_Children_Size(node) == 0) {
-      if (!emit(RETURN, 0)) {
+      if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Children_Size(node) == 1) {
@@ -2241,7 +2248,7 @@ int compile_return_statement(Compiler* c, Xen_Instance* node) {
       if (!compile_expr(c, expr)) {
         return 0;
       }
-      if (!emit(RETURN_TOP, 0)) {
+      if (!emit(RETURN_TOP, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
@@ -2279,7 +2286,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (co_name_idx == -1) {
     return 0;
   }
-  if (!emit(PUSH, co_name_idx)) {
+  if (!emit(PUSH, co_name_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
   Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
@@ -2295,11 +2302,11 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   if (has_base) {
-    if (!emit(BUILD_IMPLEMENT, co_code_idx)) {
+    if (!emit(BUILD_IMPLEMENT, co_code_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else {
-    if (!emit(BUILD_IMPLEMENT_NBASE, co_code_idx)) {
+    if (!emit(BUILD_IMPLEMENT_NBASE, co_code_idx, Xen_AST_Node_STA(node))) {
       return 0;
     }
   }
@@ -2307,7 +2314,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (local_name == -1) {
     return 0;
   }
-  if (!emit(STORE, local_name)) {
+  if (!emit(STORE, local_name, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;

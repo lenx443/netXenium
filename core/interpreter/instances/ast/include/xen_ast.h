@@ -4,11 +4,13 @@
 #include <stddef.h>
 
 #include "instance.h"
+#include "source_file.h"
 
-Xen_Instance* Xen_AST_Node_New(const char*, const char*);
+Xen_Instance* Xen_AST_Node_New(const char*, const char*, Xen_Source_Address);
 int Xen_AST_Node_Push_Child(Xen_Instance*, Xen_Instance*);
 const char* Xen_AST_Node_Name(Xen_Instance*);
 const char* Xen_AST_Node_Value(Xen_Instance*);
+Xen_Source_Address Xen_AST_Node_STA(Xen_Instance*);
 int Xen_AST_Node_Name_Cmp(Xen_Instance*, const char*);
 int Xen_AST_Node_Value_Cmp(Xen_Instance*, const char*);
 size_t Xen_AST_Node_Children_Size(Xen_Instance*);

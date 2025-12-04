@@ -735,28 +735,28 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [RETURN_BUILD_IMPLEMENT] = op_return_build_implement,
 };
 
-static int vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
+static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
   RunContext_ptr ctx = (RunContext_ptr)ctx_inst;
   bc_Instruct_t instr = ctx->ctx_code->code.code->bc_array[ctx->ctx_ip++];
-  if (instr.bci_opcode >= HALT) {
+  if (instr.hdr.bci_opcode >= HALT) {
     ctx->ctx_error = 1;
-    return NOP;
+    return (bc_Instruct_t){{NOP, 0}, {0}};
   }
-  Xen_ulong_t oparg = instr.bci_oparg;
-  if (instr.bci_oparg == 0xFF) {
+  Xen_ulong_t oparg = instr.hdr.bci_oparg;
+  if (instr.hdr.bci_oparg == 0xFF) {
     if (ctx->ctx_code->code.code->bc_size - ctx->ctx_ip < XEN_ULONG_SIZE) {
       ctx->ctx_error = 1;
-      return NOP;
+      return (bc_Instruct_t){{NOP, 0}, {0}};
     }
     oparg = 0;
     for (Xen_size_t i = 0; i < XEN_ULONG_SIZE; i++) {
       bc_Instruct_t extend_arg_instr =
           ctx->ctx_code->code.code->bc_array[ctx->ctx_ip++];
-      oparg |= ((Xen_ulong_t)extend_arg_instr.bci_oparg) << (8 * i);
+      oparg |= ((Xen_ulong_t)extend_arg_instr.hdr.bci_oparg) << (8 * i);
     }
   }
-  Dispatcher[instr.bci_opcode](vmr, ctx, oparg);
-  return instr.bci_opcode;
+  Dispatcher[instr.hdr.bci_opcode](vmr, ctx, oparg);
+  return instr;
 }
 
 Xen_Instance* vm_run(Xen_size_t id) {
@@ -765,6 +765,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
   const char* previous_op = "No-OP";
   Xen_ssize_t previous_offset = -1;
 #endif
+  bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
   while (
       (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
       ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
@@ -787,9 +788,9 @@ Xen_Instance* vm_run(Xen_size_t id) {
       run_context_stack_pop_top(&vm->vm_ctx_stack);
       continue;
     }
-    int opcode = vm_run_instruct(&vmr, (Xen_Instance*)ctx);
+    previous_instruct = vm_run_instruct(&vmr, (Xen_Instance*)ctx);
 #ifndef NDEBUG
-    previous_op = Instruct_Info_Table[opcode].name;
+    previous_op = Instruct_Info_Table[previous_instruct.hdr.bci_opcode].name;
     previous_offset = ctx->ctx_ip - 1;
 #endif
   }
@@ -808,7 +809,7 @@ except:
           id) {
     run_context_stack_pop_top(&vm->vm_ctx_stack);
   }
-  Xen_VM_Except_Show();
+  Xen_VM_Except_Show(&previous_instruct.sta, 1);
   return NULL;
 }
 

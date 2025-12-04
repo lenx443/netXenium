@@ -1,19 +1,22 @@
 #ifndef __BC_INSTRUCT_H__
 #define __BC_INSTRUCT_H__
 
-#include <stdint.h>
+#include "source_file.h"
+#include "xen_typedefs.h"
 
 #pragma pack(push, 1)
-union bc_Instruct {
-  struct {
-    uint8_t bci_opcode;
-    uint8_t bci_oparg;
-  };
-  uint32_t bci_word;
+struct bc_Instruct_Header {
+  Xen_uint8_t bci_opcode;
+  Xen_uint8_t bci_oparg;
 };
 #pragma pack(pop)
 
-typedef union bc_Instruct bc_Instruct_t;
+struct bc_Instruct {
+  struct bc_Instruct_Header hdr;
+  Xen_Source_Address sta;
+};
+
+typedef struct bc_Instruct bc_Instruct_t;
 typedef bc_Instruct_t* bc_Instruct_ptr;
 
 #endif

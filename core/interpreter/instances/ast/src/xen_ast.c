@@ -4,6 +4,7 @@
 
 #include "attrs.h"
 #include "instance.h"
+#include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_ast_implement.h"
@@ -12,7 +13,8 @@
 #include "xen_nil.h"
 #include "xen_vector.h"
 
-Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
+Xen_Instance* Xen_AST_Node_New(const char* name, const char* value,
+                               Xen_Source_Address sta) {
   Xen_AST_Node* ast =
       (Xen_AST_Node*)__instance_new(&Xen_AST_Implement, nil, nil, 0);
   if (!ast) {
@@ -30,6 +32,7 @@ Xen_Instance* Xen_AST_Node_New(const char* name, const char* value) {
       return NULL;
     }
   }
+  ast->sta = sta;
   return (Xen_Instance*)ast;
 }
 
@@ -47,6 +50,10 @@ const char* Xen_AST_Node_Name(Xen_Instance* ast) {
 
 const char* Xen_AST_Node_Value(Xen_Instance* ast) {
   return ((Xen_AST_Node*)ast)->value;
+}
+
+Xen_Source_Address Xen_AST_Node_STA(Xen_Instance* ast) {
+  return ((Xen_AST_Node*)ast)->sta;
 }
 
 int Xen_AST_Node_Name_Cmp(Xen_Instance* ast, const char* name) {
@@ -71,7 +78,8 @@ Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
 }
 
 Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
-  Xen_Instance* rsult = Xen_AST_Node_New(wrap, NULL);
+  Xen_Instance* rsult =
+      Xen_AST_Node_New(wrap, NULL, ((Xen_AST_Node*)node)->sta);
   if (!rsult) {
     return NULL;
   }

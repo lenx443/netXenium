@@ -1,12 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "attrs.h"
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
+#include "source_file.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
@@ -17,6 +17,7 @@
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_nil.h"
+#include "xen_typedefs.h"
 
 Xen_Instance* Xen_VM_Current_Ctx(void) {
   return run_context_stack_peek_top(&vm->vm_ctx_stack);
@@ -113,9 +114,15 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   return ret;
 }
 
-void Xen_VM_Except_Show(void) {
+void Xen_VM_Except_Show(Xen_Source_Address* bt, Xen_size_t bt_count) {
   Xen_Except* except = (Xen_Except*)vm->except.except;
   puts("Unhandled exception occurred.");
+  puts("BackTrace:");
+  for (Xen_size_t i = 0; i < bt_count; i++) {
+    printf("file: \"%s\"; line: %ld; column: %ld;\n",
+           globals_sources->st_files[(Xen_size_t)bt[i].id]->sf_name, bt[i].line,
+           bt->column);
+  }
   if (except->message) {
     fputs(except->type, stdout);
     fputs(": ", stdout);

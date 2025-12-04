@@ -1,6 +1,7 @@
 #include "block_list.h"
 #include "gc_header.h"
 #include "program_code.h"
+#include "source_file.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
@@ -38,7 +39,8 @@ int blocks_linealizer(block_list_ptr blocks) {
   Xen_ulong_t n = 0;
   while (current_block) {
     if (current_block->instr_array->ir_size == 0) {
-      if (!ir_emit(current_block->instr_array, NOP, 0)) {
+      if (!ir_emit(current_block->instr_array, NOP, 0,
+                   (Xen_Source_Address){0})) {
         return 0;
       }
     }
@@ -110,28 +112,28 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
         if (!reloc_add(&reloc_table, &reloc_count, &reloc_cap, inst, argpos))
           goto error;
 
-        if (!bc_emit(pc->code, inst->opcode, 0xFF)) /* 0xFF indica EXT ARG */
+        if (!bc_emit(pc->code, inst->opcode, 0xFF, inst->sta))
           goto error;
 
         for (Xen_size_t j = 0; j < XEN_ULONG_SIZE; j++) {
-          if (!bc_emit(pc->code, EXT_ARG_OP, 0x00))
+          if (!bc_emit(pc->code, EXT_ARG_OP, 0x00, inst->sta))
             goto error;
         }
 
         continue;
       } else {
         if (inst->oparg >= 0xFF) {
-          if (!bc_emit(pc->code, inst->opcode, 0xFF))
+          if (!bc_emit(pc->code, inst->opcode, 0xFF, inst->sta))
             goto error;
           Xen_size_t argpos = pc->code->bc_size;
           for (Xen_size_t j = 0; j < XEN_ULONG_SIZE; j++) {
-            if (!bc_emit(pc->code, EXT_ARG_OP, 0x00))
+            if (!bc_emit(pc->code, EXT_ARG_OP, 0x00, inst->sta))
               goto error;
           }
           if (!reloc_add(&reloc_table, &reloc_count, &reloc_cap, inst, argpos))
             goto error;
         } else {
-          if (!bc_emit(pc->code, inst->opcode, (uint8_t)inst->oparg))
+          if (!bc_emit(pc->code, inst->opcode, (uint8_t)inst->oparg, inst->sta))
             goto error;
         }
       }
@@ -161,8 +163,8 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
       if (slot_idx >= pc->code->bc_size)
         goto error;
       bc_Instruct_t* slot = &pc->code->bc_array[slot_idx];
-      slot->bci_opcode = EXT_ARG_OP;
-      slot->bci_oparg = (uint8_t)((value >> (b * 8)) & 0xFF);
+      slot->hdr.bci_opcode = EXT_ARG_OP;
+      slot->hdr.bci_oparg = (uint8_t)((value >> (b * 8)) & 0xFF);
     }
   }
 
