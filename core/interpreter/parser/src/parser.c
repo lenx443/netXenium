@@ -109,6 +109,7 @@ static Xen_Instance* parser_block(Parser*);
 static Xen_Instance* parser_flow_stmt(Parser*);
 static Xen_Instance* parser_return_stmt(Parser*);
 static Xen_Instance* parser_implement_stmt(Parser*);
+static Xen_Instance* parser_throw_stmt(Parser*);
 
 static Xen_Instance* parser_program(Parser* p) {
   Xen_Instance* program =
@@ -1268,6 +1269,9 @@ Xen_Instance* parser_keyword(Parser* p) {
   if (strcmp(p->token.tkn_text, "implement") == 0) {
     return parser_implement_stmt(p);
   }
+  if (strcmp(p->token.tkn_text, "throw") == 0) {
+    return parser_throw_stmt(p);
+  }
   FErr("Unexpected token '%s'", p->token.tkn_text);
   return NULL;
 }
@@ -1526,6 +1530,27 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
     return NULL;
   }
   return impl_stmt;
+}
+
+Xen_Instance* parser_throw_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
+  }
+  Xen_Instance* throw_stmt =
+      Xen_AST_Node_New("ThrowStatement", NULL, p->token.sta);
+  if (!throw_stmt) {
+    return NULL;
+  }
+  parser_next(p);
+  Xen_Instance* except = parser_expr(p);
+  if (!except) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(throw_stmt, except)) {
+    return NULL;
+  }
+  return throw_stmt;
 }
 
 Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,

@@ -463,6 +463,14 @@ static void op_jump([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   JUMP(oparg);
 }
 
+static void op_throw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+                     [[maybe_unused]] Xen_ulong_t oparg) {
+  Xen_Instance* val = STACK_POP;
+  if (!Xen_VM_Except_Throw(val)) {
+    ERROR;
+  }
+}
+
 static void op_jump_if_true([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                             Xen_ulong_t oparg) {
   Xen_Instance* cond = STACK_POP;
@@ -721,6 +729,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [UNARY_NOT] = op_unary_not,
     [COPY] = op_copy,
     [PRINT_TOP] = op_print_top,
+    [THROW] = op_throw,
     [JUMP] = op_jump,
     [JUMP_IF_TRUE] = op_jump_if_true,
     [JUMP_IF_FALSE] = op_jump_if_false,

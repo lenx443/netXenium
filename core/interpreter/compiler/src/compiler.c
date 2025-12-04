@@ -296,6 +296,8 @@ static int compile_return_statement(Compiler*, Xen_Instance*);
 
 static int compile_implement_statement(Compiler*, Xen_Instance*);
 
+static int compile_throw_statement(Compiler*, Xen_Instance*);
+
 int compile_program(Compiler* c, Xen_Instance* node) {
   if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
     if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
@@ -399,6 +401,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "ImplementStatement") == 0) {
       if (!compile_implement_statement(c, stmt)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(stmt, "ThrowStatement") == 0) {
+      if (!compile_throw_statement(c, stmt)) {
         return 0;
       }
     } else {
@@ -2315,6 +2321,23 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   if (!emit(STORE, local_name, Xen_AST_Node_STA(node))) {
+    return 0;
+  }
+  return 1;
+}
+
+int compile_throw_statement(Compiler* c, Xen_Instance* node) {
+  Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
+  if (!expr) {
+    return 0;
+  }
+  if (Xen_AST_Node_Name_Cmp(expr, "Expr") != 0) {
+    return 0;
+  }
+  if (!compile_expr(c, expr)) {
+    return 0;
+  }
+  if (!emit(THROW, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
   return 1;
