@@ -68,7 +68,7 @@ static Xen_Instance* tuple_string(Xen_Instance* self, Xen_Instance* args,
     Xen_IGC_XPOP(roots);
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    stack = Xen_Attr_Index_Size_Get(args, 0);
+    stack = Xen_Tuple_Get_Index(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
       Xen_IGC_XPOP(roots);
       return NULL;

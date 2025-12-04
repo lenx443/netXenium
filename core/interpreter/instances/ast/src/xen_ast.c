@@ -74,7 +74,7 @@ Xen_Instance* Xen_AST_Node_Children(Xen_Instance* ast) {
 
 Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
-  return Xen_Attr_Index_Size_Get(ast->children, index);
+  return Xen_Vector_Get_Index(ast->children, index);
 }
 
 Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
@@ -133,7 +133,7 @@ static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
            is_last ? "  " : "│ ");
 
   for (size_t i = 0; i < n; i++) {
-    Xen_Instance* child = Xen_Attr_Index_Size_Get(children, i);
+    Xen_Instance* child = Xen_Vector_Get_Index(children, i);
     __AST_Node_Print(child, new_prefix, i == n - 1);
   }
 }

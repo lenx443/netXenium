@@ -13,6 +13,7 @@
 #include "xen_cstrings.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "IR Array", msg, ##__VA_ARGS__)
 
@@ -91,7 +92,7 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
         printf(" %ld (name?)\n", code->ir_array[i].oparg);
       } else {
         Xen_Instance* c_name =
-            Xen_Attr_Index_Size_Get(consts->c_names, code->ir_array[i].oparg);
+            Xen_Vector_Get_Index(consts->c_names, code->ir_array[i].oparg);
         printf(" %ld (%s)\n", code->ir_array[i].oparg,
                c_name ? Xen_String_As_CString(c_name) : "Null");
       }
@@ -101,8 +102,8 @@ void ir_print_block(block_node_ptr block, vm_Consts_ptr consts) {
         printf(" %ld (instance?)\n", code->ir_array[i].oparg);
       } else {
         char* val = NULL;
-        Xen_Instance* c_inst = Xen_Attr_Index_Size_Get(consts->c_instances,
-                                                       code->ir_array[i].oparg);
+        Xen_Instance* c_inst =
+            Xen_Vector_Get_Index(consts->c_instances, code->ir_array[i].oparg);
         if (c_inst) {
           Xen_Instance* string = Xen_Attr_Raw(c_inst);
           if (string) {

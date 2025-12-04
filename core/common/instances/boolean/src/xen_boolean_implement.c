@@ -14,6 +14,7 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 
 static Xen_Instance* boolean_alloc(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
@@ -21,7 +22,7 @@ static Xen_Instance* boolean_alloc(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
     Xen_Instance* boolean = Xen_Attr_Boolean(inst);
     if (!boolean) {
       return NULL;

@@ -22,6 +22,7 @@
 #include "xen_number.h"
 #include "xen_number_implement.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
@@ -56,7 +57,7 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* iterable = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* iterable = Xen_Tuple_Get_Index(args, 0);
     if (self == iterable) {
       return nil;
     }
@@ -100,7 +101,7 @@ static Xen_Instance* vector_string(Xen_Instance* self, Xen_Instance* args,
     Xen_IGC_XPOP(roots);
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    stack = Xen_Attr_Index_Size_Get(args, 0);
+    stack = Xen_Tuple_Get_Index(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
       Xen_IGC_XPOP(roots);
       return NULL;
@@ -240,7 +241,7 @@ static Xen_Instance* vector_push(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
   if (!Xen_Vector_Push(self, val)) {
     return NULL;
   }

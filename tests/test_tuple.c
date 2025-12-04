@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <string.h>
 
-#include "attrs.h"
 #include "instance.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -16,8 +15,8 @@ int main(int argc, char** argv) {
   Xen_Instance* tuple =
       Xen_Tuple_From_Array(2, (Xen_Instance*[]){foo, bar, NULL});
   assert(Xen_Nil_NEval(tuple));
-  Xen_Instance* index0 = Xen_Attr_Index_Size_Get(tuple, 0);
-  Xen_Instance* index1 = Xen_Attr_Index_Size_Get(tuple, 1);
+  Xen_Instance* index0 = Xen_Tuple_Get_Index(tuple, 0);
+  Xen_Instance* index1 = Xen_Tuple_Get_Index(tuple, 1);
   assert(index0);
   assert(index1);
   assert(Xen_Number_As_Int(index0) == 537);

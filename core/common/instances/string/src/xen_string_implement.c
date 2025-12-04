@@ -20,6 +20,7 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
@@ -29,7 +30,7 @@ static Xen_Instance* string_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
     Xen_Instance* rsult = Xen_Attr_String(val);
     if (!rsult) {
       return NULL;
@@ -112,7 +113,7 @@ static Xen_Instance* string_opr_eq(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
     return NULL;
 
-  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) == 0) {
     return Xen_True;
   }
@@ -126,7 +127,7 @@ static Xen_Instance* string_opr_ne(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
     return NULL;
 
-  Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
   if (strcmp(Xen_String_As_CString(self), Xen_String_As_CString(val)) != 0) {
     return Xen_True;
   }

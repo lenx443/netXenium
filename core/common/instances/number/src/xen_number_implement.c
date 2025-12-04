@@ -1,7 +1,6 @@
 #include <iso646.h>
 #include <stdint.h>
 
-#include "attrs.h"
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
@@ -21,6 +20,7 @@
 #include "xen_number_instance.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
@@ -30,7 +30,7 @@ static Xen_Instance* number_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* val = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
     Xen_Instance* rsult = NULL;
     if (Xen_IMPL(val) == &Xen_Number_Implement) {
       rsult = val;
@@ -143,7 +143,7 @@ static Xen_Instance* number_opr_pow(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* exp = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* exp = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Pow(self, exp);
   if (!result) {
     return NULL;
@@ -158,7 +158,7 @@ static Xen_Instance* number_opr_mul(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Mul(self, num);
   if (!result) {
     return NULL;
@@ -173,7 +173,7 @@ static Xen_Instance* number_opr_div(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Div(self, num);
   if (!result) {
     return NULL;
@@ -188,7 +188,7 @@ static Xen_Instance* number_opr_mod(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Mod(self, num);
   if (!result) {
     return NULL;
@@ -203,7 +203,7 @@ static Xen_Instance* number_opr_add(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Add(self, num);
   if (!result) {
     return NULL;
@@ -218,7 +218,7 @@ static Xen_Instance* number_opr_sub(Xen_Instance* self, Xen_Instance* args,
       Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_Number_Implement)
     return NULL;
 
-  Xen_Instance* num = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* result = Xen_Number_Sub(self, num);
   if (!result) {
     return NULL;
@@ -234,7 +234,7 @@ static Xen_Instance* number_opr_eq(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) == 0) {
     return Xen_True;
   }
@@ -249,7 +249,7 @@ static Xen_Instance* number_opr_ne(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) != 0) {
     return Xen_True;
   }
@@ -264,7 +264,7 @@ static Xen_Instance* number_opr_lt(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) < 0) {
     return Xen_True;
   }
@@ -279,7 +279,7 @@ static Xen_Instance* number_opr_le(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) <= 0) {
     return Xen_True;
   }
@@ -294,7 +294,7 @@ static Xen_Instance* number_opr_gt(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) > 0) {
     return Xen_True;
   }
@@ -309,7 +309,7 @@ static Xen_Instance* number_opr_ge(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* a = self;
-  Xen_Instance* b = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* b = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Number_Cmp(a, b) >= 0) {
     return Xen_True;
   }

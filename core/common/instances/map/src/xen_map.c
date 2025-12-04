@@ -133,7 +133,7 @@ int Xen_Map_Push_Map(Xen_Instance* map_dst, Xen_Instance* map_src) {
   }
   Xen_Instance* src_keys = Xen_Map_Keys(map_src);
   for (size_t i = 0; i < Xen_SIZE(src_keys); i++) {
-    Xen_Instance* key = Xen_Attr_Index_Size_Get(src_keys, i);
+    Xen_Instance* key = Xen_Vector_Get_Index(src_keys, i);
     Xen_Instance* value = Xen_Map_Get(map_src, key);
     if (!Xen_Map_Push_Pair(map_dst, (Xen_Map_Pair){key, value})) {
       return 0;

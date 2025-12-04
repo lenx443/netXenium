@@ -17,6 +17,7 @@
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
 
 static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
@@ -25,7 +26,7 @@ static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    Xen_Instance* exit_code = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* exit_code = Xen_Tuple_Get_Index(args, 0);
     if (Xen_IMPL(exit_code) != &Xen_Number_Implement) {
       return NULL;
     }
@@ -45,7 +46,7 @@ static Xen_Instance* fn_echo(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   if (Xen_SIZE(args) == 1) {
-    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
     if (!inst) {
       return NULL;
     }
@@ -79,7 +80,7 @@ static Xen_Instance* fn_print(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
-    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string) {
       return NULL;
@@ -96,7 +97,7 @@ static Xen_Instance* fn_println(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
-    Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, i);
+    Xen_Instance* inst = Xen_Tuple_Get_Index(args, i);
     Xen_Instance* string = Xen_Attr_String(inst);
     if (!string || Xen_Nil_Eval(string)) {
       return NULL;
@@ -146,7 +147,7 @@ static Xen_Instance* fn_size(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* size = Xen_Number_From_Int64(Xen_SIZE(inst));
   if (!size) {
     return NULL;
@@ -160,7 +161,7 @@ static Xen_Instance* fn_id(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* r_id = Xen_Number_From_Pointer(inst);
   if (!r_id) {
     return NULL;
@@ -174,7 +175,7 @@ static Xen_Instance* fn_impl(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* inst = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
   return (Xen_Instance*)Xen_IMPL(inst);
 }
 

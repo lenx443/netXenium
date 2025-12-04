@@ -58,7 +58,7 @@ static void op_nop([[maybe_unused]] VM_Run* vmr,
 static void op_push([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                     Xen_ulong_t oparg) {
   Xen_Instance* c_inst =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
   if (!c_inst) {
     ERROR;
   }
@@ -75,7 +75,7 @@ static void op_pop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
 static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                     Xen_ulong_t oparg) {
   Xen_Instance* c_name =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ERROR;
   }
@@ -90,7 +90,7 @@ static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
 static void op_load_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                          Xen_ulong_t oparg) {
   Xen_Instance* c_name =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ERROR;
   }
@@ -117,7 +117,7 @@ static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                          Xen_ulong_t oparg) {
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* attr =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   Xen_Instance* result = Xen_Attr_Get(inst, attr);
   if (!result) {
     ERROR;
@@ -128,7 +128,7 @@ static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
 static void op_store([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                      Xen_ulong_t oparg) {
   Xen_Instance* c_name =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ERROR;
   }
@@ -147,7 +147,7 @@ static void op_store([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
 static void op_store_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                           Xen_ulong_t oparg) {
   Xen_Instance* c_name =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
     ERROR;
   }
@@ -173,7 +173,7 @@ static void op_store_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
   Xen_Instance* attr =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_names, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!Xen_Attr_Set(inst, attr, value)) {
     ERROR;
   }
@@ -650,7 +650,7 @@ static void op_build_implement_nbase([[maybe_unused]] VM_Run* vmr,
 
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* ret =
-      Xen_Attr_Index_Size_Get(ctx->ctx_code->code.consts->c_instances, oparg);
+      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&vm->vm_ctx_stack);
   RunContext_ptr ctx_top =

@@ -514,7 +514,6 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_map(p);
   }
   if (!value) {
-    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* primary = Xen_AST_Node_New("Primary", NULL, p->token.sta);

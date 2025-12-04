@@ -21,6 +21,7 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 #include "xen_vector_implement.h"
@@ -100,7 +101,7 @@ static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
     Xen_IGC_XPOP(roots);
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
-    stack = Xen_Attr_Index_Size_Get(args, 0);
+    stack = Xen_Tuple_Get_Index(args, 0);
     if (Xen_IMPL(stack) != &Xen_Map_Implement) {
       Xen_IGC_XPOP(roots);
       return NULL;
@@ -215,7 +216,7 @@ static Xen_Instance* map_opr_get_index(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
   Xen_IGC_Push(key);
   Xen_Instance* value = Xen_Map_Get(self, key);
   if (!value) {
@@ -233,9 +234,9 @@ static Xen_Instance* map_opr_set_index(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_size_t roots = 0;
-  Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
   Xen_IGC_XPUSH(key, roots);
-  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 1);
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
   Xen_IGC_XPUSH(value, roots);
   if (!Xen_Map_Push_Pair(self, (Xen_Map_Pair){key, value})) {
     Xen_IGC_XPOP(roots);
@@ -251,7 +252,7 @@ static Xen_Instance* map_opr_has(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
-  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 0);
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 0);
   if (Xen_Map_Has(self, value)) {
     return Xen_True;
   }
@@ -271,8 +272,8 @@ static Xen_Instance* map_push(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 2) {
     return NULL;
   }
-  Xen_Instance* key = Xen_Attr_Index_Size_Get(args, 0);
-  Xen_Instance* value = Xen_Attr_Index_Size_Get(args, 1);
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
   if (!Xen_Map_Push_Pair(self, (Xen_Map_Pair){key, value})) {
     return NULL;
   }
