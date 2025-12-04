@@ -131,6 +131,7 @@ void Xen_VM_Except_Show(Xen_Source_Address* bt, Xen_size_t bt_count) {
     fputs("Type: ", stdout);
     puts(except->type);
   }
+  vm->except.active = 0;
 }
 
 int Xen_VM_Except_Throw(Xen_Instance* except_inst) {

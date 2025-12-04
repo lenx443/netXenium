@@ -497,8 +497,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_UNDEFINED, "!", 1);
     }
   } else {
-    advance(lexer);
     token = Token(lexer, TKN_UNDEFINED, &sf->sf_content[lexer->pos], 1);
+    advance(lexer);
   }
   return token;
 }

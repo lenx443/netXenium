@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <string.h>
@@ -6,10 +7,18 @@
 #include "lexer.h"
 #include "parser.h"
 #include "source_file.h"
+#include "vm.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_cstrings.h"
+#include "xen_except.h"
 #include "xen_typedefs.h"
+
+#define Err(msg) assert(Xen_VM_Except_Throw(Xen_Except_New("SyntaxError", msg)))
+
+#define FErr(msg, ...)                                                         \
+  assert(Xen_VM_Except_Throw(                                                  \
+      Xen_Except_New_CFormat("SyntaxError", msg, ##__VA_ARGS__)))
 
 static void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
@@ -115,6 +124,7 @@ static Xen_Instance* parser_program(Parser* p) {
     return NULL;
   }
   if (p->token.tkn_type != TKN_EOF) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   return program;
@@ -245,8 +255,10 @@ Xen_Instance* parser_stmt(Parser* p) {
 }
 
 Xen_Instance* parser_string(Parser* p) {
-  if (p->token.tkn_type != TKN_STRING)
+  if (p->token.tkn_type != TKN_STRING) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
+  }
   Xen_Instance* string =
       Xen_AST_Node_New("String", p->token.tkn_text, p->token.sta);
   if (!string) {
@@ -257,8 +269,10 @@ Xen_Instance* parser_string(Parser* p) {
 }
 
 Xen_Instance* parser_number(Parser* p) {
-  if (p->token.tkn_type != TKN_NUMBER)
+  if (p->token.tkn_type != TKN_NUMBER) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
+  }
   Xen_Instance* number =
       Xen_AST_Node_New("Number", p->token.tkn_text, p->token.sta);
   if (!number) {
@@ -270,6 +284,7 @@ Xen_Instance* parser_number(Parser* p) {
 
 Xen_Instance* parser_nil(Parser* p) {
   if (p->token.tkn_type != TKN_DOUBLE_QUESTION) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* expr_nil = Xen_AST_Node_New("Nil", NULL, p->token.sta);
@@ -281,8 +296,10 @@ Xen_Instance* parser_nil(Parser* p) {
 }
 
 Xen_Instance* parser_literal(Parser* p) {
-  if (p->token.tkn_type != TKN_IDENTIFIER)
+  if (p->token.tkn_type != TKN_IDENTIFIER) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
+  }
   Xen_Instance* literal =
       Xen_AST_Node_New("Literal", p->token.tkn_text, p->token.sta);
   if (!literal) {
@@ -293,8 +310,10 @@ Xen_Instance* parser_literal(Parser* p) {
 }
 
 Xen_Instance* parser_property(Parser* p) {
-  if (p->token.tkn_type != TKN_PROPERTY)
+  if (p->token.tkn_type != TKN_PROPERTY) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
+  }
   Xen_Instance* property =
       Xen_AST_Node_New("Property", p->token.tkn_text, p->token.sta);
   if (!property) {
@@ -305,8 +324,10 @@ Xen_Instance* parser_property(Parser* p) {
 }
 
 Xen_Instance* parser_parent(Parser* p) {
-  if (p->token.tkn_type != TKN_LPARENT)
+  if (p->token.tkn_type != TKN_LPARENT) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
+  }
   parser_next(p);
   Xen_Instance* parent = Xen_AST_Node_New("Parent", NULL, p->token.sta);
   if (!parent) {
@@ -319,6 +340,7 @@ Xen_Instance* parser_parent(Parser* p) {
   }
   skip_newline(p);
   if (p->token.tkn_type != TKN_RPARENT) {
+    Err("Unclosed '('");
     return NULL;
   }
   parser_next(p);
@@ -330,6 +352,7 @@ Xen_Instance* parser_parent(Parser* p) {
 
 Xen_Instance* parser_map(Parser* p) {
   if (p->token.tkn_type != TKN_LBRACE) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* map = Xen_AST_Node_New("Map", NULL, p->token.sta);
@@ -373,6 +396,7 @@ Xen_Instance* parser_map(Parser* p) {
       return NULL;
     }
   } else {
+    Err("Invalid key in map literal");
     return NULL;
   }
   skip_newline(p);
@@ -428,6 +452,7 @@ Xen_Instance* parser_map(Parser* p) {
         return NULL;
       }
     } else {
+      Err("Invalid key in map literal");
       return NULL;
     }
     skip_newline(p);
@@ -452,6 +477,7 @@ Xen_Instance* parser_map(Parser* p) {
     }
   }
   if (p->token.tkn_type != TKN_RBRACE) {
+    Err("Unclosed '{'");
     return NULL;
   }
   parser_next(p);
@@ -488,6 +514,7 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_map(p);
   }
   if (!value) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* primary = Xen_AST_Node_New("Primary", NULL, p->token.sta);
@@ -556,6 +583,7 @@ Xen_Instance* parser_factor(Parser* p) {
     }
     return lhs;
   }
+  FErr("Unexpected token '%s'", p->token.tkn_text);
   return NULL;
 }
 
@@ -811,6 +839,7 @@ Xen_Instance* parser_function(Parser* p) {
       return NULL;
     }
     if (p->token.tkn_type != TKN_RBRACE) {
+      Err("Unclosed '{'");
       return NULL;
     }
     parser_next(p);
@@ -828,6 +857,7 @@ Xen_Instance* parser_function(Parser* p) {
 
 Xen_Instance* parser_function_arg_tail(Parser* p) {
   if (p->token.tkn_type != TKN_COMMA) {
+    FErr("Expected COMMA but found '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
@@ -983,6 +1013,7 @@ Xen_Instance* parser_suffix(Parser* p) {
       return NULL;
     }
   } else {
+    Err("Invalid suffix");
     return NULL;
   }
   if (is_suffix(p)) {
@@ -1053,6 +1084,7 @@ Xen_Instance* parser_assignment(Parser* p) {
 
 Xen_Instance* parser_call(Parser* p) {
   if (p->token.tkn_type != TKN_LPARENT) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
@@ -1089,6 +1121,7 @@ Xen_Instance* parser_call(Parser* p) {
 
 Xen_Instance* parser_arg_tail(Parser* p) {
   if (p->token.tkn_type != TKN_COMMA) {
+    FErr("Expected COMMA but found '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
@@ -1167,6 +1200,7 @@ Xen_Instance* parser_arg_assignment(Parser* p) {
 
 Xen_Instance* parser_index(Parser* p) {
   if (p->token.tkn_type != TKN_LBRACKET) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
@@ -1179,6 +1213,7 @@ Xen_Instance* parser_index(Parser* p) {
     return NULL;
   }
   if (p->token.tkn_type != TKN_RBRACKET) {
+    Err("Unclosed '['");
     return NULL;
   }
   parser_next(p);
@@ -1190,10 +1225,12 @@ Xen_Instance* parser_index(Parser* p) {
 
 Xen_Instance* parser_attr(Parser* p) {
   if (p->token.tkn_type != TKN_ATTR) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
   if (p->token.tkn_type != TKN_IDENTIFIER) {
+    Err("Identifier expected");
     return NULL;
   }
   const char* ident = Xen_CString_Dup(p->token.tkn_text);
@@ -1232,11 +1269,13 @@ Xen_Instance* parser_keyword(Parser* p) {
   if (strcmp(p->token.tkn_text, "implement") == 0) {
     return parser_implement_stmt(p);
   }
+  FErr("Unexpected token '%s'", p->token.tkn_text);
   return NULL;
 }
 
 Xen_Instance* parser_if_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* if_stmt = Xen_AST_Node_New("IfStatement", NULL, p->token.sta);
@@ -1248,9 +1287,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   if (!condition) {
     return NULL;
   }
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
+  skip_newline(p);
   Xen_Instance* then = parser_block(p);
   if (!then) {
     return NULL;
@@ -1274,9 +1311,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     if (!elif_condition) {
       return NULL;
     }
-    while (p->token.tkn_type == TKN_NEWLINE) {
-      parser_next(p);
-    }
+    skip_newline(p);
     Xen_Instance* elif_then = parser_block(p);
     if (!elif_then) {
       return NULL;
@@ -1296,9 +1331,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
   if (p->token.tkn_type == TKN_KEYWORD &&
       strcmp(p->token.tkn_text, "else") == 0) {
     parser_next(p);
-    while (p->token.tkn_type == TKN_NEWLINE) {
-      parser_next(p);
-    }
+    skip_newline(p);
     Xen_Instance* els = parser_block(p);
     if (!els) {
       return NULL;
@@ -1312,6 +1345,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
 
 Xen_Instance* parser_while_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* while_stmt =
@@ -1324,9 +1358,7 @@ Xen_Instance* parser_while_stmt(Parser* p) {
   if (!condition) {
     return NULL;
   }
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
+  skip_newline(p);
   Xen_Instance* wdo = parser_block(p);
   if (!wdo) {
     return NULL;
@@ -1342,6 +1374,7 @@ Xen_Instance* parser_while_stmt(Parser* p) {
 
 Xen_Instance* parser_for_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* for_stmt = Xen_AST_Node_New("ForStatement", NULL, p->token.sta);
@@ -1355,6 +1388,7 @@ Xen_Instance* parser_for_stmt(Parser* p) {
   }
   if (p->token.tkn_type != TKN_KEYWORD ||
       strcmp(p->token.tkn_text, "in") != 0) {
+    Err("Missing 'in' in for loop");
     return NULL;
   }
   parser_next(p);
@@ -1362,9 +1396,7 @@ Xen_Instance* parser_for_stmt(Parser* p) {
   if (!expr) {
     return NULL;
   }
-  while (p->token.tkn_type == TKN_NEWLINE) {
-    parser_next(p);
-  }
+  skip_newline(p);
   Xen_Instance* fdo = parser_block(p);
   if (!fdo) {
     return NULL;
@@ -1383,6 +1415,7 @@ Xen_Instance* parser_for_stmt(Parser* p) {
 
 Xen_Instance* parser_block(Parser* p) {
   if (p->token.tkn_type != TKN_BLOCK) {
+    Err("Invalid block syntax");
     return NULL;
   }
   parser_next(p);
@@ -1402,6 +1435,7 @@ Xen_Instance* parser_block(Parser* p) {
       return NULL;
     }
     if (p->token.tkn_type != TKN_RBRACE) {
+      Err("Unclosed '{'");
       return NULL;
     }
     parser_next(p);
@@ -1419,6 +1453,7 @@ Xen_Instance* parser_block(Parser* p) {
 
 Xen_Instance* parser_flow_stmt(Parser* p) {
   if (!is_flow_keyword(p)) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* flow =
@@ -1432,6 +1467,7 @@ Xen_Instance* parser_flow_stmt(Parser* p) {
 
 Xen_Instance* parser_return_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   Xen_Instance* return_stmt =
@@ -1454,10 +1490,12 @@ Xen_Instance* parser_return_stmt(Parser* p) {
 
 Xen_Instance* parser_implement_stmt(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
+    FErr("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
   parser_next(p);
   if (p->token.tkn_type != TKN_IDENTIFIER) {
+    Err("Invalid name for implementation");
     return NULL;
   }
   Xen_Instance* impl_stmt =
@@ -1499,6 +1537,10 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
   Parser parser = {&lexer, {0, "\0", {0}}};
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
+  if (Xen_VM_Except_Active()) {
+    Xen_VM_Except_Show(&parser.token.sta, 1);
+    return NULL;
+  }
   if (!ast_program) {
 #ifndef NDEBUG
     Xen_Source_File* sf = globals_sources->st_files[sf_id];
