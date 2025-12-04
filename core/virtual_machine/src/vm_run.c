@@ -17,6 +17,7 @@
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
+#include "source_file.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_instructs.h"
@@ -766,12 +767,33 @@ Xen_Instance* vm_run(Xen_size_t id) {
   Xen_ssize_t previous_offset = -1;
 #endif
   bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
+  Xen_Source_Address* bt = NULL;
+  Xen_size_t bt_count = 0;
+  Xen_size_t bt_cap = 0;
   while (
       (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
       ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
           id &&
       !vmr.halt && !program.closed) {
     if (Xen_VM_Except_Active()) {
+      while ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
+             ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+                     ->ctx_id >= id) {
+        if (bt_count >= bt_cap) {
+          Xen_size_t new_cap = (bt_cap == 0) ? 4 : bt_cap * 2;
+          bt = Xen_Realloc(bt, new_cap * sizeof(Xen_Source_Address));
+          bt_cap = new_cap;
+        }
+        bt[bt_count++] =
+            ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+                ->ctx_code->code.code
+                ->bc_array[((RunContext_ptr)run_context_stack_peek_top(
+                                &vm->vm_ctx_stack))
+                               ->ctx_ip -
+                           1]
+                .sta;
+        run_context_stack_pop_top(&vm->vm_ctx_stack);
+      }
       goto except;
     }
     RunContext_ptr ctx =
@@ -803,13 +825,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
   return vmr.retval;
 
 except:
-  while (
-      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
-      ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
-          id) {
-    run_context_stack_pop_top(&vm->vm_ctx_stack);
-  }
-  Xen_VM_Except_Show(&previous_instruct.sta, 1);
+  Xen_VM_Except_Show(bt, bt_count);
   return NULL;
 }
 
