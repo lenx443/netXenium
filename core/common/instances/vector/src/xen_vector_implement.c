@@ -203,7 +203,6 @@ static Xen_Instance* vector_opr_get_index(Xen_Instance* self,
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
-    Xen_VM_Except_Throw(Xen_Except_New("IndexError", NULL));
     return NULL;
   }
   return ((Xen_Vector*)self)->values[index];

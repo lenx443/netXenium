@@ -26,6 +26,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
+#include "xen_except.h"
 #include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -79,9 +80,10 @@ static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (!c_name) {
     ERROR;
   }
-  Xen_Instance* inst =
-      Xen_VM_Load_Instance(Xen_String_As_CString(c_name), ctx->ctx_id);
+  Xen_c_string_t name = Xen_String_As_CString(c_name);
+  Xen_Instance* inst = Xen_VM_Load_Instance(name, ctx->ctx_id);
   if (!inst) {
+    Xen_UndefName(name);
     ERROR;
   }
   STACK_PUSH(inst);
@@ -94,9 +96,10 @@ static void op_load_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   if (!c_name) {
     ERROR;
   }
-  Xen_Instance* inst =
-      xen_register_prop_get(Xen_String_As_CString(c_name), ctx->ctx_id);
+  Xen_c_string_t reg = Xen_String_As_CString(c_name);
+  Xen_Instance* inst = xen_register_prop_get(reg, ctx->ctx_id);
   if (!inst) {
+    Xen_UndefReg(reg);
     ERROR;
   }
   STACK_PUSH(inst);
@@ -108,6 +111,7 @@ static void op_load_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
   if (!rsult) {
+    Xen_IndexError(index);
     ERROR;
   }
   STACK_PUSH(rsult);
@@ -120,6 +124,7 @@ static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   Xen_Instance* result = Xen_Attr_Get(inst, attr);
   if (!result) {
+    Xen_AttrError(Xen_String_As_CString(attr));
     ERROR;
   }
   STACK_PUSH(result);
@@ -164,6 +169,7 @@ static void op_store_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
   if (!Xen_Attr_Index_Set(inst, index, value)) {
+    Xen_IndexError_Store(index);
     ERROR;
   }
 }
@@ -175,6 +181,7 @@ static void op_store_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* attr =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!Xen_Attr_Set(inst, attr, value)) {
+    Xen_AttrError_Store(Xen_String_As_CString(attr));
     ERROR;
   }
 }
@@ -225,6 +232,7 @@ static void op_make_vector_from_iterable([[maybe_unused]] VM_Run* vmr,
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
+    Xen_IterError(iterable);
     ERROR;
   }
   Xen_Instance* vector = Xen_Vector_New();
@@ -312,11 +320,13 @@ static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Dealloc(args_array);
   Xen_Instance* callable = STACK_POP;
   if (Xen_IMPL(callable)->__callable == NULL) {
+    Xen_CallError_Impl(callable);
     ERROR;
   }
   Xen_IGC_Push(args);
   Xen_IGC_Push(callable);
   if (!Xen_IMPL(callable)->__callable(callable, args, nil)) {
+    Xen_CallError(callable);
     Xen_IGC_XPOP(2);
     ERROR;
   }
@@ -360,11 +370,13 @@ static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Dealloc(args_array);
   Xen_Instance* callable = STACK_POP;
   if (Xen_IMPL(callable)->__callable == NULL) {
+    Xen_CallError_Impl(callable);
     Xen_IGC_XPOP(roots);
     ERROR;
   }
   Xen_IGC_XPUSH(callable, roots);
   if (!Xen_IMPL(callable)->__callable(callable, args, kwargs)) {
+    Xen_CallError(callable);
     Xen_IGC_XPOP(roots);
     ERROR;
   }
@@ -379,6 +391,7 @@ static void op_binaryop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_Push(second);
   Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
   if (!rsult) {
+    Xen_OprError();
     Xen_IGC_XPOP(2);
     ERROR;
   }
@@ -391,13 +404,16 @@ static void op_unary_positive([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
   if (!method) {
+    Xen_OprError();
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
+    Xen_OprError();
     ERROR;
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
+    Xen_OprError();
     ERROR;
   }
   STACK_PUSH(result);
@@ -408,13 +424,16 @@ static void op_unary_negative([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
   if (!method) {
+    Xen_OprError();
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
+    Xen_OprError();
     ERROR;
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
+    Xen_OprError();
     ERROR;
   }
   STACK_PUSH(result);
@@ -425,13 +444,16 @@ static void op_unary_not([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
   if (!method) {
+    Xen_OprError();
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
+    Xen_OprError();
     ERROR;
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
+    Xen_OprError();
     ERROR;
   }
   STACK_PUSH(result);
@@ -467,6 +489,7 @@ static void op_throw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                      [[maybe_unused]] Xen_ulong_t oparg) {
   Xen_Instance* val = STACK_POP;
   if (!Xen_VM_Except_Throw(val)) {
+    Xen_ThrowError();
     ERROR;
   }
 }
@@ -500,6 +523,7 @@ static void op_iter_get([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
+    Xen_IterError(iterable);
     ERROR;
   }
   STACK_PUSH(iter);
@@ -522,6 +546,7 @@ static void op_list_unpack([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_ListError(seq);
     ERROR;
   }
   if (oparg != Xen_SIZE(seq)) {
@@ -541,6 +566,7 @@ static void op_list_unpack_start([[maybe_unused]] VM_Run* vmr,
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_ListError(seq);
     ERROR;
   }
   Xen_size_t seq_size = Xen_SIZE(seq);
@@ -575,6 +601,7 @@ static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
+    Xen_ListError(seq);
     ERROR;
   }
   Xen_size_t seq_size = Xen_SIZE(seq);
