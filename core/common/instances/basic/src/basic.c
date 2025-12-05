@@ -18,8 +18,10 @@
 
 static void basic_trace(Xen_GCHeader* h) {
   struct __Implement* impl = (struct __Implement*)h;
-  if_nil_neval(impl->__props) {
+  if (impl->__props && Xen_Nil_NEval(impl->__props)) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__props);
+  }
+  if (impl->__base && Xen_Nil_NEval((Xen_Instance*)impl->__base)) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__base);
   }
 }

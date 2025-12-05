@@ -813,6 +813,11 @@ Xen_Instance* vm_run(Xen_size_t id) {
       printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
              previous_offset);
 #endif
+      while ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
+             ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+                     ->ctx_id >= id) {
+        run_context_stack_pop_top(&vm->vm_ctx_stack);
+      }
       return NULL;
     }
     if (!ctx->ctx_running) {

@@ -30,8 +30,17 @@ static Xen_Instance* string_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
+    Xen_Instance* stack = NULL;
+    if (kwargs && Xen_Nil_NEval(kwargs)) {
+      stack = Xen_Map_Get_Str(kwargs, "stack");
+    }
     Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
-    Xen_Instance* rsult = Xen_Attr_String(val);
+    Xen_Instance* rsult = NULL;
+    if (stack) {
+      rsult = Xen_Attr_String_Stack(val, stack);
+    } else {
+      rsult = Xen_Attr_String(val);
+    }
     if (!rsult) {
       return NULL;
     }
