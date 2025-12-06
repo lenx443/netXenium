@@ -14,6 +14,7 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_tuple.h"
+#include "xen_typedefs.h"
 
 Xen_Instance* Xen_Attr_Get_NBase(Xen_Instance* inst, Xen_Instance* attr) {
   if (!inst || !attr) {
@@ -50,22 +51,29 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   if (!Xen_IMPL(inst)->__get_attr) {
     return NULL;
   }
+  Xen_size_t roots = 0;
   Xen_Instance* args = Xen_Tuple_From_Array(1, &attr);
   if (!args) {
     return NULL;
   }
-  Xen_IGC_Push(args);
+  Xen_IGC_XPUSH(args, roots);
   Xen_Instance* current = inst;
   while (current != NULL) {
     Xen_Instance* result = Xen_VM_Call_Native_Function(
         Xen_IMPL(current)->__get_attr, current, args, nil);
     if (result) {
-      Xen_IGC_Pop();
+      Xen_IGC_XPOP(roots);
       return result;
     }
-    current = Xen_Attr_Get_NBase(current, Xen_String_From_CString("__base"));
+    Xen_Instance* str = Xen_String_From_CString("__base");
+    if (!str) {
+      Xen_IGC_XPOP(roots);
+      return NULL;
+    }
+    Xen_IGC_XPUSH(str, roots);
+    current = Xen_Attr_Get_NBase(current, str);
   }
-  Xen_IGC_Pop();
+  Xen_IGC_XPOP(roots);
   return NULL;
 }
 

@@ -532,12 +532,15 @@ static void op_iter_get([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
 static void op_iter_for([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                         Xen_ulong_t oparg) {
   Xen_Instance* iter = STACK_POP;
+  Xen_IGC_Push(iter);
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
+    Xen_IGC_Pop();
     STACK_PUSH(nil);
     JUMP(oparg);
     return;
   }
+  Xen_IGC_Pop();
   STACK_PUSH(rsult);
 }
 

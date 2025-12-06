@@ -14,12 +14,14 @@
 #include "operators.h"
 #include "parser.h"
 #include "program_code.h"
+#include "source_file.h"
 #include "vm_consts.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
+#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_method.h"
@@ -38,6 +40,7 @@ typedef struct {
   struct CompileContext_Stack** cc_stack;
   uint8_t flags;
   uint8_t mode;
+  Xen_Source_Address sta;
 } Compiler;
 
 CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
@@ -245,7 +248,7 @@ static int compile_statement_list(Compiler*, Xen_Instance*);
 static int compile_statement(Compiler*, Xen_Instance*);
 
 static int compile_expr_statement(Compiler*, Xen_Instance*);
-static Xen_Instance* compile_expr_constant(int*, Xen_Instance*);
+static Xen_Instance* compile_expr_constant(int*, Compiler*, Xen_Instance*);
 static int compile_expr(Compiler*, Xen_Instance*);
 static int compile_expr_primary(Compiler*, Xen_Instance*);
 static int compile_expr_primary_string(Compiler*, Xen_Instance*);
@@ -435,7 +438,8 @@ int compile_expr_statement(Compiler* c, Xen_Instance* node) {
   return 1;
 }
 
-Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
+Xen_Instance* compile_expr_constant(int* error, Compiler* c,
+                                    Xen_Instance* node) {
   *error = 1;
   if (Xen_AST_Node_Name_Cmp(node, "Expr") == 0) {
     Xen_Instance* expr = Xen_AST_Node_Get_Child(node, 0);
@@ -451,7 +455,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = 0;
       return NULL;
     }
-    Xen_Instance* result = compile_expr_constant(error, expr);
+    Xen_Instance* result = compile_expr_constant(error, c, expr);
     if (!result) {
       return NULL;
     }
@@ -480,7 +484,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = -1;
       return NULL;
     }
-    Xen_Instance* result = compile_expr_constant(error, expr);
+    Xen_Instance* result = compile_expr_constant(error, c, expr);
     if (!result) {
       return NULL;
     }
@@ -497,7 +501,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = 0;
       return NULL;
     }
-    Xen_Instance* result = compile_expr_constant(error, primary);
+    Xen_Instance* result = compile_expr_constant(error, c, primary);
     if (!result) {
       return NULL;
     }
@@ -514,7 +518,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       *error = -1;
       return NULL;
     }
-    Xen_Instance* primary = compile_expr_constant(error, unary);
+    Xen_Instance* primary = compile_expr_constant(error, c, unary);
     if (!primary) {
       return NULL;
     }
@@ -523,6 +527,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__positive", nil, nil);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_Pop();
         *error = -1;
         return NULL;
@@ -533,6 +539,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__negative", nil, nil);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_Pop();
         *error = -1;
         return NULL;
@@ -543,6 +551,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__not", nil, nil);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_Pop();
         *error = -1;
         return NULL;
@@ -578,12 +588,12 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       return NULL;
     }
     Xen_size_t roots = 0;
-    Xen_Instance* lhs_expr = compile_expr_constant(error, lhs);
+    Xen_Instance* lhs_expr = compile_expr_constant(error, c, lhs);
     if (!lhs_expr) {
       return NULL;
     }
     Xen_IGC_XPUSH(lhs_expr, roots);
-    Xen_Instance* rhs_expr = compile_expr_constant(error, rhs);
+    Xen_Instance* rhs_expr = compile_expr_constant(error, c, rhs);
     if (!rhs_expr) {
       Xen_IGC_XPOP(roots);
       return NULL;
@@ -593,6 +603,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_POW);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -603,6 +615,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_MUL);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -613,6 +627,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_DIV);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -623,6 +639,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_MOD);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -633,6 +651,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_ADD);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -643,6 +663,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_SUB);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -653,6 +675,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_LT);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -663,6 +687,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_LE);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -673,6 +699,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_GT);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -683,6 +711,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_GE);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -693,6 +723,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_EQ);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -703,6 +735,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_NE);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -712,6 +746,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
     } else if (Xen_AST_Node_Value_Cmp(node, "and") == 0) {
       Xen_Instance* lhs_bool = Xen_Attr_Boolean(lhs_expr);
       if (!lhs_bool) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -725,6 +761,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
     } else if (Xen_AST_Node_Value_Cmp(node, "or") == 0) {
       Xen_Instance* lhs_bool = Xen_Attr_Boolean(lhs_expr);
       if (!lhs_bool) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -739,6 +777,8 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_HAS);
       if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
         Xen_IGC_XPOP(roots);
         *error = -1;
         return NULL;
@@ -760,7 +800,7 @@ Xen_Instance* compile_expr_constant(int* error, Xen_Instance* node) {
     Xen_size_t roots = 0;
     for (Xen_size_t idx = 0; idx < count; idx++) {
       Xen_Instance* expr = Xen_AST_Node_Get_Child(node, idx);
-      Xen_Instance* value = compile_expr_constant(error, expr);
+      Xen_Instance* value = compile_expr_constant(error, c, expr);
       if (!value) {
         Xen_IGC_XPOP(roots);
         Xen_Dealloc(values);
@@ -1163,7 +1203,7 @@ int compile_expr_primary_suffix_attr(Compiler* c, Xen_Instance* node) {
 
 int compile_expr_unary(Compiler* c, Xen_Instance* node) {
   int error;
-  Xen_Instance* constant_value = compile_expr_constant(&error, node);
+  Xen_Instance* constant_value = compile_expr_constant(&error, c, node);
   if (constant_value) {
     Xen_ssize_t co_idx = co_push_instance(constant_value);
     if (co_idx == -1) {
@@ -1225,7 +1265,7 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
 
 int compile_expr_binary(Compiler* c, Xen_Instance* node) {
   int error;
-  Xen_Instance* constant_value = compile_expr_constant(&error, node);
+  Xen_Instance* constant_value = compile_expr_constant(&error, c, node);
   if (constant_value) {
     Xen_ssize_t co_idx = co_push_instance(constant_value);
     if (co_idx == -1) {
@@ -1610,7 +1650,7 @@ Xen_Instance* compile_expr_function_arg_assigment(Compiler* c,
 
 int compile_expr_list(Compiler* c, Xen_Instance* node) {
   int error;
-  Xen_Instance* constant_value = compile_expr_constant(&error, node);
+  Xen_Instance* constant_value = compile_expr_constant(&error, c, node);
   if (constant_value) {
     Xen_ssize_t co_idx = co_push_instance(constant_value);
     if (co_idx == -1) {
@@ -2346,9 +2386,13 @@ int compile_throw_statement(Compiler* c, Xen_Instance* node) {
 int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
                 Xen_Instance* ast) {
   struct CompileContext_Stack* loop_stack = NULL;
-  Compiler c = {b_list, b_current, &loop_stack, 0, mode};
+  Compiler c = {b_list, b_current, &loop_stack, 0, mode, Xen_AST_Node_STA(ast)};
   if (!compile_program(&c, ast)) {
     assert(loop_stack == NULL);
+    if (Xen_VM_Except_Active()) {
+      Xen_VM_Except_Show(&c.sta, 1);
+      return 0;
+    }
     return 0;
   }
   assert(loop_stack == NULL);

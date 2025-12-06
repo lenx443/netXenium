@@ -507,6 +507,9 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_parent(p);
   } else if (p->token.tkn_type == TKN_LBRACE) {
     value = parser_map(p);
+  } else {
+    Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
   }
   if (!value) {
     return NULL;

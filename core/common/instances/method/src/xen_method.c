@@ -13,6 +13,7 @@
 #include "xen_method_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
+#include "xen_typedefs.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
@@ -37,6 +38,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
   if (Xen_IMPL(method_inst) != &Xen_Method_Implement) {
     return NULL;
   }
+  Xen_size_t roots = 0;
   Xen_Method* method = (Xen_Method*)method_inst;
   Xen_Function_ptr fun = (Xen_Function_ptr)method->function;
   Xen_Instance* ret = NULL;
@@ -93,6 +95,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
       run_context_stack_pop_top(&vm->vm_ctx_stack);
       return NULL;
     }
+    Xen_IGC_XPUSH(defaults_it, roots);
     Xen_Instance* default_name = NULL;
     while ((default_name = Xen_Attr_Next(defaults_it)) != NULL) {
       if (!Xen_Map_Has(((RunContext_ptr)fun_ctx)->ctx_instances,
@@ -102,6 +105,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
         if (!Xen_Map_Push_Pair(((RunContext_ptr)fun_ctx)->ctx_instances,
                                (Xen_Map_Pair){default_name, default_value})) {
           run_context_stack_pop_top(&vm->vm_ctx_stack);
+          Xen_IGC_XPOP(roots);
           return NULL;
         }
       }
@@ -115,6 +119,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
     }
     ret = vm_run(((RunContext_ptr)fun_ctx)->ctx_id);
     if (!ret) {
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
   } else if (fun->fun_type == 2) {
