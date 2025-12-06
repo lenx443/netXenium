@@ -60,6 +60,8 @@ typedef struct {
   Xen_size_t line;
   Xen_size_t column;
   Xen_size_t pos;
+  Xen_size_t start_line;
+  Xen_size_t start_column;
 } Lexer;
 
 void skip_whitespace(Lexer*);

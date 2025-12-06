@@ -17,6 +17,11 @@ static inline Xen_size_t xadvance(Lexer* lexer) {
   return ++lexer->pos;
 }
 
+static inline void token_start(Lexer* lexer) {
+  lexer->start_line = lexer->line;
+  lexer->start_column = lexer->column;
+}
+
 static inline Lexer_Token Token(Lexer* lexer, Lexer_Token_Type type,
                                 Xen_c_string_t text, Xen_size_t size) {
   if (size >= LXR_TOKEN_SIZE) {
@@ -26,7 +31,8 @@ static inline Lexer_Token Token(Lexer* lexer, Lexer_Token_Type type,
   token.tkn_type = type;
   strncpy(token.tkn_text, text, size);
   token.tkn_text[size] = '\0';
-  token.sta = (Xen_Source_Address){lexer->sf_id, lexer->line, lexer->column};
+  token.sta = (Xen_Source_Address){lexer->sf_id, lexer->start_line,
+                                   lexer->start_column};
   return token;
 }
 
@@ -53,16 +59,20 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
 
   char c = sf->sf_content[lexer->pos];
   if (c == '\0') {
+    token_start(lexer);
     token = Token(lexer, TKN_EOF, "<EOF>", 5);
   } else if (c == '\n') {
+    token_start(lexer);
     advance(lexer);
     lexer->line++;
     lexer->column = 1;
     token = Token(lexer, TKN_NEWLINE, "<New-Line>", 10);
   } else if (c == ';' || c == '\n' || c == '\r') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_NEWLINE, "<New-Line>", 10);
   } else if (isalpha(c) || c == '_') {
+    token_start(lexer);
     size_t start = lexer->pos;
     while (isalnum(sf->sf_content[lexer->pos]) ||
            sf->sf_content[lexer->pos] == '_')
@@ -90,6 +100,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_IDENTIFIER, sf->sf_content + start, len);
     }
   } else if (c == '$') {
+    token_start(lexer);
     advance(lexer);
     size_t start = lexer->pos;
     while (isalnum(sf->sf_content[lexer->pos]) ||
@@ -98,6 +109,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     size_t len = lexer->pos - start;
     token = Token(lexer, TKN_PROPERTY, sf->sf_content + start, len);
   } else if (c == '"') {
+    token_start(lexer);
     advance(lexer);
 
     char buffer[1024];
@@ -217,6 +229,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token = Token(lexer, TKN_STRING, buffer, Xen_CString_Len(buffer));
     advance(lexer);
   } else if (c == '\'') {
+    token_start(lexer);
     advance(lexer);
 
     char buffer[1024];
@@ -336,6 +349,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token = Token(lexer, TKN_STRING, buffer, Xen_CString_Len(buffer));
     advance(lexer);
   } else if (isdigit(c)) {
+    token_start(lexer);
     if (c == '0') {
       advance(lexer);
       if (sf->sf_content[lexer->pos] == 'x' ||
@@ -403,12 +417,15 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_NUMBER, sf->sf_content + start, len);
     }
   } else if (c == '{') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_LBRACE, "{", 1);
   } else if (c == '}') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_RBRACE, "}", 1);
   } else if (c == '=') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '=') {
       advance(lexer);
@@ -420,27 +437,35 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_ASSIGNMENT, "=", 1);
     }
   } else if (c == '(') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_LPARENT, "(", 1);
   } else if (c == ')') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_RPARENT, ")", 1);
   } else if (c == '[') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_LBRACKET, "[", 1);
   } else if (c == ']') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_RBRACKET, "]", 1);
   } else if (c == '\\') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_ATTR, "\\", 1);
   } else if (c == ',') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_COMMA, ",", 1);
   } else if (c == ':') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_COLON, ":", 1);
   } else if (c == '?') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '?') {
       advance(lexer);
@@ -449,9 +474,11 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_QUESTION, "?", 1);
     }
   } else if (c == '+') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_ADD, "+", 1);
   } else if (c == '-') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '>') {
       advance(lexer);
@@ -460,6 +487,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_MINUS, "-", 1);
     }
   } else if (c == '*') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '*') {
       advance(lexer);
@@ -468,12 +496,15 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_MUL, "*", 1);
     }
   } else if (c == '/') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_DIV, "/", 1);
   } else if (c == '%') {
+    token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_MOD, "%", 1);
   } else if (c == '<') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '=') {
       advance(lexer);
@@ -482,6 +513,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_LT, "<", 1);
     }
   } else if (c == '>') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '=') {
       advance(lexer);
@@ -490,6 +522,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_GT, ">", 1);
     }
   } else if (c == '!') {
+    token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '=') {
       advance(lexer);
@@ -498,6 +531,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_UNDEFINED, "!", 1);
     }
   } else {
+    token_start(lexer);
     token = Token(lexer, TKN_UNDEFINED, &sf->sf_content[lexer->pos], 1);
     advance(lexer);
   }

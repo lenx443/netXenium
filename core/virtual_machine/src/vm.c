@@ -121,7 +121,7 @@ void Xen_VM_Except_Show(Xen_Source_Address* bt, Xen_size_t bt_count) {
   for (Xen_size_t i = 0; i < bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
            globals_sources->st_files[(Xen_size_t)bt[i].id]->sf_name, bt[i].line,
-           bt->column);
+           bt[i].column);
   }
   if (except->message) {
     fputs(except->type, stdout);
