@@ -1,85 +1,51 @@
-# netXenium
+## netXenium
 
 > Este código está en desarrollo: se pueden encontrar errores, bugs o partes incompletas. aquí se pone el código aún en desarrollo sin ninguna garantía de que funcione correctamente.
 
-**netXenium** es un programa en desarrollo que permite automatizar y operar tareas y ataques de red de alto y bajo nivel. Está diseñado para ser una herramienta flexible tanto para administradores como para investigadores de seguridad.
+### ¿Qué es netXenium?
 
-> **Advertencia:** Este software fue desarrollado con fines educativos y de investigación en entornos controlados o laborales. El desarrollador **no se hace responsable** del uso indebido que se le pueda dar.
+**netXenium es un lenguaje de scripting y un framework de red**, diseñado para automatizar tareas, controlar interfaces y dispositivos de transmisión de datos, y ejecutar scripts de alto nivel de forma segura, eficiente y multiplataforma.
 
-## Registros:
+### Tecnologías
 
-- [Modelo de programación orientada a registros](https://github.com/lenx443/netXenium/blob/dev/doc/es_registros.md)
+netXenium está escrito **completamente desde cero en C**, con su propio compilador y motor de ejecución.
+El runtime incluye:
 
-## Características actuales
+* **Máquina virtual basada en pila** optimizada para instrucciones de alto nivel.
+* **Runtime independiente**, sin dependencias externas.
+* **Tipado dinámico**.
+* **Introspección**.
+* **Soporte para programación orientada a objetos**.
+* **Sistema de excepciones propio**.
 
-- Shell interactiva con comandos específicos para operaciones de red.
-  - Soporte para navegacaión con flechas.
-  - Historial empleable (almacenamiento local en memoria y en archivo externo)
-  - Autocompletado interactivo con soporte para comandos y propiedades.
-  - Soporte para caracteres con codificación UTF-8.
-- Interfaz de línea de comandos colorida y dinámica.
-- Automatización básica de tareas comunes en redes.
-- Scripting reutilizable para automatizar tareas repetitivas.
-- Comandos internos como `help` y `exit` para facilitar el uso.
-- Manejo detallado de errores que emplea sistemas de logging para captar problemas internos
+Todo esto le permite lograr un rendimiento alto, control total y una arquitectura extensible enfocada en redes.
 
-## Requisitos
+### El Lenguaje
 
-- Lenguajes: Clang
-- Herramientas de construcción: CMake y Make
-- Sistema operativo **Linux**
-- Entorno Posix (glibc requerido)
+netXenium incorpora múltiples características que permiten desde scripts simples hasta flujos complejos y algoritmos avanzados:
 
-## Instalación
+* Flujo de control completo.
+* Declaración de funciones.
+* **Funciones de primera clase**.
+* **Closures**.
+* **UDT (tipos definidos por el usuario)** con implementaciones personalizadas.
+* Propagación y manejo de excepciones.
+* Otras características de alto nivel.
 
-### Opción 1: Descargar releases
+### Registros
 
-Puedes descargar binarios precompilados desde la sección [Releases](https://github.com/lenx443/netXenium/releases) del repositorio (si no están disponible en este momento se deberá usar la opción 2 hasta que se suban `releases`).
+netXenium cuenta con un modelo de registros que se basa en un nuevo modelo de flujo de datos y meta-programación, estos al igual que una variable actúan como referencias a un objeto, pero con diferencias muy particulares y la capacidad de modificar el comportamiento de estos.
 
-### Opción 2: Compilación manual
+[Leer más sobre el modelo de registros →](https://github.com/lenx443/netXenium/blob/dev/doc/es_registros.md)
 
-Instala las dependencias necesarias y compila el proyecto:
+### Autor
 
-```sh
-pkg update
-pkg install clang cmake make
-git clone https://github.com/lenx443/netXenium.git
-cd netXenium
-mkdir build && cd build
-cmake ..
-make
-```
+**[Lenx](https://github.com/lenx443)** es el creador y desarrollador activo de este proyecto.
+Contacto:
 
-Esto generará el binario `ntxenium` dentro del directorio `build`.
-
-## Uso
-
-Ejecuta el programa con permisos de superusuario:
-
-```sh
-sudo ./ntxenium
-```
-
-Dentro de la shell:
-
-1. Usa el comando `help` para ver la ayuda disponible.
-2. Usa el comando `help <cmd>` para ver una descripcion detallada
-3. Utiliza `exit` o `CTRL+C` para salir de la shell.
-
-## Autor
-
-**Lenx**\
-Proyecto de investigación 2024-2025
-<p>(C) 2024-2025 Lenx443 <menasalejandro153@gmail.com></p>
-
-## Contacto y Notas de Uso
-
-¿Has encontrado un error, tienes alguna sugerencia o necesitas ayuda?
-
-- Puedes [abrir un issue](https://github.com/lenx443/netXenium/issues) para reportar problemas o proponer mejoras.
-- También puedes ponerte en contacto conmigo a través de [mi perfil de GitHub](https://github.com/lenx443), donde encontrarás más información y enlaces a mis redes sociales.
+* **WhatsApp:** [+5351610913](https://wa.me/5351610913)
+* **Telegram:** [@lenx443](https://t.me/lenx443)
 
 ---
 
-**¡Recuerda!** netXenium debe ser usado únicamente en redes propias o en entornos de laboratorio controlado.
-
+© 2024–2025 Lenx443

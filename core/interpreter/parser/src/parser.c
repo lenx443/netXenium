@@ -104,6 +104,7 @@ static Xen_Instance* parser_flow_stmt(Parser*);
 static Xen_Instance* parser_return_stmt(Parser*);
 static Xen_Instance* parser_implement_stmt(Parser*);
 static Xen_Instance* parser_throw_stmt(Parser*);
+static Xen_Instance* parser_try_stmt(Parser*);
 
 static Xen_Instance* parser_program(Parser* p) {
   Xen_Instance* program =
@@ -1273,6 +1274,9 @@ Xen_Instance* parser_keyword(Parser* p) {
   if (strcmp(p->token.tkn_text, "throw") == 0) {
     return parser_throw_stmt(p);
   }
+  if (strcmp(p->token.tkn_text, "try") == 0) {
+    return parser_try_stmt(p);
+  }
   Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
   return NULL;
 }
@@ -1552,6 +1556,41 @@ Xen_Instance* parser_throw_stmt(Parser* p) {
     return NULL;
   }
   return throw_stmt;
+}
+
+Xen_Instance* parser_try_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
+  }
+  Xen_Instance* try_stmt = Xen_AST_Node_New("TryStatement", NULL, p->token.sta);
+  if (!try_stmt) {
+    return NULL;
+  }
+  parser_next(p);
+  skip_newline(p);
+  Xen_Instance* try_block = parser_block(p);
+  if (!try_block) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(try_stmt, try_block)) {
+    return NULL;
+  }
+  skip_newline(p);
+  if (p->token.tkn_type != TKN_KEYWORD ||
+      strcmp(p->token.tkn_text, "catch") != 0) {
+    return NULL;
+  }
+  parser_next(p);
+  skip_newline(p);
+  Xen_Instance* catch_block = parser_block(p);
+  if (!catch_block) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(try_stmt, catch_block)) {
+    return NULL;
+  }
+  return try_stmt;
 }
 
 Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,

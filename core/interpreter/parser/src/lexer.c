@@ -86,7 +86,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         strcmp(buffer, "for") == 0 || strcmp(buffer, "in") == 0 ||
         strcmp(buffer, "break") == 0 || strcmp(buffer, "continue") == 0 ||
         strcmp(buffer, "return") == 0 || strcmp(buffer, "implement") == 0 ||
-        strcmp(buffer, "throw") == 0) {
+        strcmp(buffer, "throw") == 0 || strcmp(buffer, "try") == 0 ||
+        strcmp(buffer, "catch") == 0) {
       token = Token(lexer, TKN_KEYWORD, sf->sf_content + start, len);
     } else if (strcmp(buffer, "has") == 0) {
       token = Token(lexer, TKN_HAS, sf->sf_content + start, len);
