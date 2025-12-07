@@ -329,6 +329,10 @@ Xen_Instance* parser_parent(Parser* p) {
     return NULL;
   }
   skip_newline(p);
+  if (!is_expr(p)) {
+    Xen_SyntaxError("Unclosed '('");
+    return NULL;
+  }
   Xen_Instance* expr = parser_expr(p);
   if (!expr) {
     return NULL;
@@ -1554,7 +1558,7 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
                          Xen_size_t file_size) {
   Xen_size_t sf_id = Xen_Source_Table_File_Push(
       globals_sources, Xen_Source_File_New(file_name, file_content, file_size));
-  Lexer lexer = {sf_id, 1, 0, 0, 1, 0};
+  Lexer lexer = {sf_id, 1, 1, 0, 1, 1};
   Parser parser = {&lexer, {0, "\0", {0}}};
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
