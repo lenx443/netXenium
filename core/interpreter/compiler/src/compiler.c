@@ -371,6 +371,8 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(stmt);
+      Xen_SyntaxError("Invalid statement inside implementation body.");
       return 0;
     }
   } else {
@@ -1154,15 +1156,21 @@ compile_expr_primary_suffix_call_arg_assignment(Compiler* c,
   Xen_Instance* lhs_expr = Xen_AST_Node_Get_Child(node, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_expr, "Expr") != 0 ||
       Xen_AST_Node_Children_Size(lhs_expr) != 1) {
+    c->sta = Xen_AST_Node_STA(lhs_expr);
+    Xen_SyntaxError("Invalid left-hand side in argument.");
     return NULL;
   }
   Xen_Instance* lhs_primary = Xen_AST_Node_Get_Child(lhs_expr, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_primary, "Primary") != 0 ||
       Xen_AST_Node_Children_Size(lhs_primary) != 1) {
+    c->sta = Xen_AST_Node_STA(lhs_primary);
+    Xen_SyntaxError("Invalid left-hand side in argument.");
     return NULL;
   }
   Xen_Instance* lhs_literal = Xen_AST_Node_Get_Child(lhs_primary, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_literal, "Literal") != 0) {
+    c->sta = Xen_AST_Node_STA(lhs_literal);
+    Xen_SyntaxError("Invalid left-hand side in argument.");
     return NULL;
   }
   Xen_Instance* name = Xen_String_From_CString(Xen_AST_Node_Value(lhs_literal));
@@ -1508,11 +1516,15 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_Instance* arg_primary = Xen_AST_Node_Get_Child(arg, 0);
       if (Xen_AST_Node_Name_Cmp(arg_primary, "Primary") != 0 ||
           Xen_AST_Node_Children_Size(arg_primary) != 1) {
+        c->sta = Xen_AST_Node_STA(arg_primary);
+        Xen_SyntaxError("Invalid function parameter definition.");
         Xen_IGC_XPOP(roots);
         return 0;
       }
       Xen_Instance* arg_literal = Xen_AST_Node_Get_Child(arg_primary, 0);
       if (Xen_AST_Node_Name_Cmp(arg_literal, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(arg_literal);
+        Xen_SyntaxError("Invalid function parameter definition.");
         Xen_IGC_XPOP(roots);
         return 0;
       }
@@ -1630,15 +1642,21 @@ Xen_Instance* compile_expr_function_arg_assigment(Compiler* c,
   Xen_Instance* lhs_expr = Xen_AST_Node_Get_Child(node, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_expr, "Expr") != 0 ||
       Xen_AST_Node_Children_Size(lhs_expr) != 1) {
+    c->sta = Xen_AST_Node_STA(lhs_expr);
+    Xen_SyntaxError("Invalid function parameter definition.");
     return NULL;
   }
   Xen_Instance* lhs_primary = Xen_AST_Node_Get_Child(lhs_expr, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_primary, "Primary") != 0 ||
       Xen_AST_Node_Children_Size(lhs_primary) != 1) {
+    c->sta = Xen_AST_Node_STA(lhs_primary);
+    Xen_SyntaxError("Invalid function parameter definition.");
     return NULL;
   }
   Xen_Instance* lhs_literal = Xen_AST_Node_Get_Child(lhs_primary, 0);
   if (Xen_AST_Node_Name_Cmp(lhs_literal, "Literal") != 0) {
+    c->sta = Xen_AST_Node_STA(lhs_literal);
+    Xen_SyntaxError("Invalid function parameter definition.");
     return NULL;
   }
   Xen_Instance* name = Xen_String_From_CString(Xen_AST_Node_Value(lhs_literal));
@@ -1749,6 +1767,8 @@ int compile_assignment_expr(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   } else {
+    c->sta = Xen_AST_Node_STA(expr);
+    Xen_SyntaxError("Invalid left-hand side in assignment.");
     return 0;
   }
   return 1;
@@ -1774,9 +1794,13 @@ int compile_assignment_expr_primary(Compiler* c, Xen_Instance* node) {
           return 0;
         }
       } else {
+        c->sta = Xen_AST_Node_STA(primary);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(node);
+      Xen_SyntaxError("Invalid left-hand side in assignment.");
       return 0;
     }
   } else {
@@ -1832,6 +1856,8 @@ int compile_assignment_expr_primary(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(primary);
+      Xen_SyntaxError("Invalid left-hand side in assignment.");
       return 0;
     }
   }
@@ -1873,7 +1899,6 @@ int compile_assignment_expr_primary_parent(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   return 1;
-  return 0;
 }
 
 int compile_assignment_expr_primary_suffix(Compiler* c, Xen_Instance* node) {
@@ -1917,6 +1942,8 @@ int compile_assignment_expr_primary_suffix(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   } else {
+    c->sta = Xen_AST_Node_STA(suffix);
+    Xen_SyntaxError("Invalid left-hand side in assignment.");
     return 0;
   }
   return 1;
@@ -1965,15 +1992,21 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
       continue;
     } else if (Xen_AST_Node_Name_Cmp(expr, "Unary") == 0) {
       if (starred) {
+        c->sta = Xen_AST_Node_STA(expr);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
       if (Xen_AST_Node_Value_Cmp(expr, "*") == 0) {
         starred = 1;
         starred_index = i;
       } else {
+        c->sta = Xen_AST_Node_STA(expr);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(expr);
+      Xen_SyntaxError("Invalid left-hand side in assignment.");
       return 0;
     }
   }
@@ -2017,12 +2050,16 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
         return 0;
       }
       if (Xen_AST_Node_Name_Cmp(primary, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(primary);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
       if (!compile_assignment_expr_primary(c, primary)) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(expr);
+      Xen_SyntaxError("Invalid left-hand side in assignment.");
       return 0;
     }
   }
@@ -2260,6 +2297,8 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(node);
+      Xen_SyntaxError("'break' used outside of a loop.");
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(node, "continue") == 0) {
@@ -2272,6 +2311,8 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(node);
+      Xen_SyntaxError("'continue' used outside of a loop.");
       return 0;
     }
   } else {
@@ -2302,6 +2343,8 @@ int compile_return_statement(Compiler* c, Xen_Instance* node) {
     }
     return 1;
   }
+  c->sta = Xen_AST_Node_STA(node);
+  Xen_SyntaxError("'return' used outside of a function.");
   return 0;
 }
 
