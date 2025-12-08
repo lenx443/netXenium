@@ -34,6 +34,9 @@ static STACK_EFFECT(iter_for_stack_effect, 0);
 static STACK_EFFECT(list_unpack_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_start_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_end_stack_effect, oparg - 1);
+static STACK_EFFECT(catch_stack_push_stack_effect, 0);
+static STACK_EFFECT(catch_stack_pop_stack_effect, 0);
+static STACK_EFFECT(catch_stack_type_stack_effect, 0);
 static STACK_EFFECT(build_implement_stack_effect, -1);
 static STACK_EFFECT(build_implement_nbase_stack_effect, 0);
 static STACK_EFFECT(return_stack_effect, 0);
@@ -87,6 +90,11 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
                            INSTRUCT_FLAG_ARG},
     [LIST_UNPACK_END] = {"LIST_UNPACK_END", list_unpack_end_stack_effect,
                          INSTRUCT_FLAG_ARG},
+    [CATCH_STACK_PUSH] = {"CATCH_STACK_PUSH", catch_stack_push_stack_effect,
+                          INSTRUCT_FLAG_ARG},
+    [CATCH_STACK_POP] = {"CATCH_STACK_POP", catch_stack_pop_stack_effect, 0},
+    [CATCH_STACK_TYPE] = {"CATCH_STACK_TYPE", catch_stack_type_stack_effect,
+                          INSTRUCT_FLAG_CO_INSTANCE},
     [BUILD_IMPLEMENT] = {"BUILD_IMPLEMENT", build_implement_stack_effect,
                          INSTRUCT_FLAG_CO_CALLABLE},
     [BUILD_IMPLEMENT_NBASE] = {"BUILD_IMPLEMENT_NBASE",

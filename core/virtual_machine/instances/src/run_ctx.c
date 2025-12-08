@@ -20,7 +20,7 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
   Xen_IGC_Push((Xen_Instance*)ctx);
   ctx->ctx_flags = CTX_FLAG_PROPS;
   ctx->ctx_id = 0;
-  ctx->ctx_retval = NULL;
+  ctx->ctx_catch_stack = NULL;
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
   ctx->ctx_error = 0;

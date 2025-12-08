@@ -1579,15 +1579,24 @@ Xen_Instance* parser_try_stmt(Parser* p) {
   skip_newline(p);
   if (p->token.tkn_type != TKN_KEYWORD ||
       strcmp(p->token.tkn_text, "catch") != 0) {
+    Xen_SyntaxError("'try' block requires a corresponding 'catch' block.");
     return NULL;
   }
   parser_next(p);
+  Xen_Instance* catch_type = parser_string(p);
+  if (!catch_type) {
+    Xen_SyntaxError("Invalid exception type in 'catch' clause.");
+    return NULL;
+  }
   skip_newline(p);
   Xen_Instance* catch_block = parser_block(p);
   if (!catch_block) {
     return NULL;
   }
   if (!Xen_AST_Node_Push_Child(try_stmt, catch_block)) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(try_stmt, catch_type)) {
     return NULL;
   }
   return try_stmt;

@@ -12,9 +12,6 @@
 
 static void frame_trace(Xen_GCHeader* h) {
   struct RunContext* ctx = (struct RunContext*)h;
-  if (ctx->ctx_retval) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_retval);
-  }
   if_nil_neval(ctx->ctx_closure) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_closure);
   }
@@ -51,7 +48,7 @@ static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   Xen_IGC_Push((Xen_Instance*)ctx_new);
   ctx_new->ctx_flags = 0;
   ctx_new->ctx_id = 0;
-  ctx_new->ctx_retval = NULL;
+  ctx_new->ctx_catch_stack = NULL;
   ctx_new->ctx_closure = nil;
   ctx_new->ctx_caller = NULL;
   ctx_new->ctx_self = nil;

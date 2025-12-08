@@ -301,6 +301,8 @@ static int compile_implement_statement(Compiler*, Xen_Instance*);
 
 static int compile_throw_statement(Compiler*, Xen_Instance*);
 
+static int compile_try_statement(Compiler*, Xen_Instance*);
+
 int compile_program(Compiler* c, Xen_Instance* node) {
   if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
     if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
@@ -410,6 +412,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "ThrowStatement") == 0) {
       if (!compile_throw_statement(c, stmt)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(stmt, "TryStatement") == 0) {
+      if (!compile_try_statement(c, stmt)) {
         return 0;
       }
     } else {
@@ -2423,6 +2429,80 @@ int compile_throw_statement(Compiler* c, Xen_Instance* node) {
   if (!emit(THROW, 0, Xen_AST_Node_STA(node))) {
     return 0;
   }
+  return 1;
+}
+
+int compile_try_statement(Compiler* c, Xen_Instance* node) {
+  B_PTR catch_block = B_NEW();
+  if (!catch_block) {
+    return 0;
+  }
+  if (!emit_jump(CATCH_STACK_PUSH, catch_block, Xen_AST_Node_STA(node))) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (Xen_AST_Node_Children_Size(node) != 3) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  Xen_Instance* type_node = Xen_AST_Node_Get_Child(node, 2);
+  Xen_Instance* type = Xen_String_From_CString(Xen_AST_Node_Value(type_node));
+  if (!type) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  Xen_ssize_t co_type_idx = co_push_instance(type);
+  if (co_type_idx == -1) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (!emit(CATCH_STACK_TYPE, co_type_idx, Xen_AST_Node_STA(type_node))) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  Xen_Instance* try_body = Xen_AST_Node_Get_Child(node, 0);
+  if (Xen_AST_Node_Name_Cmp(try_body, "Block") != 0) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (!compile_block(c, try_body)) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (!emit(CATCH_STACK_POP, 0, Xen_AST_Node_STA(node))) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  B_PTR try_end = B_NEW();
+  if (!try_end) {
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (!emit_jump(JUMP, try_end, Xen_AST_Node_STA(node))) {
+    B_FREE(try_end);
+    B_FREE(catch_block);
+    return 0;
+  }
+  if (!B_LIST_PUSH(catch_block)) {
+    B_FREE(try_end);
+    B_FREE(catch_block);
+    return 0;
+  }
+  B_SET_CURRENT(catch_block);
+  Xen_Instance* catch_body = Xen_AST_Node_Get_Child(node, 1);
+  if (Xen_AST_Node_Name_Cmp(catch_body, "Block") != 0) {
+    B_FREE(try_end);
+    return 0;
+  }
+  if (!compile_block(c, catch_body)) {
+    B_FREE(try_end);
+    return 0;
+  }
+  if (!B_LIST_PUSH(try_end)) {
+    B_FREE(try_end);
+    return 0;
+  }
+  B_SET_CURRENT(try_end);
   return 1;
 }
 

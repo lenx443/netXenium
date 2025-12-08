@@ -7,13 +7,14 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx.h"
+#include "vm_catch_stack.h"
 #include "vm_stack.h"
 
 struct RunContext {
   Xen_INSTANCE_HEAD;
   uint8_t ctx_flags;
   ctx_id_t ctx_id;
-  Xen_Instance* ctx_retval;
+  struct VM_Catch_Stack* ctx_catch_stack;
   Xen_Instance* ctx_closure;
   Xen_Instance* ctx_caller;
   Xen_Instance* ctx_self;

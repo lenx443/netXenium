@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "attrs.h"
 #include "basic.h"
@@ -19,6 +20,7 @@
 #include "run_ctx_stack.h"
 #include "source_file.h"
 #include "vm.h"
+#include "vm_catch_stack.h"
 #include "vm_def.h"
 #include "vm_instructs.h"
 #include "vm_run.h"
@@ -27,6 +29,7 @@
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
 #include "xen_except.h"
+#include "xen_except_instance.h"
 #include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -634,6 +637,30 @@ static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(new_seq);
 }
 
+static void op_catch_stack_push([[maybe_unused]] VM_Run* vmr,
+                                RunContext_ptr ctx, Xen_ulong_t oparg) {
+  vm_catch_stack_push(&ctx->ctx_catch_stack, oparg, NULL,
+                      ctx->ctx_stack->stack_top);
+}
+
+static void op_catch_stack_pop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+                               [[maybe_unused]] Xen_ulong_t oparg) {
+  struct VM_Catch_Stack* val = vm_catch_stack_pop(&ctx->ctx_catch_stack);
+  vm_catch_stack_clear(&val);
+}
+
+static void op_catch_stack_type([[maybe_unused]] VM_Run* vmr,
+                                RunContext_ptr ctx, Xen_ulong_t oparg) {
+  if (ctx->ctx_catch_stack) {
+    Xen_Instance* type =
+        Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
+    if (Xen_IMPL(type) != &Xen_String_Implement) {
+      ERROR;
+    }
+    ctx->ctx_catch_stack->except_type = strdup(Xen_String_As_CString(type));
+  }
+}
+
 static void op_build_implement([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
                                Xen_ulong_t oparg) {
   CALLABLE_ptr code =
@@ -768,6 +795,9 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [LIST_UNPACK] = op_list_unpack,
     [LIST_UNPACK_START] = op_list_unpack_start,
     [LIST_UNPACK_END] = op_list_unpack_end,
+    [CATCH_STACK_PUSH] = op_catch_stack_push,
+    [CATCH_STACK_POP] = op_catch_stack_pop,
+    [CATCH_STACK_TYPE] = op_catch_stack_type,
     [BUILD_IMPLEMENT] = op_build_implement,
     [BUILD_IMPLEMENT_NBASE] = op_build_implement_nbase,
     [RETURN] = op_return,
@@ -818,14 +848,38 @@ Xen_Instance* vm_run(Xen_size_t id) {
       while ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
              ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
                      ->ctx_id >= id) {
+        RunContext_ptr current_context =
+            (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
+        struct VM_Catch_Stack* current_handler =
+            vm_catch_stack_pop(&current_context->ctx_catch_stack);
+        while (current_handler) {
+          if (!current_handler->except_type) {
+            break;
+          }
+          if (strcmp(((Xen_Except*)vm->except.except)->type,
+                     current_handler->except_type) == 0) {
+            break;
+          }
+          current_handler =
+              vm_catch_stack_pop(&current_context->ctx_catch_stack);
+        }
+        if (current_handler) {
+          Xen_Dealloc(bt);
+          current_context->ctx_stack->stack_top =
+              current_handler->stack_top_before_try;
+          current_context->ctx_ip = current_handler->handler_offset;
+          vm_catch_stack_clear(&current_handler);
+          vm->except.active = 0;
+          current_context->ctx_error = 0;
+          break;
+        }
         if (bt_count >= bt_cap) {
           Xen_size_t new_cap = (bt_cap == 0) ? 4 : bt_cap * 2;
           bt = Xen_Realloc(bt, new_cap * sizeof(Xen_Source_Address));
           bt_cap = new_cap;
         }
         bt[bt_count++] =
-            ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
-                ->ctx_code->code.code
+            current_context->ctx_code->code.code
                 ->bc_array[((RunContext_ptr)run_context_stack_peek_top(
                                 &vm->vm_ctx_stack))
                                ->ctx_ip -
@@ -833,11 +887,11 @@ Xen_Instance* vm_run(Xen_size_t id) {
                 .sta;
         run_context_stack_pop_top(&vm->vm_ctx_stack);
       }
-      goto except;
-    }
-    RunContext_ptr ctx =
-        (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
-    if (ctx->ctx_error) {
+      if (Xen_VM_Except_Active()) {
+        goto except;
+      }
+    } else if (((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
+                   ->ctx_error) {
       run_context_stack_pop_top(&vm->vm_ctx_stack);
 #ifndef NDEBUG
       printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
@@ -850,6 +904,8 @@ Xen_Instance* vm_run(Xen_size_t id) {
       }
       return NULL;
     }
+    RunContext_ptr ctx =
+        (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
     if (!ctx->ctx_running) {
       run_context_stack_pop_top(&vm->vm_ctx_stack);
       continue;
@@ -870,6 +926,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
 
 except:
   Xen_VM_Except_Show(bt, bt_count);
+  Xen_Dealloc(bt);
   return NULL;
 }
 
