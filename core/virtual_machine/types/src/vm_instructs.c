@@ -34,7 +34,7 @@ static STACK_EFFECT(iter_for_stack_effect, 0);
 static STACK_EFFECT(list_unpack_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_start_stack_effect, oparg - 1);
 static STACK_EFFECT(list_unpack_end_stack_effect, oparg - 1);
-static STACK_EFFECT(catch_stack_push_stack_effect, 0);
+static STACK_EFFECT(catch_stack_push_stack_effect, 1);
 static STACK_EFFECT(catch_stack_pop_stack_effect, 0);
 static STACK_EFFECT(catch_stack_type_stack_effect, 0);
 static STACK_EFFECT(build_implement_stack_effect, -1);

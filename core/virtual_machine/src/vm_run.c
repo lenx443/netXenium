@@ -21,6 +21,7 @@
 #include "source_file.h"
 #include "vm.h"
 #include "vm_catch_stack.h"
+#include "vm_consts.h"
 #include "vm_def.h"
 #include "vm_instructs.h"
 #include "vm_run.h"
@@ -860,6 +861,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
                      current_handler->except_type) == 0) {
             break;
           }
+          vm_catch_stack_clear(&current_handler);
           current_handler =
               vm_catch_stack_pop(&current_context->ctx_catch_stack);
         }
@@ -869,6 +871,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
               current_handler->stack_top_before_try;
           current_context->ctx_ip = current_handler->handler_offset;
           vm_catch_stack_clear(&current_handler);
+          vm_stack_push(current_context->ctx_stack, vm->except.except);
           vm->except.active = 0;
           current_context->ctx_error = 0;
           break;

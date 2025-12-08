@@ -2441,24 +2441,31 @@ int compile_try_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(catch_block);
     return 0;
   }
-  if (Xen_AST_Node_Children_Size(node) != 3) {
+  if (Xen_AST_Node_Children_Size(node) != 2) {
     B_FREE(catch_block);
     return 0;
   }
-  Xen_Instance* type_node = Xen_AST_Node_Get_Child(node, 2);
-  Xen_Instance* type = Xen_String_From_CString(Xen_AST_Node_Value(type_node));
-  if (!type) {
+  Xen_Instance* catch_node = Xen_AST_Node_Get_Child(node, 1);
+  if (Xen_AST_Node_Children_Size(catch_node) < 2) {
     B_FREE(catch_block);
     return 0;
   }
-  Xen_ssize_t co_type_idx = co_push_instance(type);
-  if (co_type_idx == -1) {
-    B_FREE(catch_block);
-    return 0;
-  }
-  if (!emit(CATCH_STACK_TYPE, co_type_idx, Xen_AST_Node_STA(type_node))) {
-    B_FREE(catch_block);
-    return 0;
+  Xen_Instance* type_node = Xen_AST_Node_Get_Child(catch_node, 2);
+  if (type_node) {
+    Xen_Instance* type = Xen_String_From_CString(Xen_AST_Node_Value(type_node));
+    if (!type) {
+      B_FREE(catch_block);
+      return 0;
+    }
+    Xen_ssize_t co_type_idx = co_push_instance(type);
+    if (co_type_idx == -1) {
+      B_FREE(catch_block);
+      return 0;
+    }
+    if (!emit(CATCH_STACK_TYPE, co_type_idx, Xen_AST_Node_STA(type_node))) {
+      B_FREE(catch_block);
+      return 0;
+    }
   }
   Xen_Instance* try_body = Xen_AST_Node_Get_Child(node, 0);
   if (Xen_AST_Node_Name_Cmp(try_body, "Block") != 0) {
@@ -2489,7 +2496,18 @@ int compile_try_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   B_SET_CURRENT(catch_block);
-  Xen_Instance* catch_body = Xen_AST_Node_Get_Child(node, 1);
+  Xen_Instance* catch_expr = Xen_AST_Node_Get_Child(catch_node, 1);
+  if (Xen_AST_Node_Name_Cmp(catch_expr, "Expr") != 0) {
+    B_FREE(try_end);
+    return 0;
+  }
+  if (!compile_assignment_expr(c, catch_expr)) {
+    c->sta = Xen_AST_Node_STA(catch_expr);
+    Xen_SyntaxError("Invalid target expression in 'catch' clause.");
+    B_FREE(try_end);
+    return 0;
+  }
+  Xen_Instance* catch_body = Xen_AST_Node_Get_Child(catch_node, 0);
   if (Xen_AST_Node_Name_Cmp(catch_body, "Block") != 0) {
     B_FREE(try_end);
     return 0;
