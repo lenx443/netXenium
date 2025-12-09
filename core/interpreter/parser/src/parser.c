@@ -1582,8 +1582,8 @@ Xen_Instance* parser_try_stmt(Parser* p) {
     Xen_SyntaxError("'try' block requires a corresponding 'catch' block.");
     return NULL;
   }
-  Xen_Instance* catch = Xen_AST_Node_New("TryCatch", NULL, p->token.sta);
-  if (!catch) {
+  Xen_Instance* head_catch = Xen_AST_Node_New("TryCatch", NULL, p->token.sta);
+  if (!head_catch) {
     return NULL;
   }
   parser_next(p);
@@ -1598,10 +1598,10 @@ Xen_Instance* parser_try_stmt(Parser* p) {
     if (!catch_block) {
       return NULL;
     }
-    if (!Xen_AST_Node_Push_Child(catch, catch_block)) {
+    if (!Xen_AST_Node_Push_Child(head_catch, catch_block)) {
       return NULL;
     }
-    if (!Xen_AST_Node_Push_Child(catch, catch_expr)) {
+    if (!Xen_AST_Node_Push_Child(head_catch, catch_expr)) {
       return NULL;
     }
   } else {
@@ -1624,18 +1624,77 @@ Xen_Instance* parser_try_stmt(Parser* p) {
     if (!catch_block) {
       return NULL;
     }
-    if (!Xen_AST_Node_Push_Child(catch, catch_block)) {
+    if (!Xen_AST_Node_Push_Child(head_catch, catch_block)) {
       return NULL;
     }
-    if (!Xen_AST_Node_Push_Child(catch, catch_expr)) {
+    if (!Xen_AST_Node_Push_Child(head_catch, catch_expr)) {
       return NULL;
     }
-    if (!Xen_AST_Node_Push_Child(catch, catch_type)) {
+    if (!Xen_AST_Node_Push_Child(head_catch, catch_type)) {
       return NULL;
     }
   }
-  if (!Xen_AST_Node_Push_Child(try_stmt, catch)) {
+  if (!Xen_AST_Node_Push_Child(try_stmt, head_catch)) {
     return NULL;
+  }
+  skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "catch", {0}});
+  while (p->token.tkn_type == TKN_KEYWORD &&
+         strcmp(p->token.tkn_text, "catch") == 0) {
+    Xen_Instance* catch = Xen_AST_Node_New("TryCatch", NULL, p->token.sta);
+    if (!catch) {
+      return NULL;
+    }
+    parser_next(p);
+    if (p->token.tkn_type == TKN_COLON) {
+      parser_next(p);
+      Xen_Instance* catch_expr = parser_expr(p);
+      if (!catch_expr) {
+        return NULL;
+      }
+      skip_newline(p);
+      Xen_Instance* catch_block = parser_block(p);
+      if (!catch_block) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(catch, catch_block)) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(catch, catch_expr)) {
+        return NULL;
+      }
+    } else {
+      Xen_Instance* catch_type = parser_string(p);
+      if (!catch_type) {
+        Xen_SyntaxError("Invalid exception type in 'catch' clause.");
+        return NULL;
+      }
+      if (p->token.tkn_type != TKN_COLON) {
+        Xen_SyntaxError("Invalid target expression in 'catch' clause.");
+        return NULL;
+      }
+      parser_next(p);
+      Xen_Instance* catch_expr = parser_expr(p);
+      if (!catch_expr) {
+        return NULL;
+      }
+      skip_newline(p);
+      Xen_Instance* catch_block = parser_block(p);
+      if (!catch_block) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(catch, catch_block)) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(catch, catch_expr)) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(catch, catch_type)) {
+        return NULL;
+      }
+    }
+    if (!Xen_AST_Node_Push_Child(try_stmt, catch)) {
+      return NULL;
+    }
   }
   return try_stmt;
 }
