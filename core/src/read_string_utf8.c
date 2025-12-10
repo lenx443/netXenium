@@ -16,6 +16,7 @@
 #include "string_utf8.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_except.h"
 
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
@@ -195,6 +196,10 @@ CodeUTF8 read_raw_char_utf8() {
     if (n == (size_t)-1)
       return make_code_utf8_code(KEY_NULL);
 
+  if ((unsigned char)c == 0x03) {
+    Xen_Interrupt();
+    return make_code_utf8_code(KEY_NULL);
+  }
   if ((unsigned char)c == 4)
     return make_code_utf8_code(KEY_EOF);
   if ((unsigned char)c == 127)
@@ -296,8 +301,9 @@ LIST_ptr read_string_utf8() {
   while (1) {
     c = read_raw_char_utf8();
     if (c.type == SPECIAL_KEY) {
-      if (c.value.code == KEY_NULL)
-        continue;
+      if (c.value.code == KEY_NULL) {
+        goto error;
+      }
 
       if (c.value.code == KEY_EOF) {
         if (i != 0)
@@ -475,4 +481,8 @@ LIST_ptr read_string_utf8() {
   terminal_raw_input_off();
   signal(SIGWINCH, SIG_DFL);
   return cmd;
+error:
+  terminal_raw_input_off();
+  signal(SIGWINCH, SIG_DFL);
+  return NULL;
 }

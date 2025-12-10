@@ -15,6 +15,7 @@
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_tuple.h"
+#include "xen_typedefs.h"
 
 static Xen_Instance* except_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
@@ -69,6 +70,28 @@ static Xen_Instance* except_except(Xen_Instance* self, Xen_Instance* args,
   return self;
 }
 
+static Xen_Instance* except_type(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(self)) {
+    return NULL;
+  }
+  return Xen_String_From_CString(((Xen_Except*)self)->type);
+}
+
+static Xen_Instance* except_message(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(self)) {
+    return NULL;
+  }
+  Xen_c_string_t message = ((Xen_Except*)self)->message;
+  if (message) {
+    return Xen_String_From_CString(message);
+  }
+  return nil;
+}
+
 Xen_Implement Xen_Except_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_MAPPED),
     .__impl_name = "Except",
@@ -96,7 +119,9 @@ int Xen_Except_Init(void) {
   if (!props) {
     return 0;
   }
-  if (!Xen_VM_Store_Native_Function(props, "__except", except_except, nil)) {
+  if (!Xen_VM_Store_Native_Function(props, "__except", except_except, nil) ||
+      !Xen_VM_Store_Native_Function(props, "type", except_type, nil) ||
+      !Xen_VM_Store_Native_Function(props, "message", except_message, nil)) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);

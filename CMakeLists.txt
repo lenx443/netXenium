@@ -208,6 +208,7 @@ set(SOURCES
   # maquina virtual
   core/virtual_machine/dynamic/vectors/src/bytecode.c
   core/virtual_machine/dynamic/vectors/src/vm_consts.c
+  core/virtual_machine/dynamic/vectors/src/vm_backtrace.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

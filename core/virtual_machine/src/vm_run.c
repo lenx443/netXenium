@@ -18,8 +18,8 @@
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
-#include "source_file.h"
 #include "vm.h"
+#include "vm_backtrace.h"
 #include "vm_catch_stack.h"
 #include "vm_consts.h"
 #include "vm_def.h"
@@ -87,7 +87,9 @@ static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_c_string_t name = Xen_String_As_CString(c_name);
   Xen_Instance* inst = Xen_VM_Load_Instance(name, ctx->ctx_id);
   if (!inst) {
-    Xen_UndefName(name);
+    if (!Xen_VM_Except_Active()) {
+      Xen_UndefName(name);
+    }
     ERROR;
   }
   STACK_PUSH(inst);
@@ -103,7 +105,9 @@ static void op_load_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_c_string_t reg = Xen_String_As_CString(c_name);
   Xen_Instance* inst = xen_register_prop_get(reg, ctx->ctx_id);
   if (!inst) {
-    Xen_UndefReg(reg);
+    if (!Xen_VM_Except_Active()) {
+      Xen_UndefReg(reg);
+    }
     ERROR;
   }
   STACK_PUSH(inst);
@@ -115,7 +119,9 @@ static void op_load_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
   if (!rsult) {
-    Xen_IndexError(index);
+    if (!Xen_VM_Except_Active()) {
+      Xen_IndexError(index);
+    }
     ERROR;
   }
   STACK_PUSH(rsult);
@@ -128,7 +134,9 @@ static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   Xen_Instance* result = Xen_Attr_Get(inst, attr);
   if (!result) {
-    Xen_AttrError(Xen_String_As_CString(attr));
+    if (!Xen_VM_Except_Active()) {
+      Xen_AttrError(Xen_String_As_CString(attr));
+    }
     ERROR;
   }
   STACK_PUSH(result);
@@ -173,7 +181,9 @@ static void op_store_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
   if (!Xen_Attr_Index_Set(inst, index, value)) {
-    Xen_IndexError_Store(index);
+    if (!Xen_VM_Except_Active()) {
+      Xen_IndexError_Store(index);
+    }
     ERROR;
   }
 }
@@ -185,7 +195,9 @@ static void op_store_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* attr =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!Xen_Attr_Set(inst, attr, value)) {
-    Xen_AttrError_Store(Xen_String_As_CString(attr));
+    if (!Xen_VM_Except_Active()) {
+      Xen_AttrError_Store(Xen_String_As_CString(attr));
+    }
     ERROR;
   }
 }
@@ -236,7 +248,9 @@ static void op_make_vector_from_iterable([[maybe_unused]] VM_Run* vmr,
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
-    Xen_IterError(iterable);
+    if (!Xen_VM_Except_Active()) {
+      Xen_IterError(iterable);
+    }
     ERROR;
   }
   Xen_Instance* vector = Xen_Vector_New();
@@ -330,7 +344,9 @@ static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_Push(args);
   Xen_IGC_Push(callable);
   if (!Xen_IMPL(callable)->__callable(callable, args, nil)) {
-    Xen_CallError(callable);
+    if (!Xen_VM_Except_Active()) {
+      Xen_CallError(callable);
+    }
     Xen_IGC_XPOP(2);
     ERROR;
   }
@@ -380,7 +396,9 @@ static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
   Xen_IGC_XPUSH(callable, roots);
   if (!Xen_IMPL(callable)->__callable(callable, args, kwargs)) {
-    Xen_CallError(callable);
+    if (!Xen_VM_Except_Active()) {
+      Xen_CallError(callable);
+    }
     Xen_IGC_XPOP(roots);
     ERROR;
   }
@@ -395,7 +413,9 @@ static void op_binaryop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_Push(second);
   Xen_Instance* rsult = Xen_Operator_Eval_Pair(first, second, (Xen_Opr)oparg);
   if (!rsult) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     Xen_IGC_XPOP(2);
     ERROR;
   }
@@ -408,7 +428,9 @@ static void op_unary_positive([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
   if (!method) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
@@ -417,7 +439,9 @@ static void op_unary_positive([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   STACK_PUSH(result);
@@ -428,7 +452,9 @@ static void op_unary_negative([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
   if (!method) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
@@ -437,7 +463,9 @@ static void op_unary_negative([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   STACK_PUSH(result);
@@ -448,7 +476,9 @@ static void op_unary_not([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
   if (!method) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   if (Xen_IMPL(method) != &Xen_Method_Implement) {
@@ -457,7 +487,9 @@ static void op_unary_not([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
   Xen_Instance* result = Xen_Method_Call(method, nil, nil);
   if (!result) {
-    Xen_OprError();
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
     ERROR;
   }
   STACK_PUSH(result);
@@ -837,9 +869,6 @@ Xen_Instance* vm_run(Xen_size_t id) {
   Xen_ssize_t previous_offset = -1;
 #endif
   bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
-  Xen_Source_Address* bt = NULL;
-  Xen_size_t bt_count = 0;
-  Xen_size_t bt_cap = 0;
   while (
       (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack) &&
       ((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))->ctx_id >=
@@ -866,7 +895,7 @@ Xen_Instance* vm_run(Xen_size_t id) {
               vm_catch_stack_pop(&current_context->ctx_catch_stack);
         }
         if (current_handler) {
-          Xen_Dealloc(bt);
+          vm_backtrace_clear(vm->except.bt);
           current_context->ctx_stack->stack_top =
               current_handler->stack_top_before_try;
           current_context->ctx_ip = current_handler->handler_offset;
@@ -876,22 +905,18 @@ Xen_Instance* vm_run(Xen_size_t id) {
           current_context->ctx_error = 0;
           break;
         }
-        if (bt_count >= bt_cap) {
-          Xen_size_t new_cap = (bt_cap == 0) ? 4 : bt_cap * 2;
-          bt = Xen_Realloc(bt, new_cap * sizeof(Xen_Source_Address));
-          bt_cap = new_cap;
-        }
-        bt[bt_count++] =
+        vm_backtrace_push(
+            vm->except.bt,
             current_context->ctx_code->code.code
                 ->bc_array[((RunContext_ptr)run_context_stack_peek_top(
                                 &vm->vm_ctx_stack))
                                ->ctx_ip -
                            1]
-                .sta;
+                .sta);
         run_context_stack_pop_top(&vm->vm_ctx_stack);
       }
       if (Xen_VM_Except_Active()) {
-        goto except;
+        return NULL;
       }
     } else if (((RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack))
                    ->ctx_error) {
@@ -926,11 +951,6 @@ Xen_Instance* vm_run(Xen_size_t id) {
     run_context_stack_pop_top(&vm->vm_ctx_stack);
   }
   return vmr.retval;
-
-except:
-  Xen_VM_Except_Show(bt, bt_count);
-  Xen_Dealloc(bt);
-  return NULL;
 }
 
 Xen_Instance* vm_run_top(void) {

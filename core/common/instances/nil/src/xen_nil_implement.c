@@ -51,6 +51,12 @@ static Xen_Instance* nil_ne(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
+static Xen_Instance* nil_not(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_False;
+}
+
 struct __Implement Xen_Nil_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Nil",
@@ -73,7 +79,8 @@ int Xen_Nil_Init(void) {
   }
   if (!Xen_VM_Store_Native_Function(props, "__boolean", nil_boolean, nil) ||
       !Xen_VM_Store_Native_Function(props, "__eq", nil_eq, nil) ||
-      !Xen_VM_Store_Native_Function(props, "__ne", nil_ne, nil)) {
+      !Xen_VM_Store_Native_Function(props, "__ne", nil_ne, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__not", nil_not, nil)) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);

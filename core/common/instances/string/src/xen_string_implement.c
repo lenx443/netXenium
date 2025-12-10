@@ -204,6 +204,15 @@ static Xen_Instance* string_opr_mul(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* string_opr_not(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(self) == 0) {
+    return Xen_False;
+  }
+  return Xen_True;
+}
+
 static Xen_Instance* string_prop_upper(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -285,6 +294,7 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__add", string_opr_add, nil) ||
       !Xen_VM_Store_Native_Function(props, "__mul", string_opr_mul, nil) ||
       !Xen_VM_Store_Native_Function(props, "__boolean", string_boolean, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__not", string_opr_not, nil) ||
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
       !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,

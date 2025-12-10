@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "source_file.h"
 #include "vm.h"
+#include "vm_backtrace.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
 #include "xen_cstrings.h"
@@ -1708,7 +1709,7 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
   if (Xen_VM_Except_Active()) {
-    Xen_VM_Except_Show(&parser.token.sta, 1);
+    vm_backtrace_push(vm->except.bt, parser.token.sta);
     return NULL;
   }
   if (!ast_program) {

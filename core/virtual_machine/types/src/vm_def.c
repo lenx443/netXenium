@@ -1,17 +1,26 @@
+#include <signal.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "gc_header.h"
 #include "instance.h"
 #include "logs.h"
 #include "program.h"
 #include "run_ctx_stack.h"
+#include "vm_backtrace.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
+#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_string.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
+
+static void InterruptHandler(int sign) {
+  (void)sign;
+  Xen_Interrupt();
+}
 
 static void vm_def_trace([[maybe_unused]] Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules_contexts);
@@ -66,7 +75,13 @@ bool vm_create(void) {
   }
   vm->except.active = 0;
   vm->except.except = NULL;
+  vm->except.bt = vm_backtrace_new();
   Xen_GC_Push_Root((Xen_GCHeader*)vm);
+
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = InterruptHandler;
+  sigaction(SIGINT, &sa, NULL);
   return 1;
 }
 

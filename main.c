@@ -34,8 +34,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <signal.h>
-
 #include "program.h"
 #include "xen_cstrings.h"
 #include "xen_life.h"
@@ -49,7 +47,6 @@ int main(int argc, char** argv) {
     load_script(argv[1]);
   } else {
     program.name = Xen_CString_Dup(argv[0]);
-    signal(SIGINT, SIG_IGN);
     shell_loop();
   }
   Xen_Finish();

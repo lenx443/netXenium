@@ -12,6 +12,7 @@
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
+#include "vm.h"
 #include "xen_alloc.h"
 
 void load_script(char* filename) {
@@ -65,6 +66,14 @@ void shell_loop(void) {
   while (1) {
 #ifndef SHELL_BASIC
     LIST_ptr cmd = read_string_utf8();
+    if (!cmd) {
+      fputs("\n", stdout);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+        continue;
+      }
+      break;
+    }
     if (program.closed) {
       list_free(cmd);
       break;
@@ -75,6 +84,12 @@ void shell_loop(void) {
     fputs(" -> ", stdout);
     char* cmd_str = Xen_Alloc(CMDSIZ);
     if (!fgets(cmd_str, CMDSIZ, stdin)) {
+      fputs("\n", stdout);
+      Xen_Dealloc(cmd_str);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+        continue;
+      }
       fputs("\n", stdout);
       Xen_Dealloc(cmd_str);
       break;

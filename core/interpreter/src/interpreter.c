@@ -7,6 +7,7 @@
 #include "interpreter.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_nil.h"
@@ -18,6 +19,10 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
     return NULL;
   }
   CALLABLE_ptr code = compiler(file_name, file_content, compile_mode);
+  if (Xen_VM_Except_Active()) {
+    Xen_VM_Except_Backtrace_Show();
+    return NULL;
+  }
   if (!code) {
     return NULL;
   }
@@ -33,6 +38,10 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
     return NULL;
   }
   Xen_Instance* retval = vm_run_top();
+  if (Xen_VM_Except_Active()) {
+    Xen_VM_Except_Backtrace_Show();
+    return NULL;
+  }
   if (!retval) {
     return NULL;
   }

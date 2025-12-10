@@ -15,6 +15,8 @@
 #include "parser.h"
 #include "program_code.h"
 #include "source_file.h"
+#include "vm.h"
+#include "vm_backtrace.h"
 #include "vm_consts.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
@@ -2541,7 +2543,7 @@ int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
   if (!compile_program(&c, ast)) {
     assert(loop_stack == NULL);
     if (Xen_VM_Except_Active()) {
-      Xen_VM_Except_Show(&c.sta, 1);
+      vm_backtrace_push(vm->except.bt, c.sta);
       return 0;
     }
     return 0;

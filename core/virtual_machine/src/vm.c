@@ -8,6 +8,7 @@
 #include "run_ctx_stack.h"
 #include "source_file.h"
 #include "vm.h"
+#include "vm_backtrace.h"
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_except_implement.h"
@@ -114,14 +115,15 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   return ret;
 }
 
-void Xen_VM_Except_Show(Xen_Source_Address* bt, Xen_size_t bt_count) {
+void Xen_VM_Except_Backtrace_Show(void) {
   Xen_Except* except = (Xen_Except*)vm->except.except;
   puts("Unhandled exception occurred.");
   puts("BackTrace:");
-  for (Xen_size_t i = 0; i < bt_count; i++) {
+  for (Xen_size_t i = 0; i < vm->except.bt->bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
-           globals_sources->st_files[(Xen_size_t)bt[i].id]->sf_name, bt[i].line,
-           bt[i].column);
+           globals_sources->st_files[(Xen_size_t)vm->except.bt->bt_addrs[i].id]
+               ->sf_name,
+           vm->except.bt->bt_addrs[i].line, vm->except.bt->bt_addrs[i].column);
   }
   if (except->message) {
     fputs(except->type, stdout);
@@ -132,6 +134,7 @@ void Xen_VM_Except_Show(Xen_Source_Address* bt, Xen_size_t bt_count) {
     puts(except->type);
   }
   vm->except.active = 0;
+  vm_backtrace_clear(vm->except.bt);
 }
 
 int Xen_VM_Except_Throw(Xen_Instance* except_inst) {

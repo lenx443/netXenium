@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
+#include "vm_backtrace.h"
 #include "xen_typedefs.h"
 
 typedef struct {
@@ -19,6 +20,7 @@ typedef struct {
   struct {
     Xen_bool_t active;
     Xen_Instance* except;
+    vm_backtrace* bt;
   } except;
 } VM;
 

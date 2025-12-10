@@ -16,6 +16,11 @@ Xen_Instance* Xen_Except_New_CFormat(Xen_c_string_t, Xen_c_string_t, ...);
 #define Xen_SyntaxError_Format(msg, ...)                                       \
   Xen_VM_Except_Throw(Xen_Except_New_CFormat("SyntaxError", msg, ##__VA_ARGS__))
 
+static inline int Xen_Interrupt(void) {
+  return Xen_VM_Except_Throw(
+      Xen_Except_New("Interrupt", "Execution was interrupted."));
+}
+
 static inline int Xen_UndefName(Xen_c_string_t name) {
   return Xen_VM_Except_Throw(
       Xen_Except_New_CFormat("UndefError", "Name '%s' is not defined.", name));
@@ -62,12 +67,12 @@ static inline int Xen_CallError_Impl(Xen_Instance* inst) {
 
 static inline int Xen_OprError(void) {
   return Xen_VM_Except_Throw(
-      Xen_Except_New_CFormat("OprError", "Operator cannot be applied."));
+      Xen_Except_New("OprError", "Operator cannot be applied."));
 }
 
 static inline int Xen_ThrowError(void) {
   return Xen_VM_Except_Throw(
-      Xen_Except_New_CFormat("ThrowError", "Failed to throw exception."));
+      Xen_Except_New("ThrowError", "Failed to throw exception."));
 }
 
 static inline int Xen_IterError(Xen_Instance* inst) {
