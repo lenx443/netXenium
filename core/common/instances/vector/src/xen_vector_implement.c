@@ -13,7 +13,6 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
-#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
@@ -247,6 +246,16 @@ static Xen_Instance* vector_push(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
+static Xen_Instance* vector_pop(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(self) == 0) {
+    return NULL;
+  }
+  self->__size--;
+  return nil;
+}
+
 struct __Implement Xen_Vector_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Vector",
@@ -278,7 +287,8 @@ int Xen_Vector_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__set_index", vector_opr_set_index,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__iter", vector_iter, nil) ||
-      !Xen_VM_Store_Native_Function(props, "push", vector_push, nil)) {
+      !Xen_VM_Store_Native_Function(props, "push", vector_push, nil) ||
+      !Xen_VM_Store_Native_Function(props, "pop", vector_pop, nil)) {
     return 0;
   }
   Xen_Vector_Implement.__props = props;

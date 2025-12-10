@@ -66,7 +66,7 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
       Xen_IGC_XPOP(roots);
       return result;
     }
-    Xen_Instance* str = Xen_String_From_CString("__base");
+    Xen_Instance* str = Xen_String_From_CString("0base");
     if (!str) {
       Xen_IGC_XPOP(roots);
       return NULL;
