@@ -15,7 +15,7 @@
 #include "xen_vector.h"
 
 static int __expose_set_handle(const char* name, Xen_INSTANCE* inst) {
-  if (!Xen_Map_Push_Pair_Str(vm->global_props,
+  if (!Xen_Map_Push_Pair_Str(vm->globals_props,
                              (Xen_Map_Pair_Str){name, inst})) {
     return 0;
   }
@@ -23,7 +23,7 @@ static int __expose_set_handle(const char* name, Xen_INSTANCE* inst) {
 }
 
 static Xen_INSTANCE* __expose_get_handle(const char* name) {
-  Xen_INSTANCE* expose = Xen_Map_Get_Str(vm->global_props, name);
+  Xen_INSTANCE* expose = Xen_Map_Get_Str(vm->globals_props, name);
   if (!expose) {
     return NULL;
   }
@@ -86,7 +86,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
     }
     return 0;
   }
-  if (!Xen_Map_Push_Pair_Str(vm->global_props,
+  if (!Xen_Map_Push_Pair_Str(vm->globals_props,
                              (Xen_Map_Pair_Str){name, inst})) {
     return 0;
   }
@@ -127,7 +127,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
     }
     return NULL;
   }
-  Xen_INSTANCE* root_prop = Xen_Map_Get_Str(vm->global_props, name);
+  Xen_INSTANCE* root_prop = Xen_Map_Get_Str(vm->globals_props, name);
   if (!root_prop) {
     return NULL;
   };

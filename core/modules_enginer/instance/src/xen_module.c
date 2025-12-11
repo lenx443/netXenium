@@ -7,22 +7,28 @@
 #include "vm.h"
 #include "vm_run.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_function.h"
 #include "xen_map.h"
 #include "xen_module_implement.h"
 #include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
+#include "xen_typedefs.h"
+#include "xen_vector.h"
 
 Xen_Instance* Xen_Module_New(void) {
   Xen_Module* module =
       (Xen_Module*)__instance_new(&Xen_Module_Implement, nil, nil, 0);
   module->mod_initialized = 0;
   module->mod_initializing = 0;
+  module->mod_name = NULL;
+  module->mod_path = NULL;
   return (Xen_Instance*)module;
 }
 
-Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
+Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
+                                  Xen_c_string_t mod_path) {
   Xen_Module* module =
       (Xen_Module*)Xen_Map_Get_Str(vm->modules, mod_def.mod_name);
   if (Xen_Map_Has_Str(vm->modules, mod_def.mod_name)) {
@@ -35,6 +41,8 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
   }
   module = (Xen_Module*)Xen_Module_New();
   module->mod_initializing = 1;
+  module->mod_name = Xen_CString_Dup(mod_def.mod_name);
+  module->mod_path = Xen_CString_Dup(mod_path);
   Xen_Map_Push_Pair_Str(
       vm->modules, (Xen_Map_Pair_Str){mod_def.mod_name, (Xen_Instance*)module});
   for (int i = 0; mod_def.mod_functions[i].fun_name != NULL; i++) {
@@ -50,17 +58,23 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def) {
     }
   }
   if (mod_def.mod_init) {
+    if (!Xen_Vector_Push(vm->modules_stack, (Xen_Instance*)module)) {
+      return NULL;
+    }
     Xen_Instance* ret =
         Xen_VM_Call_Native_Function(mod_def.mod_init, nil, nil, nil);
     if (ret == NULL) {
+      Xen_Vector_Pop(vm->modules_stack);
       return NULL;
     }
+    Xen_Vector_Pop(vm->modules_stack);
   }
   module->mod_initialized = 0;
   return (Xen_Instance*)module;
 }
 
-Xen_Instance* Xen_Module_Load(const char* mod_name) {
+Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
+                              Xen_c_string_t mod_path) {
   Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(vm->modules, mod_name);
   if (Xen_Map_Has_Str(vm->modules, mod_name)) {
     if (module->mod_initialized) {
@@ -72,6 +86,8 @@ Xen_Instance* Xen_Module_Load(const char* mod_name) {
   }
   module = (Xen_Module*)Xen_Module_New();
   module->mod_initializing = 1;
+  module->mod_name = Xen_CString_Dup(mod_uname);
+  module->mod_path = Xen_CString_Dup(mod_path);
   Xen_Map_Push_Pair_Str(vm->modules,
                         (Xen_Map_Pair_Str){mod_name, (Xen_Instance*)module});
   FILE* fp = fopen(mod_name, "r");
@@ -96,12 +112,17 @@ Xen_Instance* Xen_Module_Load(const char* mod_name) {
   if (!file_content) {
     return NULL;
   }
+  if (!Xen_Vector_Push(vm->modules_stack, (Xen_Instance*)module)) {
+    return NULL;
+  }
   CALLABLE_ptr code = compiler(mod_name, file_content, Xen_COMPILE_PROGRAM);
   if (Xen_VM_Except_Active()) {
     Xen_VM_Except_Backtrace_Show();
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
   if (!code) {
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
 #ifndef NDEBUG
@@ -110,19 +131,24 @@ Xen_Instance* Xen_Module_Load(const char* mod_name) {
   Xen_Instance* ctx_inst = Xen_Ctx_New(
       nil, Xen_VM_Current_Ctx(), (Xen_Instance*)module, nil, nil, NULL, code);
   if (!ctx_inst) {
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
   if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
   Xen_Instance* retval = vm_run_top();
   if (Xen_VM_Except_Active()) {
     Xen_VM_Except_Backtrace_Show();
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
   if (!retval) {
+    Xen_Vector_Pop(vm->modules_stack);
     return NULL;
   }
+  Xen_Vector_Pop(vm->modules_stack);
   Xen_Dealloc(file_content);
   return (Xen_Instance*)module;
 }

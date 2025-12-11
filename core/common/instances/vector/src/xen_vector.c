@@ -10,7 +10,7 @@
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
-Xen_Instance* Xen_Vector_New() {
+Xen_Instance* Xen_Vector_New(void) {
   Xen_Instance* vector = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
   if (!vector)
     return NULL;
@@ -64,6 +64,29 @@ int Xen_Vector_Push_Vector(Xen_Instance* vector_dst, Xen_Instance* vector_src) {
     }
   }
   return 1;
+}
+
+Xen_Instance* Xen_Vector_Pop(Xen_Instance* vector_inst) {
+  if (!vector_inst) {
+    return NULL;
+  }
+  Xen_Vector* vector = (Xen_Vector*)vector_inst;
+  if (Xen_SIZE(vector) == 0) {
+    return NULL;
+  }
+  vector->__size--;
+  return vector->values[Xen_SIZE(vector)];
+}
+
+Xen_Instance* Xen_Vector_Top(Xen_Instance* vector_inst) {
+  if (!vector_inst) {
+    return NULL;
+  }
+  Xen_Vector* vector = (Xen_Vector*)vector_inst;
+  if (Xen_SIZE(vector) == 0) {
+    return NULL;
+  }
+  return vector->values[Xen_SIZE(vector) - 1];
 }
 
 Xen_Instance* Xen_Vector_Get_Index(Xen_Instance* vector, size_t index) {

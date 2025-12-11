@@ -14,6 +14,7 @@
 #include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_string.h"
+#include "xen_vector.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
 
@@ -24,8 +25,9 @@ static void InterruptHandler(int sign) {
 
 static void vm_def_trace([[maybe_unused]] Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules_stack);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_instances);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->global_props);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_props);
   if (vm->except.active) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
   }
@@ -62,14 +64,20 @@ bool vm_create(void) {
   vm->modules = Xen_Map_New();
   if (!vm->modules) {
     run_context_stack_free(&vm->vm_ctx_stack);
+    return 0;
+  }
+  vm->modules_stack = Xen_Vector_New();
+  if (!vm->modules_stack) {
+    run_context_stack_free(&vm->vm_ctx_stack);
+    return 0;
   }
   vm->globals_instances = Xen_Map_New();
   if (!vm->globals_instances) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
-  vm->global_props = Xen_Map_New();
-  if (!vm->global_props) {
+  vm->globals_props = Xen_Map_New();
+  if (!vm->globals_props) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "attrs.h"
 #include "callable.h"
@@ -11,6 +12,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_module.h"
+#include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -20,6 +22,7 @@
 #include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
                              Xen_Instance* kwargs) {
@@ -190,7 +193,42 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
   if (Xen_IMPL(inst) != &Xen_String_Implement) {
     return NULL;
   }
-  return Xen_Module_Load(Xen_String_As_CString(inst));
+  Xen_c_string_t mod_name = Xen_String_As_CString(inst);
+  if (Xen_SIZE(vm->modules_stack) > 0) {
+    Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(vm->modules_stack);
+    Xen_c_string_t path = mod_top->mod_path;
+    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path, mod_name);
+    if (psize == -1) {
+      return NULL;
+    }
+    Xen_string_t relative_path = Xen_Alloc(psize + 1);
+    snprintf(relative_path, psize + 1, "%s/%s.nxm", path, mod_name);
+    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path);
+    if (!mod) {
+      Xen_Dealloc((void*)relative_path);
+      return NULL;
+    }
+    Xen_Dealloc((void*)relative_path);
+    return mod;
+  } else {
+    char path[1024];
+    if (!getcwd(path, 1024)) {
+      return NULL;
+    }
+    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path, mod_name);
+    if (psize == -1) {
+      return NULL;
+    }
+    Xen_string_t relative_path = Xen_Alloc(psize + 1);
+    snprintf(relative_path, psize + 1, "%s/%s.nxm", path, mod_name);
+    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path);
+    if (!mod) {
+      Xen_Dealloc((void*)relative_path);
+      return NULL;
+    }
+    Xen_Dealloc((void*)relative_path);
+    return mod;
+  }
 }
 
 static Xen_Module_Function_Table core_functions = {

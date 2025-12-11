@@ -4,6 +4,7 @@
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "xen_alloc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_module_instance.h"
@@ -25,6 +26,9 @@ static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance* module_destroy(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Module* module = (Xen_Module*)self;
+  Xen_Dealloc((void*)module->mod_name);
+  Xen_Dealloc((void*)module->mod_path);
   return nil;
 }
 

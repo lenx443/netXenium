@@ -249,11 +249,13 @@ static Xen_Instance* vector_push(Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance* vector_pop(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (Xen_SIZE(self) == 0) {
-    return NULL;
-  }
-  self->__size--;
-  return nil;
+  return Xen_Vector_Pop(self);
+}
+
+static Xen_Instance* vector_top(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_Vector_Top(self);
 }
 
 struct __Implement Xen_Vector_Implement = {
@@ -288,7 +290,8 @@ int Xen_Vector_Init(void) {
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__iter", vector_iter, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", vector_push, nil) ||
-      !Xen_VM_Store_Native_Function(props, "pop", vector_pop, nil)) {
+      !Xen_VM_Store_Native_Function(props, "pop", vector_pop, nil) ||
+      !Xen_VM_Store_Native_Function(props, "top", vector_top, nil)) {
     return 0;
   }
   Xen_Vector_Implement.__props = props;
