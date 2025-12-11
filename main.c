@@ -34,9 +34,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+
 #include "program.h"
+#include "vm_def.h"
+#include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_life.h"
+#include "xen_module.h"
 
 int main(int argc, char** argv) {
   if (!Xen_Init(argc, argv)) {
@@ -44,7 +49,16 @@ int main(int argc, char** argv) {
   }
   if (argc > 1) {
     program.name = Xen_CString_Dup(argv[1]);
-    load_script(argv[1]);
+    const char* slash = strrchr(argv[1], '/');
+    if (slash) {
+      size_t len = slash - argv[1];
+      char* dir = Xen_Alloc(len + 1);
+      memcpy(dir, argv[1], len);
+      dir[len] = '\0';
+      Xen_Module_Load(argv[1], "<start>", dir, vm->globals_instances);
+    } else {
+      Xen_Module_Load(argv[1], "<start>", ".", vm->globals_instances);
+    }
   } else {
     program.name = Xen_CString_Dup(argv[0]);
     shell_loop();

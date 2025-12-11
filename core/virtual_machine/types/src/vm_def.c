@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "gc_header.h"
 #include "instance.h"
@@ -10,6 +11,7 @@
 #include "vm_backtrace.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_map.h"
@@ -81,6 +83,11 @@ bool vm_create(void) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
+  char path_current[1024];
+  if (!getcwd(path_current, 1024)) {
+    return NULL;
+  }
+  vm->path_current = Xen_CString_Dup(path_current);
   vm->except.active = 0;
   vm->except.except = NULL;
   vm->except.bt = vm_backtrace_new();

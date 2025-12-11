@@ -74,7 +74,8 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
 }
 
 Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
-                              Xen_c_string_t mod_path) {
+                              Xen_c_string_t mod_path,
+                              Xen_Instance* mod_globals) {
   Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(vm->modules, mod_name);
   if (Xen_Map_Has_Str(vm->modules, mod_name)) {
     if (module->mod_initialized) {
@@ -128,8 +129,9 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
 #ifndef NDEBUG
   printf("== Running ==\n");
 #endif
-  Xen_Instance* ctx_inst = Xen_Ctx_New(
-      nil, Xen_VM_Current_Ctx(), (Xen_Instance*)module, nil, nil, NULL, code);
+  Xen_Instance* ctx_inst =
+      Xen_Ctx_New(nil, Xen_VM_Current_Ctx(), (Xen_Instance*)module, nil, nil,
+                  mod_globals, code);
   if (!ctx_inst) {
     Xen_Vector_Pop(vm->modules_stack);
     return NULL;

@@ -203,7 +203,7 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     }
     Xen_string_t relative_path = Xen_Alloc(psize + 1);
     snprintf(relative_path, psize + 1, "%s/%s.nxm", path, mod_name);
-    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path);
+    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path, NULL);
     if (!mod) {
       Xen_Dealloc((void*)relative_path);
       return NULL;
@@ -211,17 +211,15 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     Xen_Dealloc((void*)relative_path);
     return mod;
   } else {
-    char path[1024];
-    if (!getcwd(path, 1024)) {
-      return NULL;
-    }
-    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path, mod_name);
+    Xen_ssize_t psize =
+        snprintf(NULL, 0, "%s/%s.nxm", vm->path_current, mod_name);
     if (psize == -1) {
       return NULL;
     }
     Xen_string_t relative_path = Xen_Alloc(psize + 1);
-    snprintf(relative_path, psize + 1, "%s/%s.nxm", path, mod_name);
-    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path);
+    snprintf(relative_path, psize + 1, "%s/%s.nxm", vm->path_current, mod_name);
+    Xen_Instance* mod =
+        Xen_Module_Load(relative_path, mod_name, vm->path_current, NULL);
     if (!mod) {
       Xen_Dealloc((void*)relative_path);
       return NULL;
