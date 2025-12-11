@@ -19,7 +19,7 @@ static int load_module_core(struct Xen_Module_Def* mod) {
     return 0;
   }
   if (!Xen_Map_Push_Map(vm->globals_instances,
-                        ((Xen_Module*)mod_inst)->mod_map)) {
+                        ((Xen_Module*)mod_inst)->__map)) {
     return 0;
   }
   return 1;

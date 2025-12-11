@@ -23,7 +23,7 @@ static void InterruptHandler(int sign) {
 }
 
 static void vm_def_trace([[maybe_unused]] Xen_GCHeader* h) {
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules_contexts);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_instances);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->global_props);
   if (vm->except.active) {
@@ -59,8 +59,8 @@ bool vm_create(void) {
     args_array[i] = arg_value;
   }
   Xen_Dealloc(args_array);
-  vm->modules_contexts = Xen_Map_New();
-  if (!vm->modules_contexts) {
+  vm->modules = Xen_Map_New();
+  if (!vm->modules) {
     run_context_stack_free(&vm->vm_ctx_stack);
   }
   vm->globals_instances = Xen_Map_New();

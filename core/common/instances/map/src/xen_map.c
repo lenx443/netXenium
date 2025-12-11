@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "attrs.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
@@ -239,4 +238,21 @@ int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
     current = current->next;
   }
   return 0;
+}
+
+int Xen_Map_Has_Str(Xen_Instance* map, const char* key) {
+  if (!key) {
+    return 0;
+  }
+  Xen_Instance* key_inst = Xen_String_From_CString(key);
+  if (!key_inst) {
+    return 0;
+  }
+  Xen_IGC_Push(key_inst);
+  if (!Xen_Map_Has(map, key_inst)) {
+    Xen_IGC_Pop();
+    return 0;
+  }
+  Xen_IGC_Pop();
+  return 1;
 }

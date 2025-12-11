@@ -12,7 +12,7 @@ Xen_Instance* Xen_Instance_Alloc(Xen_Implement* impl) {
       impl->__inst_size, impl->__inst_trace, __instance_free);
   inst->__impl = impl;
   inst->__size = 0;
-  inst->__flags = 0;
+  inst->__flags = impl->__inst_default_flags;
   return inst;
 }
 

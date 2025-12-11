@@ -10,6 +10,7 @@
 #include "run_ctx_instance.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_module.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -179,10 +180,30 @@ static Xen_Instance* fn_impl(Xen_Instance* self, Xen_Instance* args,
   return (Xen_Instance*)Xen_IMPL(inst);
 }
 
+static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(inst) != &Xen_String_Implement) {
+    return NULL;
+  }
+  return Xen_Module_Load(Xen_String_As_CString(inst));
+}
+
 static Xen_Module_Function_Table core_functions = {
-    {"exit", fn_exit},       {"echo", fn_echo},         {"print", fn_print},
-    {"println", fn_println}, {"readline", fn_readline}, {"size", fn_size},
-    {"id", fn_id},           {"impl", fn_impl},         {NULL, NULL},
+    {"exit", fn_exit},
+    {"echo", fn_echo},
+    {"print", fn_print},
+    {"println", fn_println},
+    {"readline", fn_readline},
+    {"size", fn_size},
+    {"id", fn_id},
+    {"impl", fn_impl},
+    {"load", fn_load},
+    {NULL, NULL},
 };
 
 struct Xen_Module_Def Module_Core = {
