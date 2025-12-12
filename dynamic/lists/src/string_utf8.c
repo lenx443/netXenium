@@ -6,7 +6,6 @@
 #include <wchar.h>
 
 #include "list.h"
-#include "logs.h"
 #include "string_utf8.h"
 #include "xen_alloc.h"
 
@@ -55,9 +54,6 @@ int string_utf8_push_back(LIST_ptr string_utf8, char* str) {
         ch.ch[i] = *p++;
       ch.size = size;
       if (!list_push_back(string_utf8, &ch, sizeof(CharUTF8))) {
-        DynSetLog(NULL);
-        log_add(NULL, ERROR, "String-UTF8",
-                "No se pudo agregar el elemento a la cadena");
         return 0;
       }
     } else
@@ -78,8 +74,6 @@ char* string_utf8_get(LIST_ptr utf8) {
 
   char* result = Xen_Alloc(total_size + 1);
   if (!result) {
-    log_add(NULL, ERROR, "String-UTF8",
-            "No,se pudo obtener la cadena por falta de memoria");
     return NULL;
   }
 

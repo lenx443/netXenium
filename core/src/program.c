@@ -7,7 +7,6 @@
 #include "history.h"
 #include "interpreter.h"
 #include "list.h"
-#include "logs.h"
 #include "macros.h"
 #include "program.h"
 #include "read_string_utf8.h"
@@ -18,10 +17,6 @@
 void load_script(char* filename) {
   FILE* fp = fopen(filename, "r");
   if (!fp) {
-    log_add(NULL, ERROR, "Script-Loader", "No se pudo abrir el archivo: %s",
-            filename);
-    log_add_errno(NULL, ERROR, "Script-Loader");
-    log_show_and_clear(NULL);
     return;
   }
   char line[CMDSIZ];
@@ -45,9 +40,7 @@ void load_script(char* filename) {
     program.exit_code = EXIT_FAILURE;
     return;
   }
-  if (!interpreter(filename, file_content, Xen_COMPILE_PROGRAM)) {
-    log_show_and_clear(NULL);
-  }
+  interpreter(filename, file_content, Xen_COMPILE_PROGRAM);
   Xen_Dealloc(file_content);
 }
 
@@ -96,7 +89,6 @@ void shell_loop(void) {
     }
 #endif
     if (!interpreter("<stdin>", cmd_str, Xen_COMPILE_REPL)) {
-      log_show_and_clear(NULL);
       Xen_Dealloc(cmd_str);
       if (program.closed)
         break;

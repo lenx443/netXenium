@@ -5,7 +5,6 @@
 #include "block_list.h"
 #include "ir_bytecode.h"
 #include "ir_instruct.h"
-#include "logs.h"
 #include "source_file.h"
 #include "vm_consts.h"
 #include "vm_instructs.h"
@@ -15,12 +14,9 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-#define error(msg, ...) log_add(NULL, ERROR, "IR Array", msg, ##__VA_ARGS__)
-
 IR_Bytecode_Array_ptr ir_new(void) {
   IR_Bytecode_Array_ptr intr_array = Xen_Alloc(sizeof(IR_Bytecode_Array_t));
   if (!intr_array) {
-    error("No hay memoria disponible");
     return NULL;
   }
   intr_array->ir_array = NULL;
@@ -40,7 +36,6 @@ int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg,
             Xen_Source_Address sta) {
   IR_Instruct_t instr = {opcode, oparg, 0, NULL, 0, sta};
   if (!ir) {
-    error("El arreglo de bytecode esta vacío");
     return 0;
   }
   if (ir->ir_size >= ir->ir_capacity) {
@@ -48,7 +43,6 @@ int ir_emit(IR_Bytecode_Array_ptr ir, Xen_uint8_t opcode, Xen_ulong_t oparg,
     IR_Instruct_ptr new_mem =
         Xen_Realloc(ir->ir_array, new_capacity * sizeof(IR_Instruct_t));
     if (!new_mem) {
-      error("No se le pudo asignar mas memoria al arreglo de bytecode");
       return 0;
     }
     ir->ir_array = new_mem;
@@ -62,7 +56,6 @@ int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode, block_node_ptr block,
                  Xen_Source_Address sta) {
   IR_Instruct_t instr = {opcode, 0, 1, block, 0, sta};
   if (!ir) {
-    error("El arreglo de bytecode esta vacío");
     return 0;
   }
   if (ir->ir_size >= ir->ir_capacity) {
@@ -70,7 +63,6 @@ int ir_emit_jump(IR_Bytecode_Array_ptr ir, uint8_t opcode, block_node_ptr block,
     IR_Instruct_ptr new_mem =
         Xen_Realloc(ir->ir_array, new_capacity * sizeof(IR_Instruct_t));
     if (!new_mem) {
-      error("No se le pudo asignar mas memoria al arreglo de bytecode");
       return 0;
     }
     ir->ir_array = new_mem;

@@ -247,7 +247,6 @@ set(SOURCES
   # fuente de las listas enlazadas
   dynamic/lists/src/list.c
   dynamic/lists/src/history.c
-  dynamic/lists/src/logs.c
   dynamic/lists/src/string_utf8.c
 )
 

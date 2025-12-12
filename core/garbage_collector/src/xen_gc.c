@@ -154,7 +154,7 @@ void Xen_GC_Sweep(void) {
   }
 }
 
-void Xen_GC_Shutdown() {
+void Xen_GC_Shutdown(void) {
   Xen_GC_Collect();
   assert(__gc_heap.pressure == 0);
   assert(__gc_heap.total_bytes == 0);

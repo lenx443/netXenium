@@ -163,7 +163,14 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           buffer[bpos++] = '?';
           break;
 
-        case '0' ... '7': {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7': {
           int val = ch - '0';
           int count = 1;
           while (count < 3 && sf->sf_content[lexer->pos + 1] >= '0' &&
@@ -283,7 +290,14 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           buffer[bpos++] = '?';
           break;
 
-        case '0' ... '7': {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7': {
           int val = ch - '0';
           int count = 1;
           while (count < 3 && sf->sf_content[lexer->pos + 1] >= '0' &&

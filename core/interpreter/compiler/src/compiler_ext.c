@@ -1,3 +1,4 @@
+#include "compiler_ext.h"
 #include "block_list.h"
 #include "gc_header.h"
 #include "program_code.h"

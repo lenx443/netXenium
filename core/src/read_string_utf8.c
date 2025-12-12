@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "list.h"
-#include "logs.h"
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
@@ -21,7 +20,7 @@
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
 
-static void terminal_raw_input_on() {
+static void terminal_raw_input_on(void) {
   tcgetattr(STDIN_FILENO, &original_terminal_mode);
 
   struct termios raw_mode = original_terminal_mode;
@@ -51,11 +50,11 @@ static int strip_ansi_escape_strlen(const char* str) {
   return len;
 }
 
-static void terminal_raw_input_off() {
+static void terminal_raw_input_off(void) {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_terminal_mode);
 }
 
-static term_size get_cursor_position() {
+static term_size get_cursor_position(void) {
   term_size out = {0};
   char ch;
   char buf[32];
@@ -82,10 +81,6 @@ static term_size get_cursor_position() {
 static int get_terminal_size(term_size* tz) {
   struct winsize w;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) < 0) {
-    log_add(NULL, ERROR, "GetTerminalSize", "{ioctl}(fd, op, ...)");
-    log_add(NULL, ERROR, "GetTerminalSize",
-            "Error al obtener el tamaño de la terminal");
-    log_add_errno(NULL, ERROR, "GetTerminalSize");
     return 0;
   }
   tz->COLS = w.ws_col;
@@ -95,11 +90,7 @@ static int get_terminal_size(term_size* tz) {
 
 static void handle_winch(int sig) {
   (void)(sig);
-  if (!get_terminal_size(&current_term_size)) {
-    log_add(NULL, ERROR, "SHELL",
-            "Ocurrio un problema al obtener el tamaño de la terminal");
-    log_show_and_clear(NULL);
-  }
+  get_terminal_size(&current_term_size);
 }
 
 static int get_scroll(int cursor_index, int scroll_offset, const char* prompt) {
@@ -189,7 +180,7 @@ CodeUTF8 make_code_utf8_char(CharUTF8 ch) {
   return code_utf8;
 }
 
-CodeUTF8 read_raw_char_utf8() {
+CodeUTF8 read_raw_char_utf8(void) {
   char c;
   size_t n;
   while ((n = read(STDIN_FILENO, &c, 1)) != 1)
@@ -275,7 +266,7 @@ CodeUTF8 read_raw_char_utf8() {
   return make_code_utf8_char(character);
 }
 
-LIST_ptr read_string_utf8() {
+LIST_ptr read_string_utf8(void) {
 #define default_promp(prompt) sprintf(prompt, " -> ");
   LIST_ptr cmd = list_new();
   int i = 0;
@@ -404,9 +395,6 @@ LIST_ptr read_string_utf8() {
             HISTORY_struct new_history_line;
             char* cmd_cstring = string_utf8_get(cmd);
             if (cmd_cstring == NULL) {
-              log_add(NULL, ERROR, "SHELL",
-                      "No se pudo gurdar el comando en el hsitorial");
-              log_show_and_clear(NULL);
             } else {
               int cmd_size = Xen_CString_Len(cmd_cstring);
               strncpy(new_history_line.command, cmd_cstring, cmd_size);
@@ -428,8 +416,6 @@ LIST_ptr read_string_utf8() {
           cursor_of_i--;
           NODE_ptr node_ch = NULL;
           if ((node_ch = list_index_get(cursor_of_i, *cmd)) == NULL) {
-            log_add(NULL, ERROR, "SHELL",
-                    "no se pudo acceder al indice %d en cmd", cursor_of_i);
             continue;
           }
           cursor_index -= char_utf8_display_with(*(CharUTF8*)node_ch->point);
@@ -452,15 +438,8 @@ LIST_ptr read_string_utf8() {
         continue;
       }
     } else if (c.value.character.ch[0] != '\0' && c.value.character.size != 0) {
-      if (!list_push_at_index(cmd, cursor_of_i, &c.value.character,
-                              sizeof(CharUTF8))) {
-        DynSetLog(NULL);
-        log_add(NULL, ERROR, "SHELL",
-                "No se pudo agregar el caracter en en indice %d", cursor_of_i);
-        log_add(NULL, ERROR, "SHELL", "Caracter que cuaso el error: %s",
-                c.value.character.ch);
-        log_show_and_clear(NULL);
-      }
+      list_push_at_index(cmd, cursor_of_i, &c.value.character,
+                         sizeof(CharUTF8));
       i++;
       cursor_of_i++;
       NODE_ptr node_ch;

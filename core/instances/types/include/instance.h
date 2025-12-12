@@ -13,11 +13,11 @@ typedef uint8_t Xen_Instance_Flag;
   struct __GC_Header __gc;                                                     \
   struct __Implement* __impl;                                                  \
   size_t __size;                                                               \
-  Xen_Instance_Flag __flags;
+  Xen_Instance_Flag __flags
 
 #define Xen_INSTANCE_MAPPED_HEAD                                               \
   Xen_INSTANCE_HEAD;                                                           \
-  struct __Instance* __map;
+  struct __Instance* __map
 
 #define Xen_INSTANCE struct __Instance
 
@@ -31,8 +31,12 @@ typedef uint8_t Xen_Instance_Flag;
 #define XEN_INSTANCE_GET_FLAG(inst, flag)                                      \
   (((((struct __Instance*)inst)->__flags) & (flag)) != 0)
 
-Xen_INSTANCE{Xen_INSTANCE_HEAD};
-Xen_INSTANCE_MAPPED{Xen_INSTANCE_MAPPED_HEAD};
+Xen_INSTANCE {
+  Xen_INSTANCE_HEAD;
+};
+Xen_INSTANCE_MAPPED {
+  Xen_INSTANCE_MAPPED_HEAD;
+};
 
 Xen_INSTANCE* Xen_Instance_Alloc(struct __Implement*);
 Xen_INSTANCE* __instance_new(struct __Implement*, Xen_INSTANCE*, Xen_INSTANCE*,

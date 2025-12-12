@@ -5,15 +5,6 @@
 
 #define FOR_EACH(node, list) while (list_forEach(node, list))
 
-typedef enum {
-  DYN_OK = 0,
-  DYN_NO_MEMORY,
-  DYN_EMPTY,
-  DYN_INVALID,
-  DYN_ELEMENT_INVALID,
-  DYN_ELEMENT_NO_MATCH,
-} DynListErrors;
-
 struct Node {
   void* point;
   size_t size;
@@ -56,7 +47,5 @@ DEPRECATED void list_as_string(LIST, char*, int);
 
 int node_empty(NODE_ptr*);
 void node_free(NODE_ptr*);
-void DynSetLog(LIST_ptr);
-extern DynListErrors dyn_error;
 
 #endif

@@ -4,14 +4,12 @@
 
 #include "history.h"
 #include "list.h"
-#include "logs.h"
 #include "macros.h"
 #include "xen_alloc.h"
 
 HISTORY_ptr history_new(const char* filename) {
   HISTORY_ptr new_history = Xen_Alloc(sizeof(HISTORY));
   if (new_history == NULL) {
-    log_add(NULL, ERROR, "History", "No se pudo crear un nuevo historial");
     return NULL;
   }
 
@@ -20,17 +18,12 @@ HISTORY_ptr history_new(const char* filename) {
 
   new_history->cache_history = list_new();
   if (new_history->cache_history == NULL) {
-    DynSetLog(NULL);
-    log_add(NULL, ERROR, "History",
-            "No se pudo crear el historial para el cache");
     Xen_Dealloc(new_history);
     return NULL;
   }
 
   new_history->local_history = list_new();
   if (new_history->local_history == NULL) {
-    DynSetLog(NULL);
-    log_add(NULL, ERROR, "History", "No se pudo crear el historial local");
     list_free(new_history->cache_history);
     Xen_Dealloc(new_history);
     return NULL;
@@ -39,9 +32,6 @@ HISTORY_ptr history_new(const char* filename) {
   if (access(filename, F_OK) != 0) {
     FILE* new_file = fopen(filename, "w");
     if (!new_file) {
-      log_add(NULL, ERROR, "History",
-              "No se pudo crear el archivo de historial");
-      log_add_errno(NULL, ERROR, "History");
       list_free(new_history->local_history);
       list_free(new_history->cache_history);
       Xen_Dealloc(new_history);
@@ -52,8 +42,6 @@ HISTORY_ptr history_new(const char* filename) {
 
   FILE* fp = fopen(filename, "r");
   if (!fp) {
-    log_add(NULL, ERROR, "History", "No se pudo abrir el archivo de historial");
-    log_add_errno(NULL, ERROR, "History");
     list_free(new_history->local_history);
     list_free(new_history->cache_history);
     Xen_Dealloc(new_history);
@@ -86,9 +74,6 @@ HISTORY_ptr history_new(const char* filename) {
 
     if (!list_push_begin(new_history->cache_history, &history_line,
                          sizeof(HISTORY_struct))) {
-      DynSetLog(NULL);
-      log_add(NULL, ERROR, "History",
-              "No se pudo cargar el contenido del historial en memoria");
       break;
     }
   }
@@ -98,14 +83,9 @@ HISTORY_ptr history_new(const char* filename) {
 
 int history_push_line(HISTORY_ptr hist, HISTORY_struct line) {
   if (hist == NULL || !list_valid(hist->local_history)) {
-    log_add(NULL, ERROR, "History",
-            "No se pudo agregar un elemento al historial");
     return 0;
   }
   if (!list_push_begin(hist->local_history, &line, sizeof(HISTORY_struct))) {
-    DynSetLog(NULL);
-    log_add(NULL, ERROR, "History",
-            "No se pudo agregar un elemento al historial");
     return 0;
   }
   return 1;
@@ -116,15 +96,11 @@ static HISTORY_struct* history_get_cache(HISTORY hist, int index) {
   if (size == 0)
     return NULL;
   if ((size - index) <= 0) {
-    log_add(NULL, ERROR, "History", "El indice %d esta fuera de limite", index);
     return NULL;
   }
 
   NODE_ptr node_value = list_index_get(index, *hist.cache_history);
   if (node_value == NULL) {
-    DynSetLog(NULL);
-    log_add(NULL, ERROR, "History",
-            "No se pudo obtener el elemento del historial");
     return NULL;
   }
   return (HISTORY_struct*)node_value->point;
@@ -132,7 +108,6 @@ static HISTORY_struct* history_get_cache(HISTORY hist, int index) {
 
 HISTORY_struct* history_get(HISTORY hist, int index) {
   if (index < 0) {
-    log_add(NULL, ERROR, "History", "El indice %d esta fuera de limite", index);
     return NULL;
   }
 
@@ -144,9 +119,6 @@ HISTORY_struct* history_get(HISTORY hist, int index) {
 
   NODE_ptr node_value = list_index_get(index, *hist.local_history);
   if (node_value == NULL) {
-    DynSetLog(NULL);
-    log_add(NULL, ERROR, "History",
-            "No se pudo obtener el elemento del historial");
     return NULL;
   }
   return (HISTORY_struct*)node_value->point;
@@ -155,8 +127,6 @@ HISTORY_struct* history_get(HISTORY hist, int index) {
 int history_save(HISTORY hist) {
   FILE* fp = fopen(hist.filename, "a");
   if (!fp) {
-    log_add(NULL, ERROR, "History", "No se pudo abrir el archivo de historial");
-    log_add_errno(NULL, ERROR, "History");
     return 0;
   }
   NODE_ptr node = list_pop_back(hist.local_history);

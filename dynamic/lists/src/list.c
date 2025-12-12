@@ -4,17 +4,14 @@
 #include <sys/types.h>
 
 #include "list.h"
-#include "logs.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 
-LIST_ptr list_new() {
+LIST_ptr list_new(void) {
   LIST_ptr list = Xen_Alloc(sizeof(LIST));
   if (list == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     return NULL;
   }
-  dyn_error = DYN_OK;
   list->head = NULL;
   list->tail = NULL;
   return list;
@@ -42,7 +39,6 @@ int list_size(LIST list) {
 
 int list_empty(LIST_ptr list) {
   if (list == NULL || list->head == NULL) {
-    dyn_error = DYN_EMPTY;
     return 1;
   }
   return 0;
@@ -50,7 +46,6 @@ int list_empty(LIST_ptr list) {
 
 int list_valid(LIST_ptr list) {
   if (list == NULL) {
-    dyn_error = DYN_INVALID;
     return 0;
   }
   return 1;
@@ -58,18 +53,15 @@ int list_valid(LIST_ptr list) {
 
 int list_push_back(LIST_ptr list, const void* value, size_t size) {
   if (list == NULL) {
-    dyn_error = DYN_INVALID;
     return 0;
   }
   NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->size = size;
   newNode->point = Xen_Alloc(newNode->size);
   if (newNode == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     Xen_Dealloc(newNode);
     return 0;
   }
@@ -85,18 +77,15 @@ int list_push_back(LIST_ptr list, const void* value, size_t size) {
 
 int list_push_begin(LIST_ptr list, void* value, size_t size) {
   if (list == NULL) {
-    dyn_error = DYN_INVALID;
     return 0;
   }
   NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->size = size;
   newNode->point = Xen_Alloc(newNode->size);
   if (newNode->point == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     Xen_Dealloc(newNode);
     return 0;
   }
@@ -114,19 +103,16 @@ int list_push_begin(LIST_ptr list, void* value, size_t size) {
 
 int list_push_at_index(LIST_ptr list, int index, void* value, size_t size) {
   if (index < 0) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
   if (index == 0 || list_empty(list)) {
     NODE_ptr node = Xen_Alloc(sizeof(NODE));
     if (!node) {
-      dyn_error = DYN_NO_MEMORY;
       return 0;
     }
     node->point = Xen_Alloc(size);
     if (!node->point) {
       Xen_Dealloc(node);
-      dyn_error = DYN_NO_MEMORY;
       return 0;
     }
     memcpy(node->point, value, size);
@@ -147,19 +133,16 @@ int list_push_at_index(LIST_ptr list, int index, void* value, size_t size) {
   }
 
   if (!prev) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
 
   NODE_ptr node = Xen_Alloc(sizeof(NODE));
   if (!node) {
-    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   node->point = Xen_Alloc(size);
   if (!node->point) {
     Xen_Dealloc(node);
-    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
 
@@ -194,12 +177,10 @@ NODE_ptr list_pop_back(LIST_ptr list) {
   if (current == list->tail) {
     NODE* data = Xen_Alloc(sizeof(NODE));
     if (data == NULL) {
-      dyn_error = DYN_NO_MEMORY;
       return NULL;
     }
     data->point = Xen_Alloc(current->size);
     if (data->point == NULL) {
-      dyn_error = DYN_NO_MEMORY;
       Xen_Dealloc(data);
       return NULL;
     }
@@ -217,12 +198,10 @@ NODE_ptr list_pop_back(LIST_ptr list) {
   current = current->next;
   NODE_ptr data = Xen_Alloc(sizeof(NODE));
   if (data == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     return NULL;
   }
   data->point = Xen_Alloc(current->size);
   if (data->point == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     Xen_Dealloc(data);
     return NULL;
   }
@@ -238,7 +217,6 @@ NODE_ptr list_pop_back(LIST_ptr list) {
 
 void list_erase_at_index(LIST_ptr list, int index) {
   if (list_empty(list) || index < 0) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return;
   }
 
@@ -275,7 +253,6 @@ int list_search(LIST list, void* value, size_t size) {
     current = current->next;
     n++;
   }
-  dyn_error = DYN_ELEMENT_NO_MATCH;
   return -1;
 }
 
@@ -291,13 +268,11 @@ int list_search_string(LIST list, const char* value) {
     current = current->next;
     n++;
   }
-  dyn_error = DYN_ELEMENT_NO_MATCH;
   return -1;
 }
 
 int list_forEach(NODE_ptr* current, LIST list) {
   if (current == NULL) {
-    dyn_error = DYN_ELEMENT_INVALID;
     return 0;
   }
   if (*current == NULL)
@@ -312,7 +287,6 @@ NODE_ptr list_index_get(int index, LIST list) {
     return NULL;
   }
   if (index < 0) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return NULL;
   }
   NODE_ptr current = list.head;
@@ -322,7 +296,6 @@ NODE_ptr list_index_get(int index, LIST list) {
     n++;
   }
   if (current == NULL) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return NULL;
   }
   return current;
@@ -333,7 +306,6 @@ int list_index_set(int index, LIST_ptr list, void* value, size_t size) {
     return 0;
   }
   if (index < 0) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
   NODE_ptr current = list->head;
@@ -345,17 +317,14 @@ int list_index_set(int index, LIST_ptr list, void* value, size_t size) {
     n++;
   }
   if (current == NULL) {
-    dyn_error = DYN_ELEMENT_NO_MATCH;
     return 0;
   }
   NODE_ptr newNode = Xen_Alloc(sizeof(NODE));
   if (newNode == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     return 0;
   }
   newNode->point = Xen_Alloc(size);
   if (newNode->point == NULL) {
-    dyn_error = DYN_NO_MEMORY;
     Xen_Dealloc(newNode);
     return 0;
   }
@@ -414,7 +383,6 @@ void list_free(LIST_ptr list) {
 
 int node_empty(NODE_ptr* node) {
   if (node == NULL || *node == NULL) {
-    dyn_error = DYN_ELEMENT_INVALID;
     return 1;
   }
   return 0;
@@ -428,28 +396,3 @@ void node_free(NODE_ptr* node) {
   Xen_Dealloc(*node);
   *node = NULL;
 }
-
-void DynSetLog(LIST_ptr log) {
-  switch (dyn_error) {
-  case DYN_OK:
-    log_add(log, INFO, "Dyn-Lists", "No se ah generado ningun problema");
-    break;
-  case DYN_NO_MEMORY:
-    log_add(log, ERROR, "Dyn-Lists", "No hay suficuente memoria");
-    break;
-  case DYN_EMPTY:
-    log_add(log, ERROR, "Dyn-Lists", "La lista esta bacia");
-    break;
-  case DYN_INVALID:
-    log_add(log, ERROR, "Dyn-Lists", "La lista no es valida");
-    break;
-  case DYN_ELEMENT_INVALID:
-    log_add(log, ERROR, "Dyn-Lists", "El elemento de la lista no es valido");
-    break;
-  case DYN_ELEMENT_NO_MATCH:
-    log_add(log, ERROR, "Dyn-Lists", "No se encontro el elemento en la lista");
-    break;
-  }
-  dyn_error = DYN_OK;
-}
-DynListErrors dyn_error = DYN_OK;

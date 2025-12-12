@@ -2,20 +2,15 @@
 #include <stdio.h>
 
 #include "bytecode.h"
-#include "logs.h"
 #include "program_code.h"
 #include "source_file.h"
 #include "vm_instructs.h"
 #include "xen_alloc.h"
 #include "xen_typedefs.h"
 
-#define error(msg, ...)                                                        \
-  log_add(NULL, ERROR, "ByteCode Array", msg, ##__VA_ARGS__)
-
 Bytecode_Array_ptr bc_new(void) {
   Bytecode_Array_ptr bytecode = Xen_Alloc(sizeof(Bytecode_Array_t));
   if (!bytecode) {
-    error("No hay memoria disponible");
     return NULL;
   }
   bytecode->bc_array = NULL;
@@ -42,7 +37,6 @@ void bc_free(const Bytecode_Array_ptr bc) {
 int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg,
             Xen_Source_Address sta) {
   if (!bc) {
-    error("El arreglo de bytecode esta vacío");
     return 0;
   }
   bc_Instruct_t instr = {{opcode, oparg}, sta};
@@ -51,7 +45,6 @@ int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg,
     bc_Instruct_ptr new_mem =
         Xen_Realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
     if (!new_mem) {
-      error("No se le pudo asignar mas memoria al arreglo de bytecode");
       return 0;
     }
     bc->bc_array = new_mem;

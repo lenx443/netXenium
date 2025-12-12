@@ -5,7 +5,6 @@
 
 #include "gc_header.h"
 #include "instance.h"
-#include "logs.h"
 #include "program.h"
 #include "run_ctx_stack.h"
 #include "vm_backtrace.h"
@@ -18,18 +17,17 @@
 #include "xen_string.h"
 #include "xen_vector.h"
 
-#define error(msg, ...) log_add(NULL, ERROR, "VM", msg, ##__VA_ARGS__)
-
 static void InterruptHandler(int sign) {
   (void)sign;
   Xen_Interrupt();
 }
 
-static void vm_def_trace([[maybe_unused]] Xen_GCHeader* h) {
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->modules_stack);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_instances);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->globals_props);
+static void vm_def_trace(Xen_GCHeader* h) {
+  VM* _vm = (VM*)h;
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props);
   if (vm->except.active) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
   }
@@ -44,10 +42,6 @@ bool vm_create(void) {
   if (vm != NULL)
     return 1;
   vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
-  if (!vm) {
-    error("No hay memoria disponible");
-    return 0;
-  }
   vm->ctx_id_count = 0;
   vm->vm_ctx_stack = NULL;
   Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));

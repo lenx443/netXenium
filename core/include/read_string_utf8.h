@@ -36,7 +36,7 @@ typedef struct {
 
 CodeUTF8 make_code_utf8_code(key_value);
 CodeUTF8 make_code_utf8_char(CharUTF8);
-CodeUTF8 read_raw_char_utf8();
-LIST_ptr read_string_utf8();
+CodeUTF8 read_raw_char_utf8(void);
+LIST_ptr read_string_utf8(void);
 
 #endif
