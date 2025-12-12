@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.15)
 
 project(NetXenium)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -Wcast-function-type -Wstrict-prototypes -Wmissing-prototypes")
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -Wcast-function-type -Wstrict-prototypes -Wmissing-prototypes -Wpedantic")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)

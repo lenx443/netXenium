@@ -51,17 +51,24 @@
   ctx->ctx_error = 1;                                                          \
   return;
 
+#define OP_CLEAR_NEVER_USED_ARGS                                               \
+  do {                                                                         \
+    (void)vmr;                                                                 \
+    (void)ctx;                                                                 \
+    (void)oparg;                                                               \
+  } while (0)
+
 #define JUMP(ip) ctx->ctx_ip = ip
 
-#define STACK_PUSH(inst) vm_stack_push(ctx->ctx_stack, inst);
+#define STACK_PUSH(inst) vm_stack_push(ctx->ctx_stack, inst)
 #define STACK_POP vm_stack_pop(ctx->ctx_stack)
 
-static void op_nop([[maybe_unused]] VM_Run* vmr,
-                   [[maybe_unused]] RunContext_ptr ctx,
-                   [[maybe_unused]] Xen_ulong_t oparg) {}
+static void op_nop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+}
 
-static void op_push([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                    Xen_ulong_t oparg) {
+static void op_push(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* c_inst =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
   if (!c_inst) {
@@ -70,15 +77,15 @@ static void op_push([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(c_inst);
 }
 
-static void op_pop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                   Xen_ulong_t oparg) {
+static void op_pop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   for (uint8_t i = 0; i < oparg; i++) {
     STACK_POP;
   }
 }
 
-static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                    Xen_ulong_t oparg) {
+static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* c_name =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -95,8 +102,8 @@ static void op_load([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(inst);
 }
 
-static void op_load_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                         Xen_ulong_t oparg) {
+static void op_load_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* c_name =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -113,8 +120,8 @@ static void op_load_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(inst);
 }
 
-static void op_load_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                          [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_load_index(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* index = STACK_POP;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* rsult = Xen_Attr_Index_Get(inst, index);
@@ -127,8 +134,8 @@ static void op_load_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(rsult);
 }
 
-static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                         Xen_ulong_t oparg) {
+static void op_load_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* attr =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
@@ -142,8 +149,8 @@ static void op_load_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(result);
 }
 
-static void op_store([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                     Xen_ulong_t oparg) {
+static void op_store(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* c_name =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -161,8 +168,8 @@ static void op_store([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_Pop();
 }
 
-static void op_store_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                          Xen_ulong_t oparg) {
+static void op_store_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* c_name =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
   if (!c_name) {
@@ -175,8 +182,8 @@ static void op_store_prop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_store_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                           [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_store_index(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* index = STACK_POP;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
@@ -188,8 +195,8 @@ static void op_store_index([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_store_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                          Xen_ulong_t oparg) {
+static void op_store_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
   Xen_Instance* attr =
@@ -202,8 +209,8 @@ static void op_store_attr([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_make_tuple([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                          Xen_ulong_t oparg) {
+static void op_make_tuple(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!vals_array) {
     ERROR;
@@ -223,8 +230,8 @@ static void op_make_tuple([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(tuple);
 }
 
-static void op_make_vector([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                           Xen_ulong_t oparg) {
+static void op_make_vector(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance** vals_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!vals_array) {
     ERROR;
@@ -242,9 +249,9 @@ static void op_make_vector([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(vector);
 }
 
-static void op_make_vector_from_iterable([[maybe_unused]] VM_Run* vmr,
-                                         RunContext_ptr ctx,
-                                         [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_make_vector_from_iterable(VM_Run* vmr, RunContext_ptr ctx,
+                                         Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
@@ -266,8 +273,8 @@ static void op_make_vector_from_iterable([[maybe_unused]] VM_Run* vmr,
   STACK_PUSH(vector);
 }
 
-static void op_make_map([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                        Xen_ulong_t oparg) {
+static void op_make_map(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* map = Xen_Map_New();
   if (!map) {
     ERROR;
@@ -287,8 +294,9 @@ static void op_make_map([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(map);
 }
 
-static void op_make_function([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+static void op_make_function(VM_Run* vmr, RunContext_ptr ctx,
                              Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   CALLABLE_ptr code =
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* args_names = STACK_POP;
@@ -308,8 +316,9 @@ static void op_make_function([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_GC_Pop_Root();
 }
 
-static void op_make_function_nargs([[maybe_unused]] VM_Run* vmr,
-                                   RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_make_function_nargs(VM_Run* vmr, RunContext_ptr ctx,
+                                   Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   CALLABLE_ptr code =
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* function =
@@ -320,8 +329,8 @@ static void op_make_function_nargs([[maybe_unused]] VM_Run* vmr,
   STACK_PUSH(function);
 }
 
-static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                    Xen_ulong_t oparg) {
+static void op_call(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance** args_array = Xen_Alloc(oparg * sizeof(Xen_Instance*));
   if (!args_array) {
     ERROR;
@@ -353,8 +362,8 @@ static void op_call([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_XPOP(2);
 }
 
-static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                       Xen_ulong_t oparg) {
+static void op_call_kw(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_size_t roots = 0;
   Xen_Instance* kw_names = STACK_POP;
   Xen_Instance* kwargs = Xen_Map_New();
@@ -405,8 +414,8 @@ static void op_call_kw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_XPOP(roots);
 }
 
-static void op_binaryop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                        Xen_ulong_t oparg) {
+static void op_binaryop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* second = STACK_POP;
   Xen_Instance* first = STACK_POP;
   Xen_IGC_Push(first);
@@ -423,8 +432,9 @@ static void op_binaryop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(rsult);
 }
 
-static void op_unary_positive([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                              [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_unary_positive(VM_Run* vmr, RunContext_ptr ctx,
+                              Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__positive");
   if (!method) {
@@ -447,8 +457,9 @@ static void op_unary_positive([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(result);
 }
 
-static void op_unary_negative([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                              [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_unary_negative(VM_Run* vmr, RunContext_ptr ctx,
+                              Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__negative");
   if (!method) {
@@ -471,8 +482,8 @@ static void op_unary_negative([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(result);
 }
 
-static void op_unary_not([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                         [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_unary_not(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* method = Xen_Attr_Get_Str(inst, "__not");
   if (!method) {
@@ -495,15 +506,15 @@ static void op_unary_not([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(result);
 }
 
-static void op_copy([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                    [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_copy(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* val = STACK_POP;
   STACK_PUSH(val);
   STACK_PUSH(val);
 }
 
-static void op_print_top([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                         [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_print_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* val = STACK_POP;
   STACK_PUSH(val);
   if_nil_eval(val) {
@@ -516,13 +527,13 @@ static void op_print_top([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_jump([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                    Xen_ulong_t oparg) {
+static void op_jump(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   JUMP(oparg);
 }
 
-static void op_throw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                     [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_throw(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* val = STACK_POP;
   if (!Xen_VM_Except_Throw(val)) {
     Xen_ThrowError();
@@ -530,8 +541,9 @@ static void op_throw([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_jump_if_true([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+static void op_jump_if_true(VM_Run* vmr, RunContext_ptr ctx,
                             Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* cond = STACK_POP;
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
@@ -542,8 +554,9 @@ static void op_jump_if_true([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_jump_if_false([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+static void op_jump_if_false(VM_Run* vmr, RunContext_ptr ctx,
                              Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* cond = STACK_POP;
   Xen_Instance* evl = Xen_Attr_Boolean(cond);
   if (!evl) {
@@ -554,8 +567,8 @@ static void op_jump_if_false([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_iter_get([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                        [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_iter_get(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* iterable = STACK_POP;
   Xen_Instance* iter = Xen_Attr_Iter(iterable);
   if (!iter) {
@@ -565,8 +578,8 @@ static void op_iter_get([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(iter);
 }
 
-static void op_iter_for([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                        Xen_ulong_t oparg) {
+static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* iter = STACK_POP;
   Xen_IGC_Push(iter);
   Xen_Instance* rsult = Xen_Attr_Next(iter);
@@ -580,8 +593,8 @@ static void op_iter_for([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(rsult);
 }
 
-static void op_list_unpack([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                           Xen_ulong_t oparg) {
+static void op_list_unpack(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -600,8 +613,9 @@ static void op_list_unpack([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_list_unpack_start([[maybe_unused]] VM_Run* vmr,
-                                 RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_list_unpack_start(VM_Run* vmr, RunContext_ptr ctx,
+                                 Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -635,8 +649,9 @@ static void op_list_unpack_start([[maybe_unused]] VM_Run* vmr,
   }
 }
 
-static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+static void op_list_unpack_end(VM_Run* vmr, RunContext_ptr ctx,
                                Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
   if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
       Xen_IMPL(seq) != &Xen_Vector_Implement) {
@@ -670,20 +685,23 @@ static void op_list_unpack_end([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(new_seq);
 }
 
-static void op_catch_stack_push([[maybe_unused]] VM_Run* vmr,
-                                RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_catch_stack_push(VM_Run* vmr, RunContext_ptr ctx,
+                                Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   vm_catch_stack_push(&ctx->ctx_catch_stack, oparg, NULL,
                       ctx->ctx_stack->stack_top);
 }
 
-static void op_catch_stack_pop([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
-                               [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_catch_stack_pop(VM_Run* vmr, RunContext_ptr ctx,
+                               Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   struct VM_Catch_Stack* val = vm_catch_stack_pop(&ctx->ctx_catch_stack);
   vm_catch_stack_clear(&val);
 }
 
-static void op_catch_stack_type([[maybe_unused]] VM_Run* vmr,
-                                RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_catch_stack_type(VM_Run* vmr, RunContext_ptr ctx,
+                                Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   if (ctx->ctx_catch_stack) {
     Xen_Instance* type =
         Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
@@ -694,8 +712,9 @@ static void op_catch_stack_type([[maybe_unused]] VM_Run* vmr,
   }
 }
 
-static void op_build_implement([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
+static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                                Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   CALLABLE_ptr code =
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* name = STACK_POP;
@@ -721,8 +740,9 @@ static void op_build_implement([[maybe_unused]] VM_Run* vmr, RunContext_ptr ctx,
   }
 }
 
-static void op_build_implement_nbase([[maybe_unused]] VM_Run* vmr,
-                                     RunContext_ptr ctx, Xen_ulong_t oparg) {
+static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
+                                     Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   CALLABLE_ptr code =
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* name = STACK_POP;
@@ -747,6 +767,7 @@ static void op_build_implement_nbase([[maybe_unused]] VM_Run* vmr,
 }
 
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret =
       Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
   Xen_size_t current_id = ctx->ctx_id;
@@ -760,8 +781,8 @@ static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
 }
 
-static void op_return_top(VM_Run* vmr, RunContext_ptr ctx,
-                          [[maybe_unused]] Xen_ulong_t oparg) {
+static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret = STACK_POP;
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&vm->vm_ctx_stack);
@@ -775,7 +796,8 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx,
 }
 
 static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
-                                      [[maybe_unused]] Xen_ulong_t oparg) {
+                                      Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self;
   Xen_Instance* impl =
       Xen_Basic_New(builder->name, builder->__map, builder->base);
