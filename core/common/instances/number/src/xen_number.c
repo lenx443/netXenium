@@ -102,7 +102,7 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
   res->sign = n->sign;
 
   uint32_t carry = 0;
-  for (ssize_t i = res->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)res->size - 1; i >= 0; i--) {
     uint64_t cur = ((uint64_t)carry << 32) | res->digits[i];
     res->digits[i] = (uint32_t)(cur / 2);
     carry = (uint32_t)(cur & 1); // resto
@@ -560,7 +560,7 @@ const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   size_t pos = 0;
   while (temp_size > 0) {
     uint64_t remainder = 0;
-    for (ssize_t i = temp_size - 1; i >= 0; i--) {
+    for (Xen_ssize_t i = (Xen_ssize_t)temp_size - 1; i >= 0; i--) {
       uint64_t cur = ((uint64_t)remainder << 32) | temp[i];
       temp[i] = (uint32_t)(cur / 10);
       remainder = cur % 10;
@@ -582,7 +582,7 @@ const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   size_t idx = 0;
   if (n->sign < 0)
     str[idx++] = '-';
-  for (ssize_t i = pos - 1; i >= 0; i--)
+  for (Xen_ssize_t i = (Xen_ssize_t)pos - 1; i >= 0; i--)
     str[idx++] = buf[i];
   str[idx] = '\0';
 
@@ -601,7 +601,7 @@ int32_t Xen_Number_As_Int32(Xen_INSTANCE* inst) {
   }
 
   int64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
 
     if (value > (int64_t)INT32_MAX + 1) {
@@ -637,7 +637,7 @@ int64_t Xen_Number_As_Int64(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -667,7 +667,7 @@ int Xen_Number_As_Int(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -694,7 +694,7 @@ unsigned int Xen_Number_As_UInt(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -719,7 +719,7 @@ long Xen_Number_As_Long(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -746,7 +746,7 @@ unsigned long Xen_Number_As_ULong(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -771,7 +771,7 @@ long long Xen_Number_As_LongLong(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 
@@ -798,7 +798,7 @@ unsigned long long Xen_Number_As_ULongLong(Xen_INSTANCE* inst) {
   }
 
   uint64_t value = 0;
-  for (ssize_t i = n->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = (Xen_ssize_t)n->size - 1; i >= 0; i--) {
     value = (value << 32) | n->digits[i];
   }
 

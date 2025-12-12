@@ -708,7 +708,8 @@ static void op_catch_stack_type(VM_Run* vmr, RunContext_ptr ctx,
     if (Xen_IMPL(type) != &Xen_String_Implement) {
       ERROR;
     }
-    ctx->ctx_catch_stack->except_type = strdup(Xen_String_As_CString(type));
+    ctx->ctx_catch_stack->except_type =
+        Xen_CString_Dup(Xen_String_As_CString(type));
   }
 }
 

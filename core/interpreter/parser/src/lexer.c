@@ -418,7 +418,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         size_t len = lexer->pos - start;
         char buffer[len + 2];
         strcpy(buffer, "0");
-        strcpy(buffer + 1, sf->sf_content + start);
+        if (len)
+          strcpy(buffer + 1, sf->sf_content + start);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else {
         token = Token(lexer, TKN_NUMBER, "0", 1);
