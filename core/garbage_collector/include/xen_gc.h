@@ -8,17 +8,17 @@
 
 struct __GC_Header* Xen_GC_New(Xen_size_t, void (*)(struct __GC_Header*),
                                void (*)(struct __GC_Header**));
-void Xen_GC_Collect();
+void Xen_GC_Collect(void);
 void Xen_GC_Push_Root(struct __GC_Header*);
-void Xen_GC_Pop_Root();
+void Xen_GC_Pop_Root(void);
 void Xen_GC_Pop_Roots(Xen_size_t);
 void Xen_GC_Push_Gray(struct __GC_Header*);
-struct __GC_Header* Xen_GC_Pop_Gray();
+struct __GC_Header* Xen_GC_Pop_Gray(void);
 void Xen_GC_Trace_GCHeader(struct __GC_Header*);
 void Xen_GC_Trace(struct __GC_Header*);
-void Xen_GC_Mark();
-void Xen_GC_Sweep();
-void Xen_GC_Shutdown();
+void Xen_GC_Mark(void);
+void Xen_GC_Sweep(void);
+void Xen_GC_Shutdown(void);
 
 static inline void Xen_GC_Write_Field(struct __GC_Header* parent,
                                       struct __GC_Header** field,

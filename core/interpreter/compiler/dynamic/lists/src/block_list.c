@@ -4,7 +4,6 @@
 #include "vm_consts.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
-#include "xen_igc.h"
 
 #define error(msg, ...) log_add(NULL, ERROR, "Block list", msg, ##__VA_ARGS__)
 

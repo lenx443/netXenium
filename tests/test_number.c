@@ -13,7 +13,7 @@
 #include "xen_number.h"
 #include "xen_string.h"
 
-static void test_number_from_cstring() {
+static void test_number_from_cstring(void) {
   printf("Testing Number From Strinig\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("13724", 0);
@@ -117,7 +117,7 @@ static void test_number_from_cstring() {
   }
 }
 
-static void test_number_from_cstring_base() {
+static void test_number_from_cstring_base(void) {
   printf("Testing Number From String With Base\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_CString("13724", 10);
@@ -201,7 +201,7 @@ static void test_number_from_cstring_base() {
   }
 }
 
-static void test_number_from_int32() {
+static void test_number_from_int32(void) {
   printf("Testing Number From Integer 32-bits\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int32(13724);
@@ -225,7 +225,7 @@ static void test_number_from_int32() {
   }
 }
 
-static void test_number_from_int64() {
+static void test_number_from_int64(void) {
   printf("Testing Number From Integer 64-bits\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int64(1372418483818485888l);
@@ -249,7 +249,7 @@ static void test_number_from_int64() {
   }
 }
 
-void test_number_from_int() {
+static void test_number_from_int(void) {
   printf("Testing Number From Int\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_Int(65535);
@@ -277,7 +277,7 @@ void test_number_from_int() {
   }
 }
 
-void test_number_from_uint() {
+static void test_number_from_uint(void) {
   printf("Testing Number From Unsigned Int\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_UInt(65535);
@@ -293,7 +293,7 @@ void test_number_from_uint() {
   }
 }
 
-void test_number_from_long() {
+static void test_number_from_long(void) {
   printf("Testing Number From Long\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_Long(2747282858672828557l);
@@ -321,7 +321,7 @@ void test_number_from_long() {
   }
 }
 
-void test_number_from_ulong() {
+static void test_number_from_ulong(void) {
   printf("Testing Number From Unsigned Long\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_ULong(2747282858672828557l);
@@ -337,7 +337,7 @@ void test_number_from_ulong() {
   }
 }
 
-void test_number_from_longlong() {
+static void test_number_from_longlong(void) {
   printf("Testing Number From Long Long\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_LongLong(2747282858672828557l);
@@ -369,7 +369,7 @@ void test_number_from_longlong() {
   }
 }
 
-void test_number_from_ulonglong() {
+static void test_number_from_ulonglong(void) {
   printf("Testing Number From Unsigned Long Long\n");
   {
     Xen_INSTANCE* foo = Xen_Number_From_ULongLong(2747282858672828557l);
@@ -387,7 +387,7 @@ void test_number_from_ulonglong() {
   }
 }
 
-void test_number_string() {
+static void test_number_string(void) {
   printf("Testing Number String\n");
   {
     Xen_Instance* foo = Xen_Number_From_Int(27447);
@@ -398,7 +398,7 @@ void test_number_string() {
   }
 }
 
-void test_number_opr_eq() {
+static void test_number_opr_eq(void) {
   printf("Testing Number Equal Operator\n");
   {
     Xen_Instance* a = Xen_Number_From_Int(1234);
@@ -465,7 +465,7 @@ void test_number_opr_eq() {
   }
 }
 
-void test_number_mul() {
+static void test_number_mul(void) {
   printf("Testing Number multiplication\n");
   {
     Xen_Instance* a = Xen_Number_From_Int(1234);

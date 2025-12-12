@@ -5,7 +5,7 @@
 
 Xen_ImplementDef Xen_Tuple_Iterator_Implement;
 
-int Xen_Tuple_Iterator_Init();
-void Xen_Tuple_Iterator_Finish();
+int Xen_Tuple_Iterator_Init(void);
+void Xen_Tuple_Iterator_Finish(void);
 
 #endif

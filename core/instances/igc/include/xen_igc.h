@@ -7,13 +7,13 @@
 
 typedef struct __IGC_Roots Xen_IGC_Fork;
 
-void Xen_IGC_Init();
-void Xen_IGC_Finish();
+void Xen_IGC_Init(void);
+void Xen_IGC_Finish(void);
 
 void Xen_IGC_Push(Xen_Instance*);
-void Xen_IGC_Pop();
+void Xen_IGC_Pop(void);
 
-Xen_IGC_Fork* Xen_IGC_Fork_New();
+Xen_IGC_Fork* Xen_IGC_Fork_New(void);
 void Xen_IGC_Fork_Push(Xen_IGC_Fork*, Xen_Instance*);
 void Xen_IGC_Fork_Pop(Xen_IGC_Fork*);
 

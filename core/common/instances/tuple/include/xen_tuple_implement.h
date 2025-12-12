@@ -5,7 +5,7 @@
 
 Xen_ImplementDef Xen_Tuple_Implement;
 
-int Xen_Tuple_Init();
-void Xen_Tuple_Finish();
+int Xen_Tuple_Init(void);
+void Xen_Tuple_Finish(void);
 
 #endif

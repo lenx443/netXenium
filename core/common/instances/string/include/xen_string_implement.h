@@ -5,7 +5,7 @@
 
 extern struct __Implement Xen_String_Implement;
 
-int Xen_String_Init();
-void Xen_String_Finish();
+int Xen_String_Init(void);
+void Xen_String_Finish(void);
 
 #endif

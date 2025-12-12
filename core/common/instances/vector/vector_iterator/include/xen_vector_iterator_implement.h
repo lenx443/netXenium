@@ -5,7 +5,7 @@
 
 Xen_ImplementDef Xen_Vector_Iterator_Implement;
 
-int Xen_Vector_Iterator_Init();
-void Xen_Vector_Iterator_Finish();
+int Xen_Vector_Iterator_Init(void);
+void Xen_Vector_Iterator_Finish(void);
 
 #endif

@@ -248,11 +248,21 @@ set(SOURCES
   dynamic/lists/src/string_utf8.c
 )
 
+add_library(libntxenium
+  abi/src/abi.c
+)
+
+set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
+
+target_compile_options(libntxenium PRIVATE -DXEN_ABI)
+
 add_executable(ntxenium
   # Codigo fuente principal (Funcion main)
   main.c
   ${SOURCES}
 )
+
+target_compile_options(ntxenium PRIVATE -DXEN_CORE)
 
 enable_testing()
 

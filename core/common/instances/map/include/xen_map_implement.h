@@ -5,7 +5,7 @@
 
 extern struct __Implement Xen_Map_Implement;
 
-int Xen_Map_Init();
-void Xen_Map_Finish();
+int Xen_Map_Init(void);
+void Xen_Map_Finish(void);
 
 #endif

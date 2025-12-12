@@ -23,10 +23,10 @@ typedef block_node_t* block_node_ptr;
 typedef struct block_list block_list_t;
 typedef block_list_t* block_list_ptr;
 
-block_node_ptr block_new();
+block_node_ptr block_new(void);
 void block_free(block_node_ptr);
 
-block_list_ptr block_list_new();
+block_list_ptr block_list_new(void);
 int block_list_push_node(block_list_ptr, block_node_ptr);
 void block_list_free(block_list_ptr);
 

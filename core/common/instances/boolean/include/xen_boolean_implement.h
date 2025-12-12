@@ -5,7 +5,7 @@
 
 Xen_ImplementDef Xen_Boolean_Implement;
 
-int Xen_Boolean_Init();
-void Xen_Boolean_Finish();
+int Xen_Boolean_Init(void);
+void Xen_Boolean_Finish(void);
 
 #endif

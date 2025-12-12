@@ -18,7 +18,7 @@ typedef enum {
 } ExecMode;
 
 void load_script(char*);
-void shell_loop();
+void shell_loop(void);
 
 extern Program_State program;
 extern HISTORY_ptr history;
