@@ -6,12 +6,14 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND DEFINED ENV{PREFIX})
+    set(CMAKE_INSTALL_PREFIX "$ENV{PREFIX}" CACHE PATH "Install prefix" FORCE)
+endif()
+
 set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -Wcast-function-type -Wstrict-prototypes -Wmissing-prototypes -Wpedantic")
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
-
-set(C_STANDARD 99)
 
 if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
@@ -258,6 +260,8 @@ set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
 
 target_compile_options(libntxenium PRIVATE -DXEN_ABI)
 
+install(TARGETS libntxenium LIBRARY DESTINATION lib)
+
 add_executable(ntxenium
   # Codigo fuente principal (Funcion main)
   main.c
@@ -265,6 +269,8 @@ add_executable(ntxenium
 )
 
 target_compile_options(ntxenium PRIVATE -DXEN_CORE)
+
+install(TARGETS ntxenium RUNTIME DESTINATION bin)
 
 enable_testing()
 
