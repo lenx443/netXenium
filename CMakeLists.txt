@@ -14,7 +14,7 @@ set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
-set(NETXENIUM_ABI_INCLUDE_PATH abi/include/)
+set(NETXENIUM_ABI_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/abi/include/)
 set(NETXENIUM_MODULES_INSTALL_PATH lib/netxenium)
 
 add_compile_options(-DXEN_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
@@ -30,7 +30,7 @@ if(SHELL_BASIC)
   add_compile_options(-DSHELL_BASIC)
 endif()
 
-include_directories(
+set(NETXENIUM_DEAFULT_INCLUDES
   core/garbage_collector/include/
   core/garbage_collector/types/header/
   core/include/
@@ -260,6 +260,7 @@ add_library(libntxenium
   abi/src/abi.c
   ${SOURCES}
 )
+target_include_directories(libntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
 
 set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
 
@@ -272,6 +273,8 @@ add_executable(ntxenium
   main.c
   ${SOURCES}
 )
+
+target_include_directories(ntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
 
 target_compile_options(ntxenium PRIVATE -DXEN_CORE)
 
@@ -293,6 +296,8 @@ add_executable(tester
   tests/test_tuple.c
   tests/test_main.c
 )
+
+target_include_directories(tester PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
 
 add_test(NAME TestNumber COMMAND tester "NUMBER")
 add_test(NAME TestString COMMAND tester "STRING")
