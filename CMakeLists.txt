@@ -260,7 +260,7 @@ add_library(libntxenium
   abi/src/abi.c
   ${SOURCES}
 )
-target_include_directories(libntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
+target_include_directories(libntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES} ${NETXENIUM_ABI_INCLUDE_PATH})
 
 set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
 
@@ -299,11 +299,11 @@ add_executable(tester
 
 target_include_directories(tester PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
 
-add_test(NAME TestNumber COMMAND tester "NUMBER")
-add_test(NAME TestString COMMAND tester "STRING")
-add_test(NAME TestMap COMMAND tester "MAP")
-add_test(NAME TestBoolean COMMAND tester "BOOLEAN")
-add_test(NAME TestModules COMMAND tester "MODULES")
-add_test(NAME TestLoadScript COMMAND tester "LOAD_SCRIPT")
-add_test(NAME TestVector COMMAND test_vector "VECTOR")
-add_test(NAME TestTuple COMMAND test_tuple "TUPLE")
+add_test(NAME TestNumber      COMMAND tester      "NUMBER")
+add_test(NAME TestString      COMMAND tester      "STRING")
+add_test(NAME TestMap         COMMAND tester      "MAP")
+add_test(NAME TestBoolean     COMMAND tester      "BOOLEAN")
+add_test(NAME TestModules     COMMAND tester      "MODULES")
+add_test(NAME TestLoadScript  COMMAND tester      "LOAD_SCRIPT")
+add_test(NAME TestVector      COMMAND test_vector "VECTOR")
+add_test(NAME TestTuple       COMMAND test_tuple  "TUPLE")

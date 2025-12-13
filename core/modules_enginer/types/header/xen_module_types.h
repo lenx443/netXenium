@@ -9,7 +9,7 @@ struct Xen_Module_Function {
 };
 
 struct Xen_Module_Def {
-  char* mod_name;
+  Xen_c_string_t mod_name;
   Xen_Native_Func mod_init;
   struct Xen_Module_Function* mod_functions;
 };

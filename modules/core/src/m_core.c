@@ -219,7 +219,21 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     }
     Xen_string_t full_path = Xen_Alloc(psize + 1);
     snprintf(full_path, psize + 1, "%s/%s.nxm", path_str, mod_name);
-    Xen_Instance* mod = Xen_Module_Load(full_path, mod_name, path_str, NULL);
+    Xen_Instance* mod =
+        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_GUEST);
+    if (mod) {
+      Xen_Dealloc(full_path);
+      return mod;
+    }
+    Xen_Dealloc(full_path);
+    psize = snprintf(NULL, 0, "%s/lib%s.so", path_str, mod_name);
+    if (psize == -1) {
+      return NULL;
+    }
+    full_path = Xen_Alloc(psize + 1);
+    snprintf(full_path, psize + 1, "%s/lib%s.so", path_str, mod_name);
+    mod =
+        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_NATIVE);
     if (mod) {
       Xen_Dealloc(full_path);
       return mod;

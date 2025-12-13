@@ -55,9 +55,11 @@ int main(int argc, char** argv) {
       char* dir = Xen_Alloc(len + 1);
       memcpy(dir, argv[1], len);
       dir[len] = '\0';
-      Xen_Module_Load(argv[1], "<start>", dir, vm->globals_instances);
+      Xen_Module_Load(argv[1], "<start>", dir, vm->globals_instances,
+                      XEN_MODULE_GUEST);
     } else {
-      Xen_Module_Load(argv[1], "<start>", ".", vm->globals_instances);
+      Xen_Module_Load(argv[1], "<start>", ".", vm->globals_instances,
+                      XEN_MODULE_GUEST);
     }
   } else {
     program.name = Xen_CString_Dup(argv[0]);
