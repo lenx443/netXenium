@@ -19,6 +19,7 @@ typedef struct {
   Xen_Instance* globals_props;
   ctx_id_t ctx_id_count;
   Xen_c_string_t path_current;
+  Xen_Instance* paths_modules;
   struct {
     Xen_bool_t active;
     Xen_Instance* except;

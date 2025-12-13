@@ -29,6 +29,7 @@ static void vm_def_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->paths_modules);
   if (vm->except.active) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
   }
@@ -37,6 +38,17 @@ static void vm_def_trace(Xen_GCHeader* h) {
 static void vm_def_destroy(Xen_GCHeader** h) {
   run_context_stack_free(&((VM_ptr)*h)->vm_ctx_stack);
   Xen_Dealloc(*h);
+}
+
+static int vm_load_modules_paths(void) {
+  vm->paths_modules = Xen_Vector_New();
+  if (!vm->paths_modules) {
+    return 0;
+  }
+  Xen_Instance* default_module_path =
+      Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");
+  Xen_Vector_Push(vm->paths_modules, default_module_path);
+  return 1;
 }
 
 bool vm_create(void) {
@@ -80,9 +92,14 @@ bool vm_create(void) {
   }
   char path_current[1024];
   if (!getcwd(path_current, 1024)) {
-    return NULL;
+    run_context_stack_free(&vm->vm_ctx_stack);
+    return 0;
   }
   vm->path_current = Xen_CString_Dup(path_current);
+  if (!vm_load_modules_paths()) {
+    run_context_stack_free(&vm->vm_ctx_stack);
+    return 0;
+  }
   vm->except.active = 0;
   vm->except.except = NULL;
   vm->except.bt = vm_backtrace_new();

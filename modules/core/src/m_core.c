@@ -194,39 +194,39 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_c_string_t mod_name = Xen_String_As_CString(inst);
+  Xen_Instance* current_path = NULL;
   if (Xen_SIZE(vm->modules_stack) > 0) {
     Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(vm->modules_stack);
-    Xen_c_string_t path = mod_top->mod_path;
-    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path, mod_name);
-    if (psize == -1) {
-      return NULL;
-    }
-    Xen_string_t relative_path = Xen_Alloc(psize + 1);
-    snprintf(relative_path, psize + 1, "%s/%s.nxm", path, mod_name);
-    Xen_Instance* mod = Xen_Module_Load(relative_path, mod_name, path, NULL);
-    if (!mod) {
-      Xen_Dealloc((void*)relative_path);
-      return NULL;
-    }
-    Xen_Dealloc((void*)relative_path);
-    return mod;
+    current_path = Xen_String_From_CString(mod_top->mod_path);
   } else {
-    Xen_ssize_t psize =
-        snprintf(NULL, 0, "%s/%s.nxm", vm->path_current, mod_name);
+    current_path = Xen_String_From_CString(vm->path_current);
+  }
+  Xen_Instance* paths_stack = Xen_Vector_New();
+  for (Xen_size_t i = Xen_SIZE(vm->paths_modules); i-- > 0;) {
+    Xen_Instance* path = Xen_Vector_Get_Index(vm->paths_modules, i);
+    Xen_Vector_Push(paths_stack, path);
+  }
+  Xen_Vector_Push(paths_stack, current_path);
+  while (Xen_SIZE(paths_stack) > 0) {
+    Xen_Instance* path = Xen_Vector_Pop(paths_stack);
+    if (Xen_IMPL(path) != &Xen_String_Implement) {
+      return NULL;
+    }
+    Xen_c_string_t path_str = Xen_String_As_CString(path);
+    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path_str, mod_name);
     if (psize == -1) {
       return NULL;
     }
-    Xen_string_t relative_path = Xen_Alloc(psize + 1);
-    snprintf(relative_path, psize + 1, "%s/%s.nxm", vm->path_current, mod_name);
-    Xen_Instance* mod =
-        Xen_Module_Load(relative_path, mod_name, vm->path_current, NULL);
-    if (!mod) {
-      Xen_Dealloc((void*)relative_path);
-      return NULL;
+    Xen_string_t full_path = Xen_Alloc(psize + 1);
+    snprintf(full_path, psize + 1, "%s/%s.nxm", path_str, mod_name);
+    Xen_Instance* mod = Xen_Module_Load(full_path, mod_name, path_str, NULL);
+    if (mod) {
+      Xen_Dealloc(full_path);
+      return mod;
     }
-    Xen_Dealloc((void*)relative_path);
-    return mod;
+    Xen_Dealloc(full_path);
   }
+  return NULL;
 }
 
 static Xen_Module_Function_Table core_functions = {

@@ -14,6 +14,10 @@ set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
+set(NETXENIUM_ABI_INCLUDE_PATH abi/include/)
+set(NETXENIUM_MODULES_INSTALL_PATH lib/netxenium)
+
+add_compile_options(-DXEN_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
 
 if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
@@ -28,7 +32,7 @@ endif()
 
 include_directories(
   core/garbage_collector/include/
-  core/garbage_collector/types/header
+  core/garbage_collector/types/header/
   core/include/
   core/common/header/
   core/common/include/
@@ -84,7 +88,7 @@ include_directories(
   core/modules_enginer/types/header/
   core/modules_enginer/instance/include/
   core/modules_enginer/instance/types/header/
-  modules/include/
+  modules/core/include/
   dynamic/lists/include/
   dynamic/hash_tables/include/
   header/
@@ -242,8 +246,8 @@ set(SOURCES
   core/modules_enginer/instance/src/xen_module.c
 
   # modulos
-  modules/src/m_core.c
-  modules/src/m_interpreter.c
+  modules/core/src/m_core.c
+  modules/core/src/m_interpreter.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
@@ -254,6 +258,7 @@ set(SOURCES
 
 add_library(libntxenium
   abi/src/abi.c
+  ${SOURCES}
 )
 
 set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
@@ -271,6 +276,8 @@ add_executable(ntxenium
 target_compile_options(ntxenium PRIVATE -DXEN_CORE)
 
 install(TARGETS ntxenium RUNTIME DESTINATION bin)
+
+add_subdirectory(modules/native/io)
 
 enable_testing()
 
