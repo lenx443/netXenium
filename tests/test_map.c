@@ -3,15 +3,15 @@
 
 #include "attrs.h"
 #include "instance.h"
-#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
 
-int main(int argc, char** argv) {
-  assert(Xen_Init(argc, argv) == 1);
+void test_map_run(void);
+
+void test_map_run(void) {
   {
     Xen_Instance* map = __instance_new(&Xen_Map_Implement, nil, nil, 0);
     assert(map != NULL);
@@ -66,6 +66,4 @@ int main(int argc, char** argv) {
              Xen_String_As_CString(value_str));
     }
   }
-  Xen_Finish();
-  return 0;
 }

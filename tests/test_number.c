@@ -8,7 +8,6 @@
 #include "operators.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
-#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
@@ -487,10 +486,9 @@ static void test_number_mul(void) {
   }
 }
 
-int main(int argc, char** argv) {
-  if (!Xen_Init(argc, argv)) {
-    return 1;
-  }
+void test_number_run(void);
+
+void test_number_run(void) {
   test_number_from_cstring();
   test_number_from_cstring_base();
   test_number_from_int32();
@@ -504,6 +502,4 @@ int main(int argc, char** argv) {
   test_number_string();
   test_number_opr_eq();
   test_number_mul();
-  Xen_Finish();
-  return 0;
 }

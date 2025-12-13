@@ -2,14 +2,14 @@
 #include <string.h>
 
 #include "instance.h"
-#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 
-int main(int argc, char** argv) {
-  assert(Xen_Init(argc, argv));
+void test_tuple_run(void);
+
+void test_tuple_run(void) {
   Xen_Instance* foo = Xen_Number_From_Int(537);
   Xen_Instance* bar = Xen_String_From_CString("Hello, World!");
   Xen_Instance* tuple =
@@ -21,6 +21,4 @@ int main(int argc, char** argv) {
   assert(index1);
   assert(Xen_Number_As_Int(index0) == 537);
   assert(strcmp(Xen_String_As_CString(index1), "Hello, World!") == 0);
-  Xen_Finish();
-  return 0;
 }

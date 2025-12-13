@@ -1,10 +1,9 @@
 #include <assert.h>
 
 #include "program.h"
-#include "xen_life.h"
 
-int main(int argc, char **argv) {
-  assert(Xen_Init(argc, argv));
+void test_load_script_run(void);
+
+void test_load_script_run(void) {
   load_script("./script.nxm");
-  Xen_Finish();
 }

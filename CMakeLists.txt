@@ -274,42 +274,24 @@ install(TARGETS ntxenium RUNTIME DESTINATION bin)
 
 enable_testing()
 
-add_executable(test_number
-  tests/test_number.c ${SOURCES}
+add_executable(tester
+  ${SOURCES}
+  tests/test_number.c
+  tests/test_string.c
+  tests/test_map.c
+  tests/test_boolean.c
+  tests/test_modules.c
+  tests/test_load_script.c
+  tests/test_vector.c
+  tests/test_tuple.c
+  tests/test_main.c
 )
-add_test(NAME TestNumber COMMAND test_number)
 
-add_executable(test_string
-  tests/test_string.c ${SOURCES}
-)
-add_test(NAME TestString COMMAND test_string)
-
-add_executable(test_map
-  tests/test_map.c ${SOURCES}
-)
-add_test(NAME TestMap COMMAND test_map)
-
-add_executable(test_boolean
-  tests/test_boolean.c ${SOURCES}
-)
-add_test(NAME TestBoolean COMMAND test_boolean)
-
-add_executable(test_modules
-  tests/test_modules.c ${SOURCES}
-)
-add_test(NAME TestModules COMMAND test_modules)
-
-add_executable(test_load_script
-  tests/test_load_script.c ${SOURCES}
-)
-add_test(NAME TestLoadScript COMMAND test_load_script)
-
-add_executable(test_vector
-  tests/test_vector.c ${SOURCES}
-)
-add_test(NAME TestVector COMMAND test_vector)
-
-add_executable(test_tuple
-  tests/test_tuple.c ${SOURCES}
-)
-add_test(NAME TestTuple COMMAND test_tuple)
+add_test(NAME TestNumber COMMAND tester "NUMBER")
+add_test(NAME TestString COMMAND tester "STRING")
+add_test(NAME TestMap COMMAND tester "MAP")
+add_test(NAME TestBoolean COMMAND tester "BOOLEAN")
+add_test(NAME TestModules COMMAND tester "MODULES")
+add_test(NAME TestLoadScript COMMAND tester "LOAD_SCRIPT")
+add_test(NAME TestVector COMMAND test_vector "VECTOR")
+add_test(NAME TestTuple COMMAND test_tuple "TUPLE")
