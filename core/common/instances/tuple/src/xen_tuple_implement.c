@@ -16,10 +16,8 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_number_implement.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_tuple_implement.h"
@@ -38,7 +36,8 @@ static void tuple_trace(Xen_GCHeader* h) {
 static Xen_Instance* tuple_alloc(Xen_Instance* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Tuple* tuple = (Xen_Tuple*)Xen_Instance_Alloc(&Xen_Tuple_Implement);
+  Xen_Tuple* tuple =
+      (Xen_Tuple*)Xen_Instance_Alloc(xen_globals->implements->tuple);
   if (!tuple) {
     return NULL;
   }
@@ -69,7 +68,7 @@ static Xen_Instance* tuple_string(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Tuple_Get_Index(args, 0);
-    if (Xen_IMPL(stack) != &Xen_Map_Implement) {
+    if (Xen_IMPL(stack) != xen_globals->implements->map) {
       Xen_IGC_XPOP(roots);
       return NULL;
     }
@@ -166,7 +165,7 @@ static Xen_Instance* tuple_opr_get_index(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(index_inst) != &Xen_Number_Implement) {
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number) {
     return NULL;
   }
   size_t index = Xen_Number_As(size_t, index_inst);
@@ -182,7 +181,7 @@ static Xen_Instance* tuple_iter(Xen_Instance* self, Xen_Instance* args,
   return Xen_Tuple_Iterator_New(self);
 }
 
-Xen_Implement Xen_Tuple_Implement = {
+Xen_Implement __Tuple_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "tuple",
     .__inst_size = sizeof(struct Xen_Tuple_Instance),
@@ -199,8 +198,13 @@ Xen_Implement Xen_Tuple_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
+struct __Implement* Xen_Tuple_GetImplement(void) {
+  return &__Tuple_Implement;
+}
+
 int Xen_Tuple_Init(void) {
-  if (!Xen_VM_Store_Global("tuple", (Xen_Instance*)&Xen_Tuple_Implement)) {
+  if (!Xen_VM_Store_Global("tuple",
+                           (Xen_Instance*)xen_globals->implements->tuple)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -212,7 +216,7 @@ int Xen_Tuple_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__iter", tuple_iter, nil)) {
     return 0;
   }
-  Xen_Tuple_Implement.__props = props;
+  __Tuple_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

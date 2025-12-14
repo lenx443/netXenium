@@ -3,6 +3,6 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_AST_Implement;
+struct __Implement* Xen_AST_GetImplement(void);
 
 #endif

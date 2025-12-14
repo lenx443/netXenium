@@ -2,21 +2,20 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "attrs.h"
 #include "instance.h"
 #include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_ast.h"
-#include "xen_ast_implement.h"
 #include "xen_ast_instance.h"
 #include "xen_cstrings.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_AST_Node_New(const char* name, const char* value,
                                Xen_Source_Address sta) {
   Xen_AST_Node* ast =
-      (Xen_AST_Node*)__instance_new(&Xen_AST_Implement, nil, nil, 0);
+      (Xen_AST_Node*)__instance_new(xen_globals->implements->ast, nil, nil, 0);
   if (!ast) {
     return NULL;
   }
@@ -37,7 +36,7 @@ Xen_Instance* Xen_AST_Node_New(const char* name, const char* value,
 }
 
 int Xen_AST_Node_Push_Child(Xen_Instance* ast_inst, Xen_Instance* child) {
-  if (Xen_IMPL(child) != &Xen_AST_Implement) {
+  if (Xen_IMPL(child) != xen_globals->implements->ast) {
     return 0;
   }
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
@@ -92,7 +91,7 @@ Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {
 #ifndef NDEBUG
 static void __AST_Node_Print(Xen_Instance* ast, const char* prefix,
                              int is_last) {
-  if (!ast || Xen_IMPL(ast) != &Xen_AST_Implement)
+  if (!ast || Xen_IMPL(ast) != xen_globals->implements->ast)
     return;
 
   printf("%s", prefix);

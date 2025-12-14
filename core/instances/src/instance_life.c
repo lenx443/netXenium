@@ -1,9 +1,15 @@
 #include "instance_life.h"
+#include "basic_builder_implement.h"
+#include "run_frame.h"
+#include "xen_ast_implement.h"
 #include "xen_boolean_implement.h"
 #include "xen_except_implement.h"
+#include "xen_function_implement.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map_implement.h"
 #include "xen_method_implement.h"
+#include "xen_module_implement.h"
 #include "xen_nil_implement.h"
 #include "xen_number_implement.h"
 #include "xen_string_implement.h"
@@ -21,7 +27,9 @@ typedef struct {
   fn_finish finish;
 } Instance_Life;
 
-Instance_Life Instances[] = {
+static struct __Implement_Pointers implements;
+
+static Instance_Life Instances[] = {
     {Xen_Number_Init, Xen_Number_Finish},
     {Xen_String_Init, Xen_String_Finish},
     {Xen_Vector_Init, Xen_Vector_Finish},
@@ -34,6 +42,26 @@ Instance_Life Instances[] = {
     {Xen_Method_Init, Xen_Method_Finish},
     {Xen_Except_Init, Xen_Except_Finish},
 };
+
+void Xen_Instance_GetReady(void) {
+  implements.basic_builder = Xen_Basic_Builder_GetImplement();
+  implements.number = Xen_Number_GetImplement();
+  implements.string = Xen_String_GetImplement();
+  implements.vector = Xen_Vector_GetImplement();
+  implements.vector_iterator = Xen_Vector_Iterator_GetImplement();
+  implements.tuple = Xen_Tuple_GetImplement();
+  implements.tuple_iterator = Xen_Tuple_Iterator_GetImplement();
+  implements.map = Xen_Map_GetImplement();
+  implements.boolean = Xen_Boolean_GetImplement();
+  implements.nilp = Xen_Nil_GetImplement();
+  implements.method = Xen_Method_GetImplement();
+  implements.function = Xen_Function_GetImplement();
+  implements.except = Xen_Except_GetImplement();
+  implements.ast = Xen_AST_GetImplement();
+  implements.run_frame = Xen_Run_Frame_GetImplement();
+  implements.module = Xen_Module_GetImplement();
+  xen_globals->implements = &implements;
+}
 
 int Xen_Instance_Init(void) {
   impls_maps = Xen_IGC_Fork_New();

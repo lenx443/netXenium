@@ -2,6 +2,7 @@
 #include "attrs.h"
 #include "instance.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"

@@ -8,6 +8,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"

@@ -80,12 +80,12 @@ static Xen_Instance* boolean_not(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
-Xen_Implement Xen_Boolean_Implement = {
+Xen_Implement __Boolean_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Boolean",
     .__inst_size = sizeof(struct Xen_Boolean_Instance),
     .__inst_default_flags = 0x00,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = boolean_alloc,
     .__create = NULL,
     .__destroy = NULL,
@@ -96,8 +96,13 @@ Xen_Implement Xen_Boolean_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
+struct __Implement* Xen_Boolean_GetImplement(void) {
+  return &__Boolean_Implement;
+}
+
 int Xen_Boolean_Init(void) {
-  if (!Xen_VM_Store_Global("boolean", (Xen_Instance*)&Xen_Boolean_Implement) ||
+  if (!Xen_VM_Store_Global("boolean",
+                           (Xen_Instance*)xen_globals->implements->boolean) ||
       !Xen_VM_Store_Global("true", Xen_True) ||
       !Xen_VM_Store_Global("false", Xen_False)) {
     return 0;
@@ -110,7 +115,7 @@ int Xen_Boolean_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__not", boolean_not, nil)) {
     return 0;
   }
-  Xen_Boolean_Implement.__props = props;
+  __Boolean_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

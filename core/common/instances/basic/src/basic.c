@@ -14,7 +14,6 @@
 #include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 
 static void basic_trace(Xen_GCHeader* h) {
@@ -97,14 +96,14 @@ static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   struct __Implement* impl = (struct __Implement*)self;
   if (impl->__props == NULL || Xen_Nil_Eval(impl->__props) ||
-      Xen_IMPL(impl->__props) != &Xen_Map_Implement) {
+      Xen_IMPL(impl->__props) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_Push(key);
@@ -123,7 +122,7 @@ struct __Implement Xen_Basic = {
     .__inst_size = sizeof(struct __Implement),
     .__inst_default_flags = 0x00,
     .__inst_trace = basic_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = NULL,
     .__create = basic_create,
     .__destroy = basic_destroy,

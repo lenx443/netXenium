@@ -4,10 +4,10 @@
 #include "instance.h"
 #include "interpreter.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_module_types.h"
 #include "xen_number.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
@@ -19,12 +19,12 @@ static Xen_Instance* fn_interpreter(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Instance* name = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(name) != &Xen_String_Implement) {
+  if (Xen_IMPL(name) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_XPUSH(name, roots);
   Xen_Instance* code = Xen_Tuple_Get_Index(args, 1);
-  if (Xen_IMPL(code) != &Xen_String_Implement) {
+  if (Xen_IMPL(code) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_XPUSH(code, roots);

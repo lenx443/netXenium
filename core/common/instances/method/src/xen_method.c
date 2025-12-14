@@ -4,13 +4,10 @@
 #include "run_ctx_stack.h"
 #include "vm_def.h"
 #include "vm_run.h"
-#include "xen_function_implement.h"
 #include "xen_function_instance.h"
 #include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
-#include "xen_method_implement.h"
 #include "xen_method_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -21,11 +18,11 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   if (!function || !self) {
     return NULL;
   }
-  if (Xen_IMPL(function) != &Xen_Function_Implement) {
+  if (Xen_IMPL(function) != xen_globals->implements->function) {
     return NULL;
   }
   Xen_Method* method =
-      (Xen_Method*)__instance_new(&Xen_Method_Implement, nil, nil, 0);
+      (Xen_Method*)__instance_new(xen_globals->implements->method, nil, nil, 0);
   if (!method) {
     return NULL;
   }
@@ -36,7 +33,7 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
 
 Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
                               Xen_Instance* kwargs) {
-  if (Xen_IMPL(method_inst) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method_inst) != xen_globals->implements->method) {
     return NULL;
   }
   Xen_size_t roots = 0;
@@ -67,7 +64,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
         return NULL;
       }
     }
-    if (Xen_IMPL(kwargs) == &Xen_Map_Implement) {
+    if (Xen_IMPL(kwargs) == xen_globals->implements->map) {
       Xen_Instance* kwargs_it = Xen_Attr_Iter(kwargs);
       if (!kwargs_it) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);

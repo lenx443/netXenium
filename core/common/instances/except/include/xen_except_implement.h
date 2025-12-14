@@ -3,8 +3,7 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Except_Implement;
-
+struct __Implement* Xen_Except_GetImplement(void);
 int Xen_Except_Init(void);
 void Xen_Except_Finish(void);
 

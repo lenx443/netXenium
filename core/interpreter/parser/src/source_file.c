@@ -6,6 +6,8 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
+static Xen_Source_Table* globals_sources = NULL;
+
 Xen_Source_File* Xen_Source_File_New(Xen_c_string_t file,
                                      Xen_c_string_t content,
                                      Xen_size_t length) {
@@ -62,7 +64,5 @@ void Xen_Source_Table_Init(void) {
 }
 
 void Xen_Source_Table_Finish(void) {
-  Xen_Source_Table_Free(globals_sources);
+  Xen_Source_Table_Free(*xen_globals->source_table);
 }
-
-Xen_Source_Table* globals_sources = NULL;

@@ -3,6 +3,6 @@
 
 #include "implement.h"
 
-extern struct __Implement Xen_Run_Frame;
+struct __Implement* Xen_Run_Frame_GetImplement(void);
 
 #endif

@@ -4,6 +4,7 @@
 #include "attrs.h"
 #include "instance.h"
 #include "xen_boolean.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 

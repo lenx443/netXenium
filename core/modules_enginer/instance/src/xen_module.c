@@ -11,20 +11,20 @@
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_function.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_module.h"
-#include "xen_module_implement.h"
 #include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-typedef struct Xen_Module_Def* (*native_module_function)(void);
+typedef struct Xen_Module_Def* (*native_module_function)(void*);
 
 Xen_Instance* Xen_Module_New(void) {
   Xen_Module* module =
-      (Xen_Module*)__instance_new(&Xen_Module_Implement, nil, nil, 0);
+      (Xen_Module*)__instance_new(xen_globals->implements->module, nil, nil, 0);
   module->mod_initialized = 0;
   module->mod_initializing = 0;
   module->mod_name = NULL;
@@ -184,7 +184,7 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       dlclose(handle);
       return NULL;
     }
-    struct Xen_Module_Def* mod_def = mod_start();
+    struct Xen_Module_Def* mod_def = mod_start(xen_globals);
     Xen_Instance* module = Xen_Module_From_Def(*mod_def, mod_path);
     Xen_Dealloc(mod_def);
     dlclose(handle);

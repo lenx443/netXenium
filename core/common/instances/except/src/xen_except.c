@@ -2,7 +2,6 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
-#include "xen_except_implement.h"
 #include "xen_except_instance.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
@@ -12,7 +11,7 @@
 
 Xen_Instance* Xen_Except_New(Xen_c_string_t type, Xen_c_string_t message) {
   Xen_Except* except =
-      (Xen_Except*)__instance_new(&Xen_Except_Implement, nil, nil, 0);
+      (Xen_Except*)__instance_new(xen_globals->implements->except, nil, nil, 0);
   if (!except) {
     return NULL;
   }
@@ -35,7 +34,7 @@ Xen_Instance* Xen_Except_New(Xen_c_string_t type, Xen_c_string_t message) {
 Xen_Instance* Xen_Except_New_CFormat(Xen_c_string_t type,
                                      Xen_c_string_t message, ...) {
   Xen_Except* except =
-      (Xen_Except*)__instance_new(&Xen_Except_Implement, nil, nil, 0);
+      (Xen_Except*)__instance_new(xen_globals->implements->except, nil, nil, 0);
   if (!except) {
     return NULL;
   }

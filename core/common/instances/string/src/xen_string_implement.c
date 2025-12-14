@@ -16,7 +16,6 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_number_implement.h"
 #include "xen_string.h"
 #include "xen_string_implement.h"
 #include "xen_string_instance.h"
@@ -46,7 +45,8 @@ static Xen_Instance* string_alloc(Xen_INSTANCE* self, Xen_Instance* args,
     }
     return rsult;
   }
-  Xen_String* string = (Xen_String*)Xen_Instance_Alloc(&Xen_String_Implement);
+  Xen_String* string =
+      (Xen_String*)Xen_Instance_Alloc(xen_globals->implements->string);
   if (!string) {
     return NULL;
   }
@@ -119,7 +119,8 @@ static Xen_Instance* string_opr_eq(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
-      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->string)
     return NULL;
 
   Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
@@ -133,7 +134,8 @@ static Xen_Instance* string_opr_ne(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
-      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) != &Xen_String_Implement)
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->string)
     return NULL;
 
   Xen_Instance* val = Xen_Tuple_Get_Index(args, 0);
@@ -150,7 +152,7 @@ static Xen_Instance* string_opr_get_index(Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
@@ -170,7 +172,7 @@ static Xen_Instance* string_opr_add(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* str = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(str) != &Xen_String_Implement)
+  if (Xen_IMPL(str) != xen_globals->implements->string)
     return NULL;
   return Xen_String_From_Concat(self, str);
 }
@@ -181,7 +183,7 @@ static Xen_Instance* string_opr_mul(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* num_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(num_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(num_inst) != xen_globals->implements->number)
     return NULL;
   size_t num = Xen_Number_As(Xen_size_t, num_inst);
   Xen_size_t bufcap = Xen_SIZE(self) * num + 1;
@@ -263,12 +265,12 @@ static Xen_Instance* string_char_code(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
-struct __Implement Xen_String_Implement = {
+static struct __Implement __String_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
     .__inst_size = sizeof(struct Xen_String_Instance),
     .__inst_default_flags = 0x00,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = string_alloc,
     .__create = NULL,
     .__destroy = string_destroy,
@@ -279,8 +281,13 @@ struct __Implement Xen_String_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
+struct __Implement* Xen_String_GetImplement(void) {
+  return &__String_Implement;
+}
+
 int Xen_String_Init(void) {
-  if (!Xen_VM_Store_Global("string", (Xen_Instance*)&Xen_String_Implement)) {
+  if (!Xen_VM_Store_Global("string",
+                           (Xen_Instance*)xen_globals->implements->string)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -301,7 +308,7 @@ int Xen_String_Init(void) {
                                     nil)) {
     return 0;
   }
-  Xen_String_Implement.__props = props;
+  __String_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

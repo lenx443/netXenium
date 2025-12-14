@@ -15,7 +15,6 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_method.h"
 #include "xen_method_instance.h"
 #include "xen_nil.h"
@@ -32,7 +31,8 @@ static void method_trace(Xen_GCHeader* h) {
 static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Method* method = (Xen_Method*)Xen_Instance_Alloc(&Xen_Method_Implement);
+  Xen_Method* method =
+      (Xen_Method*)Xen_Instance_Alloc(xen_globals->implements->method);
   if (!method) {
     return NULL;
   }
@@ -98,7 +98,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
         return NULL;
       }
     }
-    if (Xen_IMPL(kwargs) == &Xen_Map_Implement) {
+    if (Xen_IMPL(kwargs) == xen_globals->implements->map) {
       Xen_Instance* kwargs_it = Xen_Attr_Iter(kwargs);
       if (!kwargs_it) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
@@ -338,13 +338,13 @@ static Xen_Instance* method_get_hash(struct __Instance* self,
   }
 }
 
-Xen_Implement Xen_Method_Implement = {
+Xen_Implement __Method_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Method",
     .__inst_size = sizeof(struct Xen_Method_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = method_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = method_alloc,
     .__create = method_create,
     .__destroy = method_destroy,
@@ -355,8 +355,13 @@ Xen_Implement Xen_Method_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
+struct __Implement* Xen_Method_GetImplement(void) {
+  return &__Method_Implement;
+}
+
 int Xen_Method_Init(void) {
-  if (!Xen_VM_Store_Global("method", (Xen_Instance*)&Xen_Method_Implement)) {
+  if (!Xen_VM_Store_Global("method",
+                           (Xen_Instance*)xen_globals->implements->method)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -370,7 +375,7 @@ int Xen_Method_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  Xen_Method_Implement.__props = props;
+  __Method_Implement.__props = props;
   return 1;
 }
 

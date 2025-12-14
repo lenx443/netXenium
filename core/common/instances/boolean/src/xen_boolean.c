@@ -1,14 +1,21 @@
 #include "xen_boolean.h"
 #include "instance.h"
-#include "xen_boolean_implement.h"
 #include "xen_boolean_instance.h"
+#include "xen_life.h"
 
-Xen_Boolean Xen_True_Instance = {
-    Xen_INSTANCE_SET(&Xen_Boolean_Implement, XEN_INSTANCE_FLAG_STATIC),
-    .value = 1,
-};
+static Xen_Boolean Xen_True_Instance;
+static Xen_Boolean Xen_False_Instance;
 
-Xen_Boolean Xen_False_Instance = {
-    Xen_INSTANCE_SET(&Xen_Boolean_Implement, XEN_INSTANCE_FLAG_STATIC),
-    .value = 0,
-};
+Xen_Instance* Xen_True_GetInstance(void) {
+  Xen_True_Instance.__impl = xen_globals->implements->boolean;
+  Xen_True_Instance.__flags = XEN_INSTANCE_FLAG_STATIC;
+  Xen_True_Instance.value = 1;
+  return (Xen_Instance*)&Xen_True_Instance;
+}
+
+Xen_Instance* Xen_False_GetInstance(void) {
+  Xen_False_Instance.__impl = xen_globals->implements->boolean;
+  Xen_False_Instance.__flags = XEN_INSTANCE_FLAG_STATIC;
+  Xen_False_Instance.value = 0;
+  return (Xen_Instance*)&Xen_False_Instance;
+}

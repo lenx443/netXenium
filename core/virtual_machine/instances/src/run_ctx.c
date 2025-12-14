@@ -2,18 +2,17 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
-#include "run_frame.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 
 Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
                           Xen_Instance* self, Xen_Instance* args,
                           Xen_Instance* kwargs, Xen_Instance* instances,
                           CALLABLE_ptr code) {
-  RunContext_ptr ctx =
-      (RunContext_ptr)__instance_new(&Xen_Run_Frame, nil, nil, 0);
+  RunContext_ptr ctx = (RunContext_ptr)__instance_new(
+      xen_globals->implements->run_frame, nil, nil, 0);
   if (!ctx) {
     return NULL;
   }
@@ -48,7 +47,7 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
       return NULL;
     }
   }
-  if (Xen_IMPL(instances) != &Xen_Map_Implement) {
+  if (Xen_IMPL(instances) != xen_globals->implements->map) {
     Xen_IGC_Pop();
     return NULL;
   }
@@ -65,7 +64,7 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
 }
 
 ctx_id_t run_ctx_id(Xen_Instance* ctx) {
-  if (!ctx || ctx->__impl != &Xen_Run_Frame) {
+  if (!ctx || ctx->__impl != xen_globals->implements->run_frame) {
     return 0;
   }
   return ((RunContext_ptr)ctx)->ctx_id;

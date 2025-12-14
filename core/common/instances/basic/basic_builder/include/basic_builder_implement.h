@@ -3,6 +3,6 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Basic_Builder_Implement;
+struct __Implement* Xen_Basic_Builder_GetImplement(void);
 
 #endif

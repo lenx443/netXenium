@@ -6,9 +6,9 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_string_instance.h"
 
 Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
@@ -16,7 +16,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
     return NULL;
   }
   Xen_String* string =
-      (Xen_String*)__instance_new(&Xen_String_Implement, nil, nil, 0);
+      (Xen_String*)__instance_new(xen_globals->implements->string, nil, nil, 0);
   if (!string) {
     return NULL;
   }
@@ -28,7 +28,7 @@ Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
 
 Xen_Instance* Xen_String_From_Char(char c) {
   Xen_String* string =
-      (Xen_String*)__instance_new(&Xen_String_Implement, nil, nil, 0);
+      (Xen_String*)__instance_new(xen_globals->implements->string, nil, nil, 0);
   if (!string) {
     return NULL;
   }

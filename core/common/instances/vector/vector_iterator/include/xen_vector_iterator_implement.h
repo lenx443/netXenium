@@ -3,7 +3,7 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Vector_Iterator_Implement;
+struct __Implement* Xen_Vector_Iterator_GetImplement(void);
 
 int Xen_Vector_Iterator_Init(void);
 void Xen_Vector_Iterator_Finish(void);

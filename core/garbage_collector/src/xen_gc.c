@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-struct __GC_Heap __gc_heap = {
+static struct __GC_Heap __gc_heap = {
     .young = NULL,
     .old = NULL,
     .roots_count = 0,
@@ -35,16 +35,16 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   h->size = size;
 
   h->prev = NULL;
-  h->next = __gc_heap.young;
-  if (__gc_heap.young) {
-    __gc_heap.young->prev = h;
+  h->next = xen_globals->gc_heap->young;
+  if (xen_globals->gc_heap->young) {
+    xen_globals->gc_heap->young->prev = h;
   }
-  __gc_heap.young = h;
+  xen_globals->gc_heap->young = h;
 
-  __gc_heap.total_bytes += size;
-  __gc_heap.pressure += size;
+  xen_globals->gc_heap->total_bytes += size;
+  xen_globals->gc_heap->pressure += size;
 
-  if (__gc_heap.pressure > __gc_heap.threshold) {
+  if (xen_globals->gc_heap->pressure > xen_globals->gc_heap->threshold) {
     Xen_GC_Collect();
   }
   h->trace = fn_trace;
@@ -56,18 +56,18 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
 void Xen_GC_Collect(void) {
   Xen_GC_Mark();
   Xen_GC_Sweep();
-  __gc_heap.pressure = 0;
+  xen_globals->gc_heap->pressure = 0;
 }
 
 void Xen_GC_Push_Root(struct __GC_Header* inst) {
-  assert(__gc_heap.roots_count < __XEN_GC_MAX_ROOTS__);
+  assert(xen_globals->gc_heap->roots_count < __XEN_GC_MAX_ROOTS__);
   assert(inst != NULL);
-  __gc_heap.roots[__gc_heap.roots_count++] = inst;
+  xen_globals->gc_heap->roots[xen_globals->gc_heap->roots_count++] = inst;
 }
 
 void Xen_GC_Pop_Root(void) {
-  assert(__gc_heap.roots_count > 0);
-  __gc_heap.roots_count--;
+  assert(xen_globals->gc_heap->roots_count > 0);
+  xen_globals->gc_heap->roots_count--;
 }
 
 void Xen_GC_Pop_Roots(Xen_size_t count) {
@@ -77,18 +77,20 @@ void Xen_GC_Pop_Roots(Xen_size_t count) {
 }
 
 void Xen_GC_Push_Gray(struct __GC_Header* inst) {
-  assert(__gc_heap.gray_stack_count < __XEN_GC_MAX_GRAY__);
+  assert(xen_globals->gc_heap->gray_stack_count < __XEN_GC_MAX_GRAY__);
   assert(inst != NULL);
   if (inst->color != GC_WHITE) {
     return;
   }
   inst->color = GC_GRAY;
-  __gc_heap.gray_stack[__gc_heap.gray_stack_count++] = inst;
+  xen_globals->gc_heap->gray_stack[xen_globals->gc_heap->gray_stack_count++] =
+      inst;
 }
 
 struct __GC_Header* Xen_GC_Pop_Gray(void) {
-  assert(__gc_heap.gray_stack_count > 0);
-  return __gc_heap.gray_stack[--__gc_heap.gray_stack_count];
+  assert(xen_globals->gc_heap->gray_stack_count > 0);
+  return xen_globals->gc_heap
+      ->gray_stack[--xen_globals->gc_heap->gray_stack_count];
 }
 
 void Xen_GC_Trace_GCHeader(struct __GC_Header* h) {
@@ -105,12 +107,12 @@ void Xen_GC_Trace(struct __GC_Header* inst) {
 }
 
 void Xen_GC_Mark(void) {
-  for (Xen_size_t i = 0; i < __gc_heap.roots_count; i++) {
-    if (__gc_heap.roots[i]->color == GC_WHITE) {
-      Xen_GC_Push_Gray(__gc_heap.roots[i]);
+  for (Xen_size_t i = 0; i < xen_globals->gc_heap->roots_count; i++) {
+    if (xen_globals->gc_heap->roots[i]->color == GC_WHITE) {
+      Xen_GC_Push_Gray(xen_globals->gc_heap->roots[i]);
     }
   }
-  while (__gc_heap.gray_stack_count > 0) {
+  while (xen_globals->gc_heap->gray_stack_count > 0) {
     struct __GC_Header* inst = Xen_GC_Pop_Gray();
     Xen_GC_Trace(inst);
     inst->color = GC_BLACK;
@@ -118,7 +120,7 @@ void Xen_GC_Mark(void) {
 }
 
 void Xen_GC_Sweep(void) {
-  struct __GC_Header* curr = __gc_heap.young;
+  struct __GC_Header* curr = xen_globals->gc_heap->young;
 
   while (curr) {
     struct __GC_Header* next = curr->next;
@@ -131,11 +133,11 @@ void Xen_GC_Sweep(void) {
         curr->next->prev = curr->prev;
       }
 
-      if (__gc_heap.young == curr) {
-        __gc_heap.young = curr->next;
+      if (xen_globals->gc_heap->young == curr) {
+        xen_globals->gc_heap->young = curr->next;
       }
 
-      __gc_heap.total_bytes -= curr->size;
+      xen_globals->gc_heap->total_bytes -= curr->size;
 
       curr->destroy(&curr);
 
@@ -149,6 +151,6 @@ void Xen_GC_Sweep(void) {
 
 void Xen_GC_Shutdown(void) {
   Xen_GC_Collect();
-  assert(__gc_heap.pressure == 0);
-  assert(__gc_heap.total_bytes == 0);
+  assert(xen_globals->gc_heap->pressure == 0);
+  assert(xen_globals->gc_heap->total_bytes == 0);
 }

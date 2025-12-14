@@ -1,18 +1,25 @@
 #include "xen_nil.h"
 #include "instance.h"
-#include "xen_nil_implement.h"
+#include "xen_life.h"
+
+static Xen_Instance Xen_Nil_Def;
+
+Xen_Instance* Xen_Nil_GetInstance(void) {
+  Xen_Nil_Def.__impl = xen_globals->implements->nilp;
+  Xen_Nil_Def.__flags = XEN_INSTANCE_FLAG_STATIC;
+  return (Xen_Instance*)&Xen_Nil_Def;
+}
 
 Xen_Instance* Xen_Nil(void) {
-  return &Xen_Nil_Def;
+  return xen_globals->nil_instance;
 }
 
 int Xen_Nil_Eval(Xen_Instance* value) {
-  return (value == &Xen_Nil_Def || value->__impl == &Xen_Nil_Implement);
+  return (value == xen_globals->nil_instance ||
+          value->__impl == xen_globals->implements->nilp);
 }
 
 int Xen_Nil_NEval(Xen_Instance* value) {
-  return (value != &Xen_Nil_Def && value->__impl != &Xen_Nil_Implement);
+  return (value != xen_globals->nil_instance &&
+          value->__impl != xen_globals->implements->nilp);
 }
-
-Xen_Instance Xen_Nil_Def = {
-    Xen_INSTANCE_SET(&Xen_Nil_Implement, XEN_INSTANCE_FLAG_STATIC)};

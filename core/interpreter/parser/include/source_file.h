@@ -36,6 +36,4 @@ void Xen_Source_Table_Free(Xen_Source_Table*);
 void Xen_Source_Table_Init(void);
 void Xen_Source_Table_Finish(void);
 
-extern Xen_Source_Table* globals_sources;
-
 #endif

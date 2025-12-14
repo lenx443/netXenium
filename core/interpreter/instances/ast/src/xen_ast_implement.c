@@ -8,6 +8,7 @@
 #include "xen_alloc.h"
 #include "xen_ast_instance.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_vector.h"
@@ -20,7 +21,8 @@ static void ast_trace(Xen_GCHeader* h) {
 static Xen_Instance* ast_alloc(Xen_Instance* self, Xen_Instance* args,
                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_AST_Node* ast = (Xen_AST_Node*)Xen_Instance_Alloc(&Xen_AST_Implement);
+  Xen_AST_Node* ast =
+      (Xen_AST_Node*)Xen_Instance_Alloc(xen_globals->implements->ast);
   ast->name = NULL;
   ast->value = NULL;
   ast->sta = (Xen_Source_Address){0};
@@ -52,13 +54,13 @@ static Xen_Instance* ast_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
-Xen_Implement Xen_AST_Implement = {
+Xen_Implement __AST_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, 0x00),
     .__impl_name = "AST",
     .__inst_size = sizeof(struct Xen_AST_Node_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = ast_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = ast_alloc,
     .__create = NULL,
     .__destroy = ast_destroy,
@@ -67,3 +69,7 @@ Xen_Implement Xen_AST_Implement = {
     .__callable = NULL,
     .__hash = NULL,
 };
+
+struct __Implement* Xen_AST_GetImplement(void) {
+  return &__AST_Implement;
+}

@@ -3,6 +3,6 @@
 
 #include "implement.h"
 
-extern struct __Implement Xen_Module_Implement;
+struct __Implement* Xen_Module_GetImplement(void);
 
 #endif

@@ -3,8 +3,7 @@
 
 #include "implement.h"
 
-extern struct __Implement Xen_Vector_Implement;
-
+struct __Implement* Xen_Vector_GetImplement(void);
 int Xen_Vector_Init(void);
 void Xen_Vector_Finish(void);
 

@@ -5,12 +5,11 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"
-#include "xen_tuple_implement.h"
 #include "xen_tuple_instance.h"
 #include "xen_typedefs.h"
-#include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 
 Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
@@ -18,7 +17,7 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
     return NULL;
   }
   Xen_Tuple* tuple =
-      (Xen_Tuple*)__instance_new(&Xen_Tuple_Implement, nil, nil, 0);
+      (Xen_Tuple*)__instance_new(xen_globals->implements->tuple, nil, nil, 0);
   if (!tuple) {
     return NULL;
   }
@@ -35,7 +34,7 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
 }
 
 Xen_Instance* Xen_Tuple_From_Vector(Xen_Instance* vector_inst) {
-  if (Xen_IMPL(vector_inst) != &Xen_Vector_Implement) {
+  if (Xen_IMPL(vector_inst) != xen_globals->implements->vector) {
     return NULL;
   }
   Xen_Vector* vector = (Xen_Vector*)vector_inst;

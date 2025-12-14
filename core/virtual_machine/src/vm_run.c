@@ -4,7 +4,6 @@
 
 #include "attrs.h"
 #include "basic.h"
-#include "basic_builder_implement.h"
 #include "basic_builder_instance.h"
 #include "basic_templates.h"
 #include "bc_instruct.h"
@@ -36,16 +35,12 @@
 #include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_method.h"
-#include "xen_method_implement.h"
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
-#include "xen_tuple_implement.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
-#include "xen_vector_implement.h"
 
 #define ERROR                                                                  \
   ctx->ctx_error = 1;                                                          \
@@ -443,7 +438,7 @@ static void op_unary_positive(VM_Run* vmr, RunContext_ptr ctx,
     }
     ERROR;
   }
-  if (Xen_IMPL(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != xen_globals->implements->method) {
     Xen_OprError();
     ERROR;
   }
@@ -468,7 +463,7 @@ static void op_unary_negative(VM_Run* vmr, RunContext_ptr ctx,
     }
     ERROR;
   }
-  if (Xen_IMPL(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != xen_globals->implements->method) {
     Xen_OprError();
     ERROR;
   }
@@ -492,7 +487,7 @@ static void op_unary_not(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     }
     ERROR;
   }
-  if (Xen_IMPL(method) != &Xen_Method_Implement) {
+  if (Xen_IMPL(method) != xen_globals->implements->method) {
     Xen_OprError();
     ERROR;
   }
@@ -596,8 +591,8 @@ static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 static void op_list_unpack(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
-  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
-      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+  if (Xen_IMPL(seq) != xen_globals->implements->tuple &&
+      Xen_IMPL(seq) != xen_globals->implements->vector) {
     Xen_ListError(seq);
     ERROR;
   }
@@ -617,8 +612,8 @@ static void op_list_unpack_start(VM_Run* vmr, RunContext_ptr ctx,
                                  Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
-  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
-      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+  if (Xen_IMPL(seq) != xen_globals->implements->tuple &&
+      Xen_IMPL(seq) != xen_globals->implements->vector) {
     Xen_ListError(seq);
     ERROR;
   }
@@ -653,8 +648,8 @@ static void op_list_unpack_end(VM_Run* vmr, RunContext_ptr ctx,
                                Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
-  if (Xen_IMPL(seq) != &Xen_Tuple_Implement &&
-      Xen_IMPL(seq) != &Xen_Vector_Implement) {
+  if (Xen_IMPL(seq) != xen_globals->implements->tuple &&
+      Xen_IMPL(seq) != xen_globals->implements->vector) {
     Xen_ListError(seq);
     ERROR;
   }
@@ -705,7 +700,7 @@ static void op_catch_stack_type(VM_Run* vmr, RunContext_ptr ctx,
   if (ctx->ctx_catch_stack) {
     Xen_Instance* type =
         Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
-    if (Xen_IMPL(type) != &Xen_String_Implement) {
+    if (Xen_IMPL(type) != xen_globals->implements->string) {
       ERROR;
     }
     ctx->ctx_catch_stack->except_type =
@@ -721,11 +716,12 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   Xen_Instance* name = STACK_POP;
   Xen_Instance* base = STACK_POP;
   Xen_Instance* builder =
-      __instance_new(&Xen_Basic_Builder_Implement, nil, nil, 0);
+      __instance_new(xen_globals->implements->basic_builder, nil, nil, 0);
   if (!builder) {
     ERROR;
   }
-  if (Xen_IMPL(name) != &Xen_String_Implement || Xen_IMPL(base) != &Xen_Basic) {
+  if (Xen_IMPL(name) != xen_globals->implements->string ||
+      Xen_IMPL(base) != &Xen_Basic) {
     ERROR;
   }
   ((Xen_Basic_Builder*)builder)->name =
@@ -748,11 +744,11 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
       callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
   Xen_Instance* name = STACK_POP;
   Xen_Instance* builder =
-      __instance_new(&Xen_Basic_Builder_Implement, nil, nil, 0);
+      __instance_new(xen_globals->implements->basic_builder, nil, nil, 0);
   if (!builder) {
     ERROR;
   }
-  if (Xen_IMPL(name) != &Xen_String_Implement) {
+  if (Xen_IMPL(name) != xen_globals->implements->string) {
     ERROR;
   }
   ((Xen_Basic_Builder*)builder)->name =

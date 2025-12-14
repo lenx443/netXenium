@@ -3,8 +3,7 @@
 
 #include "implement.h"
 
-extern struct __Implement Xen_String_Implement;
-
+struct __Implement* Xen_String_GetImplement(void);
 int Xen_String_Init(void);
 void Xen_String_Finish(void);
 

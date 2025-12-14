@@ -8,14 +8,12 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
-#include "xen_function_implement.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
@@ -88,7 +86,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != &Xen_Map_Implement) {
+      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {
@@ -96,7 +94,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_size_t roots = 0;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_XPUSH(key, roots);
@@ -106,7 +104,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_XPUSH(attr, roots);
-  if (Xen_IMPL(attr) == &Xen_Function_Implement) {
+  if (Xen_IMPL(attr) == xen_globals->implements->function) {
     Xen_Instance* method = Xen_Method_New(attr, self);
     if (!method) {
       Xen_IGC_XPOP(roots);
@@ -124,14 +122,14 @@ Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != &Xen_Map_Implement) {
+      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 2) {
     return NULL;
   }
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_Push(key);
@@ -148,7 +146,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != &Xen_Map_Implement) {
+      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {
@@ -157,7 +155,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)self;
   Xen_size_t roots = 0;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_XPUSH(key, roots);
@@ -170,7 +168,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
     }
   }
   Xen_IGC_XPUSH(attr, roots);
-  if (Xen_IMPL(attr) == &Xen_Function_Implement) {
+  if (Xen_IMPL(attr) == xen_globals->implements->function) {
     Xen_Instance* method = Xen_Method_New(attr, self);
     if (!method) {
       Xen_IGC_XPOP(roots);
@@ -188,7 +186,7 @@ Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != &Xen_Map_Implement) {
+      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 2) {
@@ -196,7 +194,7 @@ Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)self;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_Push(key);

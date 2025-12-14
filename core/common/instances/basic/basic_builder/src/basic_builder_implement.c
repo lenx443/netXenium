@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 
@@ -28,13 +29,13 @@ static Xen_Instance* basic_builder_destroy(Xen_Instance* self,
   return nil;
 }
 
-Xen_Implement Xen_Basic_Builder_Implement = {
+Xen_Implement __Basic_Builder_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "BasicBuilder",
     .__inst_size = sizeof(struct Xen_Basic_Builder_Instance),
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
     .__inst_trace = basic_builder_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = NULL,
     .__create = NULL,
     .__destroy = basic_builder_destroy,
@@ -45,3 +46,7 @@ Xen_Implement Xen_Basic_Builder_Implement = {
     .__get_attr = NULL,
     .__set_attr = NULL,
 };
+
+struct __Implement* Xen_Basic_Builder_GetImplement(void) {
+  return &__Basic_Builder_Implement;
+}

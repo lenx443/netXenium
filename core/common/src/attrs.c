@@ -6,14 +6,12 @@
 #include "instance.h"
 #include "vm.h"
 #include "vm_backtrace.h"
-#include "xen_boolean_implement.h"
 #include "xen_cstrings.h"
 #include "xen_igc.h"
 #include "xen_method.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
@@ -21,7 +19,7 @@ Xen_Instance* Xen_Attr_Get_NBase(Xen_Instance* inst, Xen_Instance* attr) {
   if (!inst || !attr) {
     return NULL;
   }
-  if (Xen_IMPL(attr) != &Xen_String_Implement) {
+  if (Xen_IMPL(attr) != xen_globals->implements->string) {
     return NULL;
   }
   if (!Xen_IMPL(inst)->__get_attr) {
@@ -46,7 +44,7 @@ Xen_Instance* Xen_Attr_Get(Xen_Instance* inst, Xen_Instance* attr) {
   if (!inst || !attr) {
     return NULL;
   }
-  if (Xen_IMPL(attr) != &Xen_String_Implement) {
+  if (Xen_IMPL(attr) != xen_globals->implements->string) {
     return NULL;
   }
   if (!Xen_IMPL(inst)->__get_attr) {
@@ -100,7 +98,7 @@ int Xen_Attr_Set(Xen_Instance* inst, Xen_Instance* attr, Xen_Instance* val) {
   if (!inst || !attr || !val) {
     return 0;
   }
-  if (Xen_IMPL(attr) != &Xen_String_Implement) {
+  if (Xen_IMPL(attr) != xen_globals->implements->string) {
     return 0;
   }
   if (!Xen_IMPL(inst)->__set_attr) {
@@ -178,7 +176,7 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
       }
     }
   }
-  if (Xen_IMPL(string) != &Xen_String_Implement) {
+  if (Xen_IMPL(string) != xen_globals->implements->string) {
     return NULL;
   }
   return string;
@@ -226,7 +224,7 @@ Xen_Instance* Xen_Attr_String_Stack(Xen_Instance* inst, Xen_Instance* stack) {
       }
     }
   }
-  if (Xen_IMPL(string) != &Xen_String_Implement) {
+  if (Xen_IMPL(string) != xen_globals->implements->string) {
     Xen_IGC_Pop();
     return NULL;
   }
@@ -268,7 +266,7 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
       }
     }
   }
-  if (Xen_IMPL(raw) != &Xen_String_Implement) {
+  if (Xen_IMPL(raw) != xen_globals->implements->string) {
     return NULL;
   }
   return raw;
@@ -315,7 +313,7 @@ Xen_Instance* Xen_Attr_Raw_Stack(Xen_Instance* inst, Xen_Instance* stack) {
       }
     }
   }
-  if (Xen_IMPL(raw) != &Xen_String_Implement) {
+  if (Xen_IMPL(raw) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_Pop();
@@ -345,7 +343,7 @@ Xen_Instance* Xen_Attr_Boolean(Xen_Instance* inst) {
   if (!boolean) {
     return NULL;
   }
-  if (Xen_IMPL(boolean) != &Xen_Boolean_Implement) {
+  if (Xen_IMPL(boolean) != xen_globals->implements->boolean) {
     return NULL;
   }
   return boolean;

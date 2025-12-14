@@ -2,13 +2,13 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
-#include "xen_tuple_iterator_implement.h"
 #include "xen_tuple_iterator_instance.h"
 
 Xen_Instance* Xen_Tuple_Iterator_New(Xen_Instance* tuple) {
   Xen_Tuple_Iterator* it = (Xen_Tuple_Iterator*)__instance_new(
-      &Xen_Tuple_Iterator_Implement, nil, nil, 0);
+      xen_globals->implements->tuple_iterator, nil, nil, 0);
   if (!it) {
     return NULL;
   }

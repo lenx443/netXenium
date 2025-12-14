@@ -121,7 +121,7 @@ void Xen_VM_Except_Backtrace_Show(void) {
   puts("BackTrace:");
   for (Xen_size_t i = 0; i < (*xen_globals->vm)->except.bt->bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
-           globals_sources
+           (*xen_globals->source_table)
                ->st_files
                    [(Xen_size_t)(*xen_globals->vm)->except.bt->bt_addrs[i].id]
                ->sf_name,
@@ -147,7 +147,7 @@ int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
   if (!except) {
     return 0;
   }
-  if (Xen_IMPL(except) != &Xen_Except_Implement) {
+  if (Xen_IMPL(except) != xen_globals->implements->except) {
     return 0;
   }
   (*xen_globals->vm)->except.active = 1;

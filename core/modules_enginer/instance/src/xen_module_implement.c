@@ -6,17 +6,18 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_module_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 
 static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Module* module = (Xen_Module*)Xen_Instance_Alloc(&Xen_Module_Implement);
+  Xen_Module* module =
+      (Xen_Module*)Xen_Instance_Alloc(xen_globals->implements->module);
   if (!module) {
     return NULL;
   }
@@ -50,7 +51,7 @@ static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)self;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(key) != &Xen_String_Implement) {
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_IGC_Push(key);
@@ -62,13 +63,13 @@ static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
   return attr;
 }
 
-struct __Implement Xen_Module_Implement = {
+struct __Implement __Module_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Module",
     .__inst_size = sizeof(struct Xen_Module_Instance),
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
     .__inst_trace = Xen_Basic_Mapped_Trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = module_alloc,
     .__create = NULL,
     .__destroy = module_destroy,
@@ -78,3 +79,7 @@ struct __Implement Xen_Module_Implement = {
     .__hash = NULL,
     .__get_attr = module_get_attr,
 };
+
+struct __Implement* Xen_Module_GetImplement(void) {
+  return &__Module_Implement;
+}

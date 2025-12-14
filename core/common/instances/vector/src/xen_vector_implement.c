@@ -16,10 +16,8 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_number_implement.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
@@ -41,7 +39,8 @@ static Xen_Instance* vector_alloc(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) > 1) {
     return NULL;
   }
-  Xen_Vector* vector = (Xen_Vector*)Xen_Instance_Alloc(&Xen_Vector_Implement);
+  Xen_Vector* vector =
+      (Xen_Vector*)Xen_Instance_Alloc(xen_globals->implements->vector);
   if (!vector) {
     return NULL;
   }
@@ -101,7 +100,7 @@ static Xen_Instance* vector_string(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Tuple_Get_Index(args, 0);
-    if (Xen_IMPL(stack) != &Xen_Map_Implement) {
+    if (Xen_IMPL(stack) != xen_globals->implements->map) {
       Xen_IGC_XPOP(roots);
       return NULL;
     }
@@ -198,7 +197,7 @@ static Xen_Instance* vector_opr_get_index(Xen_Instance* self,
   if (Xen_SIZE(args) != 1)
     return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
@@ -220,7 +219,7 @@ static Xen_Instance* vector_opr_set_index(Xen_Instance* self,
   if (Xen_SIZE(args) != 2)
     return NULL;
   Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
-  if (Xen_IMPL(index_inst) != &Xen_Number_Implement)
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number)
     return NULL;
   Xen_Instance* value_inst = Xen_Vector_Peek_Index(args, 1);
   size_t index = Xen_Number_As(size_t, index_inst);
@@ -258,13 +257,13 @@ static Xen_Instance* vector_top(Xen_Instance* self, Xen_Instance* args,
   return Xen_Vector_Top(self);
 }
 
-struct __Implement Xen_Vector_Implement = {
+static struct __Implement __Vector_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Vector",
     .__inst_size = sizeof(struct Xen_Vector_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = vector_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = vector_alloc,
     .__create = vector_create,
     .__destroy = vector_destroy,
@@ -276,8 +275,13 @@ struct __Implement Xen_Vector_Implement = {
     .__set_attr = NULL,
 };
 
+struct __Implement* Xen_Vector_GetImplement(void) {
+  return &__Vector_Implement;
+}
+
 int Xen_Vector_Init(void) {
-  if (!Xen_VM_Store_Global("vector", (Xen_Instance*)&Xen_Vector_Implement)) {
+  if (!Xen_VM_Store_Global("vector",
+                           (Xen_Instance*)xen_globals->implements->vector)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -294,7 +298,7 @@ int Xen_Vector_Init(void) {
       !Xen_VM_Store_Native_Function(props, "top", vector_top, nil)) {
     return 0;
   }
-  Xen_Vector_Implement.__props = props;
+  __Vector_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

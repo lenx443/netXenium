@@ -14,7 +14,6 @@
 #include "xen_gc.h"
 #include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_typedefs.h"
@@ -40,7 +39,7 @@ static Xen_Instance* function_alloc(struct __Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst =
-      (Xen_Function_ptr)Xen_Instance_Alloc(&Xen_Function_Implement);
+      (Xen_Function_ptr)Xen_Instance_Alloc(xen_globals->implements->function);
   if (!inst) {
     return NULL;
   }
@@ -91,7 +90,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
         return NULL;
       }
     }
-    if (Xen_IMPL(kwargs) == &Xen_Map_Implement) {
+    if (Xen_IMPL(kwargs) == xen_globals->implements->map) {
       Xen_Instance* kwargs_it = Xen_Attr_Iter(kwargs);
       if (!kwargs_it) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
@@ -163,13 +162,13 @@ static Xen_Instance* function_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
-struct __Implement Xen_Function_Implement = {
+struct __Implement __Function_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Function",
     .__inst_size = sizeof(Xen_Function),
     .__inst_default_flags = 0x00,
     .__inst_trace = function_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = function_alloc,
     .__create = NULL,
     .__destroy = function_destroy,
@@ -178,3 +177,7 @@ struct __Implement Xen_Function_Implement = {
     .__callable = function_callable,
     .__hash = NULL,
 };
+
+struct __Implement* Xen_Function_GetImplement(void) {
+  return &__Function_Implement;
+}

@@ -25,8 +25,8 @@ static Xen_Instance* tuple_iterator_alloc(Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Tuple_Iterator* it =
-      (Xen_Tuple_Iterator*)Xen_Instance_Alloc(&Xen_Tuple_Iterator_Implement);
+  Xen_Tuple_Iterator* it = (Xen_Tuple_Iterator*)Xen_Instance_Alloc(
+      xen_globals->implements->tuple_iterator);
   if (!it) {
     return NULL;
   }
@@ -66,13 +66,13 @@ static Xen_Instance* tuple_iterator_next(Xen_Instance* self, Xen_Instance* args,
   return rsult;
 }
 
-Xen_Implement Xen_Tuple_Iterator_Implement = {
+Xen_Implement __Tuple_Iterator_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "TupleIterator",
     .__inst_size = sizeof(struct Xen_Tuple_Iterator_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = tuple_iterator_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = tuple_iterator_alloc,
     .__create = NULL,
     .__destroy = tuple_iterator_destroy,
@@ -83,6 +83,10 @@ Xen_Implement Xen_Tuple_Iterator_Implement = {
     .__get_attr = &Xen_Basic_Get_Attr_Static,
     .__set_attr = NULL,
 };
+
+struct __Implement* Xen_Tuple_Iterator_GetImplement(void) {
+  return &__Tuple_Iterator_Implement;
+}
 
 int Xen_Tuple_Iterator_Init(void) {
   Xen_Instance* props = Xen_Map_New();
@@ -95,7 +99,7 @@ int Xen_Tuple_Iterator_Init(void) {
                                     nil)) {
     return 0;
   }
-  Xen_Tuple_Iterator_Implement.__props = props;
+  __Tuple_Iterator_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

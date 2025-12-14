@@ -3,8 +3,8 @@
 
 #include "attrs.h"
 #include "instance.h"
+#include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
@@ -13,7 +13,8 @@ void test_map_run(void);
 
 void test_map_run(void) {
   {
-    Xen_Instance* map = __instance_new(&Xen_Map_Implement, nil, nil, 0);
+    Xen_Instance* map =
+        __instance_new(xen_globals->implements->map, nil, nil, 0);
     assert(map != NULL);
   }
   {

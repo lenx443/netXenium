@@ -5,6 +5,6 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Function_Implement;
+struct __Implement* Xen_Function_GetImplement(void);
 
 #endif

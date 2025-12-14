@@ -3,6 +3,7 @@
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 

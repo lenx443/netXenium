@@ -13,14 +13,14 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
 static Xen_Instance* except_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Except* except = (Xen_Except*)Xen_Instance_Alloc(&Xen_Except_Implement);
+  Xen_Except* except =
+      (Xen_Except*)Xen_Instance_Alloc(xen_globals->implements->except);
   if (!except) {
     return NULL;
   }
@@ -37,13 +37,13 @@ static Xen_Instance* except_create(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Instance* type = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(type) != &Xen_String_Implement) {
+  if (Xen_IMPL(type) != xen_globals->implements->string) {
     return NULL;
   }
   except->type = Xen_CString_Dup(Xen_String_As_CString(type));
   Xen_Instance* message = Xen_Tuple_Get_Index(args, 1);
   if (message) {
-    if (Xen_IMPL(message) != &Xen_String_Implement) {
+    if (Xen_IMPL(message) != xen_globals->implements->string) {
       return NULL;
     }
     except->message = Xen_CString_Dup(Xen_String_As_CString(message));
@@ -92,13 +92,13 @@ static Xen_Instance* except_message(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
-Xen_Implement Xen_Except_Implement = {
+Xen_Implement __Except_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_MAPPED),
     .__impl_name = "Except",
     .__inst_size = sizeof(struct Xen_Except_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = NULL,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__base = NULL,
     .__alloc = except_alloc,
     .__create = except_create,
@@ -111,8 +111,13 @@ Xen_Implement Xen_Except_Implement = {
     .__set_attr = NULL,
 };
 
+struct __Implement* Xen_Except_GetImplement(void) {
+  return &__Except_Implement;
+}
+
 int Xen_Except_Init(void) {
-  if (!Xen_VM_Store_Global("except", (Xen_Instance*)&Xen_Except_Implement)) {
+  if (!Xen_VM_Store_Global("except",
+                           (Xen_Instance*)xen_globals->implements->except)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -125,7 +130,7 @@ int Xen_Except_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  Xen_Except_Implement.__props = props;
+  __Except_Implement.__props = props;
   return 1;
 }
 

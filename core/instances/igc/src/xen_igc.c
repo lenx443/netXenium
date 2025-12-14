@@ -75,16 +75,16 @@ void Xen_IGC_Finish(void) {
 }
 
 void Xen_IGC_Push(Xen_Instance* inst) {
-  __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)inst);
+  __igc_roots_push((*xen_globals->igc_roots), (Xen_GCHeader*)inst);
 }
 
 void Xen_IGC_Pop(void) {
-  __igc_roots_pop(__igc_roots_list);
+  __igc_roots_pop((*xen_globals->igc_roots));
 }
 
 struct __IGC_Roots* Xen_IGC_Fork_New(void) {
   struct __IGC_Roots* fork = __igc_roots_new();
-  __igc_roots_push(__igc_roots_list, (Xen_GCHeader*)fork);
+  __igc_roots_push((*xen_globals->igc_roots), (Xen_GCHeader*)fork);
   return fork;
 }
 

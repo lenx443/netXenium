@@ -57,12 +57,12 @@ static Xen_Instance* nil_not(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
-struct __Implement Xen_Nil_Implement = {
+struct __Implement __Nil_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Nil",
     .__inst_size = sizeof(Xen_Instance),
     .__inst_default_flags = 0x00,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__create = NULL,
     .__destroy = NULL,
     .__string = nil_string,
@@ -71,6 +71,10 @@ struct __Implement Xen_Nil_Implement = {
     .__hash = NULL,
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
+
+struct __Implement* Xen_Nil_GetImplement(void) {
+  return &__Nil_Implement;
+}
 
 int Xen_Nil_Init(void) {
   Xen_Instance* props = Xen_Map_New();
@@ -84,7 +88,7 @@ int Xen_Nil_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  Xen_Nil_Implement.__props = props;
+  __Nil_Implement.__props = props;
   return 1;
 }
 

@@ -7,6 +7,7 @@
 #include "run_ctx_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 
@@ -40,8 +41,8 @@ static void frame_trace(Xen_GCHeader* h) {
 static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  struct RunContext* ctx_new =
-      (struct RunContext*)Xen_Instance_Alloc(&Xen_Run_Frame);
+  struct RunContext* ctx_new = (struct RunContext*)Xen_Instance_Alloc(
+      xen_globals->implements->run_frame);
   if (!ctx_new) {
     return NULL;
   }
@@ -80,13 +81,13 @@ static Xen_Instance* frame_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
-struct __Implement Xen_Run_Frame = {
+struct __Implement __Run_Frame = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "RunFrame",
     .__inst_size = sizeof(struct RunContext),
     .__inst_default_flags = 0x00,
     .__inst_trace = frame_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = frame_alloc,
     .__create = NULL,
     .__destroy = frame_destroy,
@@ -95,3 +96,7 @@ struct __Implement Xen_Run_Frame = {
     .__callable = NULL,
     .__hash = NULL,
 };
+
+struct __Implement* Xen_Run_Frame_GetImplement(void) {
+  return &__Run_Frame;
+}

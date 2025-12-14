@@ -24,7 +24,6 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
-#include "xen_vector_implement.h"
 #include "xen_vector_iterator.h"
 
 #define XEN_MAP_CAPACITY 128
@@ -48,7 +47,7 @@ static void map_trace(Xen_GCHeader* h) {
 static Xen_Instance* map_alloc(Xen_Instance* self, Xen_Instance* args,
                                Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  Xen_Map* map = (Xen_Map*)Xen_Instance_Alloc(&Xen_Map_Implement);
+  Xen_Map* map = (Xen_Map*)Xen_Instance_Alloc(xen_globals->implements->map);
   if (!map) {
     return NULL;
   }
@@ -57,7 +56,7 @@ static Xen_Instance* map_alloc(Xen_Instance* self, Xen_Instance* args,
   for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
     map->map_buckets[i] = NULL;
   }
-  map->map_keys = __instance_new(&Xen_Vector_Implement, nil, nil, 0);
+  map->map_keys = __instance_new(xen_globals->implements->vector, nil, nil, 0);
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
     map->map_buckets = NULL;
@@ -102,7 +101,7 @@ static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     stack = Xen_Tuple_Get_Index(args, 0);
-    if (Xen_IMPL(stack) != &Xen_Map_Implement) {
+    if (Xen_IMPL(stack) != xen_globals->implements->map) {
       Xen_IGC_XPOP(roots);
       return NULL;
     }
@@ -280,13 +279,13 @@ static Xen_Instance* map_push(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
-struct __Implement Xen_Map_Implement = {
+static struct __Implement __Map_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Map",
     .__inst_size = sizeof(struct Xen_Map_Instance),
     .__inst_default_flags = 0x00,
     .__inst_trace = map_trace,
-    .__props = &Xen_Nil_Def,
+    .__props = NULL,
     .__alloc = map_alloc,
     .__create = NULL,
     .__destroy = map_destroy,
@@ -297,8 +296,13 @@ struct __Implement Xen_Map_Implement = {
     .__get_attr = Xen_Basic_Get_Attr_Static,
 };
 
+struct __Implement* Xen_Map_GetImplement(void) {
+  return &__Map_Implement;
+}
+
 int Xen_Map_Init(void) {
-  if (!Xen_VM_Store_Global("map", (Xen_Instance*)&Xen_Map_Implement)) {
+  if (!Xen_VM_Store_Global("map",
+                           (Xen_Instance*)xen_globals->implements->map)) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -314,7 +318,7 @@ int Xen_Map_Init(void) {
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     return 0;
   }
-  Xen_Map_Implement.__props = props;
+  __Map_Implement.__props = props;
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

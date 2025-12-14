@@ -3,8 +3,7 @@
 
 #include "implement.h"
 
-extern struct __Implement Xen_Map_Implement;
-
+struct __Implement* Xen_Map_GetImplement(void);
 int Xen_Map_Init(void);
 void Xen_Map_Finish(void);
 

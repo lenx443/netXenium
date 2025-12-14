@@ -16,10 +16,8 @@
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
-#include "xen_number_implement.h"
 #include "xen_register.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
@@ -31,7 +29,7 @@ static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   } else if (Xen_SIZE(args) == 1) {
     Xen_Instance* exit_code = Xen_Tuple_Get_Index(args, 0);
-    if (Xen_IMPL(exit_code) != &Xen_Number_Implement) {
+    if (Xen_IMPL(exit_code) != xen_globals->implements->number) {
       return NULL;
     }
     program.closed = 1;
@@ -58,7 +56,7 @@ static Xen_Instance* fn_echo(Xen_Instance* self, Xen_Instance* args,
     if (!string) {
       return NULL;
     }
-    if (Xen_IMPL(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != xen_globals->implements->string) {
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
@@ -73,7 +71,7 @@ static Xen_Instance* fn_echo(Xen_Instance* self, Xen_Instance* args,
   if (!string) {
     return NULL;
   }
-  if (Xen_IMPL(string) != &Xen_String_Implement) {
+  if (Xen_IMPL(string) != xen_globals->implements->string) {
     return NULL;
   }
   fputs(Xen_String_As_CString(string), stdout);
@@ -89,7 +87,7 @@ static Xen_Instance* fn_print(Xen_Instance* self, Xen_Instance* args,
     if (!string) {
       return NULL;
     }
-    if (Xen_IMPL(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != xen_globals->implements->string) {
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
@@ -106,7 +104,7 @@ static Xen_Instance* fn_println(Xen_Instance* self, Xen_Instance* args,
     if (!string || Xen_Nil_Eval(string)) {
       return NULL;
     }
-    if (Xen_IMPL(string) != &Xen_String_Implement) {
+    if (Xen_IMPL(string) != xen_globals->implements->string) {
       return NULL;
     }
     fputs(Xen_String_As_CString(string), stdout);
@@ -190,7 +188,7 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
-  if (Xen_IMPL(inst) != &Xen_String_Implement) {
+  if (Xen_IMPL(inst) != xen_globals->implements->string) {
     return NULL;
   }
   Xen_c_string_t mod_name = Xen_String_As_CString(inst);
@@ -211,7 +209,7 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
   Xen_Vector_Push(paths_stack, current_path);
   while (Xen_SIZE(paths_stack) > 0) {
     Xen_Instance* path = Xen_Vector_Pop(paths_stack);
-    if (Xen_IMPL(path) != &Xen_String_Implement) {
+    if (Xen_IMPL(path) != xen_globals->implements->string) {
       return NULL;
     }
     Xen_c_string_t path_str = Xen_String_As_CString(path);

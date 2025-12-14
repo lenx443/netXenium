@@ -3,7 +3,7 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Method_Implement;
+struct __Implement* Xen_Method_GetImplement(void);
 
 int Xen_Method_Init(void);
 void Xen_Method_Finish(void);

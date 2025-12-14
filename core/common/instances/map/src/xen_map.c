@@ -12,17 +12,16 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_map_instance.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_string.h"
-#include "xen_string_implement.h"
 #include "xen_string_instance.h"
 #include "xen_vector.h"
 
 Xen_Instance* Xen_Map_New(void) {
-  Xen_Map* map = (Xen_Map*)__instance_new(&Xen_Map_Implement, nil, nil, 0);
+  Xen_Map* map =
+      (Xen_Map*)__instance_new(xen_globals->implements->map, nil, nil, 0);
   if (!map) {
     return NULL;
   }
@@ -70,8 +69,8 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
-    if (Xen_IMPL(pair.key) == &Xen_String_Implement) {
-      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
+    if (Xen_IMPL(pair.key) == xen_globals->implements->string) {
+      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
           strcmp(((Xen_String*)current->key)->characters,
                  ((Xen_String*)pair.key)->characters) == 0) {
         eval = Xen_True;
@@ -156,8 +155,8 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
-    if (Xen_IMPL(key) == &Xen_String_Implement) {
-      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
+    if (Xen_IMPL(key) == xen_globals->implements->string) {
+      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
           strcmp(((Xen_String*)current->key)->characters,
                  ((Xen_String*)key)->characters) == 0) {
         eval = Xen_True;
@@ -218,8 +217,8 @@ int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
   struct __Map_Node* current = map->map_buckets[hash_index];
   while (current) {
     Xen_Instance* eval = nil;
-    if (Xen_IMPL(key) == &Xen_String_Implement) {
-      if (Xen_IMPL(current->key) == &Xen_String_Implement &&
+    if (Xen_IMPL(key) == xen_globals->implements->string) {
+      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
           strcmp(((Xen_String*)current->key)->characters,
                  ((Xen_String*)key)->characters) == 0) {
         eval = Xen_True;

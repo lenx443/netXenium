@@ -3,7 +3,7 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Tuple_Implement;
+struct __Implement* Xen_Tuple_GetImplement(void);
 
 int Xen_Tuple_Init(void);
 void Xen_Tuple_Finish(void);

@@ -3,7 +3,7 @@
 
 #include "implement.h"
 
-Xen_ImplementDef Xen_Boolean_Implement;
+struct __Implement* Xen_Boolean_GetImplement(void);
 
 int Xen_Boolean_Init(void);
 void Xen_Boolean_Finish(void);

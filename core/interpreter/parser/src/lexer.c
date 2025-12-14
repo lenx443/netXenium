@@ -5,6 +5,7 @@
 #include "lexer.h"
 #include "source_file.h"
 #include "xen_cstrings.h"
+#include "xen_life.h"
 #include "xen_typedefs.h"
 
 static inline Xen_size_t advance(Lexer* lexer) {
@@ -37,7 +38,7 @@ static inline Lexer_Token Token(Lexer* lexer, Lexer_Token_Type type,
 }
 
 void skip_whitespace(Lexer* lexer) {
-  Xen_Source_File* sf = globals_sources->st_files[lexer->sf_id];
+  Xen_Source_File* sf = (*xen_globals->source_table)->st_files[lexer->sf_id];
   while (1) {
     char c = sf->sf_content[lexer->pos];
     if (c == ' ' || c == '\t') {
@@ -53,7 +54,7 @@ void skip_whitespace(Lexer* lexer) {
 
 Lexer_Token lexer_next_token(Lexer* lexer) {
   skip_whitespace(lexer);
-  Xen_Source_File* sf = globals_sources->st_files[lexer->sf_id];
+  Xen_Source_File* sf = (*xen_globals->source_table)->st_files[lexer->sf_id];
 
   Lexer_Token token = Token(lexer, TKN_EOF, "", 0);
 

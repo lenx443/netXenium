@@ -1,12 +1,12 @@
 #ifndef __XEN_BOOLEAN_H__
 #define __XEN_BOOLEAN_H__
 
-#include "xen_boolean_instance.h"
+#include "instance.h"
 
-extern Xen_Boolean Xen_True_Instance;
-extern Xen_Boolean Xen_False_Instance;
+Xen_Instance* Xen_True_GetInstance(void);
+Xen_Instance* Xen_False_GetInstance(void);
 
-#define Xen_True ((Xen_Instance *)&Xen_True_Instance)
-#define Xen_False ((Xen_Instance *)&Xen_False_Instance)
+#define Xen_True (xen_globals->true_instance)
+#define Xen_False (xen_globals->false_instance)
 
 #endif
