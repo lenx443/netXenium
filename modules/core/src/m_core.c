@@ -195,15 +195,17 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_c_string_t mod_name = Xen_String_As_CString(inst);
   Xen_Instance* current_path = NULL;
-  if (Xen_SIZE(vm->modules_stack) > 0) {
-    Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(vm->modules_stack);
+  if (Xen_SIZE((*xen_globals->vm)->modules_stack) > 0) {
+    Xen_Module* mod_top =
+        (Xen_Module*)Xen_Vector_Top((*xen_globals->vm)->modules_stack);
     current_path = Xen_String_From_CString(mod_top->mod_path);
   } else {
-    current_path = Xen_String_From_CString(vm->path_current);
+    current_path = Xen_String_From_CString((*xen_globals->vm)->path_current);
   }
   Xen_Instance* paths_stack = Xen_Vector_New();
-  for (Xen_size_t i = Xen_SIZE(vm->paths_modules); i-- > 0;) {
-    Xen_Instance* path = Xen_Vector_Get_Index(vm->paths_modules, i);
+  for (Xen_size_t i = Xen_SIZE((*xen_globals->vm)->paths_modules); i-- > 0;) {
+    Xen_Instance* path =
+        Xen_Vector_Get_Index((*xen_globals->vm)->paths_modules, i);
     Xen_Vector_Push(paths_stack, path);
   }
   Xen_Vector_Push(paths_stack, current_path);

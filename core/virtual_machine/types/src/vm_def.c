@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+
 #include <signal.h>
 #include <stdbool.h>
 #include <string.h>
@@ -14,9 +15,12 @@
 #include "xen_cstrings.h"
 #include "xen_except.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_string.h"
 #include "xen_vector.h"
+
+static VM_ptr vm = NULL;
 
 static void InterruptHandler(int sign) {
   (void)sign;
@@ -109,6 +113,7 @@ bool vm_create(void) {
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = InterruptHandler;
   sigaction(SIGINT, &sa, NULL);
+  xen_globals->vm = &vm;
   return 1;
 }
 
@@ -117,5 +122,3 @@ void vm_destroy(void) {
     return;
   Xen_GC_Pop_Root();
 }
-
-VM_ptr vm = NULL;

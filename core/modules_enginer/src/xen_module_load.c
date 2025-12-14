@@ -1,12 +1,13 @@
-#include "xen_module_load.h"
+#include <string.h>
+
 #include "instance.h"
-#include "vm_def.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_module.h"
 #include "xen_module_instance.h"
+#include "xen_module_load.h"
 #include "xen_module_types.h"
 #include "xen_modules_def.h"
-#include <string.h>
 
 static int core_success = 0;
 
@@ -18,7 +19,7 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   if (!mod_inst) {
     return 0;
   }
-  if (!Xen_Map_Push_Map(vm->globals_instances,
+  if (!Xen_Map_Push_Map((*xen_globals->vm)->globals_instances,
                         ((Xen_Module*)mod_inst)->__map)) {
     return 0;
   }
@@ -37,7 +38,7 @@ int Xen_Module_Load_Startup(void) {
       if (!mod_inst) {
         return 0;
       }
-      if (!Xen_Map_Push_Pair_Str(vm->globals_instances,
+      if (!Xen_Map_Push_Pair_Str((*xen_globals->vm)->globals_instances,
                                  (Xen_Map_Pair_Str){mod->mod_name, mod_inst})) {
         return 0;
       }

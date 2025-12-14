@@ -3,6 +3,7 @@
 #include "source_file.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_life.h"
 #include "xen_typedefs.h"
 
 Xen_Source_File* Xen_Source_File_New(Xen_c_string_t file,
@@ -57,6 +58,7 @@ void Xen_Source_Table_Free(Xen_Source_Table* st) {
 
 void Xen_Source_Table_Init(void) {
   globals_sources = Xen_Source_Table_New();
+  xen_globals->source_table = &globals_sources;
 }
 
 void Xen_Source_Table_Finish(void) {

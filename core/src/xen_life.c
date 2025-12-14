@@ -11,24 +11,30 @@
 #include "xen_module_load.h"
 
 int Xen_Init(int argc, char** argv) {
+  xen_globals = Xen_Alloc(sizeof(struct Xen_Globals));
   program.argv = argv + 1;
   program.argc = argc - 1;
+  xen_globals->program = &program;
 
+  Xen_GC_GetReady();
   Xen_IGC_Init();
   Xen_Source_Table_Init();
   if (!vm_create()) {
+    Xen_Dealloc(xen_globals);
     return 0;
   }
   setlocale(LC_CTYPE, "");
 
   if (!Xen_Instance_Init()) {
     vm_destroy();
+    Xen_Dealloc(xen_globals);
     return 0;
   }
 
   if (!Xen_Module_Load_Startup()) {
     Xen_Instance_Finish();
     vm_destroy();
+    Xen_Dealloc(xen_globals);
     return 0;
   }
   Xen_GC_Collect();
@@ -42,4 +48,6 @@ void Xen_Finish(void) {
   Xen_Source_Table_Finish();
   Xen_IGC_Finish();
   Xen_GC_Shutdown();
+  Xen_Dealloc(xen_globals);
 }
+struct Xen_Globals* xen_globals = NULL;

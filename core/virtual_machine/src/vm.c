@@ -21,11 +21,11 @@
 #include "xen_typedefs.h"
 
 Xen_Instance* Xen_VM_Current_Ctx(void) {
-  return run_context_stack_peek_top(&vm->vm_ctx_stack);
+  return run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
 }
 
 bool Xen_VM_Store_Global(const char* name, Xen_Instance* val) {
-  return Xen_Map_Push_Pair_Str(vm->globals_instances,
+  return Xen_Map_Push_Pair_Str((*xen_globals->vm)->globals_instances,
                                (Xen_Map_Pair_Str){name, val});
 }
 
@@ -82,19 +82,19 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   if (!callable) {
     return 0;
   }
-  Xen_Instance* ctx_inst =
-      Xen_Ctx_New(run_context_stack_peek_top(&vm->vm_ctx_stack)
-                      ? run_context_stack_peek_top(&vm->vm_ctx_stack)
-                      : nil,
-                  closure, self, args, kwargs, NULL, callable);
+  Xen_Instance* ctx_inst = Xen_Ctx_New(
+      run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
+          ? run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
+          : nil,
+      closure, self, args, kwargs, NULL, callable);
   if (!ctx_inst) {
     return 0;
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
+  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, ctx_inst)) {
     return 0;
   }
-  RunContext_ptr ctx =
-      (RunContext_ptr)run_context_stack_peek_top(&vm->vm_ctx_stack);
+  RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(
+      &(*xen_globals->vm)->vm_ctx_stack);
   ctx->ctx_code = callable;
   return 1;
 }
@@ -116,14 +116,17 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
 }
 
 void Xen_VM_Except_Backtrace_Show(void) {
-  Xen_Except* except = (Xen_Except*)vm->except.except;
+  Xen_Except* except = (Xen_Except*)(*xen_globals->vm)->except.except;
   puts("Unhandled exception occurred.");
   puts("BackTrace:");
-  for (Xen_size_t i = 0; i < vm->except.bt->bt_count; i++) {
+  for (Xen_size_t i = 0; i < (*xen_globals->vm)->except.bt->bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
-           globals_sources->st_files[(Xen_size_t)vm->except.bt->bt_addrs[i].id]
+           globals_sources
+               ->st_files
+                   [(Xen_size_t)(*xen_globals->vm)->except.bt->bt_addrs[i].id]
                ->sf_name,
-           vm->except.bt->bt_addrs[i].line, vm->except.bt->bt_addrs[i].column);
+           (*xen_globals->vm)->except.bt->bt_addrs[i].line,
+           (*xen_globals->vm)->except.bt->bt_addrs[i].column);
   }
   if (except->message) {
     fputs(except->type, stdout);
@@ -133,8 +136,8 @@ void Xen_VM_Except_Backtrace_Show(void) {
     fputs("Type: ", stdout);
     puts(except->type);
   }
-  vm->except.active = 0;
-  vm_backtrace_clear(vm->except.bt);
+  (*xen_globals->vm)->except.active = 0;
+  vm_backtrace_clear((*xen_globals->vm)->except.bt);
 }
 
 int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
@@ -147,7 +150,7 @@ int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
   if (Xen_IMPL(except) != &Xen_Except_Implement) {
     return 0;
   }
-  vm->except.active = 1;
-  vm->except.except = except;
+  (*xen_globals->vm)->except.active = 1;
+  (*xen_globals->vm)->except.except = except;
   return 1;
 }

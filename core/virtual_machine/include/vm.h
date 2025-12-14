@@ -7,7 +7,7 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
-#include "vm_def.h"
+#include "xen_life.h"
 #include "xen_typedefs.h"
 
 #define VM_CHECK_ID(id) ((run_ctx_id(Xen_VM_Current_Ctx())) == (id))
@@ -25,11 +25,11 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr, Xen_Instance*, struct __Instance*,
 Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr, struct __Instance*,
                                    Xen_Instance*, Xen_Instance*, Xen_Instance*);
 inline static Xen_Instance* Xen_VM_Except(void) {
-  return vm->except.except;
+  return (*xen_globals->vm)->except.except;
 }
 
 inline static Xen_bool_t Xen_VM_Except_Active(void) {
-  return vm->except.active;
+  return (*xen_globals->vm)->except.active;
 }
 
 void Xen_VM_Except_Backtrace_Show(void);

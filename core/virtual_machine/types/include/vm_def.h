@@ -32,6 +32,4 @@ typedef VM* VM_ptr;
 bool vm_create(void);
 void vm_destroy(void);
 
-extern VM_ptr vm;
-
 #endif

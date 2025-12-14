@@ -108,23 +108,23 @@ static Xen_Instance* parser_throw_stmt(Parser*);
 static Xen_Instance* parser_try_stmt(Parser*);
 
 static Xen_Instance* parser_program(Parser* p) {
-  Xen_Instance* program =
+  Xen_Instance* program_node =
       Xen_AST_Node_New("Program", NULL, (Xen_Source_Address){0});
-  if (!program) {
+  if (!program_node) {
     return NULL;
   }
   Xen_Instance* stmt_list = parser_stmt_list(p);
   if (!stmt_list) {
     return NULL;
   }
-  if (!Xen_AST_Node_Push_Child(program, stmt_list)) {
+  if (!Xen_AST_Node_Push_Child(program_node, stmt_list)) {
     return NULL;
   }
   if (p->token.tkn_type != TKN_EOF) {
     Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
     return NULL;
   }
-  return program;
+  return program_node;
 }
 
 bool is_stmt(Parser* p) {
@@ -1709,7 +1709,7 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
   if (Xen_VM_Except_Active()) {
-    vm_backtrace_push(vm->except.bt, parser.token.sta);
+    vm_backtrace_push((*xen_globals->vm)->except.bt, parser.token.sta);
     return NULL;
   }
   if (!ast_program) {

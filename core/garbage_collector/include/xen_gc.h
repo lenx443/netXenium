@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+void Xen_GC_GetReady(void);
 struct __GC_Header* Xen_GC_New(Xen_size_t, void (*)(struct __GC_Header*),
                                void (*)(struct __GC_Header**));
 void Xen_GC_Collect(void);

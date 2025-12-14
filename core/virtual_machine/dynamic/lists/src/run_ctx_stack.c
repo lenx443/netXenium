@@ -5,6 +5,7 @@
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 
 int run_context_stack_push(RunContext_Stack_ptr* ctx_stack, Xen_Instance* ctx) {
   if (!ctx_stack) {
@@ -17,7 +18,7 @@ int run_context_stack_push(RunContext_Stack_ptr* ctx_stack, Xen_Instance* ctx) {
   ctx_stack_new->ctx = (RunContext_ptr)ctx;
   Xen_GC_Push_Root((Xen_GCHeader*)ctx_stack_new->ctx);
   ctx_stack_new->ctx->ctx_running = 1;
-  ctx_stack_new->ctx->ctx_id = ++vm->ctx_id_count;
+  ctx_stack_new->ctx->ctx_id = ++(*xen_globals->vm)->ctx_id_count;
   ctx_stack_new->next = NULL;
   if (*ctx_stack) {
     ctx_stack_new->next = *ctx_stack;
@@ -41,7 +42,7 @@ void run_context_stack_pop_top(RunContext_Stack_ptr* ctx_stack) {
   }
   RunContext_Stack_ptr temp = *ctx_stack;
   *ctx_stack = (*ctx_stack)->next;
-  --vm->ctx_id_count;
+  --(*xen_globals->vm)->ctx_id_count;
   Xen_GC_Pop_Root();
   Xen_Dealloc(temp);
 }
@@ -57,6 +58,6 @@ void run_context_stack_free(RunContext_Stack_ptr* ctx_stack) {
     Xen_Dealloc(current);
     current = next;
   }
-  vm->ctx_id_count = 0;
+  (*xen_globals->vm)->ctx_id_count = 0;
   *ctx_stack = NULL;
 }

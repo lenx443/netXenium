@@ -164,7 +164,7 @@ Xen_Instance* Xen_Attr_String(Xen_Instance* inst) {
   }
   Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", nil, nil);
   if (!string) {
-    vm_backtrace_clear(vm->except.bt);
+    vm_backtrace_clear((*xen_globals->vm)->except.bt);
     if (Xen_IMPL(inst)->__string == NULL) {
       string = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, nil, nil);
       if (!string) {
@@ -210,7 +210,7 @@ Xen_Instance* Xen_Attr_String_Stack(Xen_Instance* inst, Xen_Instance* stack) {
   Xen_IGC_Push(args);
   Xen_Instance* string = Xen_Method_Attr_Str_Call(inst, "__string", args, nil);
   if (!string) {
-    vm_backtrace_clear(vm->except.bt);
+    vm_backtrace_clear((*xen_globals->vm)->except.bt);
     if (Xen_IMPL(inst)->__string == NULL) {
       string = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
       if (!string) {
@@ -255,7 +255,7 @@ Xen_Instance* Xen_Attr_Raw(Xen_Instance* inst) {
   }
   Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", nil, nil);
   if (!raw) {
-    vm_backtrace_clear(vm->except.bt);
+    vm_backtrace_clear((*xen_globals->vm)->except.bt);
     if (Xen_IMPL(inst)->__raw == NULL) {
       raw = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, nil, nil);
       if (!raw) {
@@ -300,7 +300,7 @@ Xen_Instance* Xen_Attr_Raw_Stack(Xen_Instance* inst, Xen_Instance* stack) {
   Xen_IGC_Push(args);
   Xen_Instance* raw = Xen_Method_Attr_Str_Call(inst, "__raw", args, nil);
   if (!raw) {
-    vm_backtrace_clear(vm->except.bt);
+    vm_backtrace_clear((*xen_globals->vm)->except.bt);
     if (Xen_IMPL(inst)->__string == NULL) {
       raw = Xen_VM_Call_Native_Function(Xen_Basic_String, inst, args, nil);
       if (!raw) {

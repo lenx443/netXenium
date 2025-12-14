@@ -4,9 +4,21 @@
 #include "gc_header.h"
 #include "xen_typedefs.h"
 
+#ifndef __XEN_GC_MAX_ROOTS__
+#define __XEN_GC_MAX_ROOTS__ 1024
+#endif
+
+#ifndef __XEN_GC_MAX_GRAY__
+#define __XEN_GC_MAX_GRAY__ 4096
+#endif
+
 struct __GC_Heap {
   struct __GC_Header* young;
   struct __GC_Header* old;
+  struct __GC_Header* roots[__XEN_GC_MAX_ROOTS__];
+  struct __GC_Header* gray_stack[__XEN_GC_MAX_GRAY__];
+  Xen_size_t roots_count;
+  Xen_size_t gray_stack_count;
   Xen_size_t total_bytes;
   Xen_size_t threshold;
   Xen_size_t pressure;

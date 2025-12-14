@@ -2543,7 +2543,7 @@ int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
   if (!compile_program(&c, ast)) {
     assert(loop_stack == NULL);
     if (Xen_VM_Except_Active()) {
-      vm_backtrace_push(vm->except.bt, c.sta);
+      vm_backtrace_push((*xen_globals->vm)->except.bt, c.sta);
       return 0;
     }
     return 0;

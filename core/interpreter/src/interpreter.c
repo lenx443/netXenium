@@ -29,12 +29,12 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
 #ifndef NDEBUG
   printf("== Running ==\n");
 #endif
-  Xen_Instance* ctx_inst =
-      Xen_Ctx_New(nil, nil, nil, nil, nil, vm->globals_instances, code);
+  Xen_Instance* ctx_inst = Xen_Ctx_New(
+      nil, nil, nil, nil, nil, (*xen_globals->vm)->globals_instances, code);
   if (!ctx_inst) {
     return NULL;
   }
-  if (!run_context_stack_push(&vm->vm_ctx_stack, ctx_inst)) {
+  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, ctx_inst)) {
     return NULL;
   }
   Xen_Instance* retval = vm_run_top();

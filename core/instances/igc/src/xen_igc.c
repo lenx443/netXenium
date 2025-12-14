@@ -3,6 +3,7 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_typedefs.h"
 #include <assert.h>
 
@@ -17,7 +18,7 @@ struct __IGC_Roots {
   Xen_size_t cap;
 };
 
-struct __IGC_Roots* __igc_roots_list = NULL;
+static struct __IGC_Roots* __igc_roots_list = NULL;
 
 static void __igc_roots_trace(Xen_GCHeader* h) {
   struct __IGC_Roots* roots = (struct __IGC_Roots*)h;
@@ -66,6 +67,7 @@ static void __igc_roots_pop(struct __IGC_Roots* roots) {
 void Xen_IGC_Init(void) {
   __igc_roots_list = __igc_roots_new();
   Xen_GC_Push_Root((Xen_GCHeader*)__igc_roots_list);
+  xen_globals->igc_roots = &__igc_roots_list;
 }
 
 void Xen_IGC_Finish(void) {
