@@ -166,7 +166,7 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     Xen_Dealloc(file_content);
     return (Xen_Instance*)module;
   } else if (mod_type == XEN_MODULE_NATIVE) {
-    void* handle = dlopen(mod_name, RTLD_LAZY);
+    void* handle = dlopen(mod_name, RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
       dlerror();
       return NULL;

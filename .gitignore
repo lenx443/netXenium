@@ -16,6 +16,7 @@ CMakeUserPresets.json
 arp
 compile_commands.json
 Makefile
+.clangd
 .cache/
 /build/
 scripts/
