@@ -47,4 +47,5 @@ struct Xen_Module_Def Module_Interpreter = {
     .mod_name = "interpreter",
     .mod_init = NULL,
     .mod_functions = interpreter_functions,
+    .mod_implements = NULL,
 };

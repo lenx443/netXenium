@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "basic.h"
 #include "compiler.h"
+#include "implement.h"
 #include "instance.h"
 #include "list.h"
 #include "macros.h"
@@ -62,6 +64,35 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
       if (!Xen_Map_Push_Pair_Str(
               module->__map,
               (Xen_Map_Pair_Str){mod_def.mod_functions[i].fun_name, fun})) {
+        return NULL;
+      }
+    }
+  }
+  if (mod_def.mod_implements) {
+    for (Xen_size_t i = 0; mod_def.mod_implements[i] != NULL; i++) {
+      Xen_Implement* impl =
+          (Xen_Implement*)__instance_new(&Xen_Basic, nil, nil, 0);
+      impl->__impl_name =
+          Xen_CString_Dup(mod_def.mod_implements[i]->__impl_name);
+      impl->__inst_size = mod_def.mod_implements[i]->__inst_size;
+      impl->__inst_default_flags =
+          mod_def.mod_implements[i]->__inst_default_flags;
+      impl->__inst_trace = mod_def.mod_implements[i]->__inst_trace;
+      impl->__props = mod_def.mod_implements[i]->__props;
+      impl->__base = mod_def.mod_implements[i]->__base;
+      impl->__alloc = mod_def.mod_implements[i]->__alloc;
+      impl->__create = mod_def.mod_implements[i]->__create;
+      impl->__destroy = mod_def.mod_implements[i]->__destroy;
+      impl->__string = mod_def.mod_implements[i]->__string;
+      impl->__raw = mod_def.mod_implements[i]->__raw;
+      impl->__callable = mod_def.mod_implements[i]->__callable;
+      impl->__hash = mod_def.mod_implements[i]->__hash;
+      impl->__get_attr = mod_def.mod_implements[i]->__get_attr;
+      impl->__set_attr = mod_def.mod_implements[i]->__set_attr;
+      if (!Xen_Map_Push_Pair_Str(
+              module->__map,
+              (Xen_Map_Pair_Str){mod_def.mod_implements[i]->__impl_name,
+                                 (Xen_Instance*)impl})) {
         return NULL;
       }
     }

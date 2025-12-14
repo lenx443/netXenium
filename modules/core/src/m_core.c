@@ -260,4 +260,5 @@ struct Xen_Module_Def Module_Core = {
     .mod_name = "core",
     .mod_init = NULL,
     .mod_functions = core_functions,
+    .mod_implements = NULL,
 };

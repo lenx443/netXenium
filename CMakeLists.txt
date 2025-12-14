@@ -14,10 +14,11 @@ set(CMAKE_C_FLAGS_DEBUG "-fno-omit-frame-pointer -g -O0 -Wall -Wextra -Wshadow -
 
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a)
-set(NETXENIUM_ABI_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/abi/include/)
 set(NETXENIUM_MODULES_INSTALL_PATH lib/netxenium)
 
-add_compile_options(-DXEN_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
+add_compile_options(
+  -DXEN_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}"
+)
 
 if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
@@ -92,6 +93,10 @@ set(NETXENIUM_DEAFULT_INCLUDES
   dynamic/lists/include/
   dynamic/hash_tables/include/
   header/
+)
+
+set(NETXENIUM_ABI_INCLUDE_PATH
+  ${CMAKE_SOURCE_DIR}/abi/include/
 )
 
 set(SOURCES
