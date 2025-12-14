@@ -1,5 +1,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "compiler.h"
 #include "instance.h"
@@ -96,6 +97,9 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
         return (Xen_Instance*)module;
       }
     }
+    if (access(mod_name, F_OK) != 0) {
+      return NULL;
+    }
     module = (Xen_Module*)Xen_Module_New();
     module->mod_initializing = 1;
     module->mod_name = Xen_CString_Dup(mod_uname);
@@ -166,6 +170,20 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     Xen_Dealloc(file_content);
     return (Xen_Instance*)module;
   } else if (mod_type == XEN_MODULE_NATIVE) {
+    Xen_Module* module =
+        (Xen_Module*)Xen_Map_Get_Str((*xen_globals->vm)->modules, mod_name);
+    if (Xen_Map_Has_Str((*xen_globals->vm)->modules, mod_name)) {
+      if (module->mod_initialized) {
+        return (Xen_Instance*)module;
+      }
+      if (module->mod_initializing) {
+        return (Xen_Instance*)module;
+      }
+    }
+    if (access(mod_name, F_OK) != 0) {
+      return NULL;
+    }
+    dlerror();
     void* handle = dlopen(mod_name, RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
       dlerror();
@@ -185,10 +203,10 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       return NULL;
     }
     struct Xen_Module_Def* mod_def = mod_start(xen_globals);
-    Xen_Instance* module = Xen_Module_From_Def(*mod_def, mod_path);
+    module = (Xen_Module*)Xen_Module_From_Def(*mod_def, mod_path);
     Xen_Dealloc(mod_def);
     dlclose(handle);
-    return module;
+    return (Xen_Instance*)module;
   }
   return NULL;
 }
