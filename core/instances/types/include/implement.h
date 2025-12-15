@@ -50,4 +50,6 @@ typedef struct __Implement Xen_Implement;
 #define Xen_ImplementDef extern struct __Implement
 typedef struct __ImplementStruct Xen_ImplementStruct;
 
+Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct);
+
 #endif

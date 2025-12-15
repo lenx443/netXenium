@@ -20,4 +20,6 @@
 typedef Xen_uint8_t Xen_Instance_Flag;
 typedef struct __Instance Xen_Instance;
 
+Xen_size_t Xen_SIZE(void*);
+
 #endif

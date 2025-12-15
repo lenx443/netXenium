@@ -154,3 +154,12 @@ void Xen_GC_Shutdown(void) {
   assert(xen_globals->gc_heap->pressure == 0);
   assert(xen_globals->gc_heap->total_bytes == 0);
 }
+
+void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
+                        struct __GC_Header* child) {
+  assert(child != NULL);
+  *field = child;
+  if (parent && parent->color == GC_BLACK && child->color == GC_WHITE) {
+    Xen_GC_Push_Gray(child);
+  }
+}

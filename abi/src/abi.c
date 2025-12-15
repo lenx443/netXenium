@@ -2,14 +2,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "basic.h"
 #include "implement.h"
-#include "instance.h"
-#include "netXenium.h"
+#include "netxenium/netXenium.h"
 #include "xen_alloc.h"
-#include "xen_cstrings.h"
 #include "xen_module_types.h"
-#include "xen_nil.h"
 #include "xen_typedefs.h"
 
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t name,
@@ -31,12 +27,4 @@ void Xen_Debug_Print(Xen_c_string_t str, ...) {
   vprintf(str, args);
   va_end(args);
 #endif
-}
-
-Xen_Implement* Xen_Implement_Make(Xen_c_string_t name, Xen_size_t size) {
-  Xen_Implement* impl =
-      (Xen_Implement*)__instance_new(&Xen_Basic, Xen_Nil(), Xen_Nil(), 0);
-  impl->__impl_name = Xen_CString_Dup(name);
-  impl->__size = size;
-  return impl;
 }

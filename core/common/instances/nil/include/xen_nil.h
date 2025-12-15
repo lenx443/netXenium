@@ -3,7 +3,7 @@
 
 #include "instance.h"
 
-#define nil (xen_globals->nil_instance)
+#define nil (Xen_Nil())
 #define if_nil_eval(value) if (Xen_Nil_Eval((Xen_Instance*)(value)))
 #define if_nil_neval(value) if (Xen_Nil_NEval((Xen_Instance*)(value)))
 

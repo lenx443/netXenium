@@ -80,7 +80,6 @@ set(NETXENIUM_DEAFULT_INCLUDES
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
-  core/instances/types/header/
   core/instances/types/include/
   core/instances/igc/include/
   core/register_enginer/include/
@@ -238,6 +237,7 @@ set(SOURCES
 
   # Implementacion de estaructura `Instance`
   core/instances/types/src/instance.c
+  core/instances/types/src/implement.c
 
   # motor de registros
   core/register_enginer/src/xen_register.c
@@ -260,6 +260,8 @@ set(SOURCES
   dynamic/lists/src/history.c
   dynamic/lists/src/string_utf8.c
 )
+
+install(DIRECTORY ${NETXENIUM_ABI_INCLUDE_PATH} DESTINATION include)
 
 add_library(libntxenium
   abi/src/abi.c
@@ -303,6 +305,8 @@ add_executable(tester
 )
 
 target_include_directories(tester PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
+
+target_compile_options(tester PRIVATE -DXEN_TEST)
 
 add_test(NAME TestNumber      COMMAND tester      "NUMBER")
 add_test(NAME TestString      COMMAND tester      "STRING")

@@ -3,7 +3,6 @@
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
-#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 
@@ -70,4 +69,8 @@ void __instance_free(Xen_GCHeader** h) {
       inst->__impl->__destroy(inst, NULL, NULL);
     Xen_Dealloc(*h);
   }
+}
+
+Xen_size_t Xen_SIZE(void* inst) {
+  return (((struct __Instance*)inst)->__size);
 }

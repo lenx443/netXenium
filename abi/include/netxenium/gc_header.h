@@ -1,6 +1,13 @@
 #ifndef __GC_HEADER_H__
 #define __GC_HEADER_H__
 
+#define GC_WHITE 1
+#define GC_GRAY 2
+#define GC_BLACK 3
+
+#define GC_YOUNG 1
+#define GC_OLD 2
+
 #define XEN_GC_HEAD                                                            \
   Xen_uint8_t color;                                                           \
   Xen_uint8_t generation;                                                      \

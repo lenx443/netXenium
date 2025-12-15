@@ -3,6 +3,7 @@
 
 #include "implement.h"
 #include "instance.h"
+#include "xen_gc.h"
 #include "xen_number.h"
 #include "xen_typedefs.h"
 
@@ -21,11 +22,14 @@ struct Xen_Module_Function {
 
 extern struct __Implement Xen_Basic;
 
+#ifndef XEN_ABI
+Xen_size_t Xen_SIZE(void* inst);
+#endif
+
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t, Xen_Native_Func,
                                          struct Xen_Module_Function*,
                                          Xen_ImplementStruct**);
 void Xen_Debug_Print(Xen_c_string_t, ...);
 void Xen_GetReady(void*);
-Xen_Implement* Xen_Implement_Make(Xen_c_string_t, Xen_size_t);
 
 #endif

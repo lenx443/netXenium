@@ -50,8 +50,6 @@ static inline struct __Implement* Xen_IMPL(void* inst) {
   return (((struct __Instance*)inst)->__impl);
 }
 
-static inline size_t Xen_SIZE(void* inst) {
-  return (((struct __Instance*)inst)->__size);
-}
+Xen_size_t Xen_SIZE(void*);
 
 #endif

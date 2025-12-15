@@ -1,5 +1,4 @@
-#include "implement.h"
-#include "netXenium.h"
+#include "netxenium/netXenium.h"
 
 struct Foo_Instance {
   Xen_INSTANCE_HEAD;
