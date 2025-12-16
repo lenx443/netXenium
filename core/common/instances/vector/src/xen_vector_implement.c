@@ -13,6 +13,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_except_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
@@ -73,6 +74,12 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
       }
     }
     Xen_IGC_XPOP(2);
+    if (!Xen_VM_Except_Active() ||
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+               "RangeEnd") != 0) {
+      return NULL;
+    }
+    (*xen_globals->vm)->except.active = 0;
   }
   return nil;
 }

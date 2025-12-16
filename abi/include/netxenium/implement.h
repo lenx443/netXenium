@@ -38,4 +38,6 @@ typedef struct __Implement Xen_Implement;
 #define Xen_ImplementDef extern struct __Implement
 typedef struct __ImplementStruct Xen_ImplementStruct;
 
+void Xen_Implement_SetProps(Xen_Implement*, Xen_Instance*);
+
 #endif

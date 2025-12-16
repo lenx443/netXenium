@@ -52,4 +52,6 @@ typedef struct __ImplementStruct Xen_ImplementStruct;
 
 Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct);
 
+void Xen_Implement_SetProps(Xen_Implement*, Xen_Instance*);
+
 #endif

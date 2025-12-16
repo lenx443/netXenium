@@ -8,8 +8,10 @@
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "vm_stack.h"
+#include "xen_except_instance.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
 #include "xen_life.h"
@@ -113,6 +115,13 @@ static Xen_Instance* function_callable(struct __Instance* self,
           return NULL;
         }
       }
+      if (!Xen_VM_Except_Active() ||
+          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+                 "RangeEnd") != 0) {
+        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+        return NULL;
+      }
+      (*xen_globals->vm)->except.active = 0;
     }
     Xen_Instance* defaults_it = Xen_Attr_Iter(inst->args_default_values);
     if (!defaults_it) {
@@ -132,6 +141,13 @@ static Xen_Instance* function_callable(struct __Instance* self,
         }
       }
     }
+    if (!Xen_VM_Except_Active() ||
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+               "RangeEnd") != 0) {
+      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+      return NULL;
+    }
+    (*xen_globals->vm)->except.active = 0;
     for (Xen_ssize_t i = 0; i < inst->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       if (!Xen_Map_Has(((RunContext_ptr)new_ctx)->ctx_instances, name)) {

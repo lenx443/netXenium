@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "instance_life.h"
 #include "vm.h"
+#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -56,6 +57,7 @@ static Xen_Instance* tuple_iterator_next(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   if ((Xen_size_t)it->index >= Xen_SIZE(it->tuple)) {
+    Xen_RangeEnd();
     it->index = -1;
     return NULL;
   }

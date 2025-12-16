@@ -2361,7 +2361,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (!name) {
     return 0;
   }
-  Xen_Instance* base = Xen_AST_Node_Get_Child(node, 0);
+  Xen_Instance* base = Xen_AST_Node_Get_Child(node, 1);
   if (!base) {
     return 0;
   }
@@ -2386,7 +2386,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (!emit(PUSH, co_name_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
-  Xen_Instance* body = Xen_AST_Node_Get_Child(node, 1);
+  Xen_Instance* body = Xen_AST_Node_Get_Child(node, 2);
   if (!body) {
     return 0;
   }
@@ -2411,7 +2411,19 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
   if (local_name == -1) {
     return 0;
   }
-  if (!emit(STORE, local_name, Xen_AST_Node_STA(node))) {
+  Xen_Instance* name_type = Xen_AST_Node_Get_Child(node, 0);
+  if (!name_type) {
+    return 0;
+  }
+  if (Xen_AST_Node_Value_Cmp(name_type, "Identifier") == 0) {
+    if (!emit(STORE, local_name, Xen_AST_Node_STA(node))) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Value_Cmp(name_type, "Property") == 0) {
+    if (!emit(STORE_PROP, local_name, Xen_AST_Node_STA(node))) {
+      return 0;
+    }
+  } else {
     return 0;
   }
   return 1;

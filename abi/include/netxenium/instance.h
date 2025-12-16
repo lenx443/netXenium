@@ -2,6 +2,9 @@
 #define __INSTANCE_H__
 
 #include "xen_typedefs.h"
+
+struct __Implement;
+
 #define Xen_INSTANCE_HEAD                                                      \
   XEN_GC_HEAD                                                                  \
   struct __Implement* __impl;                                                  \
@@ -19,6 +22,10 @@
 
 typedef Xen_uint8_t Xen_Instance_Flag;
 typedef struct __Instance Xen_Instance;
+
+Xen_Instance* Xen_Instance_Alloc(struct __Implement*);
+Xen_Instance* __instance_new(struct __Implement*, Xen_Instance*, Xen_Instance*,
+                             Xen_Instance_Flag);
 
 Xen_size_t Xen_SIZE(void*);
 

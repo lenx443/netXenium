@@ -1503,13 +1503,27 @@ Xen_Instance* parser_implement_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  if (p->token.tkn_type != TKN_IDENTIFIER) {
+  Xen_Instance* name_type = NULL;
+  if (p->token.tkn_type == TKN_IDENTIFIER) {
+    name_type = Xen_AST_Node_New("NameType", "Identifier", p->token.sta);
+    if (!name_type) {
+      return NULL;
+    }
+  } else if (p->token.tkn_type == TKN_PROPERTY) {
+    name_type = Xen_AST_Node_New("NameType", "Property", p->token.sta);
+    if (!name_type) {
+      return NULL;
+    }
+  } else {
     Xen_SyntaxError("Invalid name for implementation");
     return NULL;
   }
   Xen_Instance* impl_stmt =
       Xen_AST_Node_New("ImplementStatement", p->token.tkn_text, p->token.sta);
   if (!impl_stmt) {
+    return NULL;
+  }
+  if (!Xen_AST_Node_Push_Child(impl_stmt, name_type)) {
     return NULL;
   }
   parser_next(p);

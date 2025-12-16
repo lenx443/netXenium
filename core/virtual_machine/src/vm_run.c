@@ -33,6 +33,7 @@
 #include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_nil.h"
@@ -265,6 +266,12 @@ static void op_make_vector_from_iterable(VM_Run* vmr, RunContext_ptr ctx,
       ERROR;
     }
   }
+  if (!Xen_VM_Except_Active() ||
+      strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+             "RangeEnd") != 0) {
+    ERROR;
+  }
+  (*xen_globals->vm)->except.active = 0;
   STACK_PUSH(vector);
 }
 
@@ -579,10 +586,16 @@ static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_IGC_Push(iter);
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
-    Xen_IGC_Pop();
-    STACK_PUSH(nil);
-    JUMP(oparg);
-    return;
+    if (Xen_VM_Except_Active() &&
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+               "RangeEnd") == 0) {
+      (*xen_globals->vm)->except.active = 0;
+      Xen_IGC_Pop();
+      STACK_PUSH(nil);
+      JUMP(oparg);
+      return;
+    }
+    ERROR;
   }
   Xen_IGC_Pop();
   STACK_PUSH(rsult);
@@ -801,6 +814,8 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   if (!impl) {
     ERROR
   }
+  Xen_Map_Push_Pair_Str(ctx->ctx_instances,
+                        (Xen_Map_Pair_Str){builder->name, impl});
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
   RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(

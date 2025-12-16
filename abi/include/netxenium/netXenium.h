@@ -1,11 +1,20 @@
 #ifndef __NETXENIUM_H__
 #define __NETXENIUM_H__
 
+#include "attrs.h"
+#include "basic_templates.h"
 #include "implement.h"
 #include "instance.h"
+#include "vm.h"
+#include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_map.h"
+#include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_register.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
+#include "xen_vector.h"
 
 #define Xen_NULL ((void*)0)
 

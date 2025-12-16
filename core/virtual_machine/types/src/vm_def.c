@@ -1,3 +1,4 @@
+#include "xen_map_instance.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <signal.h>
@@ -34,6 +35,7 @@ static void vm_def_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->paths_modules);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->config);
   if (vm->except.active) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
   }
@@ -52,6 +54,18 @@ static int vm_load_modules_paths(void) {
   Xen_Instance* default_module_path =
       Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");
   Xen_Vector_Push(vm->paths_modules, default_module_path);
+  return 1;
+}
+
+static int vm_load_config(void) {
+  vm->config = Xen_Map_New();
+  if (!vm->config) {
+    return 0;
+  }
+  if (!Xen_Map_Push_Pair_Str(
+          vm->config, (Xen_Map_Pair_Str){"paths_modules", vm->paths_modules})) {
+    return 0;
+  }
   return 1;
 }
 
@@ -104,6 +118,11 @@ bool vm_create(void) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
+  if (!vm_load_config()) {
+    run_context_stack_free(&vm->vm_ctx_stack);
+    Xen_Dealloc((void*)vm->path_current);
+    return 0;
+  }
   vm->except.active = 0;
   vm->except.except = NULL;
   vm->except.bt = vm_backtrace_new();
@@ -120,5 +139,6 @@ bool vm_create(void) {
 void vm_destroy(void) {
   if (!vm)
     return;
+  Xen_Dealloc((void*)vm->path_current);
   Xen_GC_Pop_Root();
 }

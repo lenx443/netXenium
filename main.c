@@ -36,12 +36,17 @@
 
 #include <string.h>
 
+#include "attrs.h"
+#include "instance.h"
 #include "program.h"
+#include "vm.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_life.h"
+#include "xen_method.h"
 #include "xen_module.h"
+#include "xen_nil.h"
 
 int main(int argc, char** argv) {
   if (!Xen_Init(argc, argv)) {
@@ -50,21 +55,39 @@ int main(int argc, char** argv) {
   if (argc > 1) {
     program.name = Xen_CString_Dup(argv[1]);
     const char* slash = strrchr(argv[1], '/');
+    Xen_Instance* module = NULL;
     if (slash) {
       size_t len = slash - argv[1];
       char* dir = Xen_Alloc(len + 1);
       memcpy(dir, argv[1], len);
       dir[len] = '\0';
-      Xen_Module_Load(argv[1], "<start>", dir,
-                      (*xen_globals->vm)->globals_instances, XEN_MODULE_GUEST);
+      module = Xen_Module_Load(argv[1], "<start>", dir,
+                               (*xen_globals->vm)->globals_instances,
+                               XEN_MODULE_GUEST);
     } else {
-      Xen_Module_Load(argv[1], "<start>", ".",
-                      (*xen_globals->vm)->globals_instances, XEN_MODULE_GUEST);
+      module = Xen_Module_Load(argv[1], "<start>", ".",
+                               (*xen_globals->vm)->globals_instances,
+                               XEN_MODULE_GUEST);
+    }
+    if (module) {
+      Xen_Instance* start_fun = Xen_Attr_Get_Str(module, "0__start");
+      if (!start_fun) {
+        goto end;
+      }
+      if (Xen_IMPL(start_fun) != xen_globals->implements->function) {
+        goto end;
+      }
+      Xen_Instance* start = Xen_Method_New(start_fun, module);
+      Xen_Method_Call(start, nil, nil);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+      }
     }
   } else {
     program.name = Xen_CString_Dup(argv[0]);
     shell_loop();
   }
+end:
   Xen_Finish();
   return program.exit_code;
 }

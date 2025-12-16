@@ -26,6 +26,10 @@ void* Xen_ZAlloc(Xen_size_t count, Xen_size_t item_size) {
 }
 
 void* Xen_Realloc(void* mem, Xen_size_t size) {
+  if (size == 0) {
+    free(mem);
+    return NULL;
+  }
   void* new_mem = realloc(mem, size);
   if (!new_mem) {
     puts("Fatal: No memory");

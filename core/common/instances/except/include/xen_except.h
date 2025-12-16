@@ -87,4 +87,8 @@ static inline int Xen_ListError(Xen_Instance* inst) {
       "ListError", "Implementation '%s' is not listable.", impl_name));
 }
 
+static inline int Xen_RangeEnd(void) {
+  return Xen_VM_Except_Throw(Xen_Except_New("RangeEnd", NULL));
+}
+
 #endif

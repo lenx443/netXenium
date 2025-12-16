@@ -84,8 +84,8 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
                          (Xen_Instance*)module)) {
       return NULL;
     }
-    Xen_Instance* ret =
-        Xen_VM_Call_Native_Function(mod_def.mod_init, nil, nil, nil);
+    Xen_Instance* ret = Xen_VM_Call_Native_Function(
+        mod_def.mod_init, (Xen_Instance*)module, nil, nil);
     if (ret == NULL) {
       Xen_Vector_Pop((*xen_globals->vm)->modules_stack);
       return NULL;
@@ -199,7 +199,11 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     dlerror();
     void* handle = dlopen(mod_name, RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
+#ifndef NDEBUG
+      printf("%s\n", dlerror());
+#else
       dlerror();
+#endif
       return NULL;
     }
     Xen_c_string_t format_string = "Xen_Module_%s_Start";

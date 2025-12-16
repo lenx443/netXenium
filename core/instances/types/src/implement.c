@@ -22,3 +22,7 @@ Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct impl_struct) {
   impl->__set_attr = impl_struct.__set_attr;
   return impl;
 }
+
+void Xen_Implement_SetProps(Xen_Implement* impl, Xen_Instance* props) {
+  impl->__props = props;
+}

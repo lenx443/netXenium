@@ -8,6 +8,7 @@
 #include "vm.h"
 #include "vm_def.h"
 #include "xen_cstrings.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_register.h"
@@ -53,11 +54,23 @@ static Xen_INSTANCE* self_get_handle(const char* name) {
   return ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self;
 }
 
+static int config_set_handle(const char* name, Xen_INSTANCE* inst) {
+  (void)name;
+  (void)inst;
+  return 1;
+}
+
+static Xen_INSTANCE* config_get_handle(const char* name) {
+  (void)name;
+  return (*xen_globals->vm)->config;
+}
+
 static struct Xen_RegisterStream streams[] = {
     {"__expose", true, __expose_set_handle, __expose_get_handle},
     {"__expose_", false, __expose_set_handle, __expose_get_handle},
     {"__args", true, __args_set_handle, __args_get_handle},
     {"self", true, self_set_handle, self_get_handle},
+    {"__config", true, config_set_handle, config_get_handle},
     {NULL, false, NULL, NULL},
 };
 
