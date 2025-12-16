@@ -147,7 +147,6 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     }
     CALLABLE_ptr code = compiler(mod_name, file_content, Xen_COMPILE_PROGRAM);
     if (Xen_VM_Except_Active()) {
-      Xen_VM_Except_Backtrace_Show();
       Xen_Vector_Pop((*xen_globals->vm)->modules_stack);
       return NULL;
     }
@@ -171,7 +170,6 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     }
     Xen_Instance* retval = vm_run_top();
     if (Xen_VM_Except_Active()) {
-      Xen_VM_Except_Backtrace_Show();
       Xen_Vector_Pop((*xen_globals->vm)->modules_stack);
       return NULL;
     }

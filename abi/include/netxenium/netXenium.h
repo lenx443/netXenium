@@ -12,6 +12,7 @@
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_register.h"
+#include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"

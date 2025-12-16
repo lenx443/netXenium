@@ -11,6 +11,10 @@
 #include "xen_string.h"
 #include "xen_string_instance.h"
 
+Xen_bool_t Xen_IsString(Xen_Instance* inst) {
+  return Xen_IMPL(inst) == xen_globals->implements->string;
+}
+
 Xen_INSTANCE* Xen_String_From_CString(const char* cstring) {
   if (!cstring) {
     return NULL;
