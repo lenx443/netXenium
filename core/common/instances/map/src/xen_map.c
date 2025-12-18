@@ -86,6 +86,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
     if (eval == Xen_True) {
       Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&current->value,
                          (Xen_GCHeader*)pair.value);
+      map->__size++;
       return 1;
     }
     current = current->next;
@@ -105,6 +106,7 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
 
   new_node->next = map->map_buckets[hash_index];
   map->map_buckets[hash_index] = new_node;
+  map->__size++;
   return 1;
 }
 

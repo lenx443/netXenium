@@ -5,4 +5,7 @@
 
 struct __Implement* Xen_AST_GetImplement(void);
 
+int Xen_AST_Init(void);
+void Xen_AST_Finish(void);
+
 #endif

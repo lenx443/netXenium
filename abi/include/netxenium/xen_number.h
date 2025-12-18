@@ -4,6 +4,8 @@
 #include "instance.h"
 #include "xen_typedefs.h"
 
+Xen_bool_t Xen_IsNumber(Xen_Instance*);
+
 Xen_int_t Xen_Number_Is_Zero(Xen_Instance*);
 Xen_int_t Xen_Number_Is_Odd(Xen_Instance*);
 Xen_int_t Xen_Number_Cmp(Xen_Instance*, Xen_Instance*);

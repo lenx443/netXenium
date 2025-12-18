@@ -69,15 +69,17 @@ int main(int argc, char** argv) {
                                (*xen_globals->vm)->globals_instances,
                                XEN_MODULE_GUEST);
     }
+    if (Xen_VM_Except_Active()) {
+      Xen_VM_Except_Backtrace_Show();
+    }
     if (module) {
-      Xen_Instance* start_fun = Xen_Attr_Get_Str(module, "0__start");
-      if (!start_fun) {
+      Xen_Instance* start = Xen_Attr_Get_Str(module, "0__start");
+      if (!start) {
         goto end;
       }
-      if (Xen_IMPL(start_fun) != xen_globals->implements->function) {
+      if (Xen_IMPL(start) != xen_globals->implements->method) {
         goto end;
       }
-      Xen_Instance* start = Xen_Method_New(start_fun, module);
       Xen_Method_Call(start, nil, nil);
       if (Xen_VM_Except_Active()) {
         Xen_VM_Except_Backtrace_Show();

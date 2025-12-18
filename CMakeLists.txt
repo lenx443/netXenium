@@ -253,6 +253,7 @@ set(SOURCES
   # modulos
   modules/core/src/m_core.c
   modules/core/src/m_interpreter.c
+  modules/core/src/m_config.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

@@ -41,6 +41,7 @@ static Instance_Life Instances[] = {
     {Xen_Nil_Init, Xen_Nil_Finish},
     {Xen_Method_Init, Xen_Method_Finish},
     {Xen_Except_Init, Xen_Except_Finish},
+    {Xen_AST_Init, Xen_AST_Finish},
 };
 
 void Xen_Instance_GetReady(void) {

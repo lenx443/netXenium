@@ -8,10 +8,12 @@
 #include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
+#include "xen_method.h"
 #include "xen_module_instance.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+#include "xen_typedefs.h"
 
 static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
@@ -49,17 +51,28 @@ static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
   if (Xen_SIZE(args) != 1) {
     return NULL;
   }
+  Xen_size_t roots = 0;
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)self;
   Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
   if (Xen_IMPL(key) != xen_globals->implements->string) {
     return NULL;
   }
-  Xen_IGC_Push(key);
+  Xen_IGC_XPUSH(key, roots);
   Xen_Instance* attr = Xen_Map_Get(mapped->__map, key);
   if (!attr) {
     return NULL;
   }
-  Xen_IGC_Pop();
+  Xen_IGC_XPUSH(attr, roots);
+  if (Xen_IMPL(attr) == xen_globals->implements->function) {
+    Xen_Instance* method = Xen_Method_New(attr, self);
+    if (!method) {
+      Xen_IGC_XPOP(roots);
+      return NULL;
+    }
+    Xen_IGC_XPOP(roots);
+    return method;
+  }
+  Xen_IGC_XPOP(roots);
   return attr;
 }
 

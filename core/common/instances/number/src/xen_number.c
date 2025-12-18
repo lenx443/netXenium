@@ -12,6 +12,10 @@
 #include "xen_number_instance.h"
 #include "xen_typedefs.h"
 
+Xen_bool_t Xen_IsNumber(Xen_Instance* inst) {
+  return Xen_IMPL(inst) == xen_globals->implements->number;
+}
+
 int Xen_Number_Is_Zero(Xen_Instance* n_inst) {
   if (!n_inst)
     return 1;
