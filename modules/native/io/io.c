@@ -72,6 +72,28 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
+static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  File* file = (File*)self;
+  if (!(file->caps & FILE_CAP_WRITE)) {
+    return NULL;
+  }
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* value_inst = Xen_Tuple_Get_Index(args, 0);
+  if (!Xen_IsString(value_inst)) {
+    return NULL;
+  }
+  Xen_c_string_t value = Xen_String_As_CString(value_inst);
+  if (write(file->f, (void*)value, Xen_SIZE(value_inst)) < 0) {
+    perror("Error");
+    return NULL;
+  }
+  return nil;
+}
+
 Xen_ImplementStruct File_Implement = {
     .__impl_name = "File",
     .__inst_size = sizeof(File),
@@ -91,6 +113,7 @@ static Xen_Instance* Init(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "read", file_read, nil);
+  Xen_VM_Store_Native_Function(props, "write", file_write, nil);
   Xen_Implement_SetProps(File_Implement_Pointer, props);
   return nil;
 }
