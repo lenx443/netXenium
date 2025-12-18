@@ -5,6 +5,7 @@
 
 #define FILE_CAP_READ (1 << 0)
 #define FILE_CAP_WRITE (1 << 1)
+#define FILE_CAP_SEEK (1 << 2)
 
 static Xen_Implement* File_Implement_Pointer = NULL;
 
@@ -33,6 +34,9 @@ static Xen_Instance* file_create(Xen_Instance* self, Xen_Instance* args,
   }
   file->open = 1;
   file->caps = FILE_CAP_READ | FILE_CAP_WRITE;
+  if (lseek(file->f, 0, SEEK_CUR) >= 0) {
+    file->caps |= FILE_CAP_SEEK;
+  }
   return nil;
 }
 
@@ -42,6 +46,7 @@ static Xen_Instance* file_destroy(Xen_Instance* self, Xen_Instance* args,
   File* file = (File*)self;
   if (file->open) {
     close(file->f);
+    file->open = 0;
   }
   return nil;
 }
@@ -63,7 +68,6 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
   Xen_size_t size = Xen_Number_As_Int64(size_inst);
   Xen_string_t buffer = Xen_Alloc(size + 1);
   if (read(file->f, buffer, size) < 0) {
-    perror("Error");
     return NULL;
   }
   buffer[size] = '\0';
@@ -88,8 +92,54 @@ static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_c_string_t value = Xen_String_As_CString(value_inst);
   if (write(file->f, (void*)value, Xen_SIZE(value_inst)) < 0) {
-    perror("Error");
     return NULL;
+  }
+  return nil;
+}
+
+static Xen_Instance* file_seek(Xen_Instance* self, Xen_Instance* args,
+                               Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  File* file = (File*)self;
+  if (!(file->caps & FILE_CAP_SEEK)) {
+    return NULL;
+  }
+  if (Xen_SIZE(args) < 1 || Xen_SIZE(args) > 2) {
+    return NULL;
+  }
+  Xen_Instance* offset_inst = Xen_Tuple_Get_Index(args, 0);
+  if (!Xen_IsNumber(offset_inst)) {
+    return NULL;
+  }
+  Xen_size_t offset = Xen_Number_As_Int64(offset_inst);
+  Xen_int_t whence = SEEK_CUR;
+  Xen_Instance* whence_inst = Xen_Tuple_Get_Index(args, 1);
+  if (whence_inst) {
+    int whence_val = Xen_Number_As_Int(whence_inst);
+    if (whence_val == 0) {
+      whence = SEEK_SET;
+    } else if (whence_val == 1) {
+      whence = SEEK_CUR;
+    } else if (whence_val == 2) {
+      whence = SEEK_END;
+    } else {
+      return NULL;
+    }
+  }
+  off_t pos = lseek(file->f, offset, whence);
+  if (pos < 0) {
+    return NULL;
+  }
+  return Xen_Number_From_Long(pos);
+}
+
+static Xen_Instance* file_close(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  File* file = (File*)self;
+  if (file->open) {
+    close(file->f);
+    file->open = 0;
   }
   return nil;
 }
@@ -114,6 +164,14 @@ static Xen_Instance* Init(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "read", file_read, nil);
   Xen_VM_Store_Native_Function(props, "write", file_write, nil);
+  Xen_VM_Store_Native_Function(props, "seek", file_seek, nil);
+  Xen_VM_Store_Native_Function(props, "close", file_close, nil);
+  Xen_Map_Push_Pair_Str(props,
+                        (Xen_Map_Pair_Str){"SEEK_SET", Xen_Number_From_Int(0)});
+  Xen_Map_Push_Pair_Str(props,
+                        (Xen_Map_Pair_Str){"SEEK_CUR", Xen_Number_From_Int(1)});
+  Xen_Map_Push_Pair_Str(props,
+                        (Xen_Map_Pair_Str){"SEEK_END", Xen_Number_From_Int(2)});
   Xen_Implement_SetProps(File_Implement_Pointer, props);
   return nil;
 }
