@@ -58,22 +58,48 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
   if (!(file->caps & FILE_CAP_READ)) {
     return NULL;
   }
-  if (Xen_SIZE(args) != 1) {
-    return NULL;
+  if (Xen_SIZE(args) == 1) {
+    Xen_Instance* size_inst = Xen_Tuple_Get_Index(args, 0);
+    if (!Xen_IsNumber(size_inst)) {
+      return NULL;
+    }
+    Xen_size_t size = Xen_Number_As_Int64(size_inst);
+    Xen_string_t buffer = Xen_Alloc(size + 1);
+    Xen_ssize_t r = read(file->f, buffer, size);
+    if (r < 0) {
+      Xen_Dealloc(buffer);
+      return NULL;
+    }
+    buffer[r] = '\0';
+    Xen_Instance* result = Xen_String_From_CString(buffer);
+    Xen_Dealloc(buffer);
+    return result;
+  } else if (Xen_SIZE(args) == 0) {
+    const Xen_size_t chunk = 4096;
+    Xen_size_t cap = chunk;
+    Xen_size_t len = 0;
+    Xen_string_t buffer = Xen_Alloc(cap + 1);
+    for (;;) {
+      if (len + chunk > cap) {
+        cap *= 2;
+        buffer = Xen_Realloc(buffer, cap + 1);
+      }
+      ssize_t r = read(file->f, buffer + len, chunk);
+      if (r < 0) {
+        Xen_Dealloc(buffer);
+        return NULL;
+      }
+      if (r == 0) {
+        break;
+      }
+      len += r;
+    }
+    buffer[len] = '\0';
+    Xen_Instance* result = Xen_String_From_CString(buffer);
+    Xen_Dealloc(buffer);
+    return result;
   }
-  Xen_Instance* size_inst = Xen_Tuple_Get_Index(args, 0);
-  if (!Xen_IsNumber(size_inst)) {
-    return NULL;
-  }
-  Xen_size_t size = Xen_Number_As_Int64(size_inst);
-  Xen_string_t buffer = Xen_Alloc(size + 1);
-  if (read(file->f, buffer, size) < 0) {
-    return NULL;
-  }
-  buffer[size] = '\0';
-  Xen_Instance* result = Xen_String_From_CString(buffer);
-  Xen_Dealloc(buffer);
-  return result;
+  return NULL;
 }
 
 static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,

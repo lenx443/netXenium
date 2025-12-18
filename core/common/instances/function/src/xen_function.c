@@ -8,6 +8,8 @@
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_run.h"
+#include "xen_alloc.h"
+#include "xen_except.h"
 #include "xen_except_instance.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
@@ -15,9 +17,108 @@
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+
+static Xen_bool_t check_impl(Xen_Instance* v, Xen_Function_ArgImpl impl) {
+  (void)v;
+  switch (impl) {
+  case XEN_FUNCTION_ARG_IMPL_ANY:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+static Xen_ssize_t find_spec(Xen_Function_ArgSpec* spec, Xen_c_string_t name) {
+  for (int i = 0; spec[i].kind != XEN_FUNCTION_ARG_KIND_END; i++) {
+    if (strcmp(spec[i].name, name) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
+                                                Xen_Instance* kwargs,
+                                                Xen_Function_ArgSpec* spec) {
+  Xen_size_t spec_count = 0;
+  while (spec[spec_count].kind != XEN_FUNCTION_ARG_KIND_END) {
+    spec_count++;
+  }
+  Xen_Function_ArgBinding* binding = Xen_Alloc(sizeof(Xen_Function_ArgBinding));
+  binding->count = spec_count;
+  binding->args = Xen_Alloc(sizeof(Xen_Function_ArgBound) * spec_count);
+
+  for (Xen_size_t i = 0; i < spec_count; i++) {
+    binding->args[i].value = spec[i].default_value;
+    binding->args[i].provided = 0;
+  }
+
+  Xen_size_t pos_index = 0;
+  Xen_size_t args_count = Xen_SIZE(args);
+
+  for (Xen_size_t i = 0; i < args_count; i++) {
+    while (pos_index < args_count &&
+           spec[pos_index].kind == XEN_FUNCTION_ARG_KIND_POSITIONAL) {
+      pos_index++;
+    }
+    if (pos_index >= spec_count) {
+      Xen_VM_Except_Throw(
+          Xen_Except_New("ArgumentError", "Too many positional arguments"));
+      goto error;
+    }
+    Xen_Instance* value = Xen_Tuple_Get_Index(args, i);
+    if (!check_impl(value, spec[pos_index].impl)) {
+      Xen_VM_Except_Throw(
+          Xen_Except_New("TypeError", "Invalid type for positional argument"));
+      goto error;
+    }
+    binding->args[pos_index].value = value;
+    binding->args[pos_index].provided = true;
+    pos_index++;
+  }
+  if (kwargs && Xen_SIZE(kwargs) > 0) {
+    Xen_Instance* it = Xen_Attr_Iter(kwargs);
+    Xen_Instance* current = NULL;
+    while ((current = Xen_Attr_Next(it)) != NULL) {
+      Xen_c_string_t key = Xen_String_As_CString(current);
+      Xen_Instance* value = Xen_Map_Get(kwargs, current);
+      Xen_ssize_t idx = find_spec(spec, key);
+      if (idx < 0) {
+        Xen_VM_Except_Throw(
+            Xen_Except_New("ArgumentError", "Unknown keyword argument"));
+        goto error;
+      }
+      if (binding->args[idx].provided) {
+        Xen_VM_Except_Throw(Xen_Except_New(
+            "ArgumentError", "Argument specified multiple times"));
+        goto error;
+      }
+      if (!check_impl(value, spec[idx].impl)) {
+        Xen_VM_Except_Throw(
+            Xen_Except_New("TypeError", "Invalid type for keyword argument"));
+        goto error;
+      }
+      binding->args[idx].value = value;
+      binding->args[idx].provided = 1;
+    }
+  }
+  for (Xen_size_t i = 0; i < spec_count; i++) {
+    if (spec[i].required && !binding->args[i].provided) {
+      Xen_VM_Except_Throw(
+          Xen_Except_New("ArgumentError", "Missing required argument"));
+      goto error;
+    }
+  }
+  return binding;
+error:
+  Xen_Dealloc(binding->args);
+  Xen_Dealloc(binding);
+  return NULL;
+}
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
                                        Xen_Instance* closure) {
