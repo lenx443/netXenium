@@ -62,7 +62,7 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
 
   for (Xen_size_t i = 0; i < args_count; i++) {
     while (pos_index < args_count &&
-           spec[pos_index].kind == XEN_FUNCTION_ARG_KIND_POSITIONAL) {
+           spec[pos_index].kind != XEN_FUNCTION_ARG_KIND_POSITIONAL) {
       pos_index++;
     }
     if (pos_index >= spec_count) {
@@ -105,6 +105,12 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
       binding->args[idx].value = value;
       binding->args[idx].provided = 1;
     }
+    if (!Xen_VM_Except_Active() ||
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+               "RangeEnd") != 0) {
+      return NULL;
+    }
+    (*xen_globals->vm)->except.active = 0;
   }
   for (Xen_size_t i = 0; i < spec_count; i++) {
     if (spec[i].required && !binding->args[i].provided) {
@@ -118,6 +124,14 @@ error:
   Xen_Dealloc(binding->args);
   Xen_Dealloc(binding);
   return NULL;
+}
+
+void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding* binding) {
+  if (!binding) {
+    return;
+  }
+  Xen_Dealloc(binding->args);
+  Xen_Dealloc(binding);
 }
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,

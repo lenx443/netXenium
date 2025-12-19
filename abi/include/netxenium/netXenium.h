@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_map.h"
 #include "xen_nil.h"

@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "netxenium/netXenium.h"
+#include "netxenium/xen_function.h"
 
 #define FILE_CAP_READ (1 << 0)
 #define FILE_CAP_WRITE (1 << 1)
@@ -19,13 +20,22 @@ typedef struct {
 static Xen_Instance* file_create(Xen_Instance* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (Xen_SIZE(args) != 1) {
+  static Xen_Function_ArgSpec args_def[] = {
+      {"path", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_ANY, 1,
+       NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* args_binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!args_binding) {
     return NULL;
   }
-  Xen_Instance* file_path_inst = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* file_path_inst = args_binding->args[0].value;
   if (!Xen_IsString(file_path_inst)) {
+    Xen_Function_ArgBinding_Free(args_binding);
     return NULL;
   }
+  Xen_Function_ArgBinding_Free(args_binding);
   Xen_c_string_t file_path = Xen_String_As_CString(file_path_inst);
   File* file = (File*)self;
   file->f = open(file_path, O_RDWR);
