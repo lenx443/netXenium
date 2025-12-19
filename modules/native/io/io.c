@@ -42,15 +42,22 @@ static Xen_Instance* file_create(Xen_Instance* self, Xen_Instance* args,
   if (!args_binding) {
     return NULL;
   }
-  Xen_Instance* file_path_inst = args_binding->args[0].value;
-  Xen_Instance* cap_read = args_binding->args[1].value;
-  Xen_Instance* cap_write = args_binding->args[2].value;
-  Xen_Instance* cap_create = args_binding->args[3].value;
-  Xen_Instance* cap_append = args_binding->args[4].value;
-  Xen_Instance* cap_trunc = args_binding->args[5].value;
+  Xen_Instance* file_path_inst =
+      Xen_Function_ArgBinding_Search(args_binding, "path")->value;
+  Xen_Instance* cap_read =
+      Xen_Function_ArgBinding_Search(args_binding, "read")->value;
+  Xen_Instance* cap_write =
+      Xen_Function_ArgBinding_Search(args_binding, "write")->value;
+  Xen_Instance* cap_create =
+      Xen_Function_ArgBinding_Search(args_binding, "create")->value;
+  Xen_Instance* cap_append =
+      Xen_Function_ArgBinding_Search(args_binding, "append")->value;
+  Xen_Instance* cap_trunc =
+      Xen_Function_ArgBinding_Search(args_binding, "trunc")->value;
   Xen_uint32_t mode = 0666;
-  if (args_binding->args[6].provided) {
-    mode = Xen_Number_As_Int32(args_binding->args[6].value);
+  if (Xen_Function_ArgBinding_Search(args_binding, "mode")->provided) {
+    mode = Xen_Number_As_Int32(
+        Xen_Function_ArgBinding_Search(args_binding, "mode")->value);
   }
   Xen_Function_ArgBinding_Free(args_binding);
   File* file = (File*)self;
@@ -119,8 +126,9 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
   if (!args_binding) {
     return NULL;
   }
-  if (args_binding->args[0].provided) {
-    Xen_Instance* size_inst = args_binding->args[0].value;
+  if (Xen_Function_ArgBinding_Search(args_binding, "size")->provided) {
+    Xen_Instance* size_inst =
+        Xen_Function_ArgBinding_Search(args_binding, "size")->value;
     Xen_Function_ArgBinding_Free(args_binding);
     Xen_size_t size = Xen_Number_As_Int64(size_inst);
     Xen_string_t buffer = Xen_Alloc(size + 1);
@@ -179,7 +187,8 @@ static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,
   if (!args_binding) {
     return NULL;
   }
-  Xen_Instance* value_inst = args_binding->args[0].value;
+  Xen_Instance* value_inst =
+      Xen_Function_ArgBinding_Search(args_binding, "data")->value;
   Xen_Function_ArgBinding_Free(args_binding);
   Xen_c_string_t value = Xen_String_As_CString(value_inst);
   Xen_ssize_t w = write(file->f, (void*)value, Xen_SIZE(value_inst));
@@ -208,11 +217,13 @@ static Xen_Instance* file_seek(Xen_Instance* self, Xen_Instance* args,
   if (!args_binding) {
     return NULL;
   }
-  Xen_Instance* offset_inst = args_binding->args[0].value;
+  Xen_Instance* offset_inst =
+      Xen_Function_ArgBinding_Search(args_binding, "offset")->value;
   Xen_size_t offset = Xen_Number_As_Int64(offset_inst);
   Xen_int_t whence = SEEK_CUR;
-  if (args_binding->args[1].provided) {
-    Xen_Instance* whence_inst = args_binding->args[1].value;
+  if (Xen_Function_ArgBinding_Search(args_binding, "whence")->provided) {
+    Xen_Instance* whence_inst =
+        Xen_Function_ArgBinding_Search(args_binding, "whence")->value;
     if (whence_inst) {
       int whence_val = Xen_Number_As_Int(whence_inst);
       if (whence_val == 0) {

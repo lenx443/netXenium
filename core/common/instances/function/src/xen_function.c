@@ -59,6 +59,7 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
   Xen_Function_ArgBinding* binding = Xen_Alloc(sizeof(Xen_Function_ArgBinding));
   binding->count = spec_count;
   binding->args = Xen_Alloc(sizeof(Xen_Function_ArgBound) * spec_count);
+  binding->spec = spec;
 
   for (Xen_size_t i = 0; i < spec_count; i++) {
     binding->args[i].value = spec[i].default_value;
@@ -140,6 +141,17 @@ void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding* binding) {
   }
   Xen_Dealloc(binding->args);
   Xen_Dealloc(binding);
+}
+
+Xen_Function_ArgBound*
+Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding* binding,
+                               Xen_c_string_t name) {
+  for (Xen_size_t i = 0; i < binding->count; i++) {
+    if (strcmp(binding->spec[i].name, name) == 0) {
+      return &binding->args[i];
+    }
+  }
+  return NULL;
 }
 
 Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance* args, Xen_Instance* kwargs) {

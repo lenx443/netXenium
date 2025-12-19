@@ -30,14 +30,13 @@ typedef struct {
   Xen_bool_t provided;
 } Xen_Function_ArgBound;
 
-typedef struct {
-  Xen_Function_ArgBound* args;
-  Xen_size_t count;
-} Xen_Function_ArgBinding;
+typedef struct Xen_Function_ArgBinding Xen_Function_ArgBinding;
 
 Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance*, Xen_Instance*,
                                                 Xen_Function_ArgSpec*);
 void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding*);
+Xen_Function_ArgBound* Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding*,
+                                                      Xen_c_string_t);
 Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance*, Xen_Instance*);
 
 #endif
