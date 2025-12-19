@@ -9,4 +9,6 @@ Xen_Instance* Xen_False_GetInstance(void);
 #define Xen_True (xen_globals->true_instance)
 #define Xen_False (xen_globals->false_instance)
 
+Xen_bool_t Xen_IsBoolean(Xen_Instance*);
+
 #endif

@@ -13,6 +13,9 @@ typedef enum {
 
 typedef enum {
   XEN_FUNCTION_ARG_IMPL_ANY,
+  XEN_FUNCTION_ARG_IMPL_BOOLEAN,
+  XEN_FUNCTION_ARG_IMPL_STRING,
+  XEN_FUNCTION_ARG_IMPL_NUMBER,
 } Xen_Function_ArgImpl;
 
 typedef struct {
@@ -36,6 +39,7 @@ typedef struct {
 Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance*, Xen_Instance*,
                                                 Xen_Function_ArgSpec*);
 void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding*);
+Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance*, Xen_Instance*);
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func, Xen_Instance*);
 Xen_INSTANCE* Xen_Function_From_Callable(CALLABLE_ptr, Xen_Instance*,

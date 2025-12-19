@@ -4,7 +4,9 @@
 
 #include "implement.h"
 #include "netxenium/netXenium.h"
+#include "netxenium/xen_boolean.h"
 #include "xen_alloc.h"
+#include "xen_life.h"
 #include "xen_module_types.h"
 #include "xen_typedefs.h"
 
@@ -27,4 +29,12 @@ void Xen_Debug_Print(Xen_c_string_t str, ...) {
   vprintf(str, args);
   va_end(args);
 #endif
+}
+
+Xen_Instance* Xen_ABI_Get_True(void) {
+  return xen_globals->true_instance;
+}
+
+Xen_Instance* Xen_ABI_Get_False(void) {
+  return xen_globals->false_instance;
 }

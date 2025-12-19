@@ -19,3 +19,7 @@ Xen_Instance* Xen_False_GetInstance(void) {
   Xen_False_Instance.value = 0;
   return (Xen_Instance*)&Xen_False_Instance;
 }
+
+Xen_bool_t Xen_IsBoolean(Xen_Instance* v) {
+  return Xen_IMPL(v) == xen_globals->implements->boolean;
+}

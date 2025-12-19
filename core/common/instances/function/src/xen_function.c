@@ -9,6 +9,7 @@
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_alloc.h"
+#include "xen_boolean.h"
 #include "xen_except.h"
 #include "xen_except_instance.h"
 #include "xen_function_instance.h"
@@ -17,6 +18,7 @@
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
@@ -27,6 +29,12 @@ static Xen_bool_t check_impl(Xen_Instance* v, Xen_Function_ArgImpl impl) {
   switch (impl) {
   case XEN_FUNCTION_ARG_IMPL_ANY:
     return 1;
+  case XEN_FUNCTION_ARG_IMPL_BOOLEAN:
+    return Xen_IsBoolean(v);
+  case XEN_FUNCTION_ARG_IMPL_STRING:
+    return Xen_IsString(v);
+  case XEN_FUNCTION_ARG_IMPL_NUMBER:
+    return Xen_IsNumber(v);
   default:
     return 0;
   }
@@ -132,6 +140,11 @@ void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding* binding) {
   }
   Xen_Dealloc(binding->args);
   Xen_Dealloc(binding);
+}
+
+Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance* args, Xen_Instance* kwargs) {
+  return (Xen_Nil_Eval(args) || Xen_SIZE(args) > 0) &&
+         (Xen_Nil_Eval(kwargs) || Xen_SIZE(kwargs) > 0);
 }
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
