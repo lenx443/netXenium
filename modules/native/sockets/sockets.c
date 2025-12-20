@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <linux/in.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -12,6 +13,9 @@
 #define SOCKET_CAP_READ (1 << 0)
 #define SOCKET_CAP_WRITE (1 << 1)
 #define SOCKET_CAP_BIND (1 << 2)
+#define SOCKET_CAP_LISTEN (1 << 3)
+#define SOCKET_CAP_ACCEPT (1 << 4)
+#define SOCKET_CAP_CONNECT (1 << 5)
 
 static Xen_Implement* Socket_Implememnt_Pointer = NULL;
 
@@ -93,6 +97,10 @@ static Xen_Instance* socket_destroy(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
   Xen_Function_ArgSpec args_def[] = {
       {"ip", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
@@ -111,7 +119,6 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
   Xen_uint16_t port = Xen_Number_As_UInt(
       Xen_Function_ArgBinding_Search(binding, "port")->value);
   Xen_Function_ArgBinding_Free(binding);
-  Socket* sock = (Socket*)self;
   memset(&sock->local, 0, sizeof(sock->local));
   sock->local.sin_family = sock->domain;
   sock->local.sin_port = htons(port);
@@ -123,6 +130,196 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
   }
   sock->caps |= SOCKET_CAP_BIND;
   return nil;
+}
+
+static Xen_Instance* socket_listen(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (sock->type != SOCK_STREAM) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_BIND)) {
+    return NULL;
+  }
+  if (sock->caps & SOCKET_CAP_CONNECT) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"backlog", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_NUMBER, XEN_FUNCTION_ARG_OPTIONAL, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int backlog = 128;
+  Xen_Function_ArgBound* backlog_arg =
+      Xen_Function_ArgBinding_Search(binding, "backlog");
+  if (backlog_arg->provided) {
+    backlog = Xen_Number_As_Int(backlog_arg->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  if (listen(sock->f, backlog) < 0) {
+    return NULL;
+  }
+  sock->caps |= SOCKET_CAP_LISTEN | SOCKET_CAP_ACCEPT;
+  sock->caps &= ~(SOCKET_CAP_READ | SOCKET_CAP_WRITE);
+  return nil;
+}
+
+static Xen_Instance* socket_accept(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_ACCEPT)) {
+    return NULL;
+  }
+  struct sockaddr_in remote;
+  socklen_t len = sizeof(remote);
+  int client_fd = accept(sock->f, (struct sockaddr*)&remote, &len);
+  if (client_fd < 0) {
+    return NULL;
+  }
+  Socket* client =
+      (Socket*)__instance_new(Socket_Implememnt_Pointer, nil, nil, 0);
+  client->f = client_fd;
+  client->open = 1;
+  client->domain = sock->domain;
+  client->type = sock->type;
+  client->protocol = sock->protocol;
+  client->remote = remote;
+  client->local = sock->local;
+  client->caps = SOCKET_CAP_READ | SOCKET_CAP_WRITE;
+  return (Xen_Instance*)client;
+}
+
+static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (sock->type != SOCK_STREAM) {
+    return NULL;
+  }
+  if (sock->caps & (SOCKET_CAP_LISTEN | SOCKET_CAP_ACCEPT)) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"ip", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"port", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_c_string_t ip = Xen_String_As_CString(
+      Xen_Function_ArgBinding_Search(binding, "ip")->value);
+  Xen_uint16_t port = Xen_Number_As_UInt(
+      Xen_Function_ArgBinding_Search(binding, "port")->value);
+  Xen_Function_ArgBinding_Free(binding);
+  memset(&sock->remote, 0, sizeof(sock->remote));
+  sock->remote.sin_family = sock->domain;
+  sock->remote.sin_port = htons(port);
+  if (inet_pton(sock->domain, ip, &sock->remote.sin_addr) != 1) {
+    return NULL;
+  }
+  if (connect(sock->f, (struct sockaddr*)&sock->remote, sizeof(sock->remote)) <
+      0) {
+    return NULL;
+  }
+  sock->caps |= SOCKET_CAP_READ | SOCKET_CAP_WRITE | SOCKET_CAP_CONNECT;
+  return nil;
+}
+
+static Xen_Instance* socket_send(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_WRITE)) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* data_inst =
+      Xen_Function_ArgBinding_Search(binding, "data")->value;
+  Xen_c_string_t data = Xen_String_As_CString(data_inst);
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_ssize_t s = send(sock->f, data, Xen_SIZE(data_inst), 0);
+  if (s < 0) {
+    return NULL;
+  }
+  return Xen_Number_From_Long(s);
+}
+
+static Xen_Instance* socket_recv(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_READ)) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"size", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int size = 4096;
+  Xen_Function_ArgBound* size_arg =
+      Xen_Function_ArgBinding_Search(binding, "size");
+  if (size_arg->provided) {
+    size = Xen_Number_As_Int(size_arg->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_string_t buffer = Xen_Alloc(size + 1);
+  Xen_ssize_t r = recv(sock->f, buffer, size, 0);
+  if (r < 0) {
+    Xen_Dealloc(buffer);
+    return NULL;
+  }
+  if (r == 0) {
+    Xen_Dealloc(buffer);
+    return Xen_String_From_CString("");
+  }
+  buffer[r] = '\0';
+  Xen_Instance* data = Xen_String_From_CString(buffer);
+  Xen_Dealloc(buffer);
+  return data;
 }
 
 static Xen_Instance* socket_close(Xen_Instance* self, Xen_Instance* args,
@@ -155,6 +352,11 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "bind", socket_bind, nil);
+  Xen_VM_Store_Native_Function(props, "listen", socket_listen, nil);
+  Xen_VM_Store_Native_Function(props, "accept", socket_accept, nil);
+  Xen_VM_Store_Native_Function(props, "connect", socket_connect, nil);
+  Xen_VM_Store_Native_Function(props, "send", socket_send, nil);
+  Xen_VM_Store_Native_Function(props, "recv", socket_recv, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
   Xen_Map_Push_Pair_Str(
       props,
