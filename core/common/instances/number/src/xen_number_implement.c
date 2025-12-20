@@ -11,6 +11,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
+#include "xen_function.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -374,6 +375,24 @@ static Xen_Instance* number_prop_not(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
+static Xen_Instance* number_bytes(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* in = Xen_Number_As_Bytes(self, &len);
+  Xen_string_t out = Xen_Alloc(len + 1);
+  for (Xen_size_t i = 0; i < len; i++) {
+    out[i] = in[i];
+  }
+  out[len] = '\0';
+  Xen_Dealloc(in);
+  Xen_Instance* result = Xen_String_From_CString(out);
+  Xen_Dealloc(out);
+  return result;
+}
+
 static struct __Implement __Number_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
@@ -421,7 +440,8 @@ int Xen_Number_Init(void) {
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__negative", number_prop_negative,
                                     nil) ||
-      !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil)) {
+      !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil) ||
+      !Xen_VM_Store_Native_Function(props, "bytes", number_bytes, nil)) {
     return 0;
   }
   __Number_Implement.__props = props;

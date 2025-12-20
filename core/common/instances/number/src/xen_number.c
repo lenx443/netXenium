@@ -817,6 +817,44 @@ unsigned long long Xen_Number_As_ULongLong(Xen_INSTANCE* inst) {
   return (unsigned long long)value;
 }
 
+Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance* inst, Xen_size_t* out_len) {
+  Xen_Number* num = (Xen_Number*)Xen_Number_Copy(inst);
+  while (num->size > 1 && num->digits[num->size - 1] == 0) {
+    num->size--;
+  }
+  if (num->size == 0) {
+    *out_len = 1;
+    Xen_uint8_t* out = Xen_Alloc(1);
+    out[0] = 0;
+    return out;
+  }
+  uint32_t msw = num->digits[num->size - 1];
+  int msw_bytes = 0;
+  if (msw >> 24) {
+    msw_bytes = 4;
+  } else if (msw >> 16) {
+    msw_bytes = 3;
+  } else if (msw >> 8) {
+    msw_bytes = 2;
+  } else {
+    msw_bytes = 1;
+  }
+  *out_len = (num->size - 1) * 4 + msw_bytes;
+  Xen_uint8_t* out = Xen_Alloc(*out_len);
+  Xen_size_t k = 0;
+  for (Xen_ssize_t i = (Xen_ssize_t)num->size - 1; i >= 0; i--) {
+    Xen_uint32_t digit = num->digits[i];
+    for (int b = 3; b >= 0; b--) {
+      uint8_t byte = (digit >> (b * 8)) & 0xFF;
+      if (k == 0 && byte == 0 && i == (Xen_ssize_t)num->size - 1) {
+        continue;
+      }
+      out[k++] = byte;
+    }
+  }
+  return out;
+}
+
 Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if (!a_inst || !b_inst)
     return NULL;
