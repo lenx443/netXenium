@@ -289,6 +289,7 @@ target_compile_options(ntxenium PRIVATE -DXEN_CORE)
 install(TARGETS ntxenium RUNTIME DESTINATION bin)
 
 add_subdirectory(modules/native/io)
+add_subdirectory(modules/native/sockets)
 
 enable_testing()
 

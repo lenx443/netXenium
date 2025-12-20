@@ -4,6 +4,9 @@
 #include "instance.h"
 #include "xen_typedefs.h"
 
+#define XEN_FUNCTION_ARG_OPTIONAL 0
+#define XEN_FUNCTION_ARG_REQUIRED 1
+
 typedef enum {
   XEN_FUNCTION_ARG_KIND_END,
   XEN_FUNCTION_ARG_KIND_POSITIONAL,

@@ -155,8 +155,8 @@ Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding* binding,
 }
 
 Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance* args, Xen_Instance* kwargs) {
-  return (Xen_Nil_Eval(args) || Xen_SIZE(args) > 0) &&
-         (Xen_Nil_Eval(kwargs) || Xen_SIZE(kwargs) > 0);
+  return (Xen_Nil_Eval(args) || Xen_SIZE(args) == 0) &&
+         (Xen_Nil_Eval(kwargs) || Xen_SIZE(kwargs) == 0);
 }
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
