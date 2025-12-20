@@ -1,0 +1,28 @@
+load("config")
+
+sockets = load("sockets")
+http_packet = load("http_packet")
+
+$0__start => {
+  try => {
+    println("• Start Server")
+    sock = sockets\Socket()
+    sock\bind("0.0.0.0", 8080)
+    sock\listen()
+    while true => {
+      client = sock\accept()
+      request = client\recv()
+      println("• Recived Request")
+      respound = http_packet\HTTPServer(
+        headers={},
+        content="Hola Mundo!"
+      )
+      client\send(respound\pack())
+      println("• Send Respound")
+      client\close()
+    }
+    sock\close()
+  } catch "Interrupt" :_ => {
+    println("• Stop Server")
+  }
+}
