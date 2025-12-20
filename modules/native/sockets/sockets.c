@@ -322,6 +322,41 @@ static Xen_Instance* socket_recv(Xen_Instance* self, Xen_Instance* args,
   return data;
 }
 
+static Xen_Instance* socket_shutdown(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"how", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int how =
+      Xen_Number_As_Int(Xen_Function_ArgBinding_Search(binding, "how")->value);
+  Xen_Function_ArgBinding_Free(binding);
+  if (how < 0 || how > 2) {
+    return NULL;
+  }
+  if (shutdown(sock->f, how) < 0) {
+    return NULL;
+  }
+  if (how == SHUT_RD) {
+    sock->caps &= ~SOCKET_CAP_READ;
+  } else if (how == SHUT_WR) {
+    sock->caps &= ~SOCKET_CAP_WRITE;
+  } else if (how == SHUT_RDWR) {
+    sock->caps &= ~(SOCKET_CAP_READ | SOCKET_CAP_WRITE);
+  }
+  return nil;
+}
+
 static Xen_Instance* socket_close(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   if (!Xen_Function_ArgEmpy(args, kwargs)) {
@@ -357,6 +392,7 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "connect", socket_connect, nil);
   Xen_VM_Store_Native_Function(props, "send", socket_send, nil);
   Xen_VM_Store_Native_Function(props, "recv", socket_recv, nil);
+  Xen_VM_Store_Native_Function(props, "shutdown", socket_shutdown, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
   Xen_Map_Push_Pair_Str(
       props,
@@ -364,6 +400,12 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SOCK_STREAM",
                                 Xen_Number_From_Int(SOCKET_SOCK_STREAM)});
+  Xen_Map_Push_Pair_Str(
+      props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
+  Xen_Map_Push_Pair_Str(
+      props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});
+  Xen_Map_Push_Pair_Str(
+      props, (Xen_Map_Pair_Str){"SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR)});
   Xen_Implement_SetProps(Socket_Implememnt_Pointer, props);
   return nil;
 }
