@@ -11,6 +11,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_boolean_instance.h"
+#include "xen_bytes.h"
 #include "xen_function.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -381,15 +382,8 @@ static Xen_Instance* number_bytes(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_size_t len;
-  uint8_t* in = Xen_Number_As_Bytes(self, &len);
-  Xen_string_t out = Xen_Alloc(len + 1);
-  for (Xen_size_t i = 0; i < len; i++) {
-    out[i] = in[i];
-  }
-  out[len] = '\0';
-  Xen_Dealloc(in);
-  Xen_Instance* result = Xen_String_From_CString(out);
-  Xen_Dealloc(out);
+  uint8_t* arr = Xen_Number_As_Bytes(self, &len);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
   return result;
 }
 

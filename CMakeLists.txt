@@ -174,6 +174,7 @@ set(SOURCES
 
   # implementacion del tipo `Bytes`
   core/common/instances/bytes/src/xen_bytes_implement.c
+  core/common/instances/bytes/src/xen_bytes.c
 
   # Implementacion del tipo `AST`
   core/interpreter/instances/ast/src/xen_ast.c
