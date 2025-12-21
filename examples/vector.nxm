@@ -1,9 +1,9 @@
 implement Vector : vector => {
   $__create => (vec = vector()) {
-    method\create($0base)(vec)
+    method\create($$__base)(vec)
   }
   
-  $length => size($0base)
+  $length => size($$__base)
 
   $__string => {
     result = "("

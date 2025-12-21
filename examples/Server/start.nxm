@@ -3,7 +3,7 @@ load("config")
 sockets = load("sockets")
 http_packet = load("http_packet")
 
-$0__start => {
+$$__start => {
   try => {
     println("• Start Server")
     sock = sockets\Socket()
@@ -15,7 +15,8 @@ $0__start => {
       println("• Recived Request")
       respound = http_packet\HTTPServer(
         headers={},
-        content="Hola Mundo!"
+        content="<h1>Hola Mundo!</h1>",
+        content_type="text/html; charset=UTF-8"
       )
       client\send(respound\pack())
       println("• Send Respound")

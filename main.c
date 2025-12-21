@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
       Xen_VM_Except_Backtrace_Show();
     }
     if (module) {
-      Xen_Instance* start = Xen_Attr_Get_Str(module, "0__start");
+      Xen_Instance* start = Xen_Attr_Get_Str(module, "$__start");
       if (!start) {
         goto end;
       }

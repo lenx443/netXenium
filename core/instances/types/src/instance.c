@@ -49,7 +49,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
         return NULL;
       }
       if (!Xen_Map_Push_Pair_Str(mapped->__map,
-                                 (Xen_Map_Pair_Str){"0base", base})) {
+                                 (Xen_Map_Pair_Str){"$__base", base})) {
         Xen_IGC_Pop();
         return NULL;
       }

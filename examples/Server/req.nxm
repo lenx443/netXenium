@@ -1,0 +1,17 @@
+load("config")
+
+sockets = load("sockets")
+http_packet = load("http_packet")
+
+$$__start => {
+  request = http_packet\HTTPRequest(
+    host = "localhost:8080",
+    headers = {}
+  )
+  sock = sockets\Socket()
+  sock\connect("127.0.0.1", 8080)
+  sock\send(request\pack())
+  result = sock\recv()
+  sock\close()
+  println(result)
+}

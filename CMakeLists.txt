@@ -63,6 +63,8 @@ set(NETXENIUM_DEAFULT_INCLUDES
   core/common/instances/method/types/header/
   core/common/instances/except/include/
   core/common/instances/except/types/header/
+  core/common/instances/bytes/include/
+  core/common/instances/bytes/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -169,6 +171,9 @@ set(SOURCES
   # implementacion del tipo `Except`
   core/common/instances/except/src/xen_except_implement.c
   core/common/instances/except/src/xen_except.c
+
+  # implementacion del tipo `Bytes`
+  core/common/instances/bytes/src/xen_bytes_implement.c
 
   # Implementacion del tipo `AST`
   core/interpreter/instances/ast/src/xen_ast.c

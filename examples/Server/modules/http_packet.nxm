@@ -94,3 +94,24 @@ implement $HTTPServer => {
     [511] -> "Network Authentication Required"
   }
 }
+
+implement $HTTPRequest => {
+  $__create => (host, headers, method="GET", path="/", content=??) {
+    $host = host
+    $headers = headers
+    $method = method
+    $path = path
+    $content = content
+  }
+
+  $pack => {
+    buffer = $method + " " + $path + " HTTP/1.1\r\n"
+    buffer = buffer + "Host: " + $host
+    for header in $headers => {
+      buffer = buffer + header + ": " + $headers[header] + "\r\n"
+    }
+    buffer = buffer + "\r\n"
+    if ?? != $content => buffer = buffer + $content
+    return buffer
+  }
+}

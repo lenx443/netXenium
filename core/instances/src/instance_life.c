@@ -3,6 +3,7 @@
 #include "run_frame.h"
 #include "xen_ast_implement.h"
 #include "xen_boolean_implement.h"
+#include "xen_bytes_implement.h"
 #include "xen_except_implement.h"
 #include "xen_function_implement.h"
 #include "xen_igc.h"
@@ -41,6 +42,7 @@ static Instance_Life Instances[] = {
     {Xen_Nil_Init, Xen_Nil_Finish},
     {Xen_Method_Init, Xen_Method_Finish},
     {Xen_Except_Init, Xen_Except_Finish},
+    {Xen_Bytes_Init, Xen_Bytes_Finish},
     {Xen_AST_Init, Xen_AST_Finish},
 };
 
@@ -58,6 +60,7 @@ void Xen_Instance_GetReady(void) {
   implements.method = Xen_Method_GetImplement();
   implements.function = Xen_Function_GetImplement();
   implements.except = Xen_Except_GetImplement();
+  implements.bytes = Xen_Bytes_GetImplement();
   implements.ast = Xen_AST_GetImplement();
   implements.run_frame = Xen_Run_Frame_GetImplement();
   implements.module = Xen_Module_GetImplement();

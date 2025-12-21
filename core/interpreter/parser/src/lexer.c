@@ -106,7 +106,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     advance(lexer);
     size_t start = lexer->pos;
     while (isalnum(sf->sf_content[lexer->pos]) ||
-           sf->sf_content[lexer->pos] == '_')
+           sf->sf_content[lexer->pos] == '_' ||
+           sf->sf_content[lexer->pos] == '$')
       advance(lexer);
     size_t len = lexer->pos - start;
     token = Token(lexer, TKN_PROPERTY, sf->sf_content + start, len);
