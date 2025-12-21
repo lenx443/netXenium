@@ -822,7 +822,7 @@ Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance* inst, Xen_size_t* out_len) {
   while (num->size > 1 && num->digits[num->size - 1] == 0) {
     num->size--;
   }
-  if (num->size == 0) {
+  if (num->size == 0 || (num->size == 1 && num->digits[0] == 0)) {
     *out_len = 1;
     Xen_uint8_t* out = Xen_Alloc(1);
     out[0] = 0;

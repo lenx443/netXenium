@@ -12,7 +12,9 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_bytes.h"
 #include "xen_cstrings.h"
+#include "xen_function.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -265,6 +267,18 @@ static Xen_Instance* string_char_code(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
+static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_String* string = (Xen_String*)self;
+  Xen_Instance* bytes =
+      Xen_Bytes_From_Array(Xen_SIZE(string), (Xen_uint8_t*)string->characters);
+  Xen_Bytes_Append(bytes, 0);
+  return bytes;
+}
+
 static struct __Implement __String_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "String",
@@ -305,7 +319,8 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
       !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,
-                                    nil)) {
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "bytes", string_bytes, nil)) {
     return 0;
   }
   __String_Implement.__props = props;
