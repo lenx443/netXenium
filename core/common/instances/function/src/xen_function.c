@@ -10,6 +10,7 @@
 #include "vm_run.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
+#include "xen_bytes.h"
 #include "xen_except.h"
 #include "xen_except_instance.h"
 #include "xen_function_instance.h"
@@ -35,6 +36,8 @@ static Xen_bool_t check_impl(Xen_Instance* v, Xen_Function_ArgImpl impl) {
     return Xen_IsString(v);
   case XEN_FUNCTION_ARG_IMPL_NUMBER:
     return Xen_IsNumber(v);
+  case XEN_FUNCTION_ARG_IMPL_BYTES:
+    return Xen_IsBytes(v);
   default:
     return 0;
   }

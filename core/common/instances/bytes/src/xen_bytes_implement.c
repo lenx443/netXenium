@@ -5,14 +5,33 @@
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
+#include "netxenium/xen_function.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_bytes.h"
 #include "xen_bytes_implement.h"
 #include "xen_bytes_instance.h"
 #include "xen_cstrings.h"
+#include "xen_function.h"
+#include "xen_life.h"
 #include "xen_map.h"
+#include "xen_nil.h"
 #include "xen_string.h"
+#include "xen_tuple.h"
 #include "xen_typedefs.h"
+
+static Xen_Instance* bytes_create(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
+    Xen_Instance* val = Xen_Tuple_Get_Index(args, i);
+    if (Xen_IMPL(val) != xen_globals->implements->bytes) {
+      return NULL;
+    }
+    Xen_Bytes_Append_Array(self, Xen_SIZE(val), ((Xen_Bytes*)val)->bytes);
+  }
+  return nil;
+}
 
 static Xen_Instance* bytes_string(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
@@ -40,6 +59,24 @@ static Xen_Instance* bytes_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"bytes", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* bytes = Xen_Function_ArgBinding_Search(binding, "bytes")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Bytes_Append_Array(self, Xen_SIZE(bytes), ((Xen_Bytes*)bytes)->bytes);
+  return nil;
+}
+
 static Xen_Implement __Bytes_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Bytes",
@@ -49,7 +86,7 @@ static Xen_Implement __Bytes_Implement = {
     .__props = NULL,
     .__base = NULL,
     .__alloc = NULL,
-    .__create = NULL,
+    .__create = bytes_create,
     .__destroy = NULL,
     .__string = bytes_string,
     .__raw = bytes_string,
@@ -69,9 +106,7 @@ int Xen_Bytes_Init(void) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
-  if (!props) {
-    return 0;
-  }
+  Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
   Xen_IGC_Fork_Push(impls_maps, props);
   __Bytes_Implement.__props = props;
   return 1;

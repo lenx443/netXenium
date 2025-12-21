@@ -4,6 +4,7 @@
 #include "instance.h"
 #include "xen_typedefs.h"
 
+Xen_bool_t Xen_IsBytes(Xen_Instance*);
 Xen_Instance* Xen_Bytes_New(void);
 Xen_Instance* Xen_Bytes_From_Array(Xen_size_t, Xen_uint8_t*);
 void Xen_Bytes_Append(Xen_Instance*, Xen_uint8_t);

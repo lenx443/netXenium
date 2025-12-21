@@ -6,6 +6,10 @@
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 
+Xen_bool_t Xen_IsBytes(Xen_Instance* inst) {
+  return Xen_IMPL(inst) == xen_globals->implements->bytes;
+}
+
 Xen_Instance* Xen_Bytes_New(void) {
   return __instance_new(xen_globals->implements->bytes, nil, nil, 0);
 }

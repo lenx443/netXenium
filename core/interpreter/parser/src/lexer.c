@@ -377,10 +377,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           advance(lexer);
         }
         size_t len = lexer->pos - start;
-        char buffer[len + 3];
+        char buffer[len + 4];
         strcpy(buffer, "0x");
         if (len)
-          strcpy(buffer + 2, sf->sf_content + start);
+          strncpy(buffer + 2, sf->sf_content + start, len);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else if (sf->sf_content[lexer->pos] == 'b' ||
                  sf->sf_content[lexer->pos] == 'B') {
@@ -391,10 +391,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           advance(lexer);
         }
         size_t len = lexer->pos - start;
-        char buffer[len + 3];
+        char buffer[len + 4];
         strcpy(buffer, "0b");
         if (len)
-          strcpy(buffer + 2, sf->sf_content + start);
+          strncpy(buffer + 2, sf->sf_content + start, len);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else if (sf->sf_content[lexer->pos] == 'o' ||
                  sf->sf_content[lexer->pos] == 'O') {
@@ -405,10 +405,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           advance(lexer);
         }
         size_t len = lexer->pos - start;
-        char buffer[len + 3];
+        char buffer[len + 4];
         strcpy(buffer, "0o");
         if (len)
-          strcpy(buffer + 2, sf->sf_content + start);
+          strncpy(buffer + 2, sf->sf_content + start, len);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else if (sf->sf_content[lexer->pos] >= '0' &&
                  sf->sf_content[lexer->pos] <= '8') {
@@ -418,10 +418,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
           advance(lexer);
         }
         size_t len = lexer->pos - start;
-        char buffer[len + 2];
+        char buffer[len + 3];
         strcpy(buffer, "0");
         if (len)
-          strcpy(buffer + 1, sf->sf_content + start);
+          strncpy(buffer + 1, sf->sf_content + start, len);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else {
         token = Token(lexer, TKN_NUMBER, "0", 1);
