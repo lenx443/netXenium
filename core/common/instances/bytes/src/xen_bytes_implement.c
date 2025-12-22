@@ -72,7 +72,6 @@ static Xen_Instance* bytes_opr_mul(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* result = Xen_Bytes_New();
   for (Xen_size_t i = 0; i < num; i++) {
     Xen_Bytes_Append_Array(result, Xen_SIZE(self), ((Xen_Bytes*)self)->bytes);
-    ;
   }
   return result;
 }

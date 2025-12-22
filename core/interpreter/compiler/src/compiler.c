@@ -500,6 +500,10 @@ Xen_Instance* compile_expr_constant(int* error, Compiler* c,
     }
     return result;
   } else if (Xen_AST_Node_Name_Cmp(node, "Primary") == 0) {
+    if (Xen_AST_Node_Children_Size(node) != 1) {
+      *error = 0;
+      return NULL;
+    }
     Xen_Instance* primary = Xen_AST_Node_Get_Child(node, 0);
     if (!primary) {
       *error = -1;
