@@ -387,6 +387,112 @@ static Xen_Instance* number_bytes(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
+static Xen_Instance* number_i8(Xen_Instance* self, Xen_Instance* args,
+                               Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+static Xen_Instance* number_i16(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+static Xen_Instance* number_i32(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
+static Xen_Instance* number_i64(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
+static Xen_Instance* number_i128(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
+static Xen_Instance* number_u8(Xen_Instance* self, Xen_Instance* args,
+                               Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+static Xen_Instance* number_u16(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+static Xen_Instance* number_u32(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
+static Xen_Instance* number_u64(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
+static Xen_Instance* number_u128(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_size_t len;
+  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 1);
+  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+  return result;
+}
+
 static struct __Implement __Number_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Number",
@@ -435,7 +541,17 @@ int Xen_Number_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__negative", number_prop_negative,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil) ||
-      !Xen_VM_Store_Native_Function(props, "bytes", number_bytes, nil)) {
+      !Xen_VM_Store_Native_Function(props, "bytes", number_bytes, nil) ||
+      !Xen_VM_Store_Native_Function(props, "i8", number_i8, nil) ||
+      !Xen_VM_Store_Native_Function(props, "i16", number_i16, nil) ||
+      !Xen_VM_Store_Native_Function(props, "i32", number_i32, nil) ||
+      !Xen_VM_Store_Native_Function(props, "i64", number_i64, nil) ||
+      !Xen_VM_Store_Native_Function(props, "i128", number_i128, nil) ||
+      !Xen_VM_Store_Native_Function(props, "u8", number_u8, nil) ||
+      !Xen_VM_Store_Native_Function(props, "u16", number_u16, nil) ||
+      !Xen_VM_Store_Native_Function(props, "u32", number_u32, nil) ||
+      !Xen_VM_Store_Native_Function(props, "u64", number_u64, nil) ||
+      !Xen_VM_Store_Native_Function(props, "u128", number_u128, nil)) {
     return 0;
   }
   __Number_Implement.__props = props;

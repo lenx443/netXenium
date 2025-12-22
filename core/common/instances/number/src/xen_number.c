@@ -855,6 +855,79 @@ Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance* inst, Xen_size_t* out_len) {
   return out;
 }
 
+Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance* inst,
+                                          Xen_size_t* out_len, Xen_size_t align,
+                                          int is_signed,
+                                          Xen_uint8_t overflow_val,
+                                          int big_endian) {
+  Xen_Number* num = (Xen_Number*)Xen_Number_Copy(inst);
+  while (num->size > 1 && num->digits[num->size - 1] == 0) {
+    num->size--;
+  }
+  if (num->sign == 0 || (num->size == 1 && num->digits[0] == 0)) {
+    *out_len = align ? align : 1;
+    Xen_uint8_t* out = Xen_Alloc(*out_len);
+    memset(out, 0x00, *out_len);
+    return out;
+  }
+  uint32_t msw = num->digits[num->size - 1];
+  Xen_size_t msw_bytes;
+  if (msw >> 24)
+    msw_bytes = 4;
+  else if (msw >> 16)
+    msw_bytes = 3;
+  else if (msw >> 8)
+    msw_bytes = 2;
+  else
+    msw_bytes = 1;
+  Xen_size_t raw_len = (num->size - 1) * 4 + msw_bytes;
+
+  if (align) {
+    *out_len = (raw_len + (align - 1)) & ~(align - 1);
+  } else {
+    *out_len = raw_len;
+  }
+
+  Xen_uint8_t* out = Xen_Alloc(*out_len);
+  memset(out, 0x00, *out_len);
+
+  Xen_size_t k = big_endian ? (*out_len - raw_len) : 0;
+
+  if (big_endian) {
+    for (Xen_ssize_t i = (Xen_ssize_t)num->size - 1; i >= 0; i--) {
+      Xen_uint32_t digit = num->digits[i];
+      for (int b = 3; b >= 0; b--) {
+        Xen_uint8_t byte = (digit >> (b * 8)) & 0xFF;
+        if (k == (*out_len - raw_len) && byte == 0 &&
+            i == (Xen_ssize_t)num->size - 1) {
+          continue;
+        }
+        if ((is_signed && byte > INT8_MAX) ||
+            (!is_signed && byte > UINT8_MAX)) {
+          byte = overflow_val;
+        }
+        out[k++] = byte;
+      }
+    }
+  } else {
+    for (Xen_size_t i = 0; i < num->size; i++) {
+      Xen_uint32_t digit = num->digits[i];
+      for (int b = 0; b < 4; b++) {
+        if (k >= raw_len)
+          break;
+        Xen_uint8_t byte = (digit >> (b * 8)) & 0xFF;
+        if ((is_signed && byte > INT8_MAX) ||
+            (!is_signed && byte > UINT8_MAX)) {
+          byte = overflow_val;
+        }
+        out[k++] = byte;
+      }
+    }
+  }
+
+  return out;
+}
+
 Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if (!a_inst || !b_inst)
     return NULL;

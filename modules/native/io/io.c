@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "netxenium/netXenium.h"
+#include "netxenium/xen_function.h"
 
 #define FILE_CAP_READ (1 << 0)
 #define FILE_CAP_WRITE (1 << 1)
@@ -131,14 +132,13 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
         Xen_Function_ArgBinding_Search(args_binding, "size")->value;
     Xen_Function_ArgBinding_Free(args_binding);
     Xen_size_t size = Xen_Number_As_Int64(size_inst);
-    Xen_string_t buffer = Xen_Alloc(size + 1);
+    Xen_uint8_t* buffer = Xen_Alloc(size);
     Xen_ssize_t r = read(file->f, buffer, size);
     if (r < 0) {
       Xen_Dealloc(buffer);
       return NULL;
     }
-    buffer[r] = '\0';
-    Xen_Instance* result = Xen_String_From_CString(buffer);
+    Xen_Instance* result = Xen_Bytes_From_Array(r, buffer);
     Xen_Dealloc(buffer);
     return result;
   } else {
@@ -146,11 +146,11 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
     const Xen_size_t chunk = 4096;
     Xen_size_t cap = chunk;
     Xen_size_t len = 0;
-    Xen_string_t buffer = Xen_Alloc(cap + 1);
+    Xen_uint8_t* buffer = Xen_Alloc(cap);
     for (;;) {
       if (len + chunk > cap) {
         cap *= 2;
-        buffer = Xen_Realloc(buffer, cap + 1);
+        buffer = Xen_Realloc(buffer, cap);
       }
       ssize_t r = read(file->f, buffer + len, chunk);
       if (r < 0) {
@@ -162,8 +162,7 @@ static Xen_Instance* file_read(Xen_Instance* self, Xen_Instance* args,
       }
       len += r;
     }
-    buffer[len] = '\0';
-    Xen_Instance* result = Xen_String_From_CString(buffer);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, buffer);
     Xen_Dealloc(buffer);
     return result;
   }
@@ -178,8 +177,8 @@ static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   static Xen_Function_ArgSpec args_def[] = {
-      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
-       1, NULL},
+      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES, 1,
+       NULL},
       {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
   };
   Xen_Function_ArgBinding* args_binding =
@@ -187,11 +186,10 @@ static Xen_Instance* file_write(Xen_Instance* self, Xen_Instance* args,
   if (!args_binding) {
     return NULL;
   }
-  Xen_Instance* value_inst =
+  Xen_Instance* data =
       Xen_Function_ArgBinding_Search(args_binding, "data")->value;
   Xen_Function_ArgBinding_Free(args_binding);
-  Xen_c_string_t value = Xen_String_As_CString(value_inst);
-  Xen_ssize_t w = write(file->f, (void*)value, Xen_SIZE(value_inst));
+  Xen_ssize_t w = write(file->f, Xen_Bytes_Get(data), Xen_SIZE(data));
   if (w < 0) {
     return NULL;
   }

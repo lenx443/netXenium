@@ -36,3 +36,7 @@ void Xen_Bytes_Append_Array(Xen_Instance* bytes, Xen_size_t size,
     Xen_Bytes_Append(bytes, arr[i]);
   }
 }
+
+const Xen_uint8_t* Xen_Bytes_Get(Xen_Instance* bytes) {
+  return ((Xen_Bytes*)bytes)->bytes;
+}

@@ -33,6 +33,8 @@ unsigned long Xen_Number_As_ULong(Xen_Instance*);
 long long Xen_Number_As_LongLong(Xen_Instance*);
 unsigned long long Xen_Number_As_ULongLong(Xen_Instance*);
 Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance*, Xen_size_t*);
+Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance*, Xen_size_t*,
+                                          Xen_size_t, int, Xen_uint8_t, int);
 
 Xen_Instance* Xen_Number_Mul(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Div(Xen_Instance*, Xen_Instance*);

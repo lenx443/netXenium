@@ -16,6 +16,7 @@
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
@@ -59,6 +60,23 @@ static Xen_Instance* bytes_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* bytes_opr_mul(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1)
+    return NULL;
+  Xen_Instance* num_inst = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(num_inst) != xen_globals->implements->number)
+    return NULL;
+  Xen_size_t num = Xen_Number_As(Xen_size_t, num_inst);
+  Xen_Instance* result = Xen_Bytes_New();
+  for (Xen_size_t i = 0; i < num; i++) {
+    Xen_Bytes_Append_Array(result, Xen_SIZE(self), ((Xen_Bytes*)self)->bytes);
+    ;
+  }
+  return result;
+}
+
 static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   Xen_Function_ArgSpec args_def[] = {
@@ -75,6 +93,22 @@ static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   Xen_Bytes_Append_Array(self, Xen_SIZE(bytes), ((Xen_Bytes*)bytes)->bytes);
   return nil;
+}
+
+static Xen_Instance* bytes_prop_string(Xen_Instance* self, Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+    return NULL;
+  }
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  Xen_string_t buffer = Xen_Alloc(Xen_SIZE(bytes) + 1);
+  for (Xen_size_t i = 0; i < Xen_SIZE(bytes); i++) {
+    buffer[i] = (char)bytes->bytes[i];
+  }
+  buffer[Xen_SIZE(bytes)] = '\0';
+  Xen_Instance* string = Xen_String_From_CString(buffer);
+  Xen_Dealloc(buffer);
+  return string;
 }
 
 static Xen_Implement __Bytes_Implement = {
@@ -106,7 +140,9 @@ int Xen_Bytes_Init(void) {
     return 0;
   }
   Xen_Instance* props = Xen_Map_New();
+  Xen_VM_Store_Native_Function(props, "__mul", bytes_opr_mul, nil);
   Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
+  Xen_VM_Store_Native_Function(props, "string", bytes_prop_string, nil);
   Xen_IGC_Fork_Push(impls_maps, props);
   __Bytes_Implement.__props = props;
   return 1;

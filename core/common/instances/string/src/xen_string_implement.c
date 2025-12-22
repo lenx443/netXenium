@@ -153,7 +153,7 @@ static Xen_Instance* string_opr_get_index(Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_SIZE(args) != 1)
     return NULL;
-  Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
+  Xen_Instance* index_inst = Xen_Tuple_Get_Index(args, 0);
   if (Xen_IMPL(index_inst) != xen_globals->implements->number)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
