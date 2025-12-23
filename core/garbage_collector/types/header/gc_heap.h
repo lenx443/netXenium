@@ -22,6 +22,7 @@ struct __GC_Heap {
   Xen_size_t total_bytes;
   Xen_size_t threshold;
   Xen_size_t pressure;
+  Xen_bool_t started;
 };
 
 #endif

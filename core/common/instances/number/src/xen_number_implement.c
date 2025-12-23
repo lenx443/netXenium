@@ -389,108 +389,278 @@ static Xen_Instance* number_bytes(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance* number_i8(Xen_Instance* self, Xen_Instance* args,
                                Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 static Xen_Instance* number_i16(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 static Xen_Instance* number_i32(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static Xen_Instance* number_i64(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static Xen_Instance* number_i128(Xen_Instance* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static Xen_Instance* number_u8(Xen_Instance* self, Xen_Instance* args,
                                Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 static Xen_Instance* number_u16(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 static Xen_Instance* number_u32(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static Xen_Instance* number_u64(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static Xen_Instance* number_u128(Xen_Instance* self, Xen_Instance* args,
                                  Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
     return NULL;
   }
-  Xen_size_t len;
-  uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 1);
-  Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
-  return result;
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (big_ending == Xen_True) {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 1);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  } else {
+    Xen_size_t len;
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 0);
+    Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
+    return result;
+  }
 }
 
 static struct __Implement __Number_Implement = {

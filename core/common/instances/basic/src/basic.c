@@ -11,7 +11,6 @@
 #include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
-#include "xen_map_implement.h"
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_tuple.h"

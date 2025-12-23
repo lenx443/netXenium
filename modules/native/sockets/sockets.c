@@ -1,4 +1,8 @@
 #include <arpa/inet.h>
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
+#include <bits/fcntl.h>
+#include <errno.h>
 #include <linux/in.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -16,8 +20,13 @@
 #define SOCKET_CAP_LISTEN (1 << 3)
 #define SOCKET_CAP_ACCEPT (1 << 4)
 #define SOCKET_CAP_CONNECT (1 << 5)
+#define SOCKET_CAP_NONBLOCK (1 << 6)
 
 static Xen_Implement* Socket_Implememnt_Pointer = NULL;
+
+static void SocketTimeout(void) {
+  Xen_VM_Except_Throw(Xen_Except_New("Timeout", "Operation timed out"));
+}
 
 typedef struct {
   Xen_INSTANCE_HEAD;
@@ -189,6 +198,9 @@ static Xen_Instance* socket_accept(Xen_Instance* self, Xen_Instance* args,
   socklen_t len = sizeof(remote);
   int client_fd = accept(sock->f, (struct sockaddr*)&remote, &len);
   if (client_fd < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
     return NULL;
   }
   Socket* client =
@@ -242,6 +254,9 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
   }
   if (connect(sock->f, (struct sockaddr*)&sock->remote, sizeof(sock->remote)) <
       0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
     return NULL;
   }
   sock->caps |= SOCKET_CAP_READ | SOCKET_CAP_WRITE | SOCKET_CAP_CONNECT;
@@ -258,7 +273,7 @@ static Xen_Instance* socket_send(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Function_ArgSpec args_def[] = {
-      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
+      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
@@ -268,12 +283,13 @@ static Xen_Instance* socket_send(Xen_Instance* self, Xen_Instance* args,
   if (!binding) {
     return NULL;
   }
-  Xen_Instance* data_inst =
-      Xen_Function_ArgBinding_Search(binding, "data")->value;
-  Xen_c_string_t data = Xen_String_As_CString(data_inst);
+  Xen_Instance* data = Xen_Function_ArgBinding_Search(binding, "data")->value;
   Xen_Function_ArgBinding_Free(binding);
-  Xen_ssize_t s = send(sock->f, data, Xen_SIZE(data_inst), 0);
+  Xen_ssize_t s = send(sock->f, Xen_Bytes_Get(data), Xen_SIZE(data), 0);
   if (s < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
     return NULL;
   }
   return Xen_Number_From_Long(s);
@@ -306,18 +322,20 @@ static Xen_Instance* socket_recv(Xen_Instance* self, Xen_Instance* args,
     size = Xen_Number_As_Int(size_arg->value);
   }
   Xen_Function_ArgBinding_Free(binding);
-  Xen_string_t buffer = Xen_Alloc(size + 1);
+  Xen_string_t buffer = Xen_Alloc(size);
   Xen_ssize_t r = recv(sock->f, buffer, size, 0);
   if (r < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
     Xen_Dealloc(buffer);
     return NULL;
   }
   if (r == 0) {
     Xen_Dealloc(buffer);
-    return Xen_String_From_CString("");
+    return Xen_Bytes_New();
   }
-  buffer[r] = '\0';
-  Xen_Instance* data = Xen_String_From_CString(buffer);
+  Xen_Instance* data = Xen_Bytes_From_Array(r, (Xen_uint8_t*)buffer);
   Xen_Dealloc(buffer);
   return data;
 }
@@ -353,6 +371,113 @@ static Xen_Instance* socket_shutdown(Xen_Instance* self, Xen_Instance* args,
     sock->caps &= ~SOCKET_CAP_WRITE;
   } else if (how == SHUT_RDWR) {
     sock->caps &= ~(SOCKET_CAP_READ | SOCKET_CAP_WRITE);
+  }
+  return nil;
+}
+
+static Xen_Instance* socket_setsockopt(Xen_Instance* self, Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"level", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"optname", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_NUMBER, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"value", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int level = Xen_Number_As_Int(
+      Xen_Function_ArgBinding_Search(binding, "level")->value);
+  int optname = Xen_Number_As_Int(
+      Xen_Function_ArgBinding_Search(binding, "optname")->value);
+  Xen_Instance* value = Xen_Function_ArgBinding_Search(binding, "value")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (setsockopt(sock->f, level, optname, Xen_Bytes_Get(value),
+                 Xen_SIZE(value)) < 0) {
+    return NULL;
+  }
+  return nil;
+}
+
+static Xen_Instance* socket_getsockopt(Xen_Instance* self, Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"level", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"optname", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_NUMBER, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"buflen", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int level = Xen_Number_As_Int(
+      Xen_Function_ArgBinding_Search(binding, "level")->value);
+  int optname = Xen_Number_As_Int(
+      Xen_Function_ArgBinding_Search(binding, "optname")->value);
+  socklen_t buflen = sizeof(int);
+  Xen_Function_ArgBound* buflen_bound =
+      Xen_Function_ArgBinding_Search(binding, "buflen");
+  if (buflen_bound->provided) {
+    buflen = Xen_Number_As_Int(buflen_bound->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_uint8_t* buffer = Xen_ZAlloc(buflen, 1);
+  if (getsockopt(sock->f, level, optname, buffer, &buflen) < 0) {
+    Xen_Dealloc(buffer);
+    return NULL;
+  }
+  Xen_Instance* bytes = Xen_Bytes_From_Array(buflen, buffer);
+  Xen_Dealloc(buffer);
+  return bytes;
+}
+
+static Xen_Instance* socket_set_nonblocking(Xen_Instance* self,
+                                            Xen_Instance* args,
+                                            Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"nonblock", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* nonblock =
+      Xen_Function_ArgBinding_Search(binding, "nonblock")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (nonblock == Xen_True) {
+    int flags = fcntl(sock->f, F_GETFL, 0);
+    fcntl(sock->f, F_SETFL, flags | O_NONBLOCK);
+    sock->caps |= SOCKET_CAP_NONBLOCK;
+  } else {
+    int flags = fcntl(sock->f, F_GETFL, 0);
+    flags &= ~O_NONBLOCK;
+    fcntl(sock->f, F_SETFL, flags);
+    sock->caps &= ~SOCKET_CAP_NONBLOCK;
   }
   return nil;
 }
@@ -393,6 +518,10 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "send", socket_send, nil);
   Xen_VM_Store_Native_Function(props, "recv", socket_recv, nil);
   Xen_VM_Store_Native_Function(props, "shutdown", socket_shutdown, nil);
+  Xen_VM_Store_Native_Function(props, "setsockopt", socket_setsockopt, nil);
+  Xen_VM_Store_Native_Function(props, "getsockopt", socket_getsockopt, nil);
+  Xen_VM_Store_Native_Function(props, "set_nonblocking", socket_set_nonblocking,
+                               nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
   Xen_Map_Push_Pair_Str(
       props,

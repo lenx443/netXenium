@@ -17,6 +17,7 @@ static struct __GC_Heap __gc_heap = {
     .total_bytes = 0,
     .threshold = 1024 * 1024,
     .pressure = 0,
+    .started = 1,
 };
 
 void Xen_GC_GetReady(void) {
@@ -44,8 +45,10 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   xen_globals->gc_heap->total_bytes += size;
   xen_globals->gc_heap->pressure += size;
 
-  if (xen_globals->gc_heap->pressure > xen_globals->gc_heap->threshold) {
-    Xen_GC_Collect();
+  if (xen_globals->gc_heap->started) {
+    if (xen_globals->gc_heap->pressure > xen_globals->gc_heap->threshold) {
+      Xen_GC_Collect();
+    }
   }
   h->trace = fn_trace;
   h->destroy = fn_destroy;
@@ -162,4 +165,12 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
   if (parent && parent->color == GC_BLACK && child->color == GC_WHITE) {
     Xen_GC_Push_Gray(child);
   }
+}
+
+void Xen_GC_Start(void) {
+  xen_globals->gc_heap->started = 1;
+}
+
+void Xen_GC_Stop(void) {
+  xen_globals->gc_heap->started = 0;
 }

@@ -9,18 +9,21 @@ $$__start => {
     sock = sockets\Socket()
     sock\bind("0.0.0.0", 8080)
     sock\listen()
+    sock\set_nonblocking()
     while true => {
-      client = sock\accept()
-      request = client\recv()
-      println("• Recived Request")
-      respound = http_packet\HTTPServer(
-        headers={},
-        content="<h1>Hola Mundo!</h1>",
-        content_type="text/html; charset=UTF-8"
-      )
-      client\send(respound\pack())
-      println("• Send Respound")
-      client\close()
+      try => {
+        client = sock\accept()
+        request = client\recv()
+        println("• Recived Request")
+        respound = http_packet\HTTPServer(
+          headers={},
+          content="<h1>Hola Mundo!</h1>",
+          content_type="text/html; charset=UTF-8"
+        )
+        client\send(respound\pack())
+        println("• Send Respound")
+        client\close()
+      } catch "Timeout" :_ => {}
     }
     sock\close()
   } catch "Interrupt" :_ => {

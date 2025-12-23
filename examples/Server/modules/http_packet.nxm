@@ -22,7 +22,7 @@ implement $HTTPServer => {
     }
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
-    return buffer
+    return buffer\bytes()
   }
 
   reasons = {
@@ -112,6 +112,6 @@ implement $HTTPRequest => {
     }
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
-    return buffer
+    return buffer\bytes()
   }
 }

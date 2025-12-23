@@ -25,7 +25,9 @@ static VM_ptr vm = NULL;
 
 static void InterruptHandler(int sign) {
   (void)sign;
+  Xen_GC_Stop();
   Xen_Interrupt();
+  Xen_GC_Start();
 }
 
 static void vm_def_trace(Xen_GCHeader* h) {

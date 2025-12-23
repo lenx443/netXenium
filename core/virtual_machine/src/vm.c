@@ -142,15 +142,19 @@ void Xen_VM_Except_Backtrace_Show(void) {
 
 int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
   assert(except_inst != NULL);
+  Xen_IGC_Push(except_inst);
   Xen_Instance* except =
       Xen_Method_Attr_Str_Call(except_inst, "__except", nil, nil);
   if (!except) {
+    Xen_IGC_Pop();
     return 0;
   }
   if (Xen_IMPL(except) != xen_globals->implements->except) {
+    Xen_IGC_Pop();
     return 0;
   }
   (*xen_globals->vm)->except.active = 1;
   (*xen_globals->vm)->except.except = except;
+  Xen_IGC_Pop();
   return 1;
 }

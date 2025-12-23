@@ -20,6 +20,8 @@ void Xen_GC_Trace(struct __GC_Header*);
 void Xen_GC_Mark(void);
 void Xen_GC_Sweep(void);
 void Xen_GC_Shutdown(void);
+void Xen_GC_Start(void);
+void Xen_GC_Stop(void);
 
 void Xen_GC_Write_Field(struct __GC_Header*, struct __GC_Header**,
                         struct __GC_Header*);
