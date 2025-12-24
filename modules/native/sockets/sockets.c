@@ -5,14 +5,11 @@
 #include <errno.h>
 #include <linux/in.h>
 #include <string.h>
+#include <sys/endian.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include "netxenium/netXenium.h"
-
-#define SOCKET_AF_INET 1
-
-#define SOCKET_SOCK_STREAM 1
 
 #define SOCKET_CAP_READ (1 << 0)
 #define SOCKET_CAP_WRITE (1 << 1)
@@ -44,9 +41,9 @@ static Xen_Instance* socket_create(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
   Xen_Function_ArgSpec args_def[] = {
       {"family", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
-       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(SOCKET_AF_INET)},
+       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(AF_INET)},
       {"type", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
-       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(SOCKET_SOCK_STREAM)},
+       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(SOCK_STREAM)},
       {"proto", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
        XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(0)},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
@@ -57,29 +54,13 @@ static Xen_Instance* socket_create(Xen_Instance* self, Xen_Instance* args,
   if (!binding) {
     return NULL;
   }
-  int domain_arg = Xen_Number_As_Int(
+  int domain = Xen_Number_As_Int(
       Xen_Function_ArgBinding_Search(binding, "family")->value);
-  int type_arg =
+  int type =
       Xen_Number_As_Int(Xen_Function_ArgBinding_Search(binding, "type")->value);
   int protocol = Xen_Number_As_Int(
       Xen_Function_ArgBinding_Search(binding, "proto")->value);
   Xen_Function_ArgBinding_Free(binding);
-  int domain;
-  switch (domain_arg) {
-  case SOCKET_AF_INET:
-    domain = AF_INET;
-    break;
-  default:
-    return Xen_NULL;
-  }
-  int type;
-  switch (type_arg) {
-  case SOCKET_SOCK_STREAM:
-    type = SOCK_STREAM;
-    break;
-  default:
-    return Xen_NULL;
-  }
   Socket* sock = (Socket*)self;
   sock->domain = domain;
   sock->type = type;
@@ -340,6 +321,118 @@ static Xen_Instance* socket_recv(Xen_Instance* self, Xen_Instance* args,
   return data;
 }
 
+static Xen_Instance* socket_sendto(Xen_Instance* self, Xen_Instance* args,
+                                   Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_WRITE)) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* data = Xen_Function_ArgBinding_Search(binding, "data")->value;
+  Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  if (Xen_SIZE(addr) != 2) {
+    return NULL;
+  }
+  Xen_Instance* ip_inst = Xen_Vector_Get_Index(addr, 0);
+  Xen_Instance* port_inst = Xen_Vector_Get_Index(addr, 1);
+  if (!Xen_IsString(ip_inst) || !Xen_IsNumber(port_inst)) {
+    return NULL;
+  }
+  Xen_c_string_t ip = Xen_String_As_CString(ip_inst);
+  int port = Xen_Number_As_Int(port_inst);
+  struct sockaddr_in remote;
+  memset(&remote, 0, sizeof(remote));
+  remote.sin_family = sock->domain;
+  remote.sin_port = htons(port);
+  if (inet_pton(sock->domain, ip, &remote.sin_addr) != 1) {
+    return NULL;
+  }
+  Xen_ssize_t s = sendto(sock->f, Xen_Bytes_Get(data), Xen_SIZE(data), 0,
+                         (struct sockaddr*)&remote, sizeof(remote));
+  if (s < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
+    return NULL;
+  }
+  return Xen_Number_From_Long(s);
+}
+
+static Xen_Instance* socket_recvfrom(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  if (!(sock->caps & SOCKET_CAP_READ)) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"size", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
+      {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  int size = 4096;
+  Xen_Function_ArgBound* size_arg =
+      Xen_Function_ArgBinding_Search(binding, "size");
+  if (size_arg->provided) {
+    size = Xen_Number_As_Int(size_arg->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  struct sockaddr_in remote;
+  memset(&remote, 0, sizeof(remote));
+  socklen_t remote_len = sizeof(remote);
+  Xen_string_t buffer = Xen_Alloc(size);
+  Xen_ssize_t r = recvfrom(sock->f, buffer, size, 0, (struct sockaddr*)&remote,
+                           &remote_len);
+  if (r < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      SocketTimeout();
+    }
+    Xen_Dealloc(buffer);
+    return NULL;
+  }
+  Xen_Instance* data = Xen_Bytes_New();
+  char ip_str[INET_ADDRSTRLEN];
+  if (!inet_ntop(sock->domain, &remote.sin_addr, ip_str, sizeof(ip_str))) {
+    Xen_Dealloc(buffer);
+    return NULL;
+  }
+  Xen_Instance* ip = Xen_String_From_CString(ip_str);
+  Xen_Instance* port = Xen_Number_From_Int(ntohs(remote.sin_port));
+  Xen_Instance* addr = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
+  Xen_Instance* result = Xen_Tuple_From_Array(2, (Xen_Instance*[]){data, addr});
+  if (r == 0) {
+    Xen_Dealloc(buffer);
+    return result;
+  }
+  Xen_Bytes_Append_Array(data, r, (Xen_uint8_t*)buffer);
+  Xen_Dealloc(buffer);
+  return result;
+}
+
 static Xen_Instance* socket_shutdown(Xen_Instance* self, Xen_Instance* args,
                                      Xen_Instance* kwargs) {
   Socket* sock = (Socket*)self;
@@ -517,6 +610,8 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "connect", socket_connect, nil);
   Xen_VM_Store_Native_Function(props, "send", socket_send, nil);
   Xen_VM_Store_Native_Function(props, "recv", socket_recv, nil);
+  Xen_VM_Store_Native_Function(props, "sendto", socket_sendto, nil);
+  Xen_VM_Store_Native_Function(props, "recvfrom", socket_recvfrom, nil);
   Xen_VM_Store_Native_Function(props, "shutdown", socket_shutdown, nil);
   Xen_VM_Store_Native_Function(props, "setsockopt", socket_setsockopt, nil);
   Xen_VM_Store_Native_Function(props, "getsockopt", socket_getsockopt, nil);
@@ -524,11 +619,12 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
                                nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
   Xen_Map_Push_Pair_Str(
-      props,
-      (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(SOCKET_AF_INET)});
+      props, (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(AF_INET)});
   Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"SOCK_STREAM",
-                                Xen_Number_From_Int(SOCKET_SOCK_STREAM)});
+      props,
+      (Xen_Map_Pair_Str){"SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM)});
+  Xen_Map_Push_Pair_Str(
+      props, (Xen_Map_Pair_Str){"SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM)});
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
   Xen_Map_Push_Pair_Str(

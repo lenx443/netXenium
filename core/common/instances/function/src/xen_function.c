@@ -38,6 +38,8 @@ static Xen_bool_t check_impl(Xen_Instance* v, Xen_Function_ArgImpl impl) {
     return Xen_IsNumber(v);
   case XEN_FUNCTION_ARG_IMPL_BYTES:
     return Xen_IsBytes(v);
+  case XEN_FUNCTION_ARG_IMPL_TUPLE:
+    return Xen_IsTuple(v);
   default:
     return 0;
   }

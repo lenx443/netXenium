@@ -12,6 +12,10 @@
 #include "xen_typedefs.h"
 #include "xen_vector_instance.h"
 
+Xen_bool_t Xen_IsTuple(Xen_Instance* inst) {
+  return Xen_IMPL(inst) == xen_globals->implements->tuple;
+}
+
 Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
   if (!array) {
     return NULL;

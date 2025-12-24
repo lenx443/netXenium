@@ -20,6 +20,7 @@ typedef enum {
   XEN_FUNCTION_ARG_IMPL_STRING,
   XEN_FUNCTION_ARG_IMPL_NUMBER,
   XEN_FUNCTION_ARG_IMPL_BYTES,
+  XEN_FUNCTION_ARG_IMPL_TUPLE,
 } Xen_Function_ArgImpl;
 
 typedef struct {
