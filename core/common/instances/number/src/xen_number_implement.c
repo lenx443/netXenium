@@ -378,7 +378,7 @@ static Xen_Instance* number_prop_not(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance* number_bytes(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
   }
   Xen_size_t len;

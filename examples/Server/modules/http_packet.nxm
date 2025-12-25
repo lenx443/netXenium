@@ -1,4 +1,4 @@
-implement $HTTPServer => {
+implement $HTTPResponse => {
   $__create => (headers,
                 content=??,
                 content_type="text/plain",
@@ -96,22 +96,49 @@ implement $HTTPServer => {
 }
 
 implement $HTTPRequest => {
-  $__create => (host, headers, method="GET", path="/", content=??) {
+  $__create => (host, headers, method="GET", path="/", content=??, http_version="HTTP/1.1") {
     $host = host
     $headers = headers
     $method = method
     $path = path
     $content = content
+    $http_version = http_version
   }
 
   $pack => {
-    buffer = $method + " " + $path + " HTTP/1.1\r\n"
-    buffer = buffer + "Host: " + $host
+    buffer = $method + " " + $path + " " + $http_version + "\r\n"
+    if ?? != $host => buffer = buffer + "Host: " + $host
     for header in $headers => {
       buffer = buffer + header + ": " + $headers[header] + "\r\n"
     }
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
     return buffer\bytes()
+  }
+
+  $unpack => (packet) {
+    buffer = packet\string()
+    lines = buffer\split(('\r\n',))
+    println(lines)
+    head = lines[0]\split((' ',))
+    __method = head[0]
+    __path = head[1]
+    __version = head[2]
+    __headers = map()
+    idx = 1
+    while idx < size(lines) => {
+      line = lines[idx]
+      if line == "\r\n" => break
+      name, value = line\split_once(':')
+      __headers[name] = value\trim()
+      idx = idx + 1
+    }
+    return HTTPRequest(
+      host = ??,
+      headers = __headers,
+      method = __method,
+      path = __path,
+      http_version = __version
+    )
   }
 }

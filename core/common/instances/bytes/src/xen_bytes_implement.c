@@ -5,7 +5,6 @@
 #include "callable.h"
 #include "implement.h"
 #include "instance.h"
-#include "netxenium/xen_function.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_bytes.h"
@@ -96,7 +95,7 @@ static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance* bytes_prop_string(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
   }
   Xen_Bytes* bytes = (Xen_Bytes*)self;

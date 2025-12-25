@@ -269,7 +269,7 @@ static Xen_Instance* string_char_code(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
   }
   Xen_String* string = (Xen_String*)self;
@@ -277,6 +277,114 @@ static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
       Xen_Bytes_From_Array(Xen_SIZE(string), (Xen_uint8_t*)string->characters);
   Xen_Bytes_Append(bytes, 0);
   return bytes;
+}
+
+static Xen_Instance* string_split(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  Xen_String* string = (Xen_String*)self;
+  Xen_Function_ArgSpec args_def[] = {
+      {"delimiters", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_TUPLE, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* delimiters =
+      Xen_Function_ArgBinding_Search(binding, "delimiters")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Instance* tokens = Xen_Vector_New();
+  Xen_size_t start = 0;
+  Xen_size_t i = 0;
+  for (; i < string->__size; i++) {
+    for (Xen_size_t y = 0; y < Xen_SIZE(delimiters); y++) {
+      Xen_Instance* delim_inst = Xen_Tuple_Get_Index(delimiters, y);
+      if (!Xen_IsString(delim_inst)) {
+        return NULL;
+      }
+      Xen_String* delim = (Xen_String*)delim_inst;
+      if (strncmp(string->characters + i, delim->characters, delim->__size) ==
+          0) {
+        if (i != start) {
+          Xen_string_t token_str = Xen_ZAlloc(i - start + 1, 1);
+          strncpy(token_str, string->characters + start, i - start);
+          Xen_Instance* token = Xen_String_From_CString(token_str);
+          Xen_Vector_Push(tokens, token);
+          free(token_str);
+        }
+        i += delim->__size;
+        start = i;
+        break;
+      }
+    }
+  }
+  if (start != i) {
+    Xen_Instance* token = Xen_String_From_CString(string->characters + start);
+    Xen_Vector_Push(tokens, token);
+  }
+  return tokens;
+}
+
+static Xen_Instance* string_split_once(Xen_Instance* self, Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  Xen_String* string = (Xen_String*)self;
+  Xen_Function_ArgSpec args_def[] = {
+      {"delimiter", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_STRING, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_String* delimiter =
+      (Xen_String*)Xen_Function_ArgBinding_Search(binding, "delimiter")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Instance* tokens = Xen_Vector_New();
+  for (Xen_size_t i = 0; i + delimiter->__size <= string->__size; i++) {
+    if (strncmp(string->characters + i, delimiter->characters,
+                delimiter->__size) == 0) {
+      Xen_string_t lhs_str = Xen_ZAlloc(i + 1, 1);
+      strncpy(lhs_str, string->characters, i);
+      Xen_Instance* lhs = Xen_String_From_CString(lhs_str);
+      Xen_Vector_Push(tokens, lhs);
+      free(lhs_str);
+      Xen_string_t rhs_str =
+          Xen_ZAlloc(string->__size - (i + delimiter->__size) + 1, 1);
+      strncpy(rhs_str, string->characters + i + delimiter->__size,
+              string->__size - (i + delimiter->__size));
+      Xen_Instance* rhs = Xen_String_From_CString(rhs_str);
+      Xen_Vector_Push(tokens, rhs);
+      free(rhs_str);
+      return tokens;
+    }
+  }
+  Xen_Vector_Push(tokens, self);
+  Xen_Vector_Push(tokens, Xen_String_From_CString(""));
+  return tokens;
+}
+
+static Xen_Instance* string_trim(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  Xen_String* string = (Xen_String*)self;
+  Xen_size_t start = 0;
+  Xen_size_t end = string->__size;
+  while (isspace(string->characters[start]) && start < end) {
+    start++;
+  }
+  while (isspace(string->characters[end - 1]) && end > start) {
+    end--;
+  }
+  Xen_string_t result_str = Xen_ZAlloc(end - start + 1, 1);
+  strncpy(result_str, string->characters + start, end - start);
+  Xen_Instance* result = Xen_String_From_CString(result_str);
+  return result;
 }
 
 static struct __Implement __String_Implement = {
@@ -320,7 +428,11 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
       !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,
                                     nil) ||
-      !Xen_VM_Store_Native_Function(props, "bytes", string_bytes, nil)) {
+      !Xen_VM_Store_Native_Function(props, "bytes", string_bytes, nil) ||
+      !Xen_VM_Store_Native_Function(props, "split", string_split, nil) ||
+      !Xen_VM_Store_Native_Function(props, "split_once", string_split_once,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "trim", string_trim, nil)) {
     return 0;
   }
   __String_Implement.__props = props;

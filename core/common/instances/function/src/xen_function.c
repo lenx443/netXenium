@@ -159,7 +159,7 @@ Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding* binding,
   return NULL;
 }
 
-Xen_bool_t Xen_Function_ArgEmpy(Xen_Instance* args, Xen_Instance* kwargs) {
+Xen_bool_t Xen_Function_ArgEmpty(Xen_Instance* args, Xen_Instance* kwargs) {
   return (Xen_Nil_Eval(args) || Xen_SIZE(args) == 0) &&
          (Xen_Nil_Eval(kwargs) || Xen_SIZE(kwargs) == 0);
 }

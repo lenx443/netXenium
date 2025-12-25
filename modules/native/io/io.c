@@ -245,7 +245,7 @@ static Xen_Instance* file_seek(Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance* file_close(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (!Xen_Function_ArgEmpy(args, kwargs)) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
   }
   File* file = (File*)self;
