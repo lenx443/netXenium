@@ -2,7 +2,7 @@ sockets = load("sockets")
 
 try => {
   sock = sockets\Socket(type=sockets\Socket\SOCK_DGRAM)
-  sock\bind("0.0.0.0", 8844)
+  sock\bind(("0.0.0.0", 8844))
   while true => {
     data = sock\recvfrom()
     println(data[0]\string())

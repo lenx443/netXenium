@@ -25,6 +25,26 @@ static void SocketTimeout(void) {
   Xen_VM_Except_Throw(Xen_Except_New("Timeout", "Operation timed out"));
 }
 
+struct Socket_Address_IPv4 {
+  Xen_c_string_t ip;
+  int port;
+};
+
+static int Socket_Get_Addr_IPv4(Xen_Instance* addr,
+                                struct Socket_Address_IPv4* out) {
+  if (Xen_SIZE(addr) != 2) {
+    return 0;
+  }
+  Xen_Instance* ip_inst = Xen_Vector_Get_Index(addr, 0);
+  Xen_Instance* port_inst = Xen_Vector_Get_Index(addr, 1);
+  if (!Xen_IsString(ip_inst) || !Xen_IsNumber(port_inst)) {
+    return 0;
+  }
+  out->ip = Xen_String_As_CString(ip_inst);
+  out->port = Xen_Number_As_Int(port_inst);
+  return 1;
+}
+
 typedef struct {
   Xen_INSTANCE_HEAD;
   int f;
@@ -92,9 +112,7 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Function_ArgSpec args_def[] = {
-      {"ip", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
-       XEN_FUNCTION_ARG_REQUIRED, NULL},
-      {"port", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
@@ -104,15 +122,16 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
   if (!binding) {
     return NULL;
   }
-  Xen_c_string_t ip = Xen_String_As_CString(
-      Xen_Function_ArgBinding_Search(binding, "ip")->value);
-  Xen_uint16_t port = Xen_Number_As_UInt(
-      Xen_Function_ArgBinding_Search(binding, "port")->value);
+  Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
   Xen_Function_ArgBinding_Free(binding);
+  struct Socket_Address_IPv4 address;
+  if (!Socket_Get_Addr_IPv4(addr, &address)) {
+    return NULL;
+  }
   memset(&sock->local, 0, sizeof(sock->local));
   sock->local.sin_family = sock->domain;
-  sock->local.sin_port = htons(port);
-  if (inet_pton(sock->domain, ip, &sock->local.sin_addr) != 1) {
+  sock->local.sin_port = htons(address.port);
+  if (inet_pton(sock->domain, address.ip, &sock->local.sin_addr) != 1) {
     return NULL;
   }
   if (bind(sock->f, (struct sockaddr*)&sock->local, sizeof(sock->local)) < 0) {
@@ -210,9 +229,7 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Function_ArgSpec args_def[] = {
-      {"ip", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
-       XEN_FUNCTION_ARG_REQUIRED, NULL},
-      {"port", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
@@ -222,15 +239,16 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
   if (!binding) {
     return NULL;
   }
-  Xen_c_string_t ip = Xen_String_As_CString(
-      Xen_Function_ArgBinding_Search(binding, "ip")->value);
-  Xen_uint16_t port = Xen_Number_As_UInt(
-      Xen_Function_ArgBinding_Search(binding, "port")->value);
+  Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
   Xen_Function_ArgBinding_Free(binding);
+  struct Socket_Address_IPv4 address;
+  if (!Socket_Get_Addr_IPv4(addr, &address)) {
+    return NULL;
+  }
   memset(&sock->remote, 0, sizeof(sock->remote));
   sock->remote.sin_family = sock->domain;
-  sock->remote.sin_port = htons(port);
-  if (inet_pton(sock->domain, ip, &sock->remote.sin_addr) != 1) {
+  sock->remote.sin_port = htons(address.port);
+  if (inet_pton(sock->domain, address.ip, &sock->remote.sin_addr) != 1) {
     return NULL;
   }
   if (connect(sock->f, (struct sockaddr*)&sock->remote, sizeof(sock->remote)) <
@@ -346,21 +364,15 @@ static Xen_Instance* socket_sendto(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* data = Xen_Function_ArgBinding_Search(binding, "data")->value;
   Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
   Xen_Function_ArgBinding_Free(binding);
-  if (Xen_SIZE(addr) != 2) {
+  struct Socket_Address_IPv4 address;
+  if (!Socket_Get_Addr_IPv4(addr, &address)) {
     return NULL;
   }
-  Xen_Instance* ip_inst = Xen_Vector_Get_Index(addr, 0);
-  Xen_Instance* port_inst = Xen_Vector_Get_Index(addr, 1);
-  if (!Xen_IsString(ip_inst) || !Xen_IsNumber(port_inst)) {
-    return NULL;
-  }
-  Xen_c_string_t ip = Xen_String_As_CString(ip_inst);
-  int port = Xen_Number_As_Int(port_inst);
   struct sockaddr_in remote;
   memset(&remote, 0, sizeof(remote));
   remote.sin_family = sock->domain;
-  remote.sin_port = htons(port);
-  if (inet_pton(sock->domain, ip, &remote.sin_addr) != 1) {
+  remote.sin_port = htons(address.port);
+  if (inet_pton(sock->domain, address.ip, &remote.sin_addr) != 1) {
     return NULL;
   }
   Xen_ssize_t s = sendto(sock->f, Xen_Bytes_Get(data), Xen_SIZE(data), 0,
@@ -625,6 +637,15 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
       (Xen_Map_Pair_Str){"SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM)});
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM)});
+  Xen_Map_Push_Pair_Str(
+      props,
+      (Xen_Map_Pair_Str){"IPPROTO_TCP", Xen_Number_From_Int(IPPROTO_TCP)});
+  Xen_Map_Push_Pair_Str(
+      props,
+      (Xen_Map_Pair_Str){"IPPROTO_UDP", Xen_Number_From_Int(IPPROTO_UDP)});
+  Xen_Map_Push_Pair_Str(
+      props,
+      (Xen_Map_Pair_Str){"IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP)});
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
   Xen_Map_Push_Pair_Str(

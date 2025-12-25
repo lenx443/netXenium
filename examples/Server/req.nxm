@@ -9,9 +9,9 @@ $$__start => {
     headers = {}
   )
   sock = sockets\Socket()
-  sock\connect("127.0.0.1", 8080)
+  sock\connect(("127.0.0.1", 8080))
   sock\send(request\pack())
   result = sock\recv()
   sock\close()
-  println(result)
+  println(result\string())
 }

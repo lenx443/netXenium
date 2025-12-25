@@ -7,7 +7,7 @@ $$__start => {
   try => {
     println("• Start Server")
     sock = sockets\Socket()
-    sock\bind("0.0.0.0", 8080)
+    sock\bind(("0.0.0.0", 8080))
     sock\listen()
     sock\set_nonblocking()
     while true => {
