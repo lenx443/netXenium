@@ -47,6 +47,7 @@
 #include "xen_method.h"
 #include "xen_module.h"
 #include "xen_nil.h"
+#include "xen_tuple.h"
 
 int main(int argc, char** argv) {
   if (!Xen_Init(argc, argv)) {
@@ -80,7 +81,8 @@ int main(int argc, char** argv) {
       if (Xen_IMPL(start) != xen_globals->implements->method) {
         goto end;
       }
-      Xen_Method_Call(start, nil, nil);
+      Xen_Instance* args = Xen_Tuple_From_Array(1, &(*xen_globals->vm)->args);
+      Xen_Method_Call(start, args, nil);
       if (Xen_VM_Except_Active()) {
         Xen_VM_Except_Backtrace_Show();
       }

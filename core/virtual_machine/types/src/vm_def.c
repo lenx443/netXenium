@@ -32,6 +32,7 @@ static void InterruptHandler(int sign) {
 
 static void vm_def_trace(Xen_GCHeader* h) {
   VM* _vm = (VM*)h;
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->args);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack);
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances);
@@ -49,6 +50,11 @@ static void vm_def_destroy(Xen_GCHeader** h) {
 }
 
 static int vm_load_modules_paths(void) {
+  vm->args = Xen_Vector_New();
+  for (int i = 0; i < program.argc; i++) {
+    Xen_Instance* arg = Xen_String_From_CString(program.argv[i]);
+    Xen_Vector_Push(vm->args, arg);
+  }
   vm->paths_modules = Xen_Vector_New();
   if (!vm->paths_modules) {
     return 0;

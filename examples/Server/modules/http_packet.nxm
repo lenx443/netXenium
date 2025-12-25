@@ -119,7 +119,6 @@ implement $HTTPRequest => {
   $unpack => (packet) {
     buffer = packet\string()
     lines = buffer\split(('\r\n',))
-    println(lines)
     head = lines[0]\split((' ',))
     __method = head[0]
     __path = head[1]

@@ -1,0 +1,40 @@
+Socket = load("sockets")\Socket
+http_packet = load("http_packet")
+
+implement $HTTPServer => {
+  $__create => {
+    $__routes = ??
+  }
+
+  $set_routes => (routes) {
+    $__routes = routes
+  }
+
+  $start => (ip="0.0.0.0", port=8080) {
+    sock = Socket()
+    sock\bind((ip, port))
+    sock\listen()
+    sock\set_nonblocking()
+    while true => {
+      try => {
+        client = sock\accept()
+        request = http_packet\HTTPRequest\unpack(
+          client\recv()
+        )
+        if ?? == $__routes or (not $__routes has request\path) => {
+          response = http_packet\HTTPResponse(
+            headers={},
+            status=404,
+            content="<h1>El recurso solicitado no esta disponible</h1>",
+            content_type="text/html; charset=UTF-8"
+          )
+        } else => {
+          response = $__routes[request\path](request)
+        }
+        client\send(response\pack())
+        client\close()
+      } catch "Timeout" :_ => continue
+    }
+    sock\close()
+  }
+}

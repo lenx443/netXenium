@@ -1,31 +1,23 @@
 load("config")
 
-sockets = load("sockets")
 http_packet = load("http_packet")
+http_server = load("http_server")
 
-$$__start => {
+routes = {
+  ['/']-> => (req) {
+    return http_packet\HTTPResponse(
+      headers={},
+      content="Hola Mundo"
+    )
+  }
+}
+
+$$__start => (args) {
   try => {
     println("• Start Server")
-    sock = sockets\Socket()
-    sock\bind(("0.0.0.0", 8080))
-    sock\listen()
-    sock\set_nonblocking()
-    while true => {
-      try => {
-        client = sock\accept()
-        request = http_packet\HTTPRequest\unpack(client\recv())
-        println("• Recived Request")
-        respound = http_packet\HTTPResponse(
-          headers={},
-          content="<h1>Hola Mundo!</h1>",
-          content_type="text/html; charset=UTF-8"
-        )
-        client\send(respound\pack())
-        println("• Send Respound")
-        client\close()
-      } catch "Timeout" :_ => {}
-    }
-    sock\close()
+    server = http_server\HTTPServer()
+    server\set_routes(routes)
+    server\start()
   } catch "Interrupt" :_ => {
     println("• Stop Server")
   }

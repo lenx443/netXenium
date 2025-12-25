@@ -3,7 +3,7 @@ load("config")
 sockets = load("sockets")
 http_packet = load("http_packet")
 
-$$__start => {
+$$__start => (args) {
   request = http_packet\HTTPRequest(
     host = "localhost:8080",
     headers = {}

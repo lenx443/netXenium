@@ -13,6 +13,7 @@
 typedef struct {
   Xen_GCHeader gc;
   RunContext_Stack_ptr vm_ctx_stack;
+  Xen_Instance* args;
   Xen_Instance* modules;
   Xen_Instance* modules_stack;
   Xen_Instance* globals_instances;
