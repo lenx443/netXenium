@@ -12,6 +12,7 @@ implement $HTTPServer => {
 
   $start => (ip="0.0.0.0", port=8080) {
     sock = Socket()
+    sock\setsockopt(1, 2, 1\u32(false))
     sock\bind((ip, port))
     sock\listen()
     sock\set_nonblocking()
@@ -22,12 +23,16 @@ implement $HTTPServer => {
           client\recv()
         )
         if ?? == $__routes or (not $__routes has request\path) => {
-          response = http_packet\HTTPResponse(
-            headers={},
-            status=404,
-            content="<h1>El recurso solicitado no esta disponible</h1>",
-            content_type="text/html; charset=UTF-8"
-          )
+          if ?? != $__routes and  $__routes has '_' => {
+            response = $__routes['_'](request)
+          } else => {
+            response = http_packet\HTTPResponse(
+              headers={},
+              status=404,
+              content="<h1>El recurso '" + request\path + "' no esta disponible</h1>",
+              content_type="text/html; charset=UTF-8"
+            )
+          }
         } else => {
           response = $__routes[request\path](request)
         }

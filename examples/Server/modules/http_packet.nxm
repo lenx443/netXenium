@@ -1,3 +1,5 @@
+File = load("io")\File
+
 implement $HTTPResponse => {
   $__create => (headers,
                 content=??,
@@ -9,6 +11,43 @@ implement $HTTPResponse => {
     $content_type = content_type
     $status = status
     $complete = complete
+  }
+
+  $from_file => (file, error=??) {
+    try => {
+      f = File(file)
+      content = f\read()\string()
+      f\close()
+      parts = file\split(('.',))
+      ext = parts[size(parts) - 1]
+      content_type = "text/plain"
+      if content_types has ext => {
+        content_type = content_types[ext]
+      }
+      return HTTPResponse(
+        headers={},
+        content=content,
+        content_type=content_type
+      )
+    } catch :err => {
+      if ?? != error => {
+        f = File(error)
+        content = f\read()\string()
+        f\close()
+        parts = error\split(('.',))
+        ext = parts[size(parts) - 1]
+        content_type = "text/plain"
+        if size(parts) > 1 and content_types has ext => {
+          content_type = content_types[ext]
+        }
+        return HTTPResponse(
+          headers={},
+          content=content,
+          content_type=content_type
+        )
+      }
+      throw err
+    }
   }
 
   $pack => {
@@ -23,6 +62,11 @@ implement $HTTPResponse => {
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
     return buffer\bytes()
+  }
+
+  content_types = {
+    txt -> "text/plain",
+    html -> "text/html; charset=UTF-8"
   }
 
   reasons = {

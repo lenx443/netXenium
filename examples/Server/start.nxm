@@ -3,11 +3,18 @@ load("config")
 http_packet = load("http_packet")
 http_server = load("http_server")
 
+WEB_PATH = ("./www")
+
 routes = {
   ['/']-> => (req) {
-    return http_packet\HTTPResponse(
-      headers={},
-      content="Hola Mundo"
+    return http_packet\HTTPResponse\from_file(
+      WEB_PATH + "/index.html"
+    )
+  },
+  _-> => (req) {
+    return http_packet\HTTPResponse\from_file(
+      WEB_PATH + req\path,
+      error=WEB_PATH + "/not_found.html"
     )
   }
 }
