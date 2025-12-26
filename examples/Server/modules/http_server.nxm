@@ -22,9 +22,9 @@ implement $HTTPServer => {
         request = http_packet\HTTPRequest\unpack(
           client\recv()
         )
-        if ?? == $__routes or (not $__routes has request\path) => {
-          if ?? != $__routes and  $__routes has '_' => {
-            response = $__routes['_'](request)
+        if ?? == $__routes or (not $__routes has request\method) or (not $__routes[request\method] has request\path) => {
+          if ?? != $__routes and $__routes has request\method and  $__routes[request\method] has '_' => {
+            response = $__routes[request\method]['_'](request)
           } else => {
             response = http_packet\HTTPResponse(
               headers={},
@@ -34,7 +34,7 @@ implement $HTTPServer => {
             )
           }
         } else => {
-          response = $__routes[request\path](request)
+          response = $__routes[request\method][request\path](request)
         }
         client\send(response\pack())
         client\close()

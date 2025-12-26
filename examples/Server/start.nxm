@@ -5,7 +5,7 @@ http_server = load("http_server")
 
 WEB_PATH = ("./www")
 
-routes = {
+get_routes = {
   ['/']-> => (req) {
     return http_packet\HTTPResponse\from_file(
       WEB_PATH + "/index.html"
@@ -19,11 +19,15 @@ routes = {
   }
 }
 
+methods = {
+  GET -> get_routes
+}
+
 $$__start => (args) {
   try => {
     println("• Start Server")
     server = http_server\HTTPServer()
-    server\set_routes(routes)
+    server\set_routes(methods)
     server\start()
   } catch "Interrupt" :_ => {
     println("• Stop Server")
