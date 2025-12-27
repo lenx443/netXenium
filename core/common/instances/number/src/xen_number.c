@@ -82,6 +82,44 @@ Xen_Instance* Xen_Number_Floor(Xen_Instance* x) {
   return integer_part;
 }
 
+static Xen_Number* Xen_Number_Mul_Pow10_2(Xen_Number* n, int32_t pow10) {
+  if (!n)
+    return NULL;
+  if (pow10 == 0)
+    return n;
+
+  // Crea un número copia para no modificar el original
+  Xen_Number* result =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  if (!result)
+    return NULL;
+
+  result->sign = n->sign;
+  result->scale = n->scale;
+  result->size = n->size;
+  result->digits = (uint32_t*)Xen_Alloc(result->size * sizeof(uint32_t));
+  memcpy(result->digits, n->digits, result->size * sizeof(uint32_t));
+
+  // Multiplicar el número por 10^pow10 usando enteros
+  for (int32_t i = 0; i < pow10; i++) {
+    uint64_t carry = 0;
+    for (size_t j = 0; j < result->size; j++) {
+      uint64_t cur = (uint64_t)result->digits[j] * 10 + carry;
+      result->digits[j] = (uint32_t)(cur & 0xFFFFFFFF);
+      carry = cur >> 32;
+    }
+    if (carry) {
+      result->digits = (uint32_t*)realloc(result->digits, (result->size + 1) *
+                                                              sizeof(uint32_t));
+      result->digits[result->size++] = (uint32_t)carry;
+    }
+  }
+
+  // Ajusta scale
+  result->scale += pow10;
+  return result;
+}
+
 static Xen_Number* Xen_Number_Mul_Pow10(Xen_Number* n, int32_t pow10) {
   if (!n)
     return NULL;
@@ -354,9 +392,9 @@ int Xen_Number_Cmp(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   Xen_Number* b_scaled = b;
   int scale_diff = a->scale - b->scale;
   if (scale_diff > 0) {
-    b_scaled = (Xen_Number*)Xen_Number_Mul_Pow10(b, scale_diff);
+    b_scaled = (Xen_Number*)Xen_Number_Mul_Pow10_2(b, scale_diff);
   } else if (scale_diff < 0) {
-    a_scaled = (Xen_Number*)Xen_Number_Mul_Pow10(a, -scale_diff);
+    a_scaled = (Xen_Number*)Xen_Number_Mul_Pow10_2(a, -scale_diff);
   }
 
   if (a_scaled->size > b_scaled->size) {
