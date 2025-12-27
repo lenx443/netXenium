@@ -23,26 +23,13 @@ static void Xen_Number_Normalize(Xen_Number* n) {
     return;
   }
 
-  while (n->scale > 0) {
+  while (n->scale > 0 && (n->digits[0] % 10 == 0)) {
     uint64_t carry = 0;
-    int divisible = 1;
     for (ssize_t i = n->size - 1; i >= 0; i--) {
-      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
-      if (cur % 10 != 0)
-        divisible = 0;
-      carry = cur % 10;
-    }
-
-    if (!divisible)
-      break;
-
-    carry = 0;
-    for (ssize_t i = n->size - 1; i >= 0; i--) {
-      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
+      uint64_t cur = (carry << 32) | n->digits[i];
       n->digits[i] = (uint32_t)(cur / 10);
       carry = cur % 10;
     }
-
     n->scale--;
   }
 
@@ -99,93 +86,156 @@ static Xen_Number* Xen_Number_Mul_Pow10(Xen_Number* n, int32_t pow10) {
   if (!n)
     return NULL;
   if (pow10 == 0)
-    return n;
+    return (Xen_Number*)Xen_Number_Copy((Xen_Instance*)n);
 
   Xen_Number* result =
       (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
   if (!result)
     return NULL;
 
+  result->digits = Xen_Alloc(n->size * sizeof(uint32_t));
+  memcpy(result->digits, n->digits, n->size * sizeof(uint32_t));
+
+  result->size = n->size;
   result->sign = n->sign;
-  result->scale = n->scale;
-
-  Xen_Number* factor =
-      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
-  if (!factor)
-    return NULL;
-
-  factor->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
-  factor->digits[0] = 1;
-  factor->size = 1;
-  factor->sign = 1;
-  factor->scale = 0;
-  Xen_IGC_Push((Xen_Instance*)factor);
-
-  for (int i = 0; i < pow10; i++) {
-    Xen_Instance* val = Xen_Number_From_Int(10);
-    Xen_IGC_Push(val);
-    Xen_Number* tmp = (Xen_Number*)Xen_Number_Mul((Xen_Instance*)factor, val);
-    factor = tmp;
-    Xen_IGC_XPOP(2);
-    Xen_IGC_Push((Xen_Instance*)factor);
-  }
-
-  result = (Xen_Number*)Xen_Number_Mul((Xen_Instance*)n, (Xen_Instance*)factor);
-  Xen_IGC_Pop();
-
-  result->scale = n->scale + pow10;
-  result->sign = n->sign;
+  result->scale = n->scale - pow10;
 
   return result;
 }
 
-static Xen_Number* Xen_Number_BigDiv(Xen_Number* a, Xen_Number* b) {
-  if (!a || !b)
-    return NULL;
-  if (Xen_Number_Is_Zero((Xen_Instance*)b))
+static Xen_Number* Xen_Number_BigDiv_u32(Xen_Number* a, uint32_t d) {
+  if (!a || d == 0)
     return NULL;
 
-  Xen_Number* result =
+  Xen_Number* q =
       (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
-  if (!result)
+  if (!q)
     return NULL;
 
-  result->size = a->size;
-  result->digits = (uint32_t*)calloc(result->size, sizeof(uint32_t));
-  if (!result->digits) {
-    Xen_Dealloc(result);
+  q->digits = calloc(a->size, sizeof(uint32_t));
+  if (!q->digits) {
     return NULL;
   }
 
-  uint32_t* remainder = (uint32_t*)calloc(a->size, sizeof(uint32_t));
-  if (!remainder) {
-    Xen_Dealloc(result->digits);
-    Xen_Dealloc(result);
+  uint64_t rem = 0;
+
+  for (ssize_t i = a->size - 1; i >= 0; i--) {
+    uint64_t cur = (rem << 32) | a->digits[i];
+    q->digits[i] = (uint32_t)(cur / d);
+    rem = cur % d;
+  }
+
+  q->size = a->size;
+  while (q->size > 1 && q->digits[q->size - 1] == 0)
+    q->size--;
+
+  q->sign = a->sign;
+  q->scale = 0;
+
+  return q;
+}
+
+static Xen_Number* Xen_Number_BigDiv(Xen_Number* u, Xen_Number* v) {
+  if (!u || !v)
+    return NULL;
+  if (Xen_Number_Is_Zero((Xen_Instance*)v))
+    return NULL;
+
+  if (v->size == 1)
+    return Xen_Number_BigDiv_u32(u, v->digits[0]);
+
+  const uint64_t BASE = (1ULL << 32);
+
+  size_t n = v->size;
+  size_t m = u->size - n;
+
+  Xen_Number* q =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  if (!q)
+    return NULL;
+
+  q->digits = calloc(m + 1, sizeof(uint32_t));
+  if (!q->digits) {
     return NULL;
   }
-  memcpy(remainder, a->digits, a->size * sizeof(uint32_t));
-  size_t rem_size = a->size;
 
-  for (ssize_t i = (ssize_t)a->size - 1; i >= 0; i--) {
-    uint64_t rem_high = ((size_t)i + 1 < rem_size) ? remainder[i + 1] : 0;
-    uint64_t dividend = ((uint64_t)rem_high << 32) | remainder[i];
+  uint32_t* un = calloc(u->size + 1, sizeof(uint32_t));
+  uint32_t* vn = calloc(v->size, sizeof(uint32_t));
+  if (!un || !vn)
+    goto fail;
 
-    uint32_t q = (uint32_t)(dividend / b->digits[0]);
-    uint64_t sub = (uint64_t)q * b->digits[0];
-    remainder[i] = (uint32_t)(dividend - sub);
-    result->digits[i] = q;
+  uint32_t shift = __builtin_clz(v->digits[n - 1]);
+  uint64_t carry = 0;
+
+  for (size_t i = 0; i < v->size; i++) {
+    uint64_t cur = ((uint64_t)v->digits[i] << shift) | carry;
+    vn[i] = (uint32_t)cur;
+    carry = cur >> 32;
   }
 
-  size_t actual_size = result->size;
-  while (actual_size > 1 && result->digits[actual_size - 1] == 0)
-    actual_size--;
-  result->size = actual_size;
+  carry = 0;
+  for (size_t i = 0; i < u->size; i++) {
+    uint64_t cur = ((uint64_t)u->digits[i] << shift) | carry;
+    un[i] = (uint32_t)cur;
+    carry = cur >> 32;
+  }
+  un[u->size] = carry;
 
-  result->sign = a->sign * b->sign;
-  result->scale = 0;
+  for (ssize_t j = m; j >= 0; j--) {
+    uint64_t u2 = ((uint64_t)un[j + n] << 32) | un[j + n - 1];
+    uint64_t qhat = u2 / vn[n - 1];
+    uint64_t rhat = u2 % vn[n - 1];
 
-  Xen_Dealloc(remainder);
-  return result;
+    if (qhat == BASE)
+      qhat--;
+
+    while (qhat * vn[n - 2] > ((rhat << 32) | un[j + n - 2])) {
+      qhat--;
+      rhat += vn[n - 1];
+      if (rhat >= BASE)
+        break;
+    }
+
+    int64_t borrow = 0;
+    for (size_t i = 0; i < n; i++) {
+      uint64_t p = qhat * vn[i];
+      int64_t t = (int64_t)un[j + i] - (int64_t)(p & 0xFFFFFFFF) - borrow;
+      un[j + i] = (uint32_t)t;
+      borrow = (p >> 32) - (t >> 32);
+    }
+
+    int64_t t = (int64_t)un[j + n] - borrow;
+    un[j + n] = (uint32_t)t;
+
+    if (t < 0) {
+      qhat--;
+      uint64_t carryy = 0;
+      for (size_t i = 0; i < n; i++) {
+        uint64_t ty = (uint64_t)un[j + i] + vn[i] + carryy;
+        un[j + i] = (uint32_t)ty;
+        carryy = ty >> 32;
+      }
+      un[j + n] += carryy;
+    }
+
+    q->digits[j] = (uint32_t)qhat;
+  }
+
+  q->size = m + 1;
+  while (q->size > 1 && q->digits[q->size - 1] == 0)
+    q->size--;
+
+  q->sign = u->sign * v->sign;
+  q->scale = 0;
+
+  Xen_Dealloc(un);
+  Xen_Dealloc(vn);
+  return q;
+
+fail:
+  Xen_Dealloc(un);
+  Xen_Dealloc(vn);
+  return NULL;
 }
 
 static uint32_t BigMod_SingleLimb(const uint32_t* a, size_t a_size,
@@ -1336,7 +1386,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return (Xen_Instance*)result;
 }
 
-#define XEN_DECIMAL_DIV_PRECISION 16
+#define XEN_DECIMAL_DIV_PRECISION 32
 
 Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if (!a_inst || !b_inst)
@@ -1368,7 +1418,6 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     scaled = Xen_Number_Mul_Pow10(a, precision);
   }
 
-  Xen_Number_Normalize(scaled);
   Xen_Number* quotient = Xen_Number_BigDiv(scaled, b);
   if (!quotient)
     return NULL;
