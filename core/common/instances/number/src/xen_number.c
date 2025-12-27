@@ -88,7 +88,6 @@ static Xen_Number* Xen_Number_Mul_Pow10_2(Xen_Number* n, int32_t pow10) {
   if (pow10 == 0)
     return n;
 
-  // Crea un número copia para no modificar el original
   Xen_Number* result =
       (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
   if (!result)
@@ -100,7 +99,6 @@ static Xen_Number* Xen_Number_Mul_Pow10_2(Xen_Number* n, int32_t pow10) {
   result->digits = (uint32_t*)Xen_Alloc(result->size * sizeof(uint32_t));
   memcpy(result->digits, n->digits, result->size * sizeof(uint32_t));
 
-  // Multiplicar el número por 10^pow10 usando enteros
   for (int32_t i = 0; i < pow10; i++) {
     uint64_t carry = 0;
     for (size_t j = 0; j < result->size; j++) {
@@ -115,7 +113,6 @@ static Xen_Number* Xen_Number_Mul_Pow10_2(Xen_Number* n, int32_t pow10) {
     }
   }
 
-  // Ajusta scale
   result->scale += pow10;
   return result;
 }
