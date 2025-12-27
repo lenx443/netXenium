@@ -924,6 +924,17 @@ const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
 
   Xen_Dealloc(temp);
   Xen_Dealloc(buf);
+  if (n->scale > 0) {
+    char* end = str + strlen(str) - 1;
+
+    while (end > str && *end == '0') {
+      *end-- = '\0';
+    }
+
+    if (*end == '.') {
+      *end = '\0';
+    }
+  }
   return str;
 }
 
@@ -1325,7 +1336,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return (Xen_Instance*)result;
 }
 
-#define XEN_DECIMAL_DIV_PRECISION 10
+#define XEN_DECIMAL_DIV_PRECISION 16
 
 Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if (!a_inst || !b_inst)
