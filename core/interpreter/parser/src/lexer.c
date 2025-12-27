@@ -423,14 +423,44 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         if (len)
           strncpy(buffer + 1, sf->sf_content + start, len);
         token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
+      } else if (sf->sf_content[lexer->pos] == '.') {
+        advance(lexer);
+        Xen_size_t start = lexer->pos;
+        while (isdigit(sf->sf_content[lexer->pos])) {
+          advance(lexer);
+        }
+        size_t len = lexer->pos - start;
+        char buffer[len + 4];
+        strcpy(buffer, "0.");
+        if (len)
+          strncpy(buffer + 2, sf->sf_content + start, len);
+        token = Token(lexer, TKN_NUMBER, buffer, Xen_CString_Len(buffer));
       } else {
         token = Token(lexer, TKN_NUMBER, "0", 1);
       }
     } else {
       size_t start = lexer->pos;
-      while (isdigit(sf->sf_content[lexer->pos])) {
-        advance(lexer);
+      int seen_digit = 0;
+      int seen_dot = 0;
+
+      while (1) {
+        char ch = sf->sf_content[lexer->pos];
+        if (isdigit(ch)) {
+          seen_digit = 1;
+          advance(lexer);
+        } else if (ch == '.' && !seen_dot) {
+          seen_dot = 1;
+          advance(lexer);
+        } else {
+          break;
+        }
       }
+
+      if (!seen_digit) {
+        token = Token(lexer, TKN_UNDEFINED, "<UNDEF>", 7);
+        return token;
+      }
+
       size_t len = lexer->pos - start;
       token = Token(lexer, TKN_NUMBER, sf->sf_content + start, len);
     }

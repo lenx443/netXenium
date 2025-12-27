@@ -57,6 +57,7 @@ static Xen_Instance* number_alloc(Xen_INSTANCE* self, Xen_Instance* args,
     return NULL;
   }
   num->digits = NULL;
+  num->scale = 0;
   num->size = 0;
   num->sign = 0;
   return (Xen_Instance*)num;
@@ -72,6 +73,7 @@ static Xen_Instance* number_create(Xen_INSTANCE* self, Xen_Instance* args,
       return NULL;
     }
     n->digits[0] = 0;
+    n->scale = 0;
     n->size = 1;
     n->sign = 0;
   }
@@ -356,6 +358,7 @@ static Xen_Instance* number_prop_negative(Xen_Instance* self,
   for (Xen_size_t i = 0; i < size_n; i++) {
     r->digits[i] = n->digits[i];
   }
+  r->scale = n->scale;
   r->size = size_n;
   if (n->sign == 1) {
     r->sign = -1;
