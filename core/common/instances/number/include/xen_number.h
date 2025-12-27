@@ -5,6 +5,8 @@
 
 Xen_bool_t Xen_IsNumber(Xen_Instance*);
 
+Xen_Instance* Xen_Number_Trunc(Xen_Instance*);
+Xen_Instance* Xen_Number_Floor(Xen_Instance*);
 int Xen_Number_Is_Zero(Xen_Instance*);
 int Xen_Number_Is_Odd(Xen_Instance*);
 int Xen_Number_Cmp(Xen_Instance*, Xen_Instance*);

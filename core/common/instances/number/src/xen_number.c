@@ -6,11 +6,94 @@
 
 #include "instance.h"
 #include "xen_alloc.h"
+#include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_number.h"
 #include "xen_number_instance.h"
 #include "xen_typedefs.h"
+
+static void Xen_Number_Normalize(Xen_Number* n) {
+  if (!n || !n->digits)
+    return;
+
+  if (n->size == 1 && n->digits[0] == 0) {
+    n->sign = 0;
+    n->scale = 0;
+    return;
+  }
+
+  while (n->scale > 0) {
+    uint64_t carry = 0;
+    int divisible = 1;
+    for (ssize_t i = n->size - 1; i >= 0; i--) {
+      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
+      if (cur % 10 != 0)
+        divisible = 0;
+      carry = cur % 10;
+    }
+
+    if (!divisible)
+      break;
+
+    carry = 0;
+    for (ssize_t i = n->size - 1; i >= 0; i--) {
+      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
+      n->digits[i] = (uint32_t)(cur / 10);
+      carry = cur % 10;
+    }
+
+    n->scale--;
+  }
+
+  while (n->size > 1 && n->digits[n->size - 1] == 0)
+    n->size--;
+
+  if (n->size == 1 && n->digits[0] == 0)
+    n->sign = 0;
+}
+
+Xen_Instance* Xen_Number_Trunc(Xen_Instance* x) {
+  if (!x)
+    return NULL;
+
+  Xen_Number* n = (Xen_Number*)x;
+  Xen_Number* res = (Xen_Number*)Xen_Number_Copy(x);
+
+  for (Xen_size_t i = n->scale; i < n->size; i++) {
+    res->digits[i] = 0;
+  }
+
+  Xen_Number_Normalize(res);
+  return (Xen_Instance*)res;
+}
+
+Xen_Instance* Xen_Number_Floor(Xen_Instance* x) {
+  if (!x)
+    return NULL;
+  Xen_Instance* ONE = Xen_Number_From_CString("1", 10);
+
+  Xen_Instance* integer_part = Xen_Number_Trunc(x);
+  Xen_IGC_Push(integer_part);
+
+  if (Xen_Number_Cmp(x, ONE) >= 0) {
+    Xen_IGC_Pop();
+    return integer_part;
+  }
+
+  Xen_Instance* diff = Xen_Number_Sub(x, integer_part);
+  if (!Xen_Number_Is_Zero(diff)) {
+    Xen_Instance* one = Xen_Number_From_CString("1", 10);
+    Xen_IGC_Push(one);
+    Xen_Instance* res = Xen_Number_Sub(integer_part, one);
+    Xen_IGC_Pop();
+    Xen_IGC_Pop();
+    return res;
+  }
+
+  Xen_IGC_Pop();
+  return integer_part;
+}
 
 static Xen_Number* Xen_Number_Mul_Pow10(Xen_Number* n, int32_t pow10) {
   if (!n)
@@ -36,14 +119,19 @@ static Xen_Number* Xen_Number_Mul_Pow10(Xen_Number* n, int32_t pow10) {
   factor->size = 1;
   factor->sign = 1;
   factor->scale = 0;
+  Xen_IGC_Push((Xen_Instance*)factor);
 
   for (int i = 0; i < pow10; i++) {
-    Xen_Number* tmp = (Xen_Number*)Xen_Number_Mul((Xen_Instance*)factor,
-                                                  Xen_Number_From_Int(10));
+    Xen_Instance* val = Xen_Number_From_Int(10);
+    Xen_IGC_Push(val);
+    Xen_Number* tmp = (Xen_Number*)Xen_Number_Mul((Xen_Instance*)factor, val);
     factor = tmp;
+    Xen_IGC_XPOP(2);
+    Xen_IGC_Push((Xen_Instance*)factor);
   }
 
   result = (Xen_Number*)Xen_Number_Mul((Xen_Instance*)n, (Xen_Instance*)factor);
+  Xen_IGC_Pop();
 
   result->scale = n->scale + pow10;
   result->sign = n->sign;
@@ -176,55 +264,17 @@ static Xen_Number* Xen_Number_BigMod(Xen_Number* a, Xen_Number* b) {
   return remainder;
 }
 
-static void Xen_Number_Normalize(Xen_Number* n) {
-  if (!n || !n->digits)
-    return;
-
-  if (n->size == 1 && n->digits[0] == 0) {
-    n->sign = 0;
-    n->scale = 0;
-    return;
-  }
-
-  while (n->scale > 0) {
-    uint64_t carry = 0;
-    int divisible = 1;
-    for (ssize_t i = n->size - 1; i >= 0; i--) {
-      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
-      if (cur % 10 != 0)
-        divisible = 0;
-      carry = cur % 10;
-    }
-
-    if (!divisible)
-      break;
-
-    carry = 0;
-    for (ssize_t i = n->size - 1; i >= 0; i--) {
-      uint64_t cur = ((uint64_t)carry << 32) | n->digits[i];
-      n->digits[i] = (uint32_t)(cur / 10);
-      carry = cur % 10;
-    }
-
-    n->scale--;
-  }
-
-  while (n->size > 1 && n->digits[n->size - 1] == 0)
-    n->size--;
-
-  if (n->size == 1 && n->digits[0] == 0)
-    n->sign = 0;
-}
-
 Xen_bool_t Xen_IsNumber(Xen_Instance* inst) {
   return Xen_IMPL(inst) == xen_globals->implements->number;
 }
 
 int Xen_Number_Is_Zero(Xen_Instance* n_inst) {
-  if (!n_inst)
-    return 1;
   Xen_Number* n = (Xen_Number*)n_inst;
-  return (n->size == 1 && n->digits[0] == 0) || n->sign == 0;
+  for (size_t i = 0; i < n->size; i++) {
+    if (n->digits[i] != 0)
+      return false;
+  }
+  return true;
 }
 
 int Xen_Number_Is_Odd(Xen_Instance* n_inst) {
@@ -1275,7 +1325,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return (Xen_Instance*)result;
 }
 
-#define XEN_DECIMAL_DIV_PRECISION 32
+#define XEN_DECIMAL_DIV_PRECISION 10
 
 Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   if (!a_inst || !b_inst)
@@ -1307,6 +1357,7 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     scaled = Xen_Number_Mul_Pow10(a, precision);
   }
 
+  Xen_Number_Normalize(scaled);
   Xen_Number* quotient = Xen_Number_BigDiv(scaled, b);
   if (!quotient)
     return NULL;
@@ -1374,34 +1425,37 @@ Xen_Instance* Xen_Number_Pow(Xen_Instance* base_inst, Xen_Instance* exp_inst) {
   if (Xen_Number_Is_Zero(exp_inst))
     return one;
 
-  Xen_Instance* result = Xen_Number_Mul(one, one); // inicializar result = 1
+  Xen_Instance* result = Xen_Number_Mul(one, one);
   Xen_Instance* base = Xen_Number_Mul(base_inst, one);
   Xen_Instance* exp = Xen_Number_Mul(exp_inst, one);
 
-  while (!Xen_Number_Is_Zero(exp)) {
-    if (Xen_Number_Is_Odd(exp)) {
-      Xen_Instance* tmp = Xen_Number_Mul(result, base);
-      result = tmp;
+  if (((Xen_Number*)exp)->scale == 0) {
+    while (!Xen_Number_Is_Zero(exp)) {
+      if (Xen_Number_Is_Odd(exp)) {
+        Xen_Instance* tmp = Xen_Number_Mul(result, base);
+        result = tmp;
+      }
+
+      Xen_Instance* tmp_base = Xen_Number_Mul(base, base);
+      base = tmp_base;
+
+      Xen_Instance* tmp_exp = Xen_Number_Div2(exp);
+      exp = tmp_exp;
     }
 
-    Xen_Instance* tmp_base = Xen_Number_Mul(base, base);
-    base = tmp_base;
+    Xen_Number* res_num = (Xen_Number*)result;
+    Xen_Number* base_num = (Xen_Number*)base_inst;
 
-    Xen_Instance* tmp_exp = Xen_Number_Div2(exp);
-    exp = tmp_exp;
-  }
+    if (Xen_Number_Is_Odd(exp_inst)) {
+      res_num->sign = base_num->sign;
+    } else {
+      res_num->sign = 1;
+    }
 
-  Xen_Number* res_num = (Xen_Number*)result;
-  Xen_Number* base_num = (Xen_Number*)base_inst;
-
-  if (Xen_Number_Is_Odd(exp_inst)) {
-    res_num->sign = base_num->sign;
+    Xen_Number_Normalize(res_num);
   } else {
-    res_num->sign = 1;
+    return NULL;
   }
-
-  Xen_Number_Normalize(res_num);
-
   return result;
 }
 
@@ -1422,9 +1476,13 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   int scale_diff = a->scale - b->scale;
 
   if (scale_diff > 0) {
+    Xen_IGC_Push((Xen_Instance*)b);
     b_scaled = Xen_Number_Mul_Pow10(b, scale_diff);
+    Xen_IGC_Pop();
   } else if (scale_diff < 0) {
+    Xen_IGC_Push((Xen_Instance*)a);
     a_scaled = Xen_Number_Mul_Pow10(a, -scale_diff);
+    Xen_IGC_Pop();
   }
 
   if (a_scaled->sign != b_scaled->sign) {
