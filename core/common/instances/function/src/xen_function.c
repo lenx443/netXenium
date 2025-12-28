@@ -96,6 +96,7 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
   }
   if (kwargs && Xen_SIZE(kwargs) > 0) {
     Xen_Instance* it = Xen_Attr_Iter(kwargs);
+    Xen_IGC_Push(it);
     Xen_Instance* current = NULL;
     while ((current = Xen_Attr_Next(it)) != NULL) {
       Xen_c_string_t key = Xen_String_As_CString(current);
@@ -104,16 +105,19 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
       if (idx < 0) {
         Xen_VM_Except_Throw(
             Xen_Except_New("ArgumentError", "Unknown keyword argument"));
+        Xen_IGC_Pop();
         goto error;
       }
       if (binding->args[idx].provided) {
         Xen_VM_Except_Throw(Xen_Except_New(
             "ArgumentError", "Argument specified multiple times"));
+        Xen_IGC_Pop();
         goto error;
       }
       if (!check_impl(value, spec[idx].impl)) {
         Xen_VM_Except_Throw(
             Xen_Except_New("TypeError", "Invalid type for keyword argument"));
+        Xen_IGC_Pop();
         goto error;
       }
       binding->args[idx].value = value;
@@ -122,9 +126,11 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
     if (!Xen_VM_Except_Active() ||
         strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
                "RangeEnd") != 0) {
+      Xen_IGC_Pop();
       return NULL;
     }
     (*xen_globals->vm)->except.active = 0;
+    Xen_IGC_Pop();
   }
   for (Xen_size_t i = 0; i < spec_count; i++) {
     if (spec[i].required && !binding->args[i].provided) {

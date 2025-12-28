@@ -72,20 +72,24 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
+      Xen_IGC_XPUSH(kwargs_it, roots);
       Xen_Instance* keyword = NULL;
       while ((keyword = Xen_Attr_Next(kwargs_it)) != NULL) {
         if (!Xen_Map_Has(fun->args_names, keyword)) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+          Xen_IGC_XPOP(roots);
           return NULL;
         }
         if (Xen_Map_Has(((RunContext_ptr)fun_ctx)->ctx_instances, keyword)) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+          Xen_IGC_XPOP(roots);
           return NULL;
         }
         Xen_Instance* value = Xen_Map_Get(kwargs, keyword);
         if (!Xen_Map_Push_Pair(((RunContext_ptr)fun_ctx)->ctx_instances,
                                (Xen_Map_Pair){keyword, value})) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+          Xen_IGC_XPOP(roots);
           return NULL;
         }
       }
@@ -93,6 +97,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
           strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
                  "RangeEnd") != 0) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+        Xen_IGC_XPOP(roots);
         return NULL;
       }
       (*xen_globals->vm)->except.active = 0;
@@ -100,6 +105,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
     Xen_Instance* defaults_it = Xen_Attr_Iter(fun->args_default_values);
     if (!defaults_it) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+      Xen_IGC_XPOP(roots);
       return NULL;
     }
     Xen_IGC_XPUSH(defaults_it, roots);

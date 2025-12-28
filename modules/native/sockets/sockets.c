@@ -1,14 +1,17 @@
 #include <arpa/inet.h>
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
+#include <asm-generic/socket.h>
 #include <bits/fcntl.h>
 #include <errno.h>
 #include <linux/in.h>
 #include <string.h>
 #include <sys/endian.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 
+#include "netxenium/instance.h"
 #include "netxenium/netXenium.h"
 
 #define SOCKET_CAP_READ (1 << 0)
@@ -77,11 +80,11 @@ static Xen_Instance* socket_create(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
   Xen_Function_ArgSpec args_def[] = {
       {"family", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
-       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(AF_INET)},
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
       {"type", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
-       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(SOCK_STREAM)},
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
       {"proto", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
-       XEN_FUNCTION_ARG_OPTIONAL, Xen_Number_From_Int(0)},
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
 
@@ -90,12 +93,24 @@ static Xen_Instance* socket_create(Xen_Instance* self, Xen_Instance* args,
   if (!binding) {
     return NULL;
   }
-  int domain = Xen_Number_As_Int(
-      Xen_Function_ArgBinding_Search(binding, "family")->value);
-  int type =
-      Xen_Number_As_Int(Xen_Function_ArgBinding_Search(binding, "type")->value);
-  int protocol = Xen_Number_As_Int(
-      Xen_Function_ArgBinding_Search(binding, "proto")->value);
+  Xen_Function_ArgBound* domain_arg =
+      Xen_Function_ArgBinding_Search(binding, "family");
+  int domain = AF_INET;
+  if (domain_arg->provided) {
+    domain = Xen_Number_As_Int(domain_arg->value);
+  }
+  Xen_Function_ArgBound* type_arg =
+      Xen_Function_ArgBinding_Search(binding, "type");
+  int type = SOCK_STREAM;
+  if (type_arg->provided) {
+    type = Xen_Number_As_Int(type_arg->value);
+  }
+  Xen_Function_ArgBound* protocol_arg =
+      Xen_Function_ArgBinding_Search(binding, "proto");
+  int protocol = 0;
+  if (protocol_arg->provided) {
+    protocol = Xen_Number_As_Int(protocol_arg->value);
+  }
   Xen_Function_ArgBinding_Free(binding);
   Socket* sock = (Socket*)self;
   sock->domain = domain;
@@ -751,6 +766,46 @@ static Xen_Instance* socket_set_nonblocking(Xen_Instance* self,
   return nil;
 }
 
+static Xen_Instance* socket_set_timeout(Xen_Instance* self, Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"sec", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, Xen_NULL},
+      {"usec", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, Xen_NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_size_t sec =
+      Xen_Number_As_Long(Xen_Function_ArgBinding_Search(binding, "sec")->value);
+  Xen_Function_ArgBound* usec_arg =
+      Xen_Function_ArgBinding_Search(binding, "usec");
+  Xen_size_t usec = 0;
+  if (usec_arg->provided) {
+    usec = Xen_Number_As_Long(usec_arg->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  struct timeval timev = {
+      .tv_sec = sec,
+      .tv_usec = usec,
+  };
+  if (setsockopt(sock->f, SOL_SOCKET, SO_SNDTIMEO, &timev, sizeof(timev)) < 0) {
+    return NULL;
+  }
+  if (setsockopt(sock->f, SOL_SOCKET, SO_RCVTIMEO, &timev, sizeof(timev)) < 0) {
+    return NULL;
+  }
+  return nil;
+}
+
 static Xen_Instance* socket_getsockname(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
@@ -883,6 +938,7 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "getsockopt", socket_getsockopt, nil);
   Xen_VM_Store_Native_Function(props, "set_nonblocking", socket_set_nonblocking,
                                nil);
+  Xen_VM_Store_Native_Function(props, "set_timeout", socket_set_timeout, nil);
   Xen_VM_Store_Native_Function(props, "getsockname", socket_getsockname, nil);
   Xen_VM_Store_Native_Function(props, "getpeername", socket_getpeername, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
