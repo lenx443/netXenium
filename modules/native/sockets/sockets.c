@@ -45,6 +45,16 @@ static int Socket_Addr_IP_Get(Xen_Instance* addr,
   return 1;
 }
 
+static Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP in) {
+  if (!in.ip) {
+    return NULL;
+  }
+  Xen_Instance* ip = Xen_String_From_CString(in.ip);
+  Xen_Instance* port = Xen_Number_From_Int(ntohs(in.port));
+  Xen_Instance* addr = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
+  return addr;
+}
+
 typedef struct {
   Xen_INSTANCE_HEAD;
   int f;
@@ -549,9 +559,8 @@ static Xen_Instance* socket_recvfrom(Xen_Instance* self, Xen_Instance* args,
       Xen_Dealloc(buffer);
       return NULL;
     }
-    Xen_Instance* ip = Xen_String_From_CString(ip_str);
-    Xen_Instance* port = Xen_Number_From_Int(ntohs(remote.sin_port));
-    Xen_Instance* addr = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
+    Xen_Instance* addr =
+        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, remote.sin_port});
     Xen_Instance* result =
         Xen_Tuple_From_Array(2, (Xen_Instance*[]){data, addr});
     if (r == 0) {
@@ -742,6 +751,96 @@ static Xen_Instance* socket_set_nonblocking(Xen_Instance* self,
   return nil;
 }
 
+static Xen_Instance* socket_getsockname(Xen_Instance* self, Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  switch (sock->domain) {
+  case AF_INET: {
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    socklen_t len = sizeof(local);
+    if (getsockname(sock->f, (struct sockaddr*)&local, &len) < 0) {
+      return NULL;
+    }
+    char ip_str[INET_ADDRSTRLEN];
+    if (!inet_ntop(sock->domain, &local.sin_addr, ip_str, sizeof(ip_str))) {
+      return NULL;
+    }
+    Xen_Instance* addr =
+        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin_port});
+    return addr;
+  }
+  case AF_INET6: {
+    struct sockaddr_in6 local;
+    memset(&local, 0, sizeof(local));
+    socklen_t len = sizeof(local);
+    if (getsockname(sock->f, (struct sockaddr*)&local, &len) < 0) {
+      return NULL;
+    }
+    char ip_str[INET6_ADDRSTRLEN];
+    if (!inet_ntop(sock->domain, &local.sin6_addr, ip_str, sizeof(ip_str))) {
+      return NULL;
+    }
+    Xen_Instance* addr =
+        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin6_port});
+    return addr;
+  }
+  default:
+    return NULL;
+  }
+}
+
+static Xen_Instance* socket_getpeername(Xen_Instance* self, Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  Socket* sock = (Socket*)self;
+  if (!sock->open) {
+    return NULL;
+  }
+  switch (sock->domain) {
+  case AF_INET: {
+    struct sockaddr_in local;
+    memset(&local, 0, sizeof(local));
+    socklen_t len = sizeof(local);
+    if (getpeername(sock->f, (struct sockaddr*)&local, &len) < 0) {
+      return NULL;
+    }
+    char ip_str[INET_ADDRSTRLEN];
+    if (!inet_ntop(sock->domain, &local.sin_addr, ip_str, sizeof(ip_str))) {
+      return NULL;
+    }
+    Xen_Instance* addr =
+        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin_port});
+    return addr;
+  }
+  case AF_INET6: {
+    struct sockaddr_in6 local;
+    memset(&local, 0, sizeof(local));
+    socklen_t len = sizeof(local);
+    if (getpeername(sock->f, (struct sockaddr*)&local, &len) < 0) {
+      return NULL;
+    }
+    char ip_str[INET6_ADDRSTRLEN];
+    if (!inet_ntop(sock->domain, &local.sin6_addr, ip_str, sizeof(ip_str))) {
+      return NULL;
+    }
+    Xen_Instance* addr =
+        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin6_port});
+    return addr;
+  }
+  default:
+    return NULL;
+  }
+}
+
 static Xen_Instance* socket_close(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
@@ -784,6 +883,8 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "getsockopt", socket_getsockopt, nil);
   Xen_VM_Store_Native_Function(props, "set_nonblocking", socket_set_nonblocking,
                                nil);
+  Xen_VM_Store_Native_Function(props, "getsockname", socket_getsockname, nil);
+  Xen_VM_Store_Native_Function(props, "getpeername", socket_getpeername, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(AF_INET)});

@@ -11,7 +11,6 @@
 #include "vm_backtrace.h"
 #include "vm_def.h"
 #include "vm_run.h"
-#include "xen_except_implement.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
 #include "xen_igc.h"
@@ -118,7 +117,9 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
 void Xen_VM_Except_Backtrace_Show(void) {
   Xen_Except* except = (Xen_Except*)(*xen_globals->vm)->except.except;
   puts("Unhandled exception occurred.");
-  puts("BackTrace:");
+  if ((*xen_globals->vm)->except.bt->bt_count > 0) {
+    puts("BackTrace:");
+  }
   for (Xen_size_t i = 0; i < (*xen_globals->vm)->except.bt->bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
            (*xen_globals->source_table)
