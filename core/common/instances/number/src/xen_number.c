@@ -1450,7 +1450,7 @@ Xen_Instance* Xen_Number_Div(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     scaled = a;
     precision = 0;
   } else {
-    scaled = Xen_Number_Mul_Pow10(a, precision);
+    scaled = Xen_Number_Mul_Pow10_2(a, precision);
   }
 
   Xen_Number* quotient = Xen_Number_BigDiv(scaled, b);
