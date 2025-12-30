@@ -561,6 +561,18 @@ Xen_Instance* compile_expr_constant(int* error, Compiler* c,
       }
       Xen_IGC_Pop();
       return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "~") == 0) {
+      Xen_Instance* result =
+          Xen_Method_Attr_Str_Call(primary, "__bnot", nil, nil);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_Pop();
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_Pop();
+      return result;
     } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
       Xen_Instance* result =
           Xen_Method_Attr_Str_Call(primary, "__not", nil, nil);
@@ -790,6 +802,66 @@ Xen_Instance* compile_expr_constant(int* error, Compiler* c,
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_HAS);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_XPOP(roots);
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_XPOP(roots);
+      return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "&") == 0) {
+      Xen_Instance* result =
+          Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_BAND);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_XPOP(roots);
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_XPOP(roots);
+      return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "^") == 0) {
+      Xen_Instance* result =
+          Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_BXOR);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_XPOP(roots);
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_XPOP(roots);
+      return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "|") == 0) {
+      Xen_Instance* result =
+          Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_BOR);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_XPOP(roots);
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_XPOP(roots);
+      return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "<<") == 0) {
+      Xen_Instance* result =
+          Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_SHL);
+      if (!result) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_OprError();
+        Xen_IGC_XPOP(roots);
+        *error = -1;
+        return NULL;
+      }
+      Xen_IGC_XPOP(roots);
+      return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, ">>") == 0) {
+      Xen_Instance* result =
+          Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_SHR);
       if (!result) {
         c->sta = Xen_AST_Node_STA(node);
         Xen_OprError();
@@ -1271,6 +1343,10 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
       if (!emit(UNARY_NEGATIVE, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
+    } else if (Xen_AST_Node_Value_Cmp(node, "~") == 0) {
+      if (!emit(UNARY_BIT_NOT, 0, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
     } else if (Xen_AST_Node_Value_Cmp(node, "not") == 0) {
       if (!emit(UNARY_NOT, 0, Xen_AST_Node_STA(node))) {
         return 0;
@@ -1499,6 +1575,26 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
       if (!emit(BINARYOP, Xen_OPR_HAS, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, "&") == 0) {
+      if (!emit(BINARYOP, Xen_OPR_BAND, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, "^") == 0) {
+      if (!emit(BINARYOP, Xen_OPR_BXOR, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, "|") == 0) {
+      if (!emit(BINARYOP, Xen_OPR_BOR, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, "<<") == 0) {
+      if (!emit(BINARYOP, Xen_OPR_SHL, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, ">>") == 0) {
+      if (!emit(BINARYOP, Xen_OPR_SHR, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {

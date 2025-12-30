@@ -43,6 +43,12 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Pow(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Add(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Sub(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_BAnd(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_BXor(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_BOr(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_BNot(Xen_Instance*);
+Xen_Instance* Xen_Number_SHL(Xen_Instance*, Xen_uint64_t);
+Xen_Instance* Xen_Number_SHR(Xen_Instance*, Xen_uint64_t);
 
 #define Xen_Number_As(T, inst)                                                 \
   _Generic((T)0,                                                               \

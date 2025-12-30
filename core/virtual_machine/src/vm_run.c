@@ -484,6 +484,31 @@ static void op_unary_negative(VM_Run* vmr, RunContext_ptr ctx,
   STACK_PUSH(result);
 }
 
+static void op_unary_bit_not(VM_Run* vmr, RunContext_ptr ctx,
+                             Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* inst = STACK_POP;
+  Xen_Instance* method = Xen_Attr_Get_Str(inst, "__bnot");
+  if (!method) {
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
+    ERROR;
+  }
+  if (Xen_IMPL(method) != xen_globals->implements->method) {
+    Xen_OprError();
+    ERROR;
+  }
+  Xen_Instance* result = Xen_Method_Call(method, nil, nil);
+  if (!result) {
+    if (!Xen_VM_Except_Active()) {
+      Xen_OprError();
+    }
+    ERROR;
+  }
+  STACK_PUSH(result);
+}
+
 static void op_unary_not(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
@@ -850,6 +875,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [BINARYOP] = op_binaryop,
     [UNARY_POSITIVE] = op_unary_positive,
     [UNARY_NEGATIVE] = op_unary_negative,
+    [UNARY_BIT_NOT] = op_unary_bit_not,
     [UNARY_NOT] = op_unary_not,
     [COPY] = op_copy,
     [PRINT_TOP] = op_print_top,

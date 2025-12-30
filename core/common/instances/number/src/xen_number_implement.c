@@ -330,6 +330,88 @@ static Xen_Instance* number_opr_ge(Xen_Instance* self, Xen_Instance* args,
   return Xen_False;
 }
 
+static Xen_Instance* number_opr_bit_and(Xen_Instance* self, Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->number)
+    return NULL;
+
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* result = Xen_Number_BAnd(self, num);
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
+static Xen_Instance* number_opr_bit_xor(Xen_Instance* self, Xen_Instance* args,
+                                        Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->number)
+    return NULL;
+
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* result = Xen_Number_BXor(self, num);
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
+static Xen_Instance* number_opr_bit_or(Xen_Instance* self, Xen_Instance* args,
+                                       Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->number)
+    return NULL;
+
+  Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* result = Xen_Number_BOr(self, num);
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
+static Xen_Instance* number_opr_shift_left(Xen_Instance* self,
+                                           Xen_Instance* args,
+                                           Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->number)
+    return NULL;
+
+  Xen_llong_t num = Xen_Number_As_LongLong(Xen_Tuple_Get_Index(args, 0));
+  Xen_Instance* result = Xen_Number_SHL(self, num);
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
+static Xen_Instance* number_opr_shift_right(Xen_Instance* self,
+                                            Xen_Instance* args,
+                                            Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_Nil_Eval(args) || Xen_SIZE(args) < 1 ||
+      Xen_IMPL(Xen_Vector_Peek_Index(args, 0)) !=
+          xen_globals->implements->number)
+    return NULL;
+
+  Xen_llong_t num = Xen_Number_As_LongLong(Xen_Tuple_Get_Index(args, 0));
+  Xen_Instance* result = Xen_Number_SHR(self, num);
+  if (!result) {
+    return NULL;
+  }
+  return result;
+}
+
 static Xen_Instance* number_prop_positive(Xen_Instance* self,
                                           Xen_Instance* args,
                                           Xen_Instance* kwargs) {
@@ -370,10 +452,17 @@ static Xen_Instance* number_prop_negative(Xen_Instance* self,
   return (Xen_Instance*)r;
 }
 
+static Xen_Instance* number_prop_bnot(Xen_Instance* self, Xen_Instance* args,
+                                      Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  return Xen_Number_BNot(self);
+}
+
 static Xen_Instance* number_prop_not(Xen_Instance* self, Xen_Instance* args,
                                      Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (((Xen_Number*)self)->sign == 0) {
+  Xen_Number* n = (Xen_Number*)self;
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0)) {
     return Xen_True;
   }
   return Xen_False;
@@ -709,10 +798,18 @@ int Xen_Number_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__le", number_opr_le, nil) ||
       !Xen_VM_Store_Native_Function(props, "__gt", number_opr_gt, nil) ||
       !Xen_VM_Store_Native_Function(props, "__ge", number_opr_ge, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__band", number_opr_bit_and, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__bxor", number_opr_bit_xor, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__bor", number_opr_bit_or, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__shl", number_opr_shift_left,
+                                    nil) ||
+      !Xen_VM_Store_Native_Function(props, "__shr", number_opr_shift_right,
+                                    nil) ||
       !Xen_VM_Store_Native_Function(props, "__positive", number_prop_positive,
                                     nil) ||
       !Xen_VM_Store_Native_Function(props, "__negative", number_prop_negative,
                                     nil) ||
+      !Xen_VM_Store_Native_Function(props, "__bnot", number_prop_bnot, nil) ||
       !Xen_VM_Store_Native_Function(props, "__not", number_prop_not, nil) ||
       !Xen_VM_Store_Native_Function(props, "bytes", number_bytes, nil) ||
       !Xen_VM_Store_Native_Function(props, "i8", number_i8, nil) ||

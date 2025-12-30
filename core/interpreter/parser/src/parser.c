@@ -81,8 +81,12 @@ static Xen_Instance* parser_unary(Parser*);
 static Xen_Instance* parser_factor(Parser*);
 static Xen_Instance* parser_term(Parser*);
 static Xen_Instance* parser_add(Parser*);
+static Xen_Instance* parser_shift(Parser*);
 static Xen_Instance* parser_relational(Parser*);
 static Xen_Instance* parser_not(Parser*);
+static Xen_Instance* parser_bit_and(Parser*);
+static Xen_Instance* parser_bit_xor(Parser*);
+static Xen_Instance* parser_bit_or(Parser*);
 static Xen_Instance* parser_and(Parser*);
 static Xen_Instance* parser_or(Parser*);
 static Xen_Instance* parser_function(Parser*);
@@ -152,7 +156,7 @@ bool is_primary(Parser* p) {
 bool is_unary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
   if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT ||
-      token == TKN_MUL) {
+      token == TKN_MUL || token == TKN_BIT_NOT) {
     return true;
   }
   return false;
@@ -661,8 +665,44 @@ Xen_Instance* parser_add(Parser* p) {
   return left;
 }
 
-Xen_Instance* parser_relational(Parser* p) {
+static Xen_Instance* parser_shift(Parser* p) {
   Xen_Instance* left = parser_add(p);
+  if (!left) {
+    return NULL;
+  }
+  while (p->token.tkn_type == TKN_SHIFT_LEFT ||
+         p->token.tkn_type == TKN_SHIFT_RIGHT) {
+    char* op = Xen_CString_Dup(p->token.tkn_text);
+    if (!op) {
+      return NULL;
+    }
+    parser_next(p);
+    Xen_Instance* right = parser_add(p);
+    if (!right) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
+    if (!binary) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Dealloc(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance* parser_relational(Parser* p) {
+  Xen_Instance* left = parser_shift(p);
   if (!left) {
     return NULL;
   }
@@ -675,7 +715,7 @@ Xen_Instance* parser_relational(Parser* p) {
       return NULL;
     }
     parser_next(p);
-    Xen_Instance* right = parser_add(p);
+    Xen_Instance* right = parser_shift(p);
     if (!right) {
       Xen_Dealloc(op);
       return NULL;
@@ -719,8 +759,113 @@ Xen_Instance* parser_not(Parser* p) {
   return unary;
 }
 
-Xen_Instance* parser_and(Parser* p) {
+Xen_Instance* parser_bit_and(Parser* p) {
   Xen_Instance* left = parser_not(p);
+  if (!left) {
+    return NULL;
+  }
+  while (p->token.tkn_type == TKN_BIT_AND) {
+    char* op = Xen_CString_Dup(p->token.tkn_text);
+    if (!op) {
+      return NULL;
+    }
+    parser_next(p);
+    Xen_Instance* right = parser_not(p);
+    if (!right) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
+    if (!binary) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Dealloc(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance* parser_bit_xor(Parser* p) {
+  Xen_Instance* left = parser_bit_and(p);
+  if (!left) {
+    return NULL;
+  }
+  while (p->token.tkn_type == TKN_BIT_XOR) {
+    char* op = Xen_CString_Dup(p->token.tkn_text);
+    if (!op) {
+      return NULL;
+    }
+    parser_next(p);
+    Xen_Instance* right = parser_bit_and(p);
+    if (!right) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
+    if (!binary) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Dealloc(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance* parser_bit_or(Parser* p) {
+  Xen_Instance* left = parser_bit_xor(p);
+  if (!left) {
+    return NULL;
+  }
+  while (p->token.tkn_type == TKN_BIT_OR) {
+    char* op = Xen_CString_Dup(p->token.tkn_text);
+    if (!op) {
+      return NULL;
+    }
+    parser_next(p);
+    Xen_Instance* right = parser_bit_xor(p);
+    if (!right) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Instance* binary = Xen_AST_Node_New("Binary", op, p->token.sta);
+    if (!binary) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, left)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(binary, right)) {
+      Xen_Dealloc(op);
+      return NULL;
+    }
+    Xen_Dealloc(op);
+    left = binary;
+  }
+  return left;
+}
+
+Xen_Instance* parser_and(Parser* p) {
+  Xen_Instance* left = parser_bit_or(p);
   if (!left) {
     return NULL;
   }
@@ -730,7 +875,7 @@ Xen_Instance* parser_and(Parser* p) {
       return NULL;
     }
     parser_next(p);
-    Xen_Instance* right = parser_not(p);
+    Xen_Instance* right = parser_bit_or(p);
     if (!right) {
       Xen_Dealloc(op);
       return NULL;

@@ -147,7 +147,7 @@ static Xen_Number* Xen_Number_BigDiv_u32(Xen_Number* a, uint32_t d) {
   if (!q)
     return NULL;
 
-  q->digits = calloc(a->size, sizeof(uint32_t));
+  q->digits = Xen_ZAlloc(a->size, sizeof(uint32_t));
   if (!q->digits) {
     return NULL;
   }
@@ -189,13 +189,13 @@ static Xen_Number* Xen_Number_BigDiv(Xen_Number* u, Xen_Number* v) {
   if (!q)
     return NULL;
 
-  q->digits = calloc(m + 1, sizeof(uint32_t));
+  q->digits = Xen_ZAlloc(m + 1, sizeof(uint32_t));
   if (!q->digits) {
     return NULL;
   }
 
-  uint32_t* un = calloc(u->size + 1, sizeof(uint32_t));
-  uint32_t* vn = calloc(v->size, sizeof(uint32_t));
+  uint32_t* un = Xen_ZAlloc(u->size + 1, sizeof(uint32_t));
+  uint32_t* vn = Xen_ZAlloc(v->size, sizeof(uint32_t));
   if (!un || !vn)
     goto fail;
 
@@ -309,7 +309,7 @@ static Xen_Number* Xen_Number_BigMod(Xen_Number* a, Xen_Number* b) {
     return NULL;
 
   remainder->size = a->size;
-  remainder->digits = (uint32_t*)calloc(remainder->size, sizeof(uint32_t));
+  remainder->digits = (uint32_t*)Xen_ZAlloc(remainder->size, sizeof(uint32_t));
   if (!remainder->digits) {
     Xen_Dealloc(remainder);
     return NULL;
@@ -1379,7 +1379,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   }
 
   size_t res_size = a->size + b->size;
-  uint32_t* res_digits = (uint32_t*)calloc(res_size, sizeof(uint32_t));
+  uint32_t* res_digits = (uint32_t*)Xen_ZAlloc(res_size, sizeof(uint32_t));
   if (!res_digits)
     return NULL;
 
@@ -1599,7 +1599,7 @@ Xen_Instance* Xen_Number_Add(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 
   Xen_size_t max_size =
       (a_scaled->size > b_scaled->size ? a_scaled->size : b_scaled->size) + 1;
-  uint32_t* res_digits = (uint32_t*)calloc(max_size, sizeof(uint32_t));
+  uint32_t* res_digits = (uint32_t*)Xen_ZAlloc(max_size, sizeof(uint32_t));
   if (!res_digits)
     return NULL;
 
@@ -1681,7 +1681,7 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   int result_sign = (cmp >= 0) ? a_sign : -a_sign;
 
   Xen_size_t res_size = minuend->size;
-  uint32_t* res_digits = (uint32_t*)calloc(res_size, sizeof(uint32_t));
+  uint32_t* res_digits = (uint32_t*)Xen_ZAlloc(res_size, sizeof(uint32_t));
   if (!res_digits)
     return NULL;
 
@@ -1719,6 +1719,194 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   Xen_Number_Normalize(result);
 
   return (Xen_Instance*)result;
+}
+
+static inline uint32_t sign_fill(Xen_Number* n) {
+  return n->sign == -1 ? UINT32_MAX : 0;
+}
+
+static inline void bnormalize(Xen_Number* x) {
+  uint32_t fill = (x->sign == -1) ? UINT32_MAX : 0;
+  while (x->size > 1 && x->digits[x->size - 1] == fill) {
+    uint32_t msb = x->digits[x->size - 2] >> 31;
+    if (msb == ((x->sign == -1) ? 1 : 0))
+      x->size--;
+    else
+      break;
+  }
+  x->sign = ((x->digits[x->size - 1] >> 31) & 1) ? -1 : 1;
+  if (x->size == 1 && x->digits[0] == 0) {
+    x->sign = 0;
+  }
+}
+
+Xen_Instance* Xen_Number_BAnd(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (a->scale > 0 || b->scale > 0) {
+    return NULL;
+  }
+
+  Xen_size_t size = a->size < b->size ? b->size : a->size;
+
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
+  r->size = size;
+
+  for (Xen_size_t i = 0; i < size; i++) {
+    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
+    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
+    r->digits[i] = wa & wb;
+  }
+  bnormalize(r);
+  return (Xen_Instance*)r;
+}
+
+Xen_Instance* Xen_Number_BXor(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (a->scale > 0 || b->scale > 0) {
+    return NULL;
+  }
+
+  Xen_size_t size = a->size < b->size ? b->size : a->size;
+
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
+  r->size = size;
+
+  for (Xen_size_t i = 0; i < size; i++) {
+    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
+    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
+    r->digits[i] = wa ^ wb;
+  }
+  bnormalize(r);
+  return (Xen_Instance*)r;
+}
+
+Xen_Instance* Xen_Number_BOr(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+  if (!a_inst || !b_inst)
+    return NULL;
+
+  Xen_Number* a = (Xen_Number*)a_inst;
+  Xen_Number* b = (Xen_Number*)b_inst;
+
+  if (a->scale > 0 || b->scale > 0) {
+    return NULL;
+  }
+
+  Xen_size_t size = a->size < b->size ? b->size : a->size;
+
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
+  r->size = size;
+
+  for (Xen_size_t i = 0; i < size; i++) {
+    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
+    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
+    r->digits[i] = wa | wb;
+  }
+  bnormalize(r);
+  return (Xen_Instance*)r;
+}
+
+Xen_Instance* Xen_Number_BNot(Xen_Instance* n_inst) {
+  if (!n_inst)
+    return NULL;
+
+  Xen_Number* n = (Xen_Number*)n_inst;
+
+  if (n->scale > 0)
+    return NULL;
+
+  Xen_Instance* one = Xen_Number_From_Int(1);
+
+  Xen_Number* r = (Xen_Number*)Xen_Number_Add((Xen_Instance*)n, one);
+
+  if (n->sign == 1) {
+    r->sign = -1;
+  } else if (n->sign == -1) {
+    r->sign = 1;
+  } else {
+    return NULL;
+  }
+
+  return (Xen_Instance*)r;
+}
+
+Xen_Instance* Xen_Number_SHL(Xen_Instance* n_inst, Xen_uint64_t nbits) {
+  Xen_Number* n = (Xen_Number*)n_inst;
+
+  if (n->scale > 0) {
+    return NULL;
+  }
+
+  Xen_size_t word_shift = nbits / 32;
+  Xen_size_t bit_shift = nbits % 32;
+
+  Xen_size_t size = n->size + word_shift + (bit_shift ? 1 : 0);
+
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
+  r->size = size;
+  r->sign = n->sign;
+  for (Xen_size_t i = 0; i < n->size; i++) {
+    Xen_size_t j = i + word_shift;
+    r->digits[j] |= n->digits[i] << bit_shift;
+    if (bit_shift && j + 1 < size) {
+      r->digits[j + 1] |= n->digits[i] >> (32 - bit_shift);
+    }
+  }
+  bnormalize(r);
+  return (Xen_Instance*)r;
+}
+
+Xen_Instance* Xen_Number_SHR(Xen_Instance* n_inst, Xen_uint64_t nbits) {
+  Xen_Number* n = (Xen_Number*)n_inst;
+
+  if (n->scale > 0) {
+    return NULL;
+  }
+
+  Xen_size_t word_shift = nbits / 32;
+  Xen_size_t bit_shift = nbits % 32;
+
+  if (word_shift >= n->size) {
+    return Xen_Number_From_UInt((n->sign == -1) ? UINT32_MAX : 0);
+  }
+  Xen_size_t size = n->size - word_shift;
+
+  Xen_Number* r =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
+  r->size = size;
+  r->sign = n->sign;
+
+  for (Xen_size_t i = 0; i < size; i++) {
+    Xen_size_t j = i + word_shift;
+    r->digits[i] = n->digits[j] >> bit_shift;
+    if (bit_shift && j + 1 < n->size) {
+      r->digits[i] |= n->digits[j + 1] << (32 - bit_shift);
+    }
+  }
+
+  if (n->sign == -1 && bit_shift) {
+    r->digits[size - 1] |= ~((1U << (32 - bit_shift)) - 1);
+  }
+  bnormalize(r);
+  return (Xen_Instance*)r;
 }
 
 const signed char Xen_Char_Digit_Value[256] = {

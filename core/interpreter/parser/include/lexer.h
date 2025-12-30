@@ -47,6 +47,12 @@ typedef enum {
   TKN_GT,
   TKN_LE,
   TKN_GE,
+  TKN_BIT_AND,
+  TKN_BIT_XOR,
+  TKN_BIT_OR,
+  TKN_BIT_NOT,
+  TKN_SHIFT_LEFT,
+  TKN_SHIFT_RIGHT,
 } Lexer_Token_Type;
 
 typedef struct {
