@@ -3,6 +3,7 @@
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_except_instance.h"
+#include "xen_igc.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 #include <stdarg.h>
@@ -18,6 +19,7 @@ Xen_Instance* Xen_Except_New(Xen_c_string_t type, Xen_c_string_t message) {
   if (!type) {
     return NULL;
   }
+  Xen_IGC_Push((Xen_Instance*)except);
   except->type = Xen_CString_Dup(type);
   if (!except->type) {
     abort();
@@ -28,6 +30,7 @@ Xen_Instance* Xen_Except_New(Xen_c_string_t type, Xen_c_string_t message) {
       abort();
     }
   }
+  Xen_IGC_Pop();
   return (Xen_Instance*)except;
 }
 

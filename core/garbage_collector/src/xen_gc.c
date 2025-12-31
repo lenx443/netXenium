@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-#define XEN_GC_PROMOTION_AGE 3
+#define XEN_GC_PROMOTION_AGE 2
 #define XEN_GC_MAJOR_EVERY_MINORS 8
 
 static struct __GC_Heap __gc_heap = {
@@ -77,14 +77,32 @@ void Xen_GC_MinorCollect(void) {
   xen_globals->gc_heap->minor_collections++;
   Xen_GC_Mark_Young();
   Xen_GC_Sweep_Young();
+  Xen_size_t out = 0;
+  for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
+    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
+
+    struct __GC_Header* child = *e->slot;
+
+    if (!child)
+      continue;
+
+    if (e->parent->generation == GC_OLD && child->generation == GC_YOUNG) {
+      xen_globals->gc_heap->remembered_set[out++] =
+          xen_globals->gc_heap->remembered_set[i];
+    }
+  }
+
+  xen_globals->gc_heap->remembered_count = out;
+
   xen_globals->gc_heap->pressure = 0;
 }
 
 void Xen_GC_MajorCollect(void) {
   xen_globals->gc_heap->major_collections++;
   Xen_GC_Mark();
-  Xen_GC_Sweep_Young();
+  Xen_GC_Sweep_Young_NPromote();
   Xen_GC_Sweep_Old();
+  xen_globals->gc_heap->remembered_count = 0;
   xen_globals->gc_heap->pressure = 0;
 }
 
@@ -181,8 +199,14 @@ void Xen_GC_Mark_Young(void) {
     }
   }
   for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-    struct __GC_Header* child = xen_globals->gc_heap->remembered_set[i];
-    if (child->color == GC_WHITE) {
+    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
+
+    struct __GC_Header* child = *e->slot;
+
+    if (!child)
+      continue;
+
+    if (child->generation == GC_YOUNG && child->color == GC_WHITE) {
       Xen_GC_Push_Gray(child);
     }
   }
@@ -216,21 +240,44 @@ void Xen_GC_Sweep_Young(void) {
 
       curr->destroy(&curr);
 
-      for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-        if (xen_globals->gc_heap->remembered_set[i] == curr) {
-          xen_globals->gc_heap->remembered_set[i] =
-              xen_globals->gc_heap
-                  ->remembered_set[--xen_globals->gc_heap->remembered_count];
-          break;
-        }
-      }
-
     } else {
       curr->color = GC_WHITE;
       curr->age++;
       if (curr->age >= XEN_GC_PROMOTION_AGE) {
         Xen_GC_Promote_toOld(curr);
       }
+    }
+
+    curr = next;
+  }
+}
+
+void Xen_GC_Sweep_Young_NPromote(void) {
+  struct __GC_Header* curr = xen_globals->gc_heap->young;
+
+  while (curr) {
+    struct __GC_Header* next = curr->next;
+
+    if (curr->color == GC_WHITE) {
+      if (curr->prev) {
+        curr->prev->next = curr->next;
+      }
+      if (curr->next) {
+        curr->next->prev = curr->prev;
+      }
+
+      if (xen_globals->gc_heap->young == curr) {
+        xen_globals->gc_heap->young = curr->next;
+      }
+
+      xen_globals->gc_heap->young_bytes -= curr->size;
+      xen_globals->gc_heap->total_bytes -= curr->size;
+
+      curr->destroy(&curr);
+
+    } else {
+      curr->color = GC_WHITE;
+      curr->age++;
     }
 
     curr = next;
@@ -270,27 +317,29 @@ void Xen_GC_Sweep_Old(void) {
 
 void Xen_GC_Shutdown(void) {
   Xen_GC_MajorCollect();
+  assert(xen_globals->gc_heap->young == NULL);
+  assert(xen_globals->gc_heap->old == NULL);
   assert(xen_globals->gc_heap->pressure == 0);
   assert(xen_globals->gc_heap->total_bytes == 0);
 }
 
 void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
                         struct __GC_Header* child) {
-  assert(child != NULL);
   *field = child;
-  if (parent && child->color == GC_WHITE &&
-      (parent->color == GC_BLACK || parent->generation == GC_OLD)) {
-    Xen_GC_Push_Gray(child);
-  }
 
-  if (parent && parent->generation == GC_OLD && child->generation == GC_YOUNG) {
+  if (!parent || !child)
+    return;
+
+  if (parent->generation == GC_OLD && child->generation == GC_YOUNG) {
     for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-      if (xen_globals->gc_heap->remembered_set[i] == child)
+      struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
+      if (e->parent == parent && e->slot == field)
         return;
     }
     assert(xen_globals->gc_heap->remembered_count < __XEN_GC_MAX_REMEMBERED__);
     xen_globals->gc_heap
-        ->remembered_set[xen_globals->gc_heap->remembered_count++] = child;
+        ->remembered_set[xen_globals->gc_heap->remembered_count++] =
+        (struct __GC_Edge){parent, field};
   }
 }
 

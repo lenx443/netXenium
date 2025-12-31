@@ -22,6 +22,7 @@ void Xen_GC_Trace(struct __GC_Header*);
 void Xen_GC_Mark(void);
 void Xen_GC_Mark_Young(void);
 void Xen_GC_Sweep_Young(void);
+void Xen_GC_Sweep_Young_NPromote(void);
 void Xen_GC_Sweep_Old(void);
 void Xen_GC_Shutdown(void);
 void Xen_GC_Start(void);
