@@ -56,7 +56,8 @@ static void __igc_roots_ensure_capacity(struct __IGC_Roots* roots) {
 
 static void __igc_roots_push(struct __IGC_Roots* roots, Xen_GCHeader* h) {
   __igc_roots_ensure_capacity(roots);
-  roots->roots[roots->count++] = h;
+  Xen_GC_Write_Field((struct __GC_Header*)roots,
+                     (struct __GC_Header**)&roots->roots[roots->count++], h);
 }
 
 static void __igc_roots_pop(struct __IGC_Roots* roots) {

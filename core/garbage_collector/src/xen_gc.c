@@ -9,13 +9,21 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
+#define XEN_GC_PROMOTION_AGE 3
+#define XEN_GC_MAJOR_EVERY_MINORS 8
+
 static struct __GC_Heap __gc_heap = {
     .young = NULL,
     .old = NULL,
     .roots_count = 0,
     .gray_stack_count = 0,
+    .young_bytes = 0,
+    .old_bytes = 0,
+    .minor_collections = 0,
+    .major_collections = 0,
+    .minor_threshold = 1024 * 1024,
+    .major_threshold = 4 * 1024 * 1024,
     .total_bytes = 0,
-    .threshold = 1024 * 1024,
     .pressure = 0,
     .started = 1,
 };
@@ -42,12 +50,21 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   }
   xen_globals->gc_heap->young = h;
 
+  xen_globals->gc_heap->young_bytes += size;
   xen_globals->gc_heap->total_bytes += size;
   xen_globals->gc_heap->pressure += size;
 
   if (xen_globals->gc_heap->started) {
-    if (xen_globals->gc_heap->pressure > xen_globals->gc_heap->threshold) {
-      Xen_GC_Collect();
+    if (xen_globals->gc_heap->pressure >
+        xen_globals->gc_heap->minor_threshold) {
+      if (xen_globals->gc_heap->old_bytes >
+              xen_globals->gc_heap->major_threshold ||
+          xen_globals->gc_heap->minor_collections % XEN_GC_MAJOR_EVERY_MINORS ==
+              0) {
+        Xen_GC_MajorCollect();
+      } else {
+        Xen_GC_MinorCollect();
+      }
     }
   }
   h->trace = fn_trace;
@@ -56,9 +73,18 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   return h;
 }
 
-void Xen_GC_Collect(void) {
+void Xen_GC_MinorCollect(void) {
+  xen_globals->gc_heap->minor_collections++;
+  Xen_GC_Mark_Young();
+  Xen_GC_Sweep_Young();
+  xen_globals->gc_heap->pressure = 0;
+}
+
+void Xen_GC_MajorCollect(void) {
+  xen_globals->gc_heap->major_collections++;
   Xen_GC_Mark();
-  Xen_GC_Sweep();
+  Xen_GC_Sweep_Young();
+  Xen_GC_Sweep_Old();
   xen_globals->gc_heap->pressure = 0;
 }
 
@@ -96,6 +122,31 @@ struct __GC_Header* Xen_GC_Pop_Gray(void) {
       ->gray_stack[--xen_globals->gc_heap->gray_stack_count];
 }
 
+void Xen_GC_Promote_toOld(struct __GC_Header* h) {
+  if (h->prev) {
+    h->prev->next = h->next;
+  }
+  if (h->next) {
+    h->next->prev = h->prev;
+  }
+
+  if (xen_globals->gc_heap->young == h) {
+    xen_globals->gc_heap->young = h->next;
+  }
+
+  xen_globals->gc_heap->young_bytes -= h->size;
+  xen_globals->gc_heap->old_bytes += h->size;
+
+  h->generation = GC_OLD;
+  h->age = 0;
+
+  h->prev = NULL;
+  h->next = xen_globals->gc_heap->old;
+  if (xen_globals->gc_heap->old)
+    xen_globals->gc_heap->old->prev = h;
+  xen_globals->gc_heap->old = h;
+}
+
 void Xen_GC_Trace_GCHeader(struct __GC_Header* h) {
   assert(h != NULL);
   if (h->color == GC_WHITE) {
@@ -122,7 +173,27 @@ void Xen_GC_Mark(void) {
   }
 }
 
-void Xen_GC_Sweep(void) {
+void Xen_GC_Mark_Young(void) {
+  for (Xen_size_t i = 0; i < xen_globals->gc_heap->roots_count; i++) {
+    if (xen_globals->gc_heap->roots[i]->color == GC_WHITE &&
+        xen_globals->gc_heap->roots[i]->generation == GC_YOUNG) {
+      Xen_GC_Push_Gray(xen_globals->gc_heap->roots[i]);
+    }
+  }
+  for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
+    struct __GC_Header* child = xen_globals->gc_heap->remembered_set[i];
+    if (child->color == GC_WHITE) {
+      Xen_GC_Push_Gray(child);
+    }
+  }
+  while (xen_globals->gc_heap->gray_stack_count > 0) {
+    struct __GC_Header* inst = Xen_GC_Pop_Gray();
+    Xen_GC_Trace(inst);
+    inst->color = GC_BLACK;
+  }
+}
+
+void Xen_GC_Sweep_Young(void) {
   struct __GC_Header* curr = xen_globals->gc_heap->young;
 
   while (curr) {
@@ -140,6 +211,51 @@ void Xen_GC_Sweep(void) {
         xen_globals->gc_heap->young = curr->next;
       }
 
+      xen_globals->gc_heap->young_bytes -= curr->size;
+      xen_globals->gc_heap->total_bytes -= curr->size;
+
+      curr->destroy(&curr);
+
+      for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
+        if (xen_globals->gc_heap->remembered_set[i] == curr) {
+          xen_globals->gc_heap->remembered_set[i] =
+              xen_globals->gc_heap
+                  ->remembered_set[--xen_globals->gc_heap->remembered_count];
+          break;
+        }
+      }
+
+    } else {
+      curr->color = GC_WHITE;
+      curr->age++;
+      if (curr->age >= XEN_GC_PROMOTION_AGE) {
+        Xen_GC_Promote_toOld(curr);
+      }
+    }
+
+    curr = next;
+  }
+}
+
+void Xen_GC_Sweep_Old(void) {
+  struct __GC_Header* curr = xen_globals->gc_heap->old;
+
+  while (curr) {
+    struct __GC_Header* next = curr->next;
+
+    if (curr->color == GC_WHITE) {
+      if (curr->prev) {
+        curr->prev->next = curr->next;
+      }
+      if (curr->next) {
+        curr->next->prev = curr->prev;
+      }
+
+      if (xen_globals->gc_heap->old == curr) {
+        xen_globals->gc_heap->old = curr->next;
+      }
+
+      xen_globals->gc_heap->old_bytes -= curr->size;
       xen_globals->gc_heap->total_bytes -= curr->size;
 
       curr->destroy(&curr);
@@ -153,7 +269,7 @@ void Xen_GC_Sweep(void) {
 }
 
 void Xen_GC_Shutdown(void) {
-  Xen_GC_Collect();
+  Xen_GC_MajorCollect();
   assert(xen_globals->gc_heap->pressure == 0);
   assert(xen_globals->gc_heap->total_bytes == 0);
 }
@@ -162,8 +278,19 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
                         struct __GC_Header* child) {
   assert(child != NULL);
   *field = child;
-  if (parent && parent->color == GC_BLACK && child->color == GC_WHITE) {
+  if (parent && child->color == GC_WHITE &&
+      (parent->color == GC_BLACK || parent->generation == GC_OLD)) {
     Xen_GC_Push_Gray(child);
+  }
+
+  if (parent && parent->generation == GC_OLD && child->generation == GC_YOUNG) {
+    for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
+      if (xen_globals->gc_heap->remembered_set[i] == child)
+        return;
+    }
+    assert(xen_globals->gc_heap->remembered_count < __XEN_GC_MAX_REMEMBERED__);
+    xen_globals->gc_heap
+        ->remembered_set[xen_globals->gc_heap->remembered_count++] = child;
   }
 }
 

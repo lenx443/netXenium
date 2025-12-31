@@ -47,7 +47,7 @@ int Xen_Init(int argc, char** argv) {
     Xen_Dealloc(xen_globals);
     return 0;
   }
-  Xen_GC_Collect();
+  Xen_GC_MinorCollect();
   return 1;
 }
 
