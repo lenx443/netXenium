@@ -1,6 +1,6 @@
 /*
  * Netxenium Network Framework
- * Copyright (C) 2024-2025 Lenx443 <menasalejandro153@gmail.com>
+ * Copyright (C) 2024-2026 Lenx443 <menasalejandro153@gmail.com>
  *
  * Este programa es software libre: usted puede redistribuirlo y/o modificarlo
  * bajo los términos de la Licencia Pública General GNU publicada por la
@@ -18,7 +18,7 @@
 
 /*
  * Netxenium Network Framework
- * Copyright (C) 2024-2025 Lenx443 <menasalejandro153@gmail.com>
+ * Copyright (C) 2024-2026 Lenx443 <menasalejandro153@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

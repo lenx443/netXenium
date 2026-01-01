@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-#define XEN_GC_PROMOTION_AGE 2
+#define XEN_GC_PROMOTION_AGE 4
 #define XEN_GC_MAJOR_EVERY_MINORS 8
 
 static struct __GC_Heap __gc_heap = {
@@ -103,8 +103,8 @@ void Xen_GC_MajorCollect(void) {
   xen_globals->gc_heap->major_collections++;
   Xen_GC_Reset_All();
   Xen_GC_Mark();
-  Xen_GC_Sweep_Old();
   Xen_GC_Sweep_Young();
+  Xen_GC_Sweep_Old();
   xen_globals->gc_heap->remembered_count = 0;
   xen_globals->gc_heap->pressure = 0;
 }
@@ -156,6 +156,7 @@ void Xen_GC_Remove_RS_Child(struct __GC_Header* child) {
 }
 
 void Xen_GC_Promote_toOld(struct __GC_Header* h) {
+  assert(h->generation == GC_YOUNG);
   Xen_GC_Remove_RS_Child(h);
   if (h->prev) {
     h->prev->next = h->next;
@@ -290,6 +291,8 @@ void Xen_GC_Sweep_Young(void) {
       xen_globals->gc_heap->young_bytes -= curr->size;
       xen_globals->gc_heap->total_bytes -= curr->size;
 
+      curr->prev = NULL;
+      curr->next = NULL;
       curr->destroy(&curr);
 
     } else {
@@ -367,6 +370,7 @@ void Xen_GC_Sweep_Old(void) {
 }
 
 void Xen_GC_Shutdown(void) {
+  xen_globals->gc_heap->remembered_count = 0;
   Xen_GC_MajorCollect();
   assert(xen_globals->gc_heap->young == NULL);
   assert(xen_globals->gc_heap->old == NULL);

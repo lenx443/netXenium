@@ -45,7 +45,7 @@ void load_script(char* filename) {
 }
 
 void shell_loop(void) {
-  printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2025" RESET "\n"
+  printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
               "Type " VERDE "help" RESET " for more info\n");
   const char* home = getenv("HOME");
   if (home == NULL) {
