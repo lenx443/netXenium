@@ -59,7 +59,7 @@ static Xen_Instance* number_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   num->digits = NULL;
   num->scale = 0;
   num->size = 0;
-  num->sign = 0;
+  num->sign = 1;
   return (Xen_Instance*)num;
 }
 
@@ -75,7 +75,7 @@ static Xen_Instance* number_create(Xen_INSTANCE* self, Xen_Instance* args,
     n->digits[0] = 0;
     n->scale = 0;
     n->size = 1;
-    n->sign = 0;
+    n->sign = 1;
   }
   return nil;
 }
@@ -132,7 +132,8 @@ static Xen_Instance* number_hash(Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance* number_boolean(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if (((Xen_Number*)self)->sign == 0) {
+  Xen_Number* n = (Xen_Number*)self;
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0)) {
     return Xen_False;
   }
   return Xen_True;
@@ -428,7 +429,7 @@ static Xen_Instance* number_prop_negative(Xen_Instance* self,
   while (size_n > 0 && n->digits[size_n - 1] == 0) {
     size_n--;
   }
-  if (size_n == 0 || n->sign == 0) {
+  if (size_n == 0 || n->sign == 0 || (n->size == 1 && n->digits[0] == 0)) {
     return (Xen_Instance*)n;
   }
   Xen_Number* r =

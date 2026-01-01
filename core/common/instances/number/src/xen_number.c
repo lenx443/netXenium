@@ -18,7 +18,7 @@ static void Xen_Number_Normalize(Xen_Number* n) {
     return;
 
   if (n->size == 1 && n->digits[0] == 0) {
-    n->sign = 0;
+    n->sign = 1;
     n->scale = 0;
     return;
   }
@@ -37,7 +37,7 @@ static void Xen_Number_Normalize(Xen_Number* n) {
     n->size--;
 
   if (n->size == 1 && n->digits[0] == 0)
-    n->sign = 0;
+    n->sign = 1;
 }
 
 Xen_Instance* Xen_Number_Trunc(Xen_Instance* x) {
@@ -297,8 +297,8 @@ static Xen_Number* Xen_Number_BigMod(Xen_Number* a, Xen_Number* b) {
 
     res->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     res->digits[0] = rem_val;
-    res->size = (rem_val == 0) ? 0 : 1;
-    res->sign = (rem_val == 0) ? 0 : 1;
+    res->size = 1;
+    res->sign = 1;
     res->scale = 0;
     return res;
   }
@@ -445,7 +445,7 @@ Xen_Instance* Xen_Number_Div2(Xen_Instance* n_inst) {
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     zero->digits[0] = 0;
     zero->size = 1;
-    zero->sign = 0;
+    zero->sign = 1;
     return (Xen_Instance*)zero;
   }
 
@@ -485,18 +485,16 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
   z->scale = 0;
 
   const char* str = cstring;
   while (*str && isspace((unsigned char)*str))
     str++;
 
-  int8_t sign = 1;
   if (*str == '+') {
     str++;
   } else if (*str == '-') {
-    sign = -1;
     str++;
   }
 
@@ -601,9 +599,6 @@ Xen_INSTANCE* Xen_Number_From_CString(const char* cstring, int base) {
     z->scale = frac_len;
   }
 
-  int is_zero = (z->size == 1 && z->digits[0] == 0);
-  z->sign = is_zero ? 0 : sign;
-
   while (z->size > 1 && z->digits[z->size - 1] == 0) {
     z->size--;
   }
@@ -619,13 +614,13 @@ Xen_INSTANCE* Xen_Number_From_Int32(int32_t value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -654,13 +649,13 @@ Xen_INSTANCE* Xen_Number_From_Int64(int64_t value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -695,13 +690,13 @@ Xen_INSTANCE* Xen_Number_From_Int(int value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -736,13 +731,13 @@ Xen_INSTANCE* Xen_Number_From_UInt(unsigned int value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -770,13 +765,13 @@ Xen_INSTANCE* Xen_Number_From_Long(long value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -811,13 +806,13 @@ Xen_INSTANCE* Xen_Number_From_ULong(unsigned long value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -845,13 +840,13 @@ Xen_INSTANCE* Xen_Number_From_LongLong(long long value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -886,13 +881,13 @@ Xen_INSTANCE* Xen_Number_From_ULongLong(unsigned long long value) {
 
   z->digits = NULL;
   z->size = 0;
-  z->sign = 0;
+  z->sign = 1;
 
   if (value == 0) {
     z->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     z->digits[0] = 0;
     z->size = 1;
-    z->sign = 0;
+    z->sign = 1;
     return (Xen_INSTANCE*)z;
   }
 
@@ -922,7 +917,7 @@ const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   if (!n)
     return NULL;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     if (n->scale > 0) {
       char* z = Xen_Alloc(2 + n->scale);
       if (!z)
@@ -1028,7 +1023,7 @@ int32_t Xen_Number_As_Int32(Xen_INSTANCE* inst) {
   if (!n)
     return 0;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     return 0;
   }
 
@@ -1060,7 +1055,7 @@ int64_t Xen_Number_As_Int64(Xen_INSTANCE* inst) {
   if (!n)
     return 0;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     return 0;
   }
 
@@ -1094,7 +1089,7 @@ int Xen_Number_As_Int(Xen_INSTANCE* inst) {
   if (!n)
     return 0;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     return 0;
   }
 
@@ -1146,7 +1141,7 @@ long Xen_Number_As_Long(Xen_INSTANCE* inst) {
   if (!n)
     return 0;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     return 0;
   }
 
@@ -1198,7 +1193,7 @@ long long Xen_Number_As_LongLong(Xen_INSTANCE* inst) {
   if (!n)
     return 0;
 
-  if (n->sign == 0 || n->size == 0) {
+  if (n->sign == 0 || (n->size == 1 && n->digits[0] == 0) || n->size == 0) {
     return 0;
   }
 
@@ -1373,7 +1368,7 @@ Xen_Instance* Xen_Number_Mul(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     zero->digits[0] = 0;
     zero->size = 1;
-    zero->sign = 0;
+    zero->sign = 1;
     zero->scale = 0;
     return (Xen_Instance*)zero;
   }
@@ -1484,7 +1479,7 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     zero->digits[0] = 0;
     zero->size = 1;
-    zero->sign = 0;
+    zero->sign = 1;
     zero->scale = 0;
     return (Xen_Instance*)zero;
   }
@@ -1671,7 +1666,7 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
     zero->digits = (uint32_t*)Xen_Alloc(sizeof(uint32_t));
     zero->digits[0] = 0;
     zero->size = 1;
-    zero->sign = 0;
+    zero->sign = 1;
     zero->scale = 0;
     return (Xen_Instance*)zero;
   }
@@ -1736,7 +1731,7 @@ static inline void bnormalize(Xen_Number* x) {
   }
   x->sign = ((x->digits[x->size - 1] >> 31) & 1) ? -1 : 1;
   if (x->size == 1 && x->digits[0] == 0) {
-    x->sign = 0;
+    x->sign = 1;
   }
 }
 
