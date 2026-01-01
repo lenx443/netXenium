@@ -1,4 +1,3 @@
-#include "xen_map_instance.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <signal.h>
@@ -16,6 +15,7 @@
 #include "xen_cstrings.h"
 #include "xen_except.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_string.h"
@@ -50,12 +50,12 @@ static void vm_def_destroy(Xen_GCHeader** h) {
 }
 
 static int vm_load_modules_paths(void) {
-  vm->args = Xen_Vector_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->args, Xen_Vector_New());
   for (int i = 0; i < program.argc; i++) {
     Xen_Instance* arg = Xen_String_From_CString(program.argv[i]);
     Xen_Vector_Push(vm->args, arg);
   }
-  vm->paths_modules = Xen_Vector_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->paths_modules, Xen_Vector_New());
   if (!vm->paths_modules) {
     return 0;
   }
@@ -66,7 +66,7 @@ static int vm_load_modules_paths(void) {
 }
 
 static int vm_load_config(void) {
-  vm->config = Xen_Map_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->config, Xen_Map_New());
   if (!vm->config) {
     return 0;
   }
@@ -96,22 +96,22 @@ bool vm_create(void) {
     args_array[i] = arg_value;
   }
   Xen_Dealloc(args_array);
-  vm->modules = Xen_Map_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->modules, Xen_Map_New());
   if (!vm->modules) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
-  vm->modules_stack = Xen_Vector_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->modules_stack, Xen_Vector_New());
   if (!vm->modules_stack) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
-  vm->globals_instances = Xen_Map_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->globals_instances, Xen_Map_New());
   if (!vm->globals_instances) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
-  vm->globals_props = Xen_Map_New();
+  Xen_IGC_WRITE_FIELD(vm, vm->globals_props, Xen_Map_New());
   if (!vm->globals_props) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;

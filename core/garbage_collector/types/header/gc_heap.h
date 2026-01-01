@@ -46,6 +46,7 @@ struct __GC_Heap {
   Xen_size_t pressure;
 
   Xen_bool_t started;
+  Xen_bool_t marking;
 };
 
 #endif
