@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "basic.h"
@@ -110,6 +112,63 @@ static Xen_Instance* bytes_prop_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* bytes_slice(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"first", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"second", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_bool_t is_pair = 0;
+  Xen_ssize_t first = Xen_Number_As_LongLong(
+      Xen_Function_ArgBinding_Search(binding, "first")->value);
+  Xen_Function_ArgBound* second_arg =
+      Xen_Function_ArgBinding_Search(binding, "second");
+  Xen_size_t second = 0;
+  if (second_arg->provided) {
+    is_pair = 1;
+    second = Xen_Number_As_ULongLong(second_arg->value);
+  }
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  if (is_pair) {
+    if (first < 0 || (Xen_size_t)first > second ||
+        (Xen_size_t)first > Xen_SIZE(bytes) || second > Xen_SIZE(bytes)) {
+      return NULL;
+    }
+    Xen_Instance* result =
+        Xen_Bytes_From_Array(second - first, bytes->bytes + first);
+    return result;
+  } else {
+    if (first >= 0) {
+      if ((Xen_size_t)first > Xen_SIZE(bytes)) {
+        return NULL;
+      }
+      Xen_Instance* result =
+          Xen_Bytes_From_Array(Xen_SIZE(bytes) - first, bytes->bytes + first);
+      return result;
+    } else {
+      if (first < INT_MIN || first > INT_MAX) {
+        return NULL;
+      }
+      int abs_first = abs((int)first);
+      if ((Xen_size_t)abs_first > Xen_SIZE(bytes)) {
+        return NULL;
+      }
+      Xen_Instance* result = Xen_Bytes_From_Array(abs_first, bytes->bytes);
+      return result;
+    }
+  }
+  return NULL;
+}
+
 static Xen_Instance* bytes_signed(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   Xen_Function_ArgSpec args_def[] = {
@@ -136,6 +195,7 @@ static Xen_Instance* bytes_signed(Xen_Instance* self, Xen_Instance* args,
     return num;
   }
 }
+
 static Xen_Instance* bytes_unsigned(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   Xen_Function_ArgSpec args_def[] = {
@@ -195,6 +255,7 @@ int Xen_Bytes_Init(void) {
   Xen_VM_Store_Native_Function(props, "__mul", bytes_opr_mul, nil);
   Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
   Xen_VM_Store_Native_Function(props, "string", bytes_prop_string, nil);
+  Xen_VM_Store_Native_Function(props, "slice", bytes_slice, nil);
   Xen_VM_Store_Native_Function(props, "signed", bytes_signed, nil);
   Xen_VM_Store_Native_Function(props, "unsigned", bytes_unsigned, nil);
   Xen_IGC_Fork_Push(impls_maps, props);

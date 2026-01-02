@@ -916,34 +916,38 @@ Xen_Instance* Xen_Number_From_Bytes(const Xen_uint8_t* bytes, Xen_size_t len,
                                     int is_signed, int big_endian) {
   Xen_Number* num =
       (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
-  num->sign = 1;
+
   num->size = (len + 3) / 4;
   num->digits = Xen_Alloc(num->size * sizeof(uint32_t));
   memset(num->digits, 0, num->size * sizeof(uint32_t));
 
+  num->sign = 1;
+
   for (Xen_size_t i = 0; i < len; i++) {
-    Xen_size_t digit_index = i / 4;
-    int byte_offset = i % 4;
+    Xen_size_t d = i / 4;
+    int shift = (i % 4) * 8;
 
-    Xen_uint8_t b;
-    if (big_endian) {
-      b = bytes[len - 1 - i];
-    } else {
-      b = bytes[i];
-    }
+    Xen_uint8_t b = big_endian ? bytes[len - 1 - i] : bytes[i];
 
-    num->digits[digit_index] |= ((uint32_t)b << (byte_offset * 8));
+    num->digits[d] |= ((uint32_t)b << shift);
   }
 
-  if (is_signed && (big_endian ? (bytes[0] & 0x80) : (bytes[len - 1] & 0x80))) {
+  int negative =
+      is_signed && (big_endian ? (bytes[0] & 0x80) : (bytes[len - 1] & 0x80));
+
+  if (negative && (len % 4) != 0) {
+    uint32_t mask = 0xFFFFFFFFu << ((len % 4) * 8);
+    num->digits[num->size - 1] |= mask;
+  }
+
+  if (negative) {
     num->sign = -1;
 
-    int carry = 1;
+    uint64_t carry = 1;
     for (Xen_size_t i = 0; i < num->size; i++) {
-      num->digits[i] = ~num->digits[i];
-      uint64_t temp = (uint64_t)num->digits[i] + carry;
-      num->digits[i] = (uint32_t)temp;
-      carry = (temp >> 32) & 0x1;
+      uint64_t v = (~num->digits[i]) + carry;
+      num->digits[i] = (uint32_t)v;
+      carry = v >> 32;
     }
   }
 
