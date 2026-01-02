@@ -500,10 +500,10 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     token_start(lexer);
     advance(lexer);
     token = Token(lexer, TKN_RBRACKET, "]", 1);
-  } else if (c == '\\') {
+  } else if (c == '.') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_ATTR, "\\", 1);
+    token = Token(lexer, TKN_ATTR, ".", 1);
   } else if (c == ',') {
     token_start(lexer);
     advance(lexer);

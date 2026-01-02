@@ -42,6 +42,8 @@ struct __GC_Heap {
   Xen_size_t minor_threshold;
   Xen_size_t major_threshold;
 
+  Xen_size_t major_pressure;
+
   Xen_size_t total_bytes;
   Xen_size_t pressure;
 

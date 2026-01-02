@@ -44,9 +44,9 @@ static void vm_def_trace(Xen_GCHeader* h) {
   }
 }
 
-static void vm_def_destroy(Xen_GCHeader** h) {
-  run_context_stack_free(&((VM_ptr)*h)->vm_ctx_stack);
-  Xen_Dealloc(*h);
+static void vm_def_destroy(Xen_GCHeader* h) {
+  run_context_stack_free(&((VM_ptr)h)->vm_ctx_stack);
+  Xen_Dealloc(h);
 }
 
 static int vm_load_modules_paths(void) {

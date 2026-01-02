@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-#define XEN_GC_PROMOTION_AGE 4
+#define XEN_GC_PROMOTION_AGE 2
 #define XEN_GC_MAJOR_EVERY_MINORS 8
 
 static struct __GC_Heap __gc_heap = {
@@ -23,6 +23,7 @@ static struct __GC_Heap __gc_heap = {
     .major_collections = 0,
     .minor_threshold = 1024 * 1024,
     .major_threshold = 4 * 1024 * 1024,
+    .major_pressure = 0,
     .total_bytes = 0,
     .pressure = 0,
     .started = 1,
@@ -35,7 +36,7 @@ void Xen_GC_GetReady(void) {
 
 struct __GC_Header* Xen_GC_New(Xen_size_t size,
                                void (*fn_trace)(struct __GC_Header*),
-                               void (*fn_destroy)(struct __GC_Header**)) {
+                               void (*fn_destroy)(struct __GC_Header*)) {
   struct __GC_Header* h = (struct __GC_Header*)Xen_Alloc(size);
   Xen_GC_Push_Root(h);
 
@@ -58,7 +59,7 @@ struct __GC_Header* Xen_GC_New(Xen_size_t size,
   if (xen_globals->gc_heap->started) {
     if (xen_globals->gc_heap->pressure >
         xen_globals->gc_heap->minor_threshold) {
-      if (xen_globals->gc_heap->old_bytes >
+      if (xen_globals->gc_heap->major_pressure >
               xen_globals->gc_heap->major_threshold ||
           xen_globals->gc_heap->minor_collections % XEN_GC_MAJOR_EVERY_MINORS ==
               0) {
@@ -93,19 +94,19 @@ void Xen_GC_MinorCollect(void) {
           xen_globals->gc_heap->remembered_set[i];
     }
   }
-
   xen_globals->gc_heap->remembered_count = out;
-
   xen_globals->gc_heap->pressure = 0;
 }
 
 void Xen_GC_MajorCollect(void) {
   xen_globals->gc_heap->major_collections++;
+  xen_globals->gc_heap->minor_collections++;
   Xen_GC_Reset_All();
   Xen_GC_Mark();
-  Xen_GC_Sweep_Young();
+  Xen_GC_Sweep_Young_Major();
   Xen_GC_Sweep_Old();
   xen_globals->gc_heap->remembered_count = 0;
+  xen_globals->gc_heap->major_pressure = 0;
   xen_globals->gc_heap->pressure = 0;
 }
 
@@ -171,8 +172,10 @@ void Xen_GC_Promote_toOld(struct __GC_Header* h) {
 
   xen_globals->gc_heap->young_bytes -= h->size;
   xen_globals->gc_heap->old_bytes += h->size;
+  xen_globals->gc_heap->major_pressure += h->size;
 
   h->generation = GC_OLD;
+  h->color = GC_WHITE;
   h->age = 0;
 
   h->prev = NULL;
@@ -293,7 +296,7 @@ void Xen_GC_Sweep_Young(void) {
 
       curr->prev = NULL;
       curr->next = NULL;
-      curr->destroy(&curr);
+      curr->destroy(curr);
 
     } else {
       curr->color = GC_WHITE;
@@ -328,7 +331,9 @@ void Xen_GC_Sweep_Young_Major(void) {
       xen_globals->gc_heap->young_bytes -= curr->size;
       xen_globals->gc_heap->total_bytes -= curr->size;
 
-      curr->destroy(&curr);
+      curr->prev = NULL;
+      curr->next = NULL;
+      curr->destroy(curr);
 
     } else {
       curr->age++;
@@ -359,7 +364,9 @@ void Xen_GC_Sweep_Old(void) {
       xen_globals->gc_heap->old_bytes -= curr->size;
       xen_globals->gc_heap->total_bytes -= curr->size;
 
-      curr->destroy(&curr);
+      curr->prev = NULL;
+      curr->next = NULL;
+      curr->destroy(curr);
 
     } else {
       curr->color = GC_WHITE;

@@ -41,7 +41,7 @@ Xen_INSTANCE_MAPPED {
 Xen_INSTANCE* Xen_Instance_Alloc(struct __Implement*);
 Xen_INSTANCE* __instance_new(struct __Implement*, Xen_INSTANCE*, Xen_INSTANCE*,
                              Xen_Instance_Flag);
-void __instance_free(Xen_GCHeader**);
+void __instance_free(Xen_GCHeader*);
 
 typedef Xen_INSTANCE Xen_Instance;
 typedef Xen_INSTANCE_MAPPED Xen_Instance_Mapped;

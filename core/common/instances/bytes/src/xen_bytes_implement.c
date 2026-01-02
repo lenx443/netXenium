@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "vm.h"
 #include "xen_alloc.h"
+#include "xen_boolean.h"
 #include "xen_bytes.h"
 #include "xen_bytes_implement.h"
 #include "xen_bytes_instance.h"
@@ -109,6 +110,59 @@ static Xen_Instance* bytes_prop_string(Xen_Instance* self, Xen_Instance* args,
   return string;
 }
 
+static Xen_Instance* bytes_signed(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  if (big_ending == Xen_True) {
+    Xen_Instance* num =
+        Xen_Number_From_Bytes(bytes->bytes, bytes->__size, 1, 1);
+    return num;
+  } else {
+    Xen_Instance* num =
+        Xen_Number_From_Bytes(bytes->bytes, bytes->__size, 1, 0);
+    return num;
+  }
+}
+static Xen_Instance* bytes_unsigned(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  Xen_Function_ArgSpec args_def[] = {
+      {"big_endian", XEN_FUNCTION_ARG_KIND_POSITIONAL,
+       XEN_FUNCTION_ARG_IMPL_BOOLEAN, XEN_FUNCTION_ARG_OPTIONAL, Xen_True},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* big_ending =
+      Xen_Function_ArgBinding_Search(binding, "big_endian")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  if (big_ending == Xen_True) {
+    Xen_Instance* num =
+        Xen_Number_From_Bytes(bytes->bytes, bytes->__size, 0, 1);
+    return num;
+  } else {
+    Xen_Instance* num =
+        Xen_Number_From_Bytes(bytes->bytes, bytes->__size, 0, 0);
+    return num;
+  }
+}
+
 static Xen_Implement __Bytes_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Bytes",
@@ -141,6 +195,8 @@ int Xen_Bytes_Init(void) {
   Xen_VM_Store_Native_Function(props, "__mul", bytes_opr_mul, nil);
   Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
   Xen_VM_Store_Native_Function(props, "string", bytes_prop_string, nil);
+  Xen_VM_Store_Native_Function(props, "signed", bytes_signed, nil);
+  Xen_VM_Store_Native_Function(props, "unsigned", bytes_unsigned, nil);
   Xen_IGC_Fork_Push(impls_maps, props);
   __Bytes_Implement.__props = props;
   return 1;

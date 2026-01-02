@@ -24,6 +24,7 @@ Xen_Instance* Xen_Number_From_ULong(unsigned long);
 Xen_Instance* Xen_Number_From_LongLong(long long);
 Xen_Instance* Xen_Number_From_ULongLong(unsigned long long);
 Xen_Instance* Xen_Number_From_Pointer(void*);
+Xen_Instance* Xen_Number_From_Bytes(const Xen_uint8_t*, Xen_size_t, int, int);
 
 const char* Xen_Number_As_CString(Xen_Instance*);
 int32_t Xen_Number_As_Int32(Xen_Instance*);
@@ -36,7 +37,7 @@ long long Xen_Number_As_LongLong(Xen_Instance*);
 unsigned long long Xen_Number_As_ULongLong(Xen_Instance*);
 Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance*, Xen_size_t*);
 Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance*, Xen_size_t*,
-                                          Xen_size_t, int, Xen_uint8_t, int);
+                                          Xen_size_t, int, int);
 
 Xen_Instance* Xen_Number_Mul(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Div(Xen_Instance*, Xen_Instance*);

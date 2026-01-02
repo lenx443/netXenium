@@ -3,6 +3,7 @@
 
 #include "callable.h"
 #include "instance.h"
+#include "netxenium/gc_header.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"
@@ -13,6 +14,7 @@
 #include "vm_run.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
+#include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_method.h"
@@ -155,7 +157,9 @@ int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
     return 0;
   }
   (*xen_globals->vm)->except.active = 1;
-  (*xen_globals->vm)->except.except = except;
+  Xen_GC_Write_Field((Xen_GCHeader*)*xen_globals->vm,
+                     (Xen_GCHeader**)&(*xen_globals->vm)->except.except,
+                     (Xen_GCHeader*)except);
   Xen_IGC_Pop();
   return 1;
 }

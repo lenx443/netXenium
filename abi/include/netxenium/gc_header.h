@@ -14,7 +14,7 @@
   Xen_uint16_t age;                                                            \
   Xen_size_t size;                                                             \
   void (*trace)(struct __GC_Header*);                                          \
-  void (*destroy)(struct __GC_Header**);                                       \
+  void (*destroy)(struct __GC_Header*);                                        \
   struct __GC_Header* next;                                                    \
   struct __GC_Header* prev;
 

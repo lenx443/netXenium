@@ -21,8 +21,8 @@ static void vm_consts_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_callables);
 }
 
-static void vm_consts_destroy(Xen_GCHeader** h) {
-  Xen_Dealloc(*h);
+static void vm_consts_destroy(Xen_GCHeader* h) {
+  Xen_Dealloc(h);
 }
 
 vm_Consts_ptr vm_consts_new(void) {

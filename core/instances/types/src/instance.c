@@ -59,15 +59,15 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   return inst;
 }
 
-void __instance_free(Xen_GCHeader** h) {
-  Xen_Instance* inst = *(Xen_Instance**)h;
+void __instance_free(Xen_GCHeader* h) {
+  Xen_Instance* inst = (Xen_Instance*)h;
   if (!inst) {
     return;
   }
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy)
       inst->__impl->__destroy(inst, NULL, NULL);
-    Xen_Dealloc(*h);
+    Xen_Dealloc(h);
   }
 }
 

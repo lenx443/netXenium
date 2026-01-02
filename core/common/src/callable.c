@@ -10,10 +10,10 @@ static void callable_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader((Xen_GCHeader*)callable->code.consts);
 }
 
-static void callable_destroy(Xen_GCHeader** h) {
-  CALLABLE_ptr callable = *(CALLABLE_ptr*)h;
+static void callable_destroy(Xen_GCHeader* h) {
+  CALLABLE_ptr callable = (CALLABLE_ptr)h;
   bc_free(callable->code.code);
-  Xen_Dealloc(*h);
+  Xen_Dealloc(h);
 }
 
 CALLABLE_ptr callable_new(ProgramCode_t bpc) {
@@ -33,10 +33,10 @@ static void callable_vector_trace(Xen_GCHeader* h) {
   }
 }
 
-static void callable_vector_destroy(Xen_GCHeader** h) {
-  CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)*h;
+static void callable_vector_destroy(Xen_GCHeader* h) {
+  CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)h;
   Xen_Dealloc(cv->callables);
-  Xen_Dealloc(*h);
+  Xen_Dealloc(h);
 }
 
 CALLABLE_Vector_ptr callable_vector_new(void) {

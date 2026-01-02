@@ -912,6 +912,48 @@ Xen_INSTANCE* Xen_Number_From_Pointer(void* ptr) {
   return Xen_Number_From_LongLong((long long)(uintptr_t)ptr);
 }
 
+Xen_Instance* Xen_Number_From_Bytes(const Xen_uint8_t* bytes, Xen_size_t len,
+                                    int is_signed, int big_endian) {
+  Xen_Number* num =
+      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+  num->sign = 1;
+  num->size = (len + 3) / 4;
+  num->digits = Xen_Alloc(num->size * sizeof(uint32_t));
+  memset(num->digits, 0, num->size * sizeof(uint32_t));
+
+  for (Xen_size_t i = 0; i < len; i++) {
+    Xen_size_t digit_index = i / 4;
+    int byte_offset = i % 4;
+
+    Xen_uint8_t b;
+    if (big_endian) {
+      b = bytes[len - 1 - i];
+    } else {
+      b = bytes[i];
+    }
+
+    num->digits[digit_index] |= ((uint32_t)b << (byte_offset * 8));
+  }
+
+  if (is_signed && (big_endian ? (bytes[0] & 0x80) : (bytes[len - 1] & 0x80))) {
+    num->sign = -1;
+
+    int carry = 1;
+    for (Xen_size_t i = 0; i < num->size; i++) {
+      num->digits[i] = ~num->digits[i];
+      uint64_t temp = (uint64_t)num->digits[i] + carry;
+      num->digits[i] = (uint32_t)temp;
+      carry = (temp >> 32) & 0x1;
+    }
+  }
+
+  while (num->size > 1 && num->digits[num->size - 1] == 0) {
+    num->size--;
+  }
+
+  return (Xen_Instance*)num;
+}
+
 const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   Xen_Number* n = (Xen_Number*)inst;
   if (!n)
@@ -1280,19 +1322,20 @@ Xen_uint8_t* Xen_Number_As_Bytes(Xen_Instance* inst, Xen_size_t* out_len) {
 
 Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance* inst,
                                           Xen_size_t* out_len, Xen_size_t align,
-                                          int is_signed,
-                                          Xen_uint8_t overflow_val,
-                                          int big_endian) {
+                                          int is_signed, int big_endian) {
   Xen_Number* num = (Xen_Number*)Xen_Number_Copy(inst);
+
   while (num->size > 1 && num->digits[num->size - 1] == 0) {
     num->size--;
   }
+
   if (num->sign == 0 || (num->size == 1 && num->digits[0] == 0)) {
     *out_len = align ? align : 1;
     Xen_uint8_t* out = Xen_Alloc(*out_len);
     memset(out, 0x00, *out_len);
     return out;
   }
+
   uint32_t msw = num->digits[num->size - 1];
   Xen_size_t msw_bytes;
   if (msw >> 24)
@@ -1303,6 +1346,7 @@ Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance* inst,
     msw_bytes = 2;
   else
     msw_bytes = 1;
+
   Xen_size_t raw_len = (num->size - 1) * 4 + msw_bytes;
 
   if (align) {
@@ -1312,42 +1356,42 @@ Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance* inst,
   }
 
   Xen_uint8_t* out = Xen_Alloc(*out_len);
-  memset(out, 0x00, *out_len);
 
-  Xen_size_t k = big_endian ? (*out_len - raw_len) : 0;
+  memset(out, (is_signed && num->sign < 0) ? 0xFF : 0x00, *out_len);
 
-  if (big_endian) {
-    for (Xen_ssize_t i = (Xen_ssize_t)num->size - 1; i >= 0; i--) {
-      Xen_uint32_t digit = num->digits[i];
-      for (int b = 3; b >= 0; b--) {
-        Xen_uint8_t byte = (digit >> (b * 8)) & 0xFF;
-        if (k == (*out_len - raw_len) && byte == 0 &&
-            i == (Xen_ssize_t)num->size - 1) {
-          continue;
-        }
-        if ((is_signed && byte > INT8_MAX) ||
-            (!is_signed && byte > UINT8_MAX)) {
-          byte = overflow_val;
-        }
-        out[k++] = byte;
-      }
-    }
-  } else {
-    for (Xen_size_t i = 0; i < num->size; i++) {
-      Xen_uint32_t digit = num->digits[i];
-      for (int b = 0; b < 4; b++) {
-        if (k >= raw_len)
-          break;
-        Xen_uint8_t byte = (digit >> (b * 8)) & 0xFF;
-        if ((is_signed && byte > INT8_MAX) ||
-            (!is_signed && byte > UINT8_MAX)) {
-          byte = overflow_val;
-        }
-        out[k++] = byte;
-      }
+  Xen_uint8_t* temp = Xen_Alloc(raw_len);
+  Xen_size_t k = 0;
+
+  for (Xen_size_t i = 0; i < num->size; i++) {
+    Xen_uint32_t digit = num->digits[i];
+    for (int b = 0; b < 4; b++) {
+      if (k >= raw_len)
+        break;
+      temp[k++] = (digit >> (b * 8)) & 0xFF;
     }
   }
 
+  if (is_signed && num->sign < 0) {
+    for (Xen_size_t i = 0; i < raw_len; i++) {
+      temp[i] = ~temp[i];
+    }
+    for (Xen_size_t i = 0; i < raw_len; i++) {
+      if (++temp[i] != 0)
+        break;
+    }
+  }
+
+  if (big_endian) {
+    for (Xen_size_t i = 0; i < raw_len; i++) {
+      out[*out_len - raw_len + i] = temp[i];
+    }
+  } else {
+    for (Xen_size_t i = 0; i < raw_len; i++) {
+      out[i] = temp[i];
+    }
+  }
+
+  Xen_Dealloc(temp);
   return out;
 }
 

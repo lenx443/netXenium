@@ -42,6 +42,7 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
   }
   impl->__get_attr = Xen_Basic_Get_Attr_Mapped;
   impl->__set_attr = Xen_Basic_Set_Attr_Mapped;
+  printf("basic: %p\n", (void*)impl);
   return (Xen_Instance*)impl;
 }
 

@@ -27,12 +27,12 @@ static void __igc_roots_trace(Xen_GCHeader* h) {
   }
 }
 
-static void __igc_roots_destroy(Xen_GCHeader** h) {
-  struct __IGC_Roots* roots = (struct __IGC_Roots*)*h;
+static void __igc_roots_destroy(Xen_GCHeader* h) {
+  struct __IGC_Roots* roots = (struct __IGC_Roots*)h;
   if (roots->roots) {
     Xen_Dealloc(roots->roots);
   }
-  Xen_Dealloc(*h);
+  Xen_Dealloc(h);
 }
 
 static struct __IGC_Roots* __igc_roots_new(void) {

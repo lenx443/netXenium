@@ -16,13 +16,13 @@ static void vm_stack_trace(Xen_GCHeader* h) {
   }
 }
 
-static void vm_stack_free(Xen_GCHeader** h) {
-  struct vm_Stack* stack = *(struct vm_Stack**)h;
+static void vm_stack_free(Xen_GCHeader* h) {
+  struct vm_Stack* stack = (struct vm_Stack*)h;
   if (stack->stack_head) {
     Xen_Dealloc(stack->stack_head);
   }
   vm_stack_start(stack);
-  Xen_Dealloc(*h);
+  Xen_Dealloc(h);
 }
 
 struct vm_Stack* vm_stack_new(size_t cap) {

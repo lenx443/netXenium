@@ -9,7 +9,7 @@
 
 void Xen_GC_GetReady(void);
 struct __GC_Header* Xen_GC_New(Xen_size_t, void (*)(struct __GC_Header*),
-                               void (*)(struct __GC_Header**));
+                               void (*)(struct __GC_Header*));
 void Xen_GC_MinorCollect(void);
 void Xen_GC_MajorCollect(void);
 void Xen_GC_Push_Root(struct __GC_Header*);

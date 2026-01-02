@@ -497,12 +497,12 @@ static Xen_Instance* number_i8(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 1, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -524,12 +524,12 @@ static Xen_Instance* number_i16(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 1, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -551,12 +551,12 @@ static Xen_Instance* number_i32(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 1, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -579,12 +579,12 @@ static Xen_Instance* number_i64(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 1, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -607,12 +607,12 @@ static Xen_Instance* number_i128(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 1, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -635,12 +635,12 @@ static Xen_Instance* number_u8(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 1, 0, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -662,12 +662,12 @@ static Xen_Instance* number_u16(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 2, 0, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -689,12 +689,12 @@ static Xen_Instance* number_u32(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 4, 0, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -717,12 +717,12 @@ static Xen_Instance* number_u64(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 8, 0, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
@@ -745,12 +745,12 @@ static Xen_Instance* number_u128(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   if (big_ending == Xen_True) {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 1);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 1);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   } else {
     Xen_size_t len;
-    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0xff, 0);
+    uint8_t* arr = Xen_Number_As_Bytes_Flexible(self, &len, 16, 0, 0);
     Xen_Instance* result = Xen_Bytes_From_Array(len, arr);
     return result;
   }
