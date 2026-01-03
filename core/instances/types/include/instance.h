@@ -17,7 +17,7 @@ typedef uint8_t Xen_Instance_Flag;
 
 #define Xen_INSTANCE_MAPPED_HEAD                                               \
   Xen_INSTANCE_HEAD;                                                           \
-  struct __Instance* __map
+  Xen_GCHandle* __map
 
 #define Xen_INSTANCE struct __Instance
 

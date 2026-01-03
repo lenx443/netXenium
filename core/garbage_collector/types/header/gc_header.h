@@ -1,6 +1,7 @@
 #ifndef __GC_HEADER_H__
 #define __GC_HEADER_H__
 
+#include "xen_alloc.h"
 #include "xen_typedefs.h"
 
 #define GC_WHITE 1
@@ -21,6 +22,25 @@ struct __GC_Header {
   struct __GC_Header* prev;
 };
 
+struct __GC_Handle {
+  struct __GC_Header* ptr;
+};
+
 typedef struct __GC_Header Xen_GCHeader;
+typedef struct __GC_Handle Xen_GCHandle;
+
+static inline struct __GC_Handle* Xen_GCHandle_New(void) {
+  return Xen_Alloc(sizeof(struct __GC_Handle));
+}
+
+static inline struct __GC_Handle* Xen_GCHandle_New_From(Xen_GCHeader* h) {
+  Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
+  handle->ptr = h;
+  return handle;
+}
+
+static inline void Xen_GCHandle_Free(struct __GC_Handle* handle) {
+  Xen_Dealloc(handle);
+}
 
 #endif

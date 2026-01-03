@@ -6,6 +6,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
@@ -435,9 +436,11 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "trim", string_trim, nil)) {
     return 0;
   }
-  __String_Implement.__props = props;
+  __String_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_String_Finish(void) {}
+void Xen_String_Finish(void) {
+  Xen_GCHandle_Free(__String_Implement.__props);
+}

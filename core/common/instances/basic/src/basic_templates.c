@@ -42,7 +42,6 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
   }
   impl->__get_attr = Xen_Basic_Get_Attr_Mapped;
   impl->__set_attr = Xen_Basic_Set_Attr_Mapped;
-  printf("basic: %p\n", (void*)impl);
   return (Xen_Instance*)impl;
 }
 
@@ -85,8 +84,8 @@ Xen_Instance* Xen_Basic_String(Xen_Instance* self, Xen_Instance* args,
 Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  if (Xen_IMPL(self)->__props == NULL ||
-      Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
+  if (Xen_IMPL(self)->__props == NULL || Xen_IMPL(self)->__props->ptr == NULL ||
+      Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
       Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
@@ -99,7 +98,8 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_XPUSH(key, roots);
-  Xen_Instance* attr = Xen_Map_Get(Xen_IMPL(self)->__props, key);
+  Xen_Instance* attr =
+      Xen_Map_Get((Xen_Instance*)Xen_IMPL(self)->__props->ptr, key);
   if (!attr) {
     Xen_IGC_XPOP(roots);
     return NULL;
@@ -121,8 +121,8 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
 Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  if (Xen_IMPL(self)->__props == NULL ||
-      Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
+  if (Xen_IMPL(self)->__props == NULL || Xen_IMPL(self)->__props->ptr == NULL ||
+      Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
       Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
@@ -135,7 +135,8 @@ Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_IGC_Push(key);
   Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
-  if (!Xen_Map_Push_Pair(Xen_IMPL(self)->__props, (Xen_Map_Pair){key, value})) {
+  if (!Xen_Map_Push_Pair((Xen_Instance*)Xen_IMPL(self)->__props->ptr,
+                         (Xen_Map_Pair){key, value})) {
     return NULL;
   }
   Xen_IGC_Pop();
@@ -146,7 +147,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
-      Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
+      Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
       Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
@@ -160,9 +161,9 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_XPUSH(key, roots);
-  Xen_Instance* attr = Xen_Map_Get(mapped->__map, key);
+  Xen_Instance* attr = Xen_Map_Get((Xen_Instance*)mapped->__map->ptr, key);
   if (!attr) {
-    attr = Xen_Map_Get(Xen_IMPL(self)->__props, key);
+    attr = Xen_Map_Get((Xen_Instance*)Xen_IMPL(self)->__props->ptr, key);
     if (!attr) {
       Xen_IGC_XPOP(roots);
       return NULL;
@@ -186,7 +187,7 @@ Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
                                         Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
-      Xen_Nil_Eval(Xen_IMPL(self)->__props) ||
+      Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
       Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
     return NULL;
   }
@@ -200,7 +201,8 @@ Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_IGC_Push(key);
   Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
-  if (!Xen_Map_Push_Pair(mapped->__map, (Xen_Map_Pair){key, value})) {
+  if (!Xen_Map_Push_Pair((Xen_Instance*)mapped->__map->ptr,
+                         (Xen_Map_Pair){key, value})) {
     return NULL;
   }
   Xen_IGC_Pop();

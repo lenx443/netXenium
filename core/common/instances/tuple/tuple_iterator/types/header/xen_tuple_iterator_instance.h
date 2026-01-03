@@ -6,7 +6,7 @@
 
 struct Xen_Tuple_Iterator_Instance {
   Xen_INSTANCE_HEAD;
-  Xen_Instance* tuple;
+  Xen_GCHandle* tuple;
   Xen_ssize_t index;
 };
 

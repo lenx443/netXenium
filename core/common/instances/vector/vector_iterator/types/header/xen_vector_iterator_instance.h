@@ -6,7 +6,7 @@
 
 struct Xen_Vector_Iterator_Instance {
   Xen_INSTANCE_HEAD;
-  Xen_Instance* vector;
+  Xen_GCHandle* vector;
   Xen_ssize_t index;
 };
 

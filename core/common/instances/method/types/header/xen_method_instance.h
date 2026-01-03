@@ -5,8 +5,8 @@
 
 struct Xen_Method_Instance {
   Xen_INSTANCE_HEAD;
-  Xen_Instance* function;
-  Xen_Instance* self;
+  Xen_GCHandle* function;
+  Xen_GCHandle* self;
 };
 
 typedef struct Xen_Method_Instance Xen_Method;

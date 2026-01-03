@@ -32,7 +32,7 @@ void Xen_GC_Shutdown(void);
 void Xen_GC_Start(void);
 void Xen_GC_Stop(void);
 
-void Xen_GC_Write_Field(struct __GC_Header*, struct __GC_Header**,
+void Xen_GC_Write_Field(struct __GC_Header*, struct __GC_Handle**,
                         struct __GC_Header*);
 
 #endif

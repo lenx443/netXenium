@@ -12,7 +12,7 @@ Xen_Instance* Xen_Tuple_Iterator_New(Xen_Instance* tuple) {
   if (!it) {
     return NULL;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)it, (Xen_GCHeader**)&it->tuple,
+  Xen_GC_Write_Field((Xen_GCHeader*)it, (Xen_GCHandle**)&it->tuple,
                      (Xen_GCHeader*)tuple);
   it->index = 0;
   return (Xen_Instance*)it;

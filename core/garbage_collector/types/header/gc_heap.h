@@ -18,7 +18,7 @@
 
 struct __GC_Edge {
   struct __GC_Header* parent;
-  struct __GC_Header** slot;
+  struct __GC_Handle* handle;
 };
 
 struct __GC_Heap {

@@ -172,7 +172,7 @@ static Xen_Instance* tuple_opr_get_index(Xen_Instance* self, Xen_Instance* args,
   if (index >= self->__size) {
     return NULL;
   }
-  return ((Xen_Tuple*)self)->instances[index];
+  return (Xen_Instance*)((Xen_Tuple*)self)->instances[index]->ptr;
 }
 
 static Xen_Instance* tuple_iter(Xen_Instance* self, Xen_Instance* args,
@@ -216,9 +216,11 @@ int Xen_Tuple_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__iter", tuple_iter, nil)) {
     return 0;
   }
-  __Tuple_Implement.__props = props;
+  __Tuple_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Tuple_Finish(void) {}
+void Xen_Tuple_Finish(void) {
+  Xen_GCHandle_Free(__Tuple_Implement.__props);
+}

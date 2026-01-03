@@ -5,6 +5,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
@@ -76,6 +77,46 @@ static Xen_Instance* bytes_opr_mul(Xen_Instance* self, Xen_Instance* args,
     Xen_Bytes_Append_Array(result, Xen_SIZE(self), ((Xen_Bytes*)self)->bytes);
   }
   return result;
+}
+
+static Xen_Instance* bytes_opr_get_index(Xen_Instance* self, Xen_Instance* args,
+                                         Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1)
+    return NULL;
+  Xen_Instance* index_inst = Xen_Tuple_Peek_Index(args, 0);
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number)
+    return NULL;
+  size_t index = Xen_Number_As(size_t, index_inst);
+  if (index >= self->__size) {
+    return NULL;
+  }
+  return Xen_Bytes_From_Array(1, &((Xen_Bytes*)self)->bytes[index]);
+}
+
+static Xen_Instance* bytes_opr_set_index(Xen_Instance* self, Xen_Instance* args,
+                                         Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 2)
+    return NULL;
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  Xen_Instance* index_inst = Xen_Tuple_Peek_Index(args, 0);
+  if (Xen_IMPL(index_inst) != xen_globals->implements->number)
+    return NULL;
+  Xen_Instance* value_inst = Xen_Tuple_Peek_Index(args, 1);
+  size_t index = Xen_Number_As(size_t, index_inst);
+  if (index >= self->__size) {
+    return NULL;
+  }
+  if (Xen_IMPL(value_inst) != xen_globals->implements->bytes) {
+    return NULL;
+  }
+  Xen_Bytes* value = (Xen_Bytes*)value_inst;
+  if (value->__size == 0) {
+    return NULL;
+  }
+  bytes->bytes[index] = value->bytes[0];
+  return nil;
 }
 
 static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
@@ -253,14 +294,18 @@ int Xen_Bytes_Init(void) {
   }
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "__mul", bytes_opr_mul, nil);
+  Xen_VM_Store_Native_Function(props, "__get_index", bytes_opr_get_index, nil);
+  Xen_VM_Store_Native_Function(props, "__set_index", bytes_opr_set_index, nil);
   Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
   Xen_VM_Store_Native_Function(props, "string", bytes_prop_string, nil);
   Xen_VM_Store_Native_Function(props, "slice", bytes_slice, nil);
   Xen_VM_Store_Native_Function(props, "signed", bytes_signed, nil);
   Xen_VM_Store_Native_Function(props, "unsigned", bytes_unsigned, nil);
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Bytes_Implement.__props = props;
+  __Bytes_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   return 1;
 }
 
-void Xen_Bytes_Finish(void) {}
+void Xen_Bytes_Finish(void) {
+  Xen_GCHandle_Free(__Bytes_Implement.__props);
+}

@@ -15,8 +15,8 @@ struct __Implement {
   size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
   void (*__inst_trace)(Xen_GCHeader*);
-  struct __Instance* __props;
-  struct __Implement* __base;
+  Xen_GCHandle* __props;
+  Xen_GCHandle* __base;
   Xen_Native_Func __alloc;
   Xen_Native_Func __create;
   Xen_Native_Func __destroy;
@@ -33,8 +33,8 @@ struct __ImplementStruct {
   Xen_size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
   void (*__inst_trace)(Xen_GCHeader*);
-  struct __Instance* __props;
-  struct __Implement* __base;
+  Xen_GCHandle* __props;
+  Xen_GCHandle* __base;
   Xen_Native_Func __alloc;
   Xen_Native_Func __create;
   Xen_Native_Func __destroy;

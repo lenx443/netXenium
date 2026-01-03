@@ -31,7 +31,7 @@ static Xen_Instance* tuple_iterator_alloc(Xen_Instance* self,
   if (!it) {
     return NULL;
   }
-  it->tuple = NULL;
+  it->tuple = Xen_GCHandle_New();
   it->index = -1;
   return (Xen_Instance*)it;
 }
@@ -40,6 +40,8 @@ static Xen_Instance* tuple_iterator_destroy(Xen_Instance* self,
                                             Xen_Instance* args,
                                             Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Tuple_Iterator* it = (Xen_Tuple_Iterator*)self;
+  Xen_GCHandle_Free(it->tuple);
   return nil;
 }
 
@@ -61,7 +63,8 @@ static Xen_Instance* tuple_iterator_next(Xen_Instance* self, Xen_Instance* args,
     it->index = -1;
     return NULL;
   }
-  Xen_Instance* rsult = Xen_Tuple_Get_Index(it->tuple, it->index++);
+  Xen_Instance* rsult =
+      Xen_Tuple_Get_Index((Xen_Instance*)it->tuple->ptr, it->index++);
   if (!rsult) {
     return NULL;
   }
@@ -101,9 +104,12 @@ int Xen_Tuple_Iterator_Init(void) {
                                     nil)) {
     return 0;
   }
-  __Tuple_Iterator_Implement.__props = props;
+  __Tuple_Iterator_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Tuple_Iterator_Finish(void) {}
+void Xen_Tuple_Iterator_Finish(void) {
+  Xen_GCHandle_Free(__Tuple_Iterator_Implement.__props);
+}

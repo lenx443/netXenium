@@ -31,15 +31,15 @@ void Xen_IGC_Fork_Pop(Xen_IGC_Fork*);
   } while (0)
 
 static inline void Xen_IGC_Write_Field(Xen_Instance* parent,
-                                       Xen_Instance** field,
+                                       Xen_GCHandle** field,
                                        Xen_Instance* child) {
-  Xen_GC_Write_Field((Xen_GCHeader*)parent, (Xen_GCHeader**)field,
+  Xen_GC_Write_Field((Xen_GCHeader*)parent, (Xen_GCHandle**)field,
                      (Xen_GCHeader*)child);
 }
 
 #define Xen_IGC_WRITE_FIELD(parent, field, child)                              \
   do {                                                                         \
-    Xen_IGC_Write_Field((Xen_Instance*)(parent), (Xen_Instance**)&(field),     \
+    Xen_IGC_Write_Field((Xen_Instance*)(parent), (Xen_GCHandle**)&(field),     \
                         (Xen_Instance*)(child));                               \
   } while (0)
 

@@ -56,7 +56,8 @@ static Xen_Instance* map_alloc(Xen_Instance* self, Xen_Instance* args,
   for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
     map->map_buckets[i] = NULL;
   }
-  map->map_keys = __instance_new(xen_globals->implements->vector, nil, nil, 0);
+  map->map_keys = Xen_GCHandle_New_From((Xen_GCHeader*)__instance_new(
+      xen_globals->implements->vector, nil, nil, 0));
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
     map->map_buckets = NULL;
@@ -78,11 +79,14 @@ static Xen_Instance* map_destroy(Xen_Instance* self, Xen_Instance* args,
       while (current) {
         struct __Map_Node* temp = current;
         current = current->next;
+        Xen_GCHandle_Free(current->key);
+        Xen_GCHandle_Free(current->value);
         Xen_Dealloc(temp);
       }
     }
     Xen_Dealloc(map->map_buckets);
   }
+  Xen_GCHandle_Free(map->map_keys);
   return nil;
 }
 
@@ -136,7 +140,8 @@ static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_size_t buflen = 6;
   for (Xen_size_t i = 0; i < Xen_SIZE(map->map_keys); i++) {
-    Xen_Instance* key_inst = Xen_Vector_Peek_Index(map->map_keys, i);
+    Xen_Instance* key_inst =
+        Xen_Vector_Peek_Index((Xen_Instance*)map->map_keys->ptr, i);
     Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
     Xen_Instance* key_string = Xen_Attr_Raw_Stack(key_inst, stack);
     if (!key_string) {
@@ -262,7 +267,7 @@ static Xen_Instance* map_iter(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Map* map = (Xen_Map*)self;
-  return Xen_Vector_Iterator_New(map->map_keys);
+  return Xen_Vector_Iterator_New((Xen_Instance*)map->map_keys->ptr);
 }
 
 static Xen_Instance* map_push(Xen_Instance* self, Xen_Instance* args,
@@ -318,9 +323,11 @@ int Xen_Map_Init(void) {
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     return 0;
   }
-  __Map_Implement.__props = props;
+  __Map_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Map_Finish(void) {}
+void Xen_Map_Finish(void) {
+  Xen_GCHandle_Free(__Map_Implement.__props);
+}

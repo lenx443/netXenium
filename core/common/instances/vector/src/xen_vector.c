@@ -42,16 +42,17 @@ int Xen_Vector_Push(Xen_Instance* vector_inst, Xen_Instance* value) {
   Xen_Vector* vector = (Xen_Vector*)vector_inst;
   if (vector->__size >= vector->capacity) {
     size_t new_cap = vector->capacity == 0 ? 4 : vector->capacity * 2;
-    Xen_Instance** new_mem = (Xen_INSTANCE**)Xen_Realloc(
-        vector->values, sizeof(Xen_Instance*) * new_cap);
+    Xen_GCHandle** new_mem = (Xen_GCHandle**)Xen_Realloc(
+        vector->values, sizeof(Xen_GCHandle*) * new_cap);
     if (!new_mem) {
       return 0;
     }
     vector->values = new_mem;
     vector->capacity = new_cap;
   }
+  vector->values[vector->__size] = Xen_GCHandle_New();
   Xen_GC_Write_Field((Xen_GCHeader*)vector,
-                     (Xen_GCHeader**)&vector->values[vector->__size++],
+                     (Xen_GCHandle**)&vector->values[vector->__size++],
                      (Xen_GCHeader*)value);
   return 1;
 }
@@ -77,7 +78,9 @@ Xen_Instance* Xen_Vector_Pop(Xen_Instance* vector_inst) {
     return NULL;
   }
   vector->__size--;
-  return vector->values[Xen_SIZE(vector)];
+  Xen_Instance* value = (Xen_Instance*)vector->values[vector->__size]->ptr;
+  Xen_GCHandle_Free(vector->values[vector->__size]);
+  return value;
 }
 
 Xen_Instance* Xen_Vector_Top(Xen_Instance* vector_inst) {
@@ -88,21 +91,21 @@ Xen_Instance* Xen_Vector_Top(Xen_Instance* vector_inst) {
   if (Xen_SIZE(vector) == 0) {
     return NULL;
   }
-  return vector->values[Xen_SIZE(vector) - 1];
+  return (Xen_Instance*)vector->values[Xen_SIZE(vector) - 1]->ptr;
 }
 
 Xen_Instance* Xen_Vector_Get_Index(Xen_Instance* vector, size_t index) {
   if (!vector || index >= ((Xen_Vector*)vector)->__size) {
     return NULL;
   }
-  return ((Xen_Vector*)vector)->values[index];
+  return (Xen_Instance*)((Xen_Vector*)vector)->values[index]->ptr;
 }
 
 Xen_Instance* Xen_Vector_Peek_Index(Xen_Instance* vector, size_t index) {
   if (!vector || index >= ((Xen_Vector*)vector)->__size) {
     return NULL;
   }
-  return ((Xen_Vector*)vector)->values[index];
+  return (Xen_Instance*)((Xen_Vector*)vector)->values[index]->ptr;
 }
 
 size_t Xen_Vector_Size(Xen_Instance* vector) {

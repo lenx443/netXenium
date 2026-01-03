@@ -62,7 +62,8 @@ static Xen_Instance* vector_iterator_next(Xen_Instance* self,
     it->index = -1;
     return NULL;
   }
-  Xen_Instance* rsult = Xen_Vector_Get_Index(it->vector, it->index++);
+  Xen_Instance* rsult =
+      Xen_Vector_Get_Index((Xen_Instance*)it->vector->ptr, it->index++);
   if (!rsult) {
     return NULL;
   }
@@ -102,9 +103,12 @@ int Xen_Vector_Iterator_Init(void) {
                                     nil)) {
     return 0;
   }
-  __Vector_Iterator_Implement.__props = props;
+  __Vector_Iterator_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Vector_Iterator_Finish(void) {}
+void Xen_Vector_Iterator_Finish(void) {
+  Xen_GCHandle_Free(__Vector_Iterator_Implement.__props);
+}

@@ -30,7 +30,7 @@
 static void vector_trace(Xen_GCHeader* h) {
   Xen_Vector* vector = (Xen_Vector*)h;
   for (size_t i = 0; i < vector->__size; i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vector->values[i]);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vector->values[i]->ptr);
   }
 }
 
@@ -88,6 +88,9 @@ static Xen_Instance* vector_destroy(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Vector* vector = (Xen_Vector*)self;
+  for (Xen_size_t i = 0; i < vector->__size; i++) {
+    Xen_GCHandle_Free(vector->values[i]);
+  }
   Xen_Dealloc(vector->values);
   return nil;
 }
@@ -203,14 +206,14 @@ static Xen_Instance* vector_opr_get_index(Xen_Instance* self,
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(args) != 1)
     return NULL;
-  Xen_Instance* index_inst = Xen_Vector_Peek_Index(args, 0);
+  Xen_Instance* index_inst = Xen_Tuple_Peek_Index(args, 0);
   if (Xen_IMPL(index_inst) != xen_globals->implements->number)
     return NULL;
   size_t index = Xen_Number_As(size_t, index_inst);
   if (index >= self->__size) {
     return NULL;
   }
-  return ((Xen_Vector*)self)->values[index];
+  return (Xen_Instance*)((Xen_Vector*)self)->values[index]->ptr;
 }
 
 static Xen_Instance* vector_iter(Xen_Instance* self, Xen_Instance* args,
@@ -233,9 +236,7 @@ static Xen_Instance* vector_opr_set_index(Xen_Instance* self,
   if (index >= self->__size) {
     return NULL;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)self,
-                     (Xen_GCHeader**)&((Xen_Vector*)self)->values[index],
-                     (Xen_GCHeader*)value_inst);
+  ((Xen_Vector*)self)->values[index]->ptr = (Xen_GCHeader*)value_inst;
   return nil;
 }
 
@@ -305,9 +306,11 @@ int Xen_Vector_Init(void) {
       !Xen_VM_Store_Native_Function(props, "top", vector_top, nil)) {
     return 0;
   }
-  __Vector_Implement.__props = props;
+  __Vector_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_Vector_Finish(void) {}
+void Xen_Vector_Finish(void) {
+  Xen_GCHandle_Free(__Vector_Implement.__props);
+}

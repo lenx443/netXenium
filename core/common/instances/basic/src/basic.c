@@ -17,11 +17,13 @@
 
 static void basic_trace(Xen_GCHeader* h) {
   struct __Implement* impl = (struct __Implement*)h;
-  if (impl->__props && Xen_Nil_NEval(impl->__props)) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__props);
+  if (impl->__props && impl->__props->ptr &&
+      Xen_Nil_NEval((Xen_Instance*)impl->__props->ptr)) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__props->ptr);
   }
-  if (impl->__base && Xen_Nil_NEval((Xen_Instance*)impl->__base)) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__base);
+  if (impl->__base && impl->__base->ptr &&
+      Xen_Nil_NEval((Xen_Instance*)impl->__base->ptr)) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__base->ptr);
   }
 }
 
@@ -35,7 +37,8 @@ static Xen_Instance* basic_create(struct __Instance* self, Xen_Instance* args,
   }
   impl->__impl_name = NULL;
   impl->__inst_trace = NULL;
-  impl->__props = NULL;
+  impl->__props = Xen_GCHandle_New();
+  impl->__base = Xen_GCHandle_New();
   impl->__inst_size = sizeof(struct __Instance);
   impl->__create = NULL;
   impl->__destroy = NULL;
@@ -56,6 +59,12 @@ static Xen_Instance* basic_destroy(struct __Instance* self, Xen_Instance* args,
     return NULL;
   if (impl->__impl_name)
     Xen_Dealloc(impl->__impl_name);
+  if (impl->__props) {
+    Xen_GCHandle_Free(impl->__props);
+  }
+  if (impl->__base) {
+    Xen_GCHandle_Free(impl->__base);
+  }
   return nil;
 }
 
@@ -94,8 +103,9 @@ static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   struct __Implement* impl = (struct __Implement*)self;
-  if (impl->__props == NULL || Xen_Nil_Eval(impl->__props) ||
-      Xen_IMPL(impl->__props) != xen_globals->implements->map) {
+  if (impl->__props == NULL || impl->__props->ptr ||
+      Xen_Nil_Eval((Xen_Instance*)impl->__props->ptr) ||
+      Xen_IMPL(impl->__props->ptr) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {
@@ -106,7 +116,7 @@ static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_Push(key);
-  Xen_Instance* attr = Xen_Map_Get(impl->__props, key);
+  Xen_Instance* attr = Xen_Map_Get((Xen_Instance*)impl->__props->ptr, key);
   if (!attr) {
     Xen_IGC_Pop();
     return NULL;

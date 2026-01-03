@@ -4,10 +4,11 @@
 #include <stddef.h>
 
 #include "instance.h"
+#include "netxenium/gc_header.h"
 
 struct Xen_Vector_Instance {
   Xen_INSTANCE_HEAD;
-  Xen_Instance **values;
+  Xen_GCHandle** values;
   size_t capacity;
 };
 

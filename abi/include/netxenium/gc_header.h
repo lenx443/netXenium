@@ -20,6 +20,9 @@
 
 struct __GC_Header;
 
+struct __GC_Handle;
+
 typedef struct __GC_Header Xen_GCHeader;
+typedef struct __GC_Handle Xen_GCHandle;
 
 #endif

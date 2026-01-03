@@ -78,13 +78,14 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
         eval = Xen_False;
       }
     } else {
-      eval = Xen_Operator_Eval_Pair(current->key, pair.key, Xen_OPR_EQ);
+      eval = Xen_Operator_Eval_Pair((Xen_Instance*)current->key->ptr, pair.key,
+                                    Xen_OPR_EQ);
       if (!eval) {
         return 0;
       }
     }
     if (eval == Xen_True) {
-      Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&current->value,
+      Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHandle**)&current->value,
                          (Xen_GCHeader*)pair.value);
       map->__size++;
       return 1;
@@ -95,13 +96,13 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   if (!new_node) {
     return 0;
   }
-  if (!Xen_Vector_Push(map->map_keys, pair.key)) {
+  if (!Xen_Vector_Push((Xen_Instance*)map->map_keys->ptr, pair.key)) {
     Xen_Dealloc(new_node);
     return 0;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&new_node->key,
+  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHandle**)&new_node->key,
                      (Xen_GCHeader*)pair.key);
-  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHeader**)&new_node->value,
+  Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHandle**)&new_node->value,
                      (Xen_GCHeader*)pair.value);
 
   new_node->next = map->map_buckets[hash_index];
@@ -166,13 +167,14 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
         eval = Xen_False;
       }
     } else {
-      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
+      eval = Xen_Operator_Eval_Pair((Xen_Instance*)current->key->ptr, key,
+                                    Xen_OPR_EQ);
       if (!eval) {
         return NULL;
       }
     }
     if (eval == Xen_True) {
-      return current->value;
+      return (Xen_Instance*)current->value->ptr;
     }
     current = current->next;
   }
@@ -201,7 +203,7 @@ Xen_Instance* Xen_Map_Keys(Xen_Instance* map) {
   if (!map || Xen_Nil_Eval(map)) {
     return NULL;
   }
-  return ((Xen_Map*)map)->map_keys;
+  return (Xen_Instance*)((Xen_Map*)map)->map_keys->ptr;
 }
 
 int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
@@ -228,7 +230,8 @@ int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
         eval = Xen_False;
       }
     } else {
-      eval = Xen_Operator_Eval_Pair(current->key, key, Xen_OPR_EQ);
+      eval = Xen_Operator_Eval_Pair((Xen_Instance*)current->key->ptr, key,
+                                    Xen_OPR_EQ);
       if (!eval) {
         return 0;
       }

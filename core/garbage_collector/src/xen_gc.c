@@ -84,7 +84,7 @@ void Xen_GC_MinorCollect(void) {
   for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
     struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
 
-    struct __GC_Header* child = *e->slot;
+    struct __GC_Header* child = e->handle->ptr;
 
     if (!child)
       continue;
@@ -148,7 +148,7 @@ void Xen_GC_Remove_RS_Child(struct __GC_Header* child) {
   Xen_size_t out = 0;
   for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
     struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-    if (*e->slot != child) {
+    if (e->handle->ptr != child) {
       xen_globals->gc_heap->remembered_set[out++] =
           xen_globals->gc_heap->remembered_set[i];
     }
@@ -228,7 +228,7 @@ void Xen_GC_Mark(void) {
   }
   for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
     struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-    struct __GC_Header* child = *e->slot;
+    struct __GC_Header* child = e->handle->ptr;
 
     if (!child)
       continue;
@@ -256,7 +256,7 @@ void Xen_GC_Mark_Young(void) {
   for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
     struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
 
-    struct __GC_Header* child = *e->slot;
+    struct __GC_Header* child = e->handle->ptr;
 
     if (!child)
       continue;
@@ -385,9 +385,9 @@ void Xen_GC_Shutdown(void) {
   assert(xen_globals->gc_heap->total_bytes == 0);
 }
 
-void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
+void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
                         struct __GC_Header* child) {
-  *field = child;
+  (*handle)->ptr = child;
 
   if (!parent || !child)
     return;
@@ -401,13 +401,13 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Header** field,
   if (parent->generation == GC_OLD && child->generation == GC_YOUNG) {
     for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
       struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-      if (e->parent == parent && e->slot == field)
+      if (e->parent == parent && e->handle == *handle)
         return;
     }
     assert(xen_globals->gc_heap->remembered_count < __XEN_GC_MAX_REMEMBERED__);
     xen_globals->gc_heap
         ->remembered_set[xen_globals->gc_heap->remembered_count++] =
-        (struct __GC_Edge){parent, field};
+        (struct __GC_Edge){parent, *handle};
   }
 }
 

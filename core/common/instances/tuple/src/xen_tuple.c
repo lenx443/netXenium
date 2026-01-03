@@ -30,8 +30,9 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
     return NULL;
   }
   for (size_t i = 0; i < size; i++) {
+    tuple->instances[tuple->__size] = Xen_GCHandle_New();
     Xen_GC_Write_Field((Xen_GCHeader*)tuple,
-                       (Xen_GCHeader**)&tuple->instances[tuple->__size++],
+                       (Xen_GCHandle**)&tuple->instances[tuple->__size++],
                        (Xen_GCHeader*)array[i]);
   }
   return (Xen_Instance*)tuple;
@@ -42,19 +43,23 @@ Xen_Instance* Xen_Tuple_From_Vector(Xen_Instance* vector_inst) {
     return NULL;
   }
   Xen_Vector* vector = (Xen_Vector*)vector_inst;
-  return Xen_Tuple_From_Array(Xen_SIZE(vector), vector->values);
+  Xen_Instance** array = Xen_Alloc(Xen_SIZE(vector) * sizeof(Xen_Instance*));
+  for (Xen_size_t i = 0; i < Xen_SIZE(vector); i++) {
+    array[i] = (Xen_Instance*)vector->values[i]->ptr;
+  }
+  return Xen_Tuple_From_Array(Xen_SIZE(vector), array);
 }
 
 Xen_Instance* Xen_Tuple_Get_Index(Xen_Instance* tuple, Xen_size_t index) {
   if (!tuple || index >= ((Xen_Tuple*)tuple)->__size) {
     return NULL;
   }
-  return ((Xen_Tuple*)tuple)->instances[index];
+  return (Xen_Instance*)((Xen_Tuple*)tuple)->instances[index]->ptr;
 }
 
 Xen_Instance* Xen_Tuple_Peek_Index(Xen_Instance* tuple, Xen_size_t index) {
   if (!tuple || index >= ((Xen_Tuple*)tuple)->__size) {
     return NULL;
   }
-  return ((Xen_Tuple*)tuple)->instances[index];
+  return (Xen_Instance*)((Xen_Tuple*)tuple)->instances[index]->ptr;
 }

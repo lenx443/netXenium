@@ -37,8 +37,8 @@ static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
   if (!method) {
     return NULL;
   }
-  method->function = nil;
-  method->self = nil;
+  method->function = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
+  method->self = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
   return (Xen_Instance*)method;
 }
 
@@ -59,6 +59,9 @@ static Xen_Instance* method_create(struct __Instance* self, Xen_Instance* args,
 static Xen_Instance* method_destroy(struct __Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Method* method = (Xen_Method*)self;
+  Xen_GCHandle_Free(method->function);
+  Xen_GCHandle_Free(method->self);
   return nil;
 }
 
@@ -76,12 +79,13 @@ static Xen_Instance* method_callable(struct __Instance* self,
   if (function->fun_type == 1) {
     Xen_Instance* new_ctx = Xen_Ctx_New(
         run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack),
-        function->closure, method->self, args, kwargs, NULL,
-        function->fun_code);
+        (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
+        args, kwargs, NULL, function->fun_code);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
       return NULL;
     }
-    Xen_Instance* args_list = Xen_Map_Keys(function->args_names);
+    Xen_Instance* args_list =
+        Xen_Map_Keys((Xen_Instance*)function->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;
@@ -107,7 +111,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
       }
       Xen_Instance* keyword = NULL;
       while ((keyword = Xen_Attr_Next(kwargs_it)) != NULL) {
-        if (!Xen_Map_Has(function->args_names, keyword)) {
+        if (!Xen_Map_Has((Xen_Instance*)function->args_names->ptr, keyword)) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
@@ -129,7 +133,8 @@ static Xen_Instance* method_callable(struct __Instance* self,
       }
       (*xen_globals->vm)->except.active = 0;
     }
-    Xen_Instance* defaults_it = Xen_Attr_Iter(function->args_default_values);
+    Xen_Instance* defaults_it =
+        Xen_Attr_Iter((Xen_Instance*)function->args_default_values->ptr);
     if (!defaults_it) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;
@@ -138,8 +143,8 @@ static Xen_Instance* method_callable(struct __Instance* self,
     while ((default_name = Xen_Attr_Next(defaults_it)) != NULL) {
       if (!Xen_Map_Has(((RunContext_ptr)new_ctx)->ctx_instances,
                        default_name)) {
-        Xen_Instance* default_value =
-            Xen_Map_Get(function->args_default_values, default_name);
+        Xen_Instance* default_value = Xen_Map_Get(
+            (Xen_Instance*)function->args_default_values->ptr, default_name);
         if (!Xen_Map_Push_Pair(((RunContext_ptr)new_ctx)->ctx_instances,
                                (Xen_Map_Pair){default_name, default_value})) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
@@ -162,7 +167,8 @@ static Xen_Instance* method_callable(struct __Instance* self,
       }
     }
   } else if (function->fun_type == 2) {
-    Xen_Instance* ret = function->fun_native(method->self, args, kwargs);
+    Xen_Instance* ret =
+        function->fun_native((Xen_Instance*)method->self->ptr, args, kwargs);
     if (!ret) {
       return NULL;
     }
@@ -389,8 +395,10 @@ int Xen_Method_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Method_Implement.__props = props;
+  __Method_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   return 1;
 }
 
-void Xen_Method_Finish(void) {}
+void Xen_Method_Finish(void) {
+  Xen_GCHandle_Free(__Method_Implement.__props);
+}

@@ -12,7 +12,7 @@ Xen_Instance* Xen_Vector_Iterator_New(Xen_Instance* vector) {
   if (!it) {
     return NULL;
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)it, (Xen_GCHeader**)&it->vector,
+  Xen_GC_Write_Field((Xen_GCHeader*)it, (Xen_GCHandle**)&it->vector,
                      (Xen_GCHeader*)vector);
   it->index = 0;
   return (Xen_Instance*)it;
