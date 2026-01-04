@@ -32,15 +32,15 @@ static void InterruptHandler(int sign) {
 
 static void vm_def_trace(Xen_GCHeader* h) {
   VM* _vm = (VM*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->args);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->paths_modules);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->config);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->args->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->paths_modules->ptr);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->config->ptr);
   if (vm->except.active) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except->ptr);
   }
 }
 
@@ -53,25 +53,21 @@ static int vm_load_modules_paths(void) {
   Xen_IGC_WRITE_FIELD(vm, vm->args, Xen_Vector_New());
   for (int i = 0; i < program.argc; i++) {
     Xen_Instance* arg = Xen_String_From_CString(program.argv[i]);
-    Xen_Vector_Push(vm->args, arg);
+    Xen_Vector_Push((Xen_Instance*)vm->args->ptr, arg);
   }
   Xen_IGC_WRITE_FIELD(vm, vm->paths_modules, Xen_Vector_New());
-  if (!vm->paths_modules) {
-    return 0;
-  }
   Xen_Instance* default_module_path =
       Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");
-  Xen_Vector_Push(vm->paths_modules, default_module_path);
+  Xen_Vector_Push((Xen_Instance*)vm->paths_modules->ptr, default_module_path);
   return 1;
 }
 
 static int vm_load_config(void) {
   Xen_IGC_WRITE_FIELD(vm, vm->config, Xen_Map_New());
-  if (!vm->config) {
-    return 0;
-  }
   if (!Xen_Map_Push_Pair_Str(
-          vm->config, (Xen_Map_Pair_Str){"paths_modules", vm->paths_modules})) {
+          (Xen_Instance*)vm->config->ptr,
+          (Xen_Map_Pair_Str){"paths_modules",
+                             (Xen_Instance*)vm->paths_modules->ptr})) {
     return 0;
   }
   return 1;
@@ -83,6 +79,14 @@ bool vm_create(void) {
   vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
   vm->ctx_id_count = 0;
   vm->vm_ctx_stack = NULL;
+  vm->args = Xen_GCHandle_New();
+  vm->modules = Xen_GCHandle_New();
+  vm->modules_stack = Xen_GCHandle_New();
+  vm->globals_instances = Xen_GCHandle_New();
+  vm->globals_props = Xen_GCHandle_New();
+  vm->paths_modules = Xen_GCHandle_New();
+  vm->config = Xen_GCHandle_New();
+  vm->except.except = Xen_GCHandle_New();
   Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));
   if (!args_array) {
     return 0;
@@ -132,7 +136,6 @@ bool vm_create(void) {
     return 0;
   }
   vm->except.active = 0;
-  vm->except.except = NULL;
   vm->except.bt = vm_backtrace_new();
   Xen_GC_Push_Root((Xen_GCHeader*)vm);
 
@@ -148,5 +151,13 @@ void vm_destroy(void) {
   if (!vm)
     return;
   Xen_Dealloc((void*)vm->path_current);
+  Xen_GCHandle_Free(vm->args);
+  Xen_GCHandle_Free(vm->modules);
+  Xen_GCHandle_Free(vm->modules_stack);
+  Xen_GCHandle_Free(vm->globals_instances);
+  Xen_GCHandle_Free(vm->globals_props);
+  Xen_GCHandle_Free(vm->paths_modules);
+  Xen_GCHandle_Free(vm->config);
+  Xen_GCHandle_Free(vm->except.except);
   Xen_GC_Pop_Root();
 }

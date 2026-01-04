@@ -62,13 +62,15 @@ int main(int argc, char** argv) {
       char* dir = Xen_Alloc(len + 1);
       memcpy(dir, argv[1], len);
       dir[len] = '\0';
-      module = Xen_Module_Load(argv[1], "<start>", dir,
-                               (*xen_globals->vm)->globals_instances,
-                               XEN_MODULE_GUEST);
+      module = Xen_Module_Load(
+          argv[1], "<start>", dir,
+          (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+          XEN_MODULE_GUEST);
     } else {
-      module = Xen_Module_Load(argv[1], "<start>", ".",
-                               (*xen_globals->vm)->globals_instances,
-                               XEN_MODULE_GUEST);
+      module = Xen_Module_Load(
+          argv[1], "<start>", ".",
+          (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+          XEN_MODULE_GUEST);
     }
     if (Xen_VM_Except_Active()) {
       Xen_VM_Except_Backtrace_Show();
@@ -81,7 +83,8 @@ int main(int argc, char** argv) {
       if (Xen_IMPL(start) != xen_globals->implements->method) {
         goto end;
       }
-      Xen_Instance* args = Xen_Tuple_From_Array(1, &(*xen_globals->vm)->args);
+      Xen_Instance* args = Xen_Tuple_From_Array(
+          1, (Xen_Instance**)&(*xen_globals->vm)->args->ptr);
       Xen_Method_Call(start, args, nil);
       if (Xen_VM_Except_Active()) {
         Xen_VM_Except_Backtrace_Show();

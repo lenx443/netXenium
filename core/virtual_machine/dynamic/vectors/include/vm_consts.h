@@ -14,9 +14,9 @@ struct Callable_Vector;
 
 typedef struct {
   Xen_GCHeader gc;
-  struct __Instance* c_names;
-  struct __Instance* c_instances;
-  struct Callable_Vector* c_callables;
+  Xen_GCHandle* c_names;
+  Xen_GCHandle* c_instances;
+  Xen_GCHandle* c_callables;
 } vm_Consts;
 
 typedef vm_Consts* vm_Consts_ptr;

@@ -2,10 +2,10 @@
 #define __PROGRAM_CODE_H__
 
 #include "bytecode.h"
-#include "vm_consts.h"
+#include "netxenium/gc_header.h"
 
 struct ProgramCode {
-  vm_Consts_ptr consts;
+  Xen_GCHandle* consts;
   Bytecode_Array_ptr code;
   size_t stack_depth;
 };

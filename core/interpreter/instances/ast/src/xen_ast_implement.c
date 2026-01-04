@@ -128,9 +128,11 @@ int Xen_AST_Init(void) {
       !Xen_VM_Store_Native_Function(props, "children", ast_children, nil)) {
     return 0;
   }
-  __AST_Implement.__props = props;
+  __AST_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }
 
-void Xen_AST_Finish(void) {}
+void Xen_AST_Finish(void) {
+  Xen_GCHandle_Free(__AST_Implement.__props);
+}

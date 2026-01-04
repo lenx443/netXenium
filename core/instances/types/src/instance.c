@@ -1,4 +1,5 @@
 #include "instance.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
@@ -37,18 +38,22 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   }
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
-    mapped->__map = Xen_Map_New();
+    mapped->__map = Xen_GCHandle_New();
+    Xen_GC_Write_Field((struct __GC_Header*)mapped,
+                       (struct __GC_Handle**)&mapped->__map,
+                       (struct __GC_Header*)Xen_Map_New());
     if (!mapped->__map) {
       Xen_IGC_Pop();
       return NULL;
     }
     if (impl->__base) {
-      Xen_Instance* base = __instance_new(impl->__base, nil, nil, 0);
+      Xen_Instance* base =
+          __instance_new((Xen_Implement*)impl->__base->ptr, nil, nil, 0);
       if (!base) {
         Xen_IGC_Pop();
         return NULL;
       }
-      if (!Xen_Map_Push_Pair_Str(mapped->__map,
+      if (!Xen_Map_Push_Pair_Str((Xen_Instance*)mapped->__map->ptr,
                                  (Xen_Map_Pair_Str){"$__base", base})) {
         Xen_IGC_Pop();
         return NULL;
@@ -67,6 +72,9 @@ void __instance_free(Xen_GCHeader* h) {
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
     if (inst->__impl->__destroy)
       inst->__impl->__destroy(inst, NULL, NULL);
+    if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
+      Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
+    }
     Xen_Dealloc(h);
   }
 }

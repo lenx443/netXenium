@@ -11,7 +11,7 @@ static void vm_stack_trace(Xen_GCHeader* h) {
   struct vm_Stack* stack = (struct vm_Stack*)h;
   if (stack->stack_head) {
     for (Xen_size_t i = 0; &stack->stack_head[i] < stack->stack_top; i++) {
-      Xen_GC_Trace_GCHeader((Xen_GCHeader*)stack->stack_head[i]);
+      Xen_GC_Trace_GCHeader((Xen_GCHeader*)stack->stack_head[i]->ptr);
     }
   }
 }
@@ -19,6 +19,9 @@ static void vm_stack_trace(Xen_GCHeader* h) {
 static void vm_stack_free(Xen_GCHeader* h) {
   struct vm_Stack* stack = (struct vm_Stack*)h;
   if (stack->stack_head) {
+    for (Xen_size_t i = 0; i < stack->stack_capacity; i++) {
+      Xen_Dealloc(stack->stack_head[i]);
+    }
     Xen_Dealloc(stack->stack_head);
   }
   vm_stack_start(stack);
@@ -31,6 +34,9 @@ struct vm_Stack* vm_stack_new(size_t cap) {
   stack->stack_head = Xen_ZAlloc(cap, sizeof(Xen_Instance*));
   if (!stack->stack_head) {
     return 0;
+  }
+  for (Xen_size_t i = 0; i < stack->stack_capacity; i++) {
+    stack->stack_head[i] = Xen_GCHandle_New();
   }
   stack->stack_top = stack->stack_head;
   stack->stack_capacity = cap;

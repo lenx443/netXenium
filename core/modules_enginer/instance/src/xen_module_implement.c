@@ -58,7 +58,7 @@ static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_XPUSH(key, roots);
-  Xen_Instance* attr = Xen_Map_Get(mapped->__map, key);
+  Xen_Instance* attr = Xen_Map_Get((Xen_Instance*)mapped->__map->ptr, key);
   if (!attr) {
     return NULL;
   }

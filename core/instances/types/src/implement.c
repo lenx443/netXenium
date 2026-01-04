@@ -1,6 +1,7 @@
 #include "implement.h"
 #include "basic.h"
 #include "xen_cstrings.h"
+#include "xen_gc.h"
 #include "xen_nil.h"
 
 Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct impl_struct) {
@@ -24,5 +25,7 @@ Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct impl_struct) {
 }
 
 void Xen_Implement_SetProps(Xen_Implement* impl, Xen_Instance* props) {
-  impl->__props = props;
+  Xen_GC_Write_Field((struct __GC_Header*)impl,
+                     (struct __GC_Handle**)&impl->__props,
+                     (struct __GC_Header*)props);
 }

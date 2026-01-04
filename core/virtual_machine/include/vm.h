@@ -25,7 +25,7 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr, Xen_Instance*, struct __Instance*,
 Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr, struct __Instance*,
                                    Xen_Instance*, Xen_Instance*, Xen_Instance*);
 inline static Xen_Instance* Xen_VM_Except(void) {
-  return (*xen_globals->vm)->except.except;
+  return (Xen_Instance*)(*xen_globals->vm)->except.except->ptr;
 }
 
 inline static Xen_bool_t Xen_VM_Except_Active(void) {

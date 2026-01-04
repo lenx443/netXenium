@@ -25,7 +25,7 @@ typedef CALLABLE* CALLABLE_ptr;
 
 struct Callable_Vector {
   Xen_GCHeader gc;
-  struct Callable** callables;
+  Xen_GCHandle** callables;
   Xen_size_t count;
   Xen_size_t cap;
 };

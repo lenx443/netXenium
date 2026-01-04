@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include "gc_header.h"
-#include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_stack.h"
 #include "vm_backtrace.h"
@@ -13,18 +12,18 @@
 typedef struct {
   Xen_GCHeader gc;
   RunContext_Stack_ptr vm_ctx_stack;
-  Xen_Instance* args;
-  Xen_Instance* modules;
-  Xen_Instance* modules_stack;
-  Xen_Instance* globals_instances;
-  Xen_Instance* globals_props;
+  Xen_GCHandle* args;
+  Xen_GCHandle* modules;
+  Xen_GCHandle* modules_stack;
+  Xen_GCHandle* globals_instances;
+  Xen_GCHandle* globals_props;
   ctx_id_t ctx_id_count;
   Xen_c_string_t path_current;
-  Xen_Instance* paths_modules;
-  Xen_Instance* config;
+  Xen_GCHandle* paths_modules;
+  Xen_GCHandle* config;
   struct {
     Xen_bool_t active;
-    Xen_Instance* except;
+    Xen_GCHandle* except;
     vm_backtrace* bt;
   } except;
 } VM;

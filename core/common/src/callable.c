@@ -35,6 +35,9 @@ static void callable_vector_trace(Xen_GCHeader* h) {
 
 static void callable_vector_destroy(Xen_GCHeader* h) {
   CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)h;
+  for (Xen_size_t i = 0; i < cv->count; i++) {
+    Xen_GCHandle_Free(cv->callables[i]);
+  }
   Xen_Dealloc(cv->callables);
   Xen_Dealloc(h);
 }
@@ -52,11 +55,12 @@ void callable_vector_push(CALLABLE_Vector_ptr cv, CALLABLE_ptr callable) {
   assert(cv && callable);
   if (cv->count >= cv->cap) {
     Xen_size_t new_cap = cv->cap ? cv->cap * 2 : 4;
-    cv->callables = Xen_Realloc(cv->callables, new_cap * sizeof(CALLABLE_ptr));
+    cv->callables = Xen_Realloc(cv->callables, new_cap * sizeof(Xen_GCHandle*));
     cv->cap = new_cap;
   }
+  cv->callables[cv->count] = Xen_GCHandle_New();
   Xen_GC_Write_Field((Xen_GCHeader*)cv,
-                     (Xen_GCHeader**)&cv->callables[cv->count++],
+                     (Xen_GCHandle**)&cv->callables[cv->count++],
                      (Xen_GCHeader*)callable);
 }
 
@@ -64,5 +68,5 @@ CALLABLE_ptr callable_vector_get(CALLABLE_Vector_ptr cv, Xen_size_t idx) {
   if (idx >= cv->count) {
     return NULL;
   }
-  return cv->callables[idx];
+  return (CALLABLE_ptr)cv->callables[idx]->ptr;
 }

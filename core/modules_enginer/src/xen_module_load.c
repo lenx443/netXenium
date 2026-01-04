@@ -19,8 +19,9 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   if (!mod_inst) {
     return 0;
   }
-  if (!Xen_Map_Push_Map((*xen_globals->vm)->globals_instances,
-                        ((Xen_Module*)mod_inst)->__map)) {
+  if (!Xen_Map_Push_Map(
+          (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+          (Xen_Instance*)((Xen_Module*)mod_inst)->__map->ptr)) {
     return 0;
   }
   return 1;
@@ -38,8 +39,9 @@ int Xen_Module_Load_Startup(void) {
       if (!mod_inst) {
         return 0;
       }
-      if (!Xen_Map_Push_Pair_Str((*xen_globals->vm)->globals_instances,
-                                 (Xen_Map_Pair_Str){mod->mod_name, mod_inst})) {
+      if (!Xen_Map_Push_Pair_Str(
+              (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+              (Xen_Map_Pair_Str){mod->mod_name, mod_inst})) {
         return 0;
       }
     }

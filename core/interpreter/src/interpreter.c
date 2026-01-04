@@ -30,7 +30,8 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
   printf("== Running ==\n");
 #endif
   Xen_Instance* ctx_inst = Xen_Ctx_New(
-      nil, nil, nil, nil, nil, (*xen_globals->vm)->globals_instances, code);
+      nil, nil, nil, nil, nil,
+      (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr, code);
   if (!ctx_inst) {
     return NULL;
   }

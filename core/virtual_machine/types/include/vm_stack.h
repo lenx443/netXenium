@@ -9,8 +9,8 @@
 
 struct vm_Stack {
   Xen_GCHeader gc;
-  Xen_Instance** stack_head;
-  Xen_Instance** stack_top;
+  Xen_GCHandle** stack_head;
+  Xen_GCHandle** stack_top;
   size_t stack_capacity;
 };
 
@@ -23,11 +23,11 @@ static inline void vm_stack_start(struct vm_Stack* stack) {
 }
 
 static inline void vm_stack_push(struct vm_Stack* stack, Xen_Instance* val) {
-  Xen_GC_Write_Field((Xen_GCHeader*)stack, (Xen_GCHeader**)stack->stack_top++,
+  Xen_GC_Write_Field((Xen_GCHeader*)stack, (Xen_GCHandle**)stack->stack_top++,
                      (Xen_GCHeader*)val);
 }
 static inline Xen_Instance* vm_stack_pop(struct vm_Stack* stack) {
-  Xen_Instance* val = *--stack->stack_top;
+  Xen_Instance* val = (Xen_Instance*)(*--stack->stack_top)->ptr;
   return val;
 }
 

@@ -2,6 +2,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
@@ -88,8 +89,10 @@ int Xen_Nil_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Nil_Implement.__props = props;
+  __Nil_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
   return 1;
 }
 
-void Xen_Nil_Finish(void) {}
+void Xen_Nil_Finish(void) {
+  Xen_GCHandle_Free(__Nil_Implement.__props);
+}

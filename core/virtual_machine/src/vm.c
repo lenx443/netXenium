@@ -26,8 +26,9 @@ Xen_Instance* Xen_VM_Current_Ctx(void) {
 }
 
 bool Xen_VM_Store_Global(const char* name, Xen_Instance* val) {
-  return Xen_Map_Push_Pair_Str((*xen_globals->vm)->globals_instances,
-                               (Xen_Map_Pair_Str){name, val});
+  return Xen_Map_Push_Pair_Str(
+      (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+      (Xen_Map_Pair_Str){name, val});
 }
 
 bool Xen_VM_Store_Native_Function(Xen_Instance* inst_map, const char* name,
@@ -62,7 +63,8 @@ Xen_INSTANCE* Xen_VM_Load_Instance(const char* name, ctx_id_t id) {
   }
   RunContext_ptr current = (RunContext_ptr)Xen_VM_Current_Ctx();
   while (current && Xen_Nil_NEval((Xen_Instance*)current)) {
-    Xen_Instance* inst = Xen_Map_Get_Str(current->ctx_instances, name);
+    Xen_Instance* inst =
+        Xen_Map_Get_Str((Xen_Instance*)current->ctx_instances->ptr, name);
     if (inst != NULL) {
       return inst;
     }
@@ -96,7 +98,9 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
   }
   RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(
       &(*xen_globals->vm)->vm_ctx_stack);
-  ctx->ctx_code = callable;
+  Xen_GC_Write_Field((struct __GC_Header*)ctx,
+                     (struct __GC_Handle**)&ctx->ctx_code,
+                     (struct __GC_Header*)callable);
   return 1;
 }
 
@@ -158,7 +162,7 @@ int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
   }
   (*xen_globals->vm)->except.active = 1;
   Xen_GC_Write_Field((Xen_GCHeader*)*xen_globals->vm,
-                     (Xen_GCHeader**)&(*xen_globals->vm)->except.except,
+                     (Xen_GCHandle**)&(*xen_globals->vm)->except.except,
                      (Xen_GCHeader*)except);
   Xen_IGC_Pop();
   return 1;

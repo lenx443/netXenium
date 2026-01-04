@@ -1,6 +1,8 @@
 #include "compiler_ext.h"
 #include "block_list.h"
+#include "callable.h"
 #include "gc_header.h"
+#include "instance.h"
 #include "program_code.h"
 #include "source_file.h"
 #include "vm_instructs.h"
@@ -62,9 +64,10 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
   if (!pc->code)
     return 0;
 
-  pc->consts = vm_consts_from_values(blocks->consts->c_names,
-                                     blocks->consts->c_instances,
-                                     blocks->consts->c_callables);
+  pc->consts->ptr = (Xen_GCHeader*)vm_consts_from_values(
+      (Xen_Instance*)blocks->consts->c_names->ptr,
+      (Xen_Instance*)blocks->consts->c_instances->ptr,
+      (CALLABLE_Vector_ptr)blocks->consts->c_callables->ptr);
   if (!pc->consts) {
     bc_free(pc->code);
     return 0;

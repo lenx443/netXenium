@@ -100,6 +100,8 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
     Xen_Dealloc(new_node);
     return 0;
   }
+  new_node->key = Xen_GCHandle_New();
+  new_node->value = Xen_GCHandle_New();
   Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHandle**)&new_node->key,
                      (Xen_GCHeader*)pair.key);
   Xen_GC_Write_Field((Xen_GCHeader*)map, (Xen_GCHandle**)&new_node->value,

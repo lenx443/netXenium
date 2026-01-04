@@ -21,7 +21,7 @@ static Xen_Instance* fn_add_absolute_path(Xen_Instance* self,
   if (Xen_IMPL(path) != xen_globals->implements->string) {
     return NULL;
   }
-  Xen_Vector_Push((*xen_globals->vm)->paths_modules, path);
+  Xen_Vector_Push((Xen_Instance*)(*xen_globals->vm)->paths_modules->ptr, path);
   return nil;
 }
 
@@ -38,8 +38,8 @@ static Xen_Instance* fn_add_relative_path(Xen_Instance* self,
   }
   Xen_c_string_t current_path = NULL;
   if (Xen_SIZE((*xen_globals->vm)->modules_stack) > 0) {
-    Xen_Module* mod_top =
-        (Xen_Module*)Xen_Vector_Top((*xen_globals->vm)->modules_stack);
+    Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(
+        (Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
     current_path = mod_top->mod_path;
   } else {
     current_path = (*xen_globals->vm)->path_current;
@@ -52,7 +52,8 @@ static Xen_Instance* fn_add_relative_path(Xen_Instance* self,
   Xen_string_t full_path = Xen_Alloc(psize + 1);
   snprintf(full_path, psize + 1, "%s/%s", current_path, path_str);
   Xen_Instance* abs_path = Xen_String_From_CString(full_path);
-  Xen_Vector_Push((*xen_globals->vm)->paths_modules, abs_path);
+  Xen_Vector_Push((Xen_Instance*)(*xen_globals->vm)->paths_modules->ptr,
+                  abs_path);
   return nil;
 }
 

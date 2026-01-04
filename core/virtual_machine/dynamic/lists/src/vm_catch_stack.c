@@ -1,10 +1,9 @@
 #include "vm_catch_stack.h"
-#include "instance.h"
 #include "xen_alloc.h"
 
 void vm_catch_stack_push(struct VM_Catch_Stack** stack,
                          Xen_ulong_t handler_offset, Xen_c_string_t except_type,
-                         Xen_Instance** stack_top) {
+                         Xen_GCHandle** stack_top) {
   struct VM_Catch_Stack* new_node = Xen_Alloc(sizeof(struct VM_Catch_Stack));
   new_node->handler_offset = handler_offset;
   new_node->except_type = except_type;

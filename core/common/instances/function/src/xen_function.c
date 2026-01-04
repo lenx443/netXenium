@@ -286,8 +286,9 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
-      if (!Xen_Map_Push_Pair(((RunContext_ptr)fun_ctx)->ctx_instances,
-                             (Xen_Map_Pair){name, arg})) {
+      if (!Xen_Map_Push_Pair(
+              (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+              (Xen_Map_Pair){name, arg})) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
@@ -304,13 +305,16 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
-        if (Xen_Map_Has(((RunContext_ptr)fun_ctx)->ctx_instances, keyword)) {
+        if (Xen_Map_Has(
+                (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+                keyword)) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
         Xen_Instance* value = Xen_Map_Get(kwargs, keyword);
-        if (!Xen_Map_Push_Pair(((RunContext_ptr)fun_ctx)->ctx_instances,
-                               (Xen_Map_Pair){keyword, value})) {
+        if (!Xen_Map_Push_Pair(
+                (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+                (Xen_Map_Pair){keyword, value})) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
@@ -331,12 +335,14 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
     }
     Xen_Instance* default_name = NULL;
     while ((default_name = Xen_Attr_Next(defaults_it)) != NULL) {
-      if (!Xen_Map_Has(((RunContext_ptr)fun_ctx)->ctx_instances,
-                       default_name)) {
+      if (!Xen_Map_Has(
+              (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+              default_name)) {
         Xen_Instance* default_value = Xen_Map_Get(
             (Xen_Instance*)fun->args_default_values->ptr, default_name);
-        if (!Xen_Map_Push_Pair(((RunContext_ptr)fun_ctx)->ctx_instances,
-                               (Xen_Map_Pair){default_name, default_value})) {
+        if (!Xen_Map_Push_Pair(
+                (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+                (Xen_Map_Pair){default_name, default_value})) {
           run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
@@ -351,7 +357,9 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
     (*xen_globals->vm)->except.active = 0;
     for (Xen_ssize_t i = 0; i < fun->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
-      if (!Xen_Map_Has(((RunContext_ptr)fun_ctx)->ctx_instances, name)) {
+      if (!Xen_Map_Has(
+              (Xen_Instance*)((RunContext_ptr)fun_ctx)->ctx_instances->ptr,
+              name)) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }

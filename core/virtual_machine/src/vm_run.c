@@ -56,8 +56,8 @@
 
 #define JUMP(ip) ctx->ctx_ip = ip
 
-#define STACK_PUSH(inst) vm_stack_push(ctx->ctx_stack, inst)
-#define STACK_POP vm_stack_pop(ctx->ctx_stack)
+#define STACK_PUSH(inst) vm_stack_push(((struct vm_Stack*)ctx->ctx_stack), inst)
+#define STACK_POP vm_stack_pop(((struct vm_Stack*)ctx->ctx_stack))
 
 static void op_nop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
@@ -65,8 +65,12 @@ static void op_nop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_push(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* c_inst =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
+  Xen_Instance* c_inst = Xen_Vector_Get_Index(
+      (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)
+                                                          ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+                          ->c_instances->ptr),
+      oparg);
   if (!c_inst) {
     ERROR;
   }
@@ -82,8 +86,11 @@ static void op_pop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* c_name =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   if (!c_name) {
     ERROR;
   }
@@ -100,8 +107,11 @@ static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_load_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* c_name =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   if (!c_name) {
     ERROR;
   }
@@ -133,8 +143,11 @@ static void op_load_index(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 static void op_load_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
-  Xen_Instance* attr =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* attr = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   Xen_Instance* result = Xen_Attr_Get(inst, attr);
   if (!result) {
     if (!Xen_VM_Except_Active()) {
@@ -147,8 +160,11 @@ static void op_load_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_store(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* c_name =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   if (!c_name) {
     ERROR;
   }
@@ -157,7 +173,8 @@ static void op_store(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     ERROR;
   }
   Xen_IGC_Push(inst);
-  if (!Xen_Map_Push_Pair(ctx->ctx_instances, (Xen_Map_Pair){c_name, inst})) {
+  if (!Xen_Map_Push_Pair((Xen_Instance*)ctx->ctx_instances->ptr,
+                         (Xen_Map_Pair){c_name, inst})) {
     Xen_IGC_Pop();
     ERROR;
   }
@@ -166,8 +183,11 @@ static void op_store(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_store_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* c_name =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   if (!c_name) {
     ERROR;
   }
@@ -195,8 +215,11 @@ static void op_store_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* inst = STACK_POP;
   Xen_Instance* value = STACK_POP;
-  Xen_Instance* attr =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_names, oparg);
+  Xen_Instance* attr = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
   if (!Xen_Attr_Set(inst, attr, value)) {
     if (!Xen_VM_Except_Active()) {
       Xen_AttrError_Store(Xen_String_As_CString(attr));
@@ -299,8 +322,12 @@ static void op_make_map(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 static void op_make_function(VM_Run* vmr, RunContext_ptr ctx,
                              Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  CALLABLE_ptr code =
-      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
   Xen_Instance* args_names = STACK_POP;
   Xen_Instance* args_deafult_values = STACK_POP;
   Xen_GC_Push_Root((Xen_GCHeader*)code);
@@ -321,8 +348,12 @@ static void op_make_function(VM_Run* vmr, RunContext_ptr ctx,
 static void op_make_function_nargs(VM_Run* vmr, RunContext_ptr ctx,
                                    Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  CALLABLE_ptr code =
-      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
   Xen_Instance* function =
       Xen_Function_From_Callable(code, (Xen_Instance*)ctx, nil, nil);
   if (!function) {
@@ -722,7 +753,7 @@ static void op_catch_stack_push(VM_Run* vmr, RunContext_ptr ctx,
                                 Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   vm_catch_stack_push(&ctx->ctx_catch_stack, oparg, NULL,
-                      ctx->ctx_stack->stack_top);
+                      ((struct vm_Stack*)ctx->ctx_stack)->stack_top);
 }
 
 static void op_catch_stack_pop(VM_Run* vmr, RunContext_ptr ctx,
@@ -736,8 +767,12 @@ static void op_catch_stack_type(VM_Run* vmr, RunContext_ptr ctx,
                                 Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   if (ctx->ctx_catch_stack) {
-    Xen_Instance* type =
-        Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
+    Xen_Instance* type = Xen_Vector_Get_Index(
+        (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)
+                                                            ctx->ctx_code->ptr)
+                             ->code.consts->ptr)
+                            ->c_instances->ptr),
+        oparg);
     if (Xen_IMPL(type) != xen_globals->implements->string) {
       ERROR;
     }
@@ -749,8 +784,12 @@ static void op_catch_stack_type(VM_Run* vmr, RunContext_ptr ctx,
 static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                                Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  CALLABLE_ptr code =
-      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
   Xen_Instance* name = STACK_POP;
   Xen_Instance* base = STACK_POP;
   Xen_Instance* builder =
@@ -764,7 +803,9 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   }
   ((Xen_Basic_Builder*)builder)->name =
       Xen_CString_Dup(Xen_String_As_CString(name));
-  ((Xen_Basic_Builder*)builder)->base = (Xen_Implement*)base;
+  Xen_GC_Write_Field((Xen_GCHeader*)builder,
+                     (Xen_GCHandle**)&((Xen_Basic_Builder*)builder)->base,
+                     (Xen_GCHeader*)base);
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
                                       builder, nil, nil, NULL, code);
   if (!new_ctx) {
@@ -778,8 +819,12 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
 static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
                                      Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  CALLABLE_ptr code =
-      callable_vector_get(ctx->ctx_code->code.consts->c_callables, oparg);
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
   Xen_Instance* name = STACK_POP;
   Xen_Instance* builder =
       __instance_new(xen_globals->implements->basic_builder, nil, nil, 0);
@@ -803,14 +848,18 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
 
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Instance* ret =
-      Xen_Vector_Get_Index(ctx->ctx_code->code.consts->c_instances, oparg);
+  Xen_Instance* ret = Xen_Vector_Get_Index(
+      (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)
+                                                          ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+                          ->c_instances->ptr),
+      oparg);
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
   RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(
       &(*xen_globals->vm)->vm_ctx_stack);
   if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push(ctx_top->ctx_stack, ret);
+    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
   }
@@ -824,7 +873,7 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(
       &(*xen_globals->vm)->vm_ctx_stack);
   if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push(ctx_top->ctx_stack, ret);
+    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
   }
@@ -835,18 +884,19 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self;
   Xen_Instance* impl =
-      Xen_Basic_New(builder->name, builder->__map, builder->base);
+      Xen_Basic_New(builder->name, (Xen_Instance*)builder->__map->ptr,
+                    (Xen_Implement*)builder->base->ptr);
   if (!impl) {
     ERROR
   }
-  Xen_Map_Push_Pair_Str(ctx->ctx_instances,
+  Xen_Map_Push_Pair_Str((Xen_Instance*)ctx->ctx_instances->ptr,
                         (Xen_Map_Pair_Str){builder->name, impl});
   Xen_size_t current_id = ctx->ctx_id;
   run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
   RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(
       &(*xen_globals->vm)->vm_ctx_stack);
   if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push(ctx_top->ctx_stack, impl);
+    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, impl);
   } else {
     vmr->retval = impl;
   }
@@ -900,21 +950,23 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
 
 static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
   RunContext_ptr ctx = (RunContext_ptr)ctx_inst;
-  bc_Instruct_t instr = ctx->ctx_code->code.code->bc_array[ctx->ctx_ip++];
+  bc_Instruct_t instr =
+      ((CALLABLE_ptr)ctx->ctx_code->ptr)->code.code->bc_array[ctx->ctx_ip++];
   if (instr.hdr.bci_opcode >= HALT) {
     ctx->ctx_error = 1;
     return (bc_Instruct_t){{NOP, 0}, {0}};
   }
   Xen_ulong_t oparg = instr.hdr.bci_oparg;
   if (instr.hdr.bci_oparg == 0xFF) {
-    if (ctx->ctx_code->code.code->bc_size - ctx->ctx_ip < XEN_ULONG_SIZE) {
+    if (((CALLABLE_ptr)ctx->ctx_code->ptr)->code.code->bc_size - ctx->ctx_ip <
+        XEN_ULONG_SIZE) {
       ctx->ctx_error = 1;
       return (bc_Instruct_t){{NOP, 0}, {0}};
     }
     oparg = 0;
     for (Xen_size_t i = 0; i < XEN_ULONG_SIZE; i++) {
-      bc_Instruct_t extend_arg_instr =
-          ctx->ctx_code->code.code->bc_array[ctx->ctx_ip++];
+      bc_Instruct_t extend_arg_instr = ((CALLABLE_ptr)ctx->ctx_code->ptr)
+                                           ->code.code->bc_array[ctx->ctx_ip++];
       oparg |= ((Xen_ulong_t)extend_arg_instr.hdr.bci_oparg) << (8 * i);
     }
   }
@@ -960,19 +1012,20 @@ Xen_Instance* vm_run(Xen_size_t id) {
         }
         if (current_handler) {
           vm_backtrace_clear((*xen_globals->vm)->except.bt);
-          current_context->ctx_stack->stack_top =
+          ((struct vm_Stack*)current_context->ctx_stack)->stack_top =
               current_handler->stack_top_before_try;
           current_context->ctx_ip = current_handler->handler_offset;
           vm_catch_stack_clear(&current_handler);
-          vm_stack_push(current_context->ctx_stack,
-                        (*xen_globals->vm)->except.except);
+          vm_stack_push(((struct vm_Stack*)current_context->ctx_stack),
+                        (Xen_Instance*)(*xen_globals->vm)->except.except);
           (*xen_globals->vm)->except.active = 0;
           current_context->ctx_error = 0;
           break;
         }
         vm_backtrace_push(
             (*xen_globals->vm)->except.bt,
-            current_context->ctx_code->code.code
+            ((CALLABLE_ptr)current_context->ctx_code->ptr)
+                ->code.code
                 ->bc_array[((RunContext_ptr)run_context_stack_peek_top(
                                 &(*xen_globals->vm)->vm_ctx_stack))
                                ->ctx_ip -

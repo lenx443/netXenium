@@ -2,6 +2,8 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
+#include "vm_stack.h"
+#include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
@@ -29,14 +31,17 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_caller, caller);
   }
   if (!closure || Xen_Nil_Eval(closure)) {
-    ctx->ctx_closure = nil;
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_closure,
+                       (Xen_GCHeader*)nil);
   } else {
     Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_closure, closure);
   }
   if (!self) {
-    ctx->ctx_self = nil;
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_self,
+                       (Xen_GCHeader*)nil);
   } else {
-    ctx->ctx_self = self;
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_self,
+                       (Xen_GCHeader*)self);
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_args, args);
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_kwargs, kwargs);
@@ -52,10 +57,9 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     return NULL;
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_instances, instances);
-  if (!code) {
-    ctx->ctx_code = NULL;
-  } else {
-    ctx->ctx_code = code;
+  if (code) {
+    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_code,
+                       (Xen_GCHeader*)code);
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack,
                       vm_stack_new(code->code.stack_depth + 1));

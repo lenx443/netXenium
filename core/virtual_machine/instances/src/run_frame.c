@@ -14,27 +14,24 @@
 static void frame_trace(Xen_GCHeader* h) {
   struct RunContext* ctx = (struct RunContext*)h;
   if_nil_neval(ctx->ctx_closure) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_closure);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_closure->ptr);
   }
   if (ctx->ctx_caller) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_caller);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_caller->ptr);
   }
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_self);
-  if (ctx->ctx_code) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code->code.consts);
-  }
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_self->ptr);
   if (ctx->ctx_stack)
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_stack->ptr);
   if (ctx->ctx_args) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_args);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_args->ptr);
   }
   if (ctx->ctx_kwargs) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_kwargs);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_kwargs->ptr);
   }
   if (ctx->ctx_instances)
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_instances->ptr);
   if (ctx->ctx_code) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_code->ptr);
   }
 }
 
@@ -50,14 +47,14 @@ static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   ctx_new->ctx_flags = 0;
   ctx_new->ctx_id = 0;
   ctx_new->ctx_catch_stack = NULL;
-  ctx_new->ctx_closure = nil;
-  ctx_new->ctx_caller = NULL;
-  ctx_new->ctx_self = nil;
-  ctx_new->ctx_code = NULL;
-  ctx_new->ctx_stack = NULL;
-  ctx_new->ctx_args = NULL;
-  ctx_new->ctx_kwargs = NULL;
-  ctx_new->ctx_instances = NULL;
+  ctx_new->ctx_closure = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
+  ctx_new->ctx_caller = Xen_GCHandle_New();
+  ctx_new->ctx_self = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
+  ctx_new->ctx_code = Xen_GCHandle_New();
+  ctx_new->ctx_stack = Xen_GCHandle_New();
+  ctx_new->ctx_args = Xen_GCHandle_New();
+  ctx_new->ctx_kwargs = Xen_GCHandle_New();
+  ctx_new->ctx_instances = Xen_GCHandle_New();
   ctx_new->ctx_ip = 0;
   ctx_new->ctx_running = 0;
   ctx_new->ctx_error = 0;
@@ -68,6 +65,15 @@ static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
 static Xen_Instance* frame_destroy(Xen_INSTANCE* self, Xen_INSTANCE* args,
                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  struct RunContext* ctx = (struct RunContext*)self;
+  Xen_GCHandle_Free(ctx->ctx_closure);
+  Xen_GCHandle_Free(ctx->ctx_caller);
+  Xen_GCHandle_Free(ctx->ctx_self);
+  Xen_GCHandle_Free(ctx->ctx_code);
+  Xen_GCHandle_Free(ctx->ctx_stack);
+  Xen_GCHandle_Free(ctx->ctx_args);
+  Xen_GCHandle_Free(ctx->ctx_kwargs);
+  Xen_GCHandle_Free(ctx->ctx_instances);
   return nil;
 }
 

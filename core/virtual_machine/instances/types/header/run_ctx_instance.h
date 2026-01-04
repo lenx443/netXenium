@@ -4,25 +4,24 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "callable.h"
 #include "instance.h"
+#include "netxenium/gc_header.h"
 #include "run_ctx.h"
 #include "vm_catch_stack.h"
-#include "vm_stack.h"
 
 struct RunContext {
   Xen_INSTANCE_HEAD;
   uint8_t ctx_flags;
   ctx_id_t ctx_id;
   struct VM_Catch_Stack* ctx_catch_stack;
-  Xen_Instance* ctx_closure;
-  Xen_Instance* ctx_caller;
-  Xen_Instance* ctx_self;
-  CALLABLE_ptr ctx_code;
-  struct vm_Stack* ctx_stack;
-  Xen_Instance* ctx_args;
-  Xen_Instance* ctx_kwargs;
-  struct __Instance* ctx_instances;
+  Xen_GCHandle* ctx_closure;
+  Xen_GCHandle* ctx_caller;
+  Xen_GCHandle* ctx_self;
+  Xen_GCHandle* ctx_code;
+  Xen_GCHandle* ctx_stack;
+  Xen_GCHandle* ctx_args;
+  Xen_GCHandle* ctx_kwargs;
+  Xen_GCHandle* ctx_instances;
   Xen_ulong_t ctx_ip;
   bool ctx_running;
   bool ctx_error;
