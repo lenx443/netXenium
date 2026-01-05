@@ -601,7 +601,7 @@ static Xen_Instance* socket_recvfrom(Xen_Instance* self, Xen_Instance* args,
       return NULL;
     }
     Xen_Instance* data = Xen_Bytes_New();
-    char ip_str[INET_ADDRSTRLEN];
+    char ip_str[INET6_ADDRSTRLEN];
     if (!inet_ntop(sock->domain, &remote.sin6_addr, ip_str, sizeof(ip_str))) {
       Xen_Dealloc(buffer);
       return NULL;

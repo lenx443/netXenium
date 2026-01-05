@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-#define XEN_GC_PROMOTION_AGE 2
+#define XEN_GC_PROMOTION_AGE 4
 #define XEN_GC_MAJOR_EVERY_MINORS 8
 
 static struct __GC_Heap __gc_heap = {
@@ -318,6 +318,7 @@ void Xen_GC_Sweep_Young_Major(void) {
     struct __GC_Header* next = curr->next;
 
     if (curr->color == GC_WHITE) {
+      curr->released = 1;
       if (curr->prev) {
         curr->prev->next = curr->next;
       }
@@ -351,6 +352,7 @@ void Xen_GC_Sweep_Old(void) {
     struct __GC_Header* next = curr->next;
 
     if (curr->color == GC_WHITE) {
+      curr->released = 1;
       if (curr->prev) {
         curr->prev->next = curr->next;
       }
@@ -400,15 +402,14 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
   }
 
   if (parent->generation == GC_OLD && child->generation == GC_YOUNG) {
-    for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-      struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-      if (e->parent == parent && e->handle == *handle)
-        return;
+    if ((*handle)->in_rs) {
+      return;
     }
     assert(xen_globals->gc_heap->remembered_count < __XEN_GC_MAX_REMEMBERED__);
     xen_globals->gc_heap
         ->remembered_set[xen_globals->gc_heap->remembered_count++] =
         (struct __GC_Edge){parent, *handle};
+    (*handle)->in_rs = 1;
   }
 }
 

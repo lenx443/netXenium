@@ -24,6 +24,7 @@ struct __GC_Header {
 };
 
 struct __GC_Handle {
+  Xen_uint8_t in_rs;
   struct __GC_Header* ptr;
 };
 
@@ -32,12 +33,14 @@ typedef struct __GC_Handle Xen_GCHandle;
 
 static inline struct __GC_Handle* Xen_GCHandle_New(void) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
+  handle->in_rs = 0;
   handle->ptr = NULL;
   return handle;
 }
 
 static inline struct __GC_Handle* Xen_GCHandle_New_From(Xen_GCHeader* h) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
+  handle->in_rs = 0;
   handle->ptr = h;
   return handle;
 }
