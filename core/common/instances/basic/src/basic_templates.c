@@ -47,7 +47,7 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
 
 void Xen_Basic_Mapped_Trace(Xen_GCHeader* h) {
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)mapped->__map);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)mapped->__map->ptr);
 }
 
 Xen_Instance* Xen_Basic_String(Xen_Instance* self, Xen_Instance* args,
@@ -86,7 +86,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL || Xen_IMPL(self)->__props->ptr == NULL ||
       Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
+      Xen_IMPL(Xen_IMPL(self)->__props->ptr) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {
@@ -148,7 +148,7 @@ Xen_Instance* Xen_Basic_Get_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
+      Xen_IMPL(Xen_IMPL(self)->__props->ptr) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 1) {

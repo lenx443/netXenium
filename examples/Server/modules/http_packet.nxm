@@ -1,4 +1,4 @@
-File = load("io")\File
+File = load("io").File
 
 implement $HTTPResponse => {
   $__create => (headers,
@@ -16,9 +16,9 @@ implement $HTTPResponse => {
   $from_file => (file, error=??) {
     try => {
       f = File(file)
-      content = f\read()\string()
-      f\close()
-      parts = file\split(('.',))
+      content = f.read().string()
+      f.close()
+      parts = file.split(('.',))
       ext = parts[size(parts) - 1]
       content_type = "text/plain"
       if content_types has ext => {
@@ -32,9 +32,9 @@ implement $HTTPResponse => {
     } catch :err => {
       if ?? != error => {
         f = File(error)
-        content = f\read()\string()
-        f\close()
-        parts = error\split(('.',))
+        content = f.read().string()
+        f.close()
+        parts = error.split(('.',))
         ext = parts[size(parts) - 1]
         content_type = "text/plain"
         if size(parts) > 1 and content_types has ext => {
@@ -61,7 +61,7 @@ implement $HTTPResponse => {
     }
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
-    return buffer\bytes()
+    return buffer.bytes()
   }
 
   content_types = {
@@ -157,13 +157,13 @@ implement $HTTPRequest => {
     }
     buffer = buffer + "\r\n"
     if ?? != $content => buffer = buffer + $content
-    return buffer\bytes()
+    return buffer.bytes()
   }
 
   $unpack => (packet) {
-    buffer = packet\string()
-    lines = buffer\split(('\r\n',))
-    head = lines[0]\split((' ',))
+    buffer = packet.string()
+    lines = buffer.split(('\r\n',))
+    head = lines[0].split((' ',))
     __method = head[0]
     __path = head[1]
     __version = head[2]
@@ -172,8 +172,8 @@ implement $HTTPRequest => {
     while idx < size(lines) => {
       line = lines[idx]
       if line == "\r\n" => break
-      name, value = line\split_once(':')
-      __headers[name] = value\trim()
+      name, value = line.split_once(':')
+      __headers[name] = value.trim()
       idx = idx + 1
     }
     return HTTPRequest(

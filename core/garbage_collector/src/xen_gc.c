@@ -280,6 +280,7 @@ void Xen_GC_Sweep_Young(void) {
     struct __GC_Header* next = curr->next;
 
     if (curr->color == GC_WHITE) {
+      curr->released = 1;
       if (curr->prev) {
         curr->prev->next = curr->next;
       }

@@ -7,13 +7,13 @@ WEB_PATH = ("./www")
 
 get_routes = {
   ['/']-> => (req) {
-    return http_packet\HTTPResponse\from_file(
+    return http_packet.HTTPResponse.from_file(
       WEB_PATH + "/index.html"
     )
   },
   _-> => (req) {
-    return http_packet\HTTPResponse\from_file(
-      WEB_PATH + req\path,
+    return http_packet.HTTPResponse.from_file(
+      WEB_PATH + req.path,
       error=WEB_PATH + "/not_found.html"
     )
   }
@@ -26,9 +26,9 @@ methods = {
 $$__start => (args) {
   try => {
     println("• Start Server")
-    server = http_server\HTTPServer()
-    server\set_routes(methods)
-    server\start()
+    server = http_server.HTTPServer()
+    server.set_routes(methods)
+    server.start()
   } catch "Interrupt" :_ => {
     println("• Stop Server")
   }

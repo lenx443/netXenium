@@ -10,8 +10,16 @@ Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct impl_struct) {
   impl->__inst_size = impl_struct.__inst_size;
   impl->__inst_default_flags = impl_struct.__inst_default_flags;
   impl->__inst_trace = impl_struct.__inst_trace;
-  impl->__props = impl_struct.__props;
-  impl->__base = impl_struct.__base;
+  if (impl_struct.__props) {
+    Xen_GC_Write_Field((struct __GC_Header*)impl,
+                       (struct __GC_Handle**)&impl->__props,
+                       (struct __GC_Header*)impl_struct.__props);
+  }
+  if (impl_struct.__base) {
+    Xen_GC_Write_Field((struct __GC_Header*)impl,
+                       (struct __GC_Handle**)&impl->__base,
+                       (struct __GC_Header*)impl_struct.__base);
+  }
   impl->__alloc = impl_struct.__alloc;
   impl->__create = impl_struct.__create;
   impl->__destroy = impl_struct.__destroy;

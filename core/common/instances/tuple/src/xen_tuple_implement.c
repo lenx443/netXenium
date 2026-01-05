@@ -29,7 +29,7 @@
 static void tuple_trace(Xen_GCHeader* h) {
   Xen_Tuple* tuple = (Xen_Tuple*)h;
   for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)tuple->instances[i]);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)tuple->instances[i]->ptr);
   }
 }
 

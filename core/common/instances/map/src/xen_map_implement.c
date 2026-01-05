@@ -31,13 +31,13 @@
 static void map_trace(Xen_GCHeader* h) {
   Xen_Map* map = (Xen_Map*)h;
   if (map->map_keys)
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys->ptr);
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
       while (current) {
-        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->key);
-        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->value);
+        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->key->ptr);
+        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->value->ptr);
         current = current->next;
       }
     }
@@ -79,8 +79,8 @@ static Xen_Instance* map_destroy(Xen_Instance* self, Xen_Instance* args,
       while (current) {
         struct __Map_Node* temp = current;
         current = current->next;
-        Xen_GCHandle_Free(current->key);
-        Xen_GCHandle_Free(current->value);
+        Xen_GCHandle_Free(temp->key);
+        Xen_GCHandle_Free(temp->value);
         Xen_Dealloc(temp);
       }
     }
@@ -139,7 +139,7 @@ static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_size_t buflen = 6;
-  for (Xen_size_t i = 0; i < Xen_SIZE(map->map_keys); i++) {
+  for (Xen_size_t i = 0; i < Xen_SIZE(map->map_keys->ptr); i++) {
     Xen_Instance* key_inst =
         Xen_Vector_Peek_Index((Xen_Instance*)map->map_keys->ptr, i);
     Xen_Instance* value_inst = Xen_Map_Get(self, key_inst);
@@ -183,7 +183,7 @@ static Xen_Instance* map_string(Xen_Instance* self, Xen_Instance* args,
     strcat(buffer, value);
     Xen_Dealloc((void*)key);
     Xen_Dealloc((void*)value);
-    if (i != Xen_SIZE(map->map_keys) - 1) {
+    if (i != Xen_SIZE(map->map_keys->ptr) - 1) {
       buflen += 2;
       char* tem = Xen_Realloc(buffer, buflen);
       if (!tem) {

@@ -104,7 +104,7 @@ Xen_ssize_t vm_consts_push_name(vm_Consts_ptr consts, const char* c_name) {
   if (!c_name_inst) {
     return false;
   }
-  Xen_size_t index = Xen_SIZE(consts->c_names);
+  Xen_size_t index = Xen_SIZE(consts->c_names->ptr);
   if (!Xen_Vector_Push((Xen_Instance*)consts->c_names->ptr, c_name_inst)) {
     return -1;
   }
@@ -125,7 +125,7 @@ Xen_ssize_t vm_consts_push_instance(vm_Consts_ptr consts,
   if (c_instance == Xen_False) {
     return 2;
   }
-  Xen_size_t index = Xen_SIZE(consts->c_instances);
+  Xen_size_t index = Xen_SIZE(consts->c_instances->ptr);
   if (!Xen_Vector_Push((Xen_Instance*)consts->c_instances->ptr, c_instance)) {
     return -1;
   }

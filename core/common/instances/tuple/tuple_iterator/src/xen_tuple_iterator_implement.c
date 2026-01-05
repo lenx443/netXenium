@@ -58,7 +58,7 @@ static Xen_Instance* tuple_iterator_next(Xen_Instance* self, Xen_Instance* args,
   if (it->index == -1) {
     return NULL;
   }
-  if ((Xen_size_t)it->index >= Xen_SIZE(it->tuple)) {
+  if ((Xen_size_t)it->index >= Xen_SIZE(it->tuple->ptr)) {
     Xen_RangeEnd();
     it->index = -1;
     return NULL;

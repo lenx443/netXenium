@@ -28,8 +28,8 @@ static void basic_trace(Xen_GCHeader* h) {
   }
 }
 
-static Xen_Instance* basic_create(struct __Instance* self, Xen_Instance* args,
-                                  Xen_Instance* kwargs) {
+static Xen_Instance* basic_alloc(struct __Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   struct __Implement* impl =
       (struct __Implement*)Xen_Instance_Alloc(&Xen_Basic);
@@ -49,7 +49,7 @@ static Xen_Instance* basic_create(struct __Instance* self, Xen_Instance* args,
   impl->__hash = NULL;
   impl->__get_attr = NULL;
   impl->__set_attr = NULL;
-  return nil;
+  return (Xen_Instance*)impl;
 }
 
 static Xen_Instance* basic_destroy(struct __Instance* self, Xen_Instance* args,
@@ -104,7 +104,7 @@ static Xen_Instance* basic_get_attr(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   struct __Implement* impl = (struct __Implement*)self;
-  if (impl->__props == NULL || impl->__props->ptr ||
+  if (impl->__props == NULL || impl->__props->ptr == NULL ||
       Xen_Nil_Eval((Xen_Instance*)impl->__props->ptr) ||
       Xen_IMPL(impl->__props->ptr) != xen_globals->implements->map) {
     return NULL;
@@ -133,8 +133,8 @@ struct __Implement Xen_Basic = {
     .__inst_default_flags = 0x00,
     .__inst_trace = basic_trace,
     .__props = NULL,
-    .__alloc = NULL,
-    .__create = basic_create,
+    .__alloc = basic_alloc,
+    .__create = NULL,
     .__destroy = basic_destroy,
     .__string = basic_string,
     .__raw = basic_string,

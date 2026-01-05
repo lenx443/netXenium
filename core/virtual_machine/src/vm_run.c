@@ -56,8 +56,9 @@
 
 #define JUMP(ip) ctx->ctx_ip = ip
 
-#define STACK_PUSH(inst) vm_stack_push(((struct vm_Stack*)ctx->ctx_stack), inst)
-#define STACK_POP vm_stack_pop(((struct vm_Stack*)ctx->ctx_stack))
+#define STACK_PUSH(inst)                                                       \
+  vm_stack_push(((struct vm_Stack*)ctx->ctx_stack->ptr), inst)
+#define STACK_POP vm_stack_pop(((struct vm_Stack*)ctx->ctx_stack->ptr))
 
 static void op_nop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
@@ -290,7 +291,7 @@ static void op_make_vector_from_iterable(VM_Run* vmr, RunContext_ptr ctx,
     }
   }
   if (!Xen_VM_Except_Active() ||
-      strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+      strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
              "RangeEnd") != 0) {
     ERROR;
   }
@@ -643,7 +644,7 @@ static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
     if (Xen_VM_Except_Active() &&
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") == 0) {
       (*xen_globals->vm)->except.active = 0;
       Xen_IGC_Pop();
@@ -753,7 +754,7 @@ static void op_catch_stack_push(VM_Run* vmr, RunContext_ptr ctx,
                                 Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   vm_catch_stack_push(&ctx->ctx_catch_stack, oparg, NULL,
-                      ((struct vm_Stack*)ctx->ctx_stack)->stack_top);
+                      ((struct vm_Stack*)ctx->ctx_stack->ptr)->stack_top);
 }
 
 static void op_catch_stack_pop(VM_Run* vmr, RunContext_ptr ctx,
@@ -882,7 +883,7 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                                       Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self;
+  Xen_Basic_Builder* builder = (Xen_Basic_Builder*)ctx->ctx_self->ptr;
   Xen_Instance* impl =
       Xen_Basic_New(builder->name, (Xen_Instance*)builder->__map->ptr,
                     (Xen_Implement*)builder->base->ptr);
@@ -1002,8 +1003,9 @@ Xen_Instance* vm_run(Xen_size_t id) {
           if (!current_handler->except_type) {
             break;
           }
-          if (strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
-                     current_handler->except_type) == 0) {
+          if (strcmp(
+                  ((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+                  current_handler->except_type) == 0) {
             break;
           }
           vm_catch_stack_clear(&current_handler);
@@ -1012,12 +1014,12 @@ Xen_Instance* vm_run(Xen_size_t id) {
         }
         if (current_handler) {
           vm_backtrace_clear((*xen_globals->vm)->except.bt);
-          ((struct vm_Stack*)current_context->ctx_stack)->stack_top =
+          ((struct vm_Stack*)current_context->ctx_stack->ptr)->stack_top =
               current_handler->stack_top_before_try;
           current_context->ctx_ip = current_handler->handler_offset;
           vm_catch_stack_clear(&current_handler);
-          vm_stack_push(((struct vm_Stack*)current_context->ctx_stack),
-                        (Xen_Instance*)(*xen_globals->vm)->except.except);
+          vm_stack_push(((struct vm_Stack*)current_context->ctx_stack->ptr),
+                        (Xen_Instance*)(*xen_globals->vm)->except.except->ptr);
           (*xen_globals->vm)->except.active = 0;
           current_context->ctx_error = 0;
           break;

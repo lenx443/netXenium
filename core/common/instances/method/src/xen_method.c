@@ -1,5 +1,6 @@
 #include "xen_method.h"
 #include "attrs.h"
+#include "callable.h"
 #include "instance.h"
 #include "run_ctx_stack.h"
 #include "vm.h"
@@ -40,12 +41,12 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
   }
   Xen_size_t roots = 0;
   Xen_Method* method = (Xen_Method*)method_inst;
-  Xen_Function_ptr fun = (Xen_Function_ptr)method->function;
+  Xen_Function_ptr fun = (Xen_Function_ptr)method->function->ptr;
   Xen_Instance* ret = NULL;
   if (fun->fun_type == 1) {
-    Xen_Instance* fun_ctx = Xen_Ctx_New(nil, (Xen_Instance*)fun->closure->ptr,
-                                        (Xen_Instance*)method->self->ptr, args,
-                                        kwargs, NULL, fun->fun_code);
+    Xen_Instance* fun_ctx = Xen_Ctx_New(
+        nil, (Xen_Instance*)fun->closure->ptr, (Xen_Instance*)method->self->ptr,
+        args, kwargs, NULL, (CALLABLE_ptr)fun->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, fun_ctx)) {
       return NULL;
     }
@@ -99,7 +100,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         Xen_IGC_XPOP(roots);
@@ -132,7 +133,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       Xen_IGC_XPOP(roots);

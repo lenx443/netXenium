@@ -46,7 +46,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
       Xen_IGC_Pop();
       return NULL;
     }
-    if (impl->__base) {
+    if (impl->__base && impl->__base->ptr) {
       Xen_Instance* base =
           __instance_new((Xen_Implement*)impl->__base->ptr, nil, nil, 0);
       if (!base) {

@@ -30,7 +30,7 @@ static Xen_Instance* vector_iterator_alloc(Xen_Instance* self,
   if (!it) {
     return NULL;
   }
-  it->vector = NULL;
+  it->vector = Xen_GCHandle_New();
   it->index = -1;
   return (Xen_Instance*)it;
 }
@@ -39,6 +39,8 @@ static Xen_Instance* vector_iterator_destroy(Xen_Instance* self,
                                              Xen_Instance* args,
                                              Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Vector_Iterator* it = (Xen_Vector_Iterator*)self;
+  Xen_GCHandle_Free(it->vector);
   return nil;
 }
 
@@ -57,7 +59,7 @@ static Xen_Instance* vector_iterator_next(Xen_Instance* self,
   if (it->index == -1) {
     return NULL;
   }
-  if ((Xen_size_t)it->index >= Xen_SIZE(it->vector)) {
+  if ((Xen_size_t)it->index >= Xen_SIZE(it->vector->ptr)) {
     Xen_RangeEnd();
     it->index = -1;
     return NULL;

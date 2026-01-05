@@ -70,8 +70,8 @@ int Xen_Map_Push_Pair(Xen_Instance* map_inst, Xen_Map_Pair pair) {
   while (current) {
     Xen_Instance* eval = nil;
     if (Xen_IMPL(pair.key) == xen_globals->implements->string) {
-      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
-          strcmp(((Xen_String*)current->key)->characters,
+      if (Xen_IMPL(current->key->ptr) == xen_globals->implements->string &&
+          strcmp(((Xen_String*)current->key->ptr)->characters,
                  ((Xen_String*)pair.key)->characters) == 0) {
         eval = Xen_True;
       } else {
@@ -161,8 +161,8 @@ Xen_Instance* Xen_Map_Get(Xen_Instance* map_inst, Xen_Instance* key) {
   while (current) {
     Xen_Instance* eval = nil;
     if (Xen_IMPL(key) == xen_globals->implements->string) {
-      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
-          strcmp(((Xen_String*)current->key)->characters,
+      if (Xen_IMPL(current->key->ptr) == xen_globals->implements->string &&
+          strcmp(((Xen_String*)current->key->ptr)->characters,
                  ((Xen_String*)key)->characters) == 0) {
         eval = Xen_True;
       } else {
@@ -224,8 +224,8 @@ int Xen_Map_Has(Xen_Instance* map_inst, Xen_Instance* key) {
   while (current) {
     Xen_Instance* eval = nil;
     if (Xen_IMPL(key) == xen_globals->implements->string) {
-      if (Xen_IMPL(current->key) == xen_globals->implements->string &&
-          strcmp(((Xen_String*)current->key)->characters,
+      if (Xen_IMPL(current->key->ptr) == xen_globals->implements->string &&
+          strcmp(((Xen_String*)current->key->ptr)->characters,
                  ((Xen_String*)key)->characters) == 0) {
         eval = Xen_True;
       } else {

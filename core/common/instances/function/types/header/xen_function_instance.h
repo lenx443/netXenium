@@ -9,7 +9,7 @@
 struct Xen_Function_Instance {
   Xen_INSTANCE_HEAD;
   Xen_uint8_t fun_type;
-  CALLABLE_ptr fun_code;
+  Xen_GCHandle* fun_code;
   Xen_Native_Func fun_native;
   Xen_GCHandle* closure;
   Xen_GCHandle* args_names;

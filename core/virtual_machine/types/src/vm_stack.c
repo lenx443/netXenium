@@ -35,7 +35,7 @@ struct vm_Stack* vm_stack_new(size_t cap) {
   if (!stack->stack_head) {
     return 0;
   }
-  for (Xen_size_t i = 0; i < stack->stack_capacity; i++) {
+  for (Xen_size_t i = 0; i < cap; i++) {
     stack->stack_head[i] = Xen_GCHandle_New();
   }
   stack->stack_top = stack->stack_head;

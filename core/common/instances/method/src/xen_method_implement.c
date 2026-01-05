@@ -76,12 +76,12 @@ static Xen_Instance* method_callable(struct __Instance* self,
                                      Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Method* method = (Xen_Method*)self;
-  Xen_Function_ptr function = (Xen_Function_ptr)method->function;
+  Xen_Function_ptr function = (Xen_Function_ptr)method->function->ptr;
   if (function->fun_type == 1) {
     Xen_Instance* new_ctx = Xen_Ctx_New(
         run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack),
         (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
-        args, kwargs, NULL, function->fun_code);
+        args, kwargs, NULL, (CALLABLE_ptr)function->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
       return NULL;
     }
@@ -132,7 +132,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         return NULL;
       }
@@ -160,7 +160,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;

@@ -68,7 +68,7 @@ Xen_INSTANCE* Xen_VM_Load_Instance(const char* name, ctx_id_t id) {
     if (inst != NULL) {
       return inst;
     }
-    current = (RunContext_ptr)current->ctx_closure;
+    current = (RunContext_ptr)current->ctx_closure->ptr;
   }
   return NULL;
 }
@@ -121,7 +121,7 @@ Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
 }
 
 void Xen_VM_Except_Backtrace_Show(void) {
-  Xen_Except* except = (Xen_Except*)(*xen_globals->vm)->except.except;
+  Xen_Except* except = (Xen_Except*)(*xen_globals->vm)->except.except->ptr;
   puts("Unhandled exception occurred.");
   if ((*xen_globals->vm)->except.bt->bt_count > 0) {
     puts("BackTrace:");

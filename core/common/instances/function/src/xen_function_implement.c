@@ -24,16 +24,16 @@
 static void function_trace(Xen_GCHeader* h) {
   Xen_Function_ptr inst = (Xen_Function_ptr)h;
   if (inst->fun_type == 1) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->fun_code);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->fun_code->ptr);
   }
-  if (inst->closure) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->closure);
+  if (inst->closure->ptr) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->closure->ptr);
   }
-  if (inst->args_names) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_names);
+  if (inst->args_names->ptr) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_names->ptr);
   }
-  if (inst->args_default_values) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_default_values);
+  if (inst->args_default_values->ptr) {
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_default_values->ptr);
   }
 }
 
@@ -46,7 +46,7 @@ static Xen_Instance* function_alloc(struct __Instance* self, Xen_Instance* args,
     return NULL;
   }
   inst->fun_type = 0;
-  inst->fun_code = NULL;
+  inst->fun_code = Xen_GCHandle_New();
   inst->fun_native = NULL;
   inst->closure = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
   inst->args_names = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
@@ -60,6 +60,7 @@ static Xen_Instance* function_destroy(struct __Instance* self,
                                       Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Function_ptr inst = (Xen_Function_ptr)self;
+  Xen_GCHandle_Free(inst->fun_code);
   Xen_GCHandle_Free(inst->closure);
   Xen_GCHandle_Free(inst->args_names);
   Xen_GCHandle_Free(inst->args_default_values);
@@ -75,7 +76,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
     Xen_Instance* new_ctx = Xen_Ctx_New(
         run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack),
         (Xen_Instance*)inst->closure->ptr, nil, args, kwargs, NULL,
-        inst->fun_code);
+        (CALLABLE_ptr)inst->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
       return NULL;
     }
@@ -126,7 +127,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
@@ -155,7 +156,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;

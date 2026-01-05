@@ -68,7 +68,7 @@ int blocks_compiler(block_list_ptr blocks, ProgramCode_t* pc) {
       (Xen_Instance*)blocks->consts->c_names->ptr,
       (Xen_Instance*)blocks->consts->c_instances->ptr,
       (CALLABLE_Vector_ptr)blocks->consts->c_callables->ptr);
-  if (!pc->consts) {
+  if (!pc->consts->ptr) {
     bc_free(pc->code);
     return 0;
   }

@@ -1,4 +1,4 @@
-Socket = load("sockets")\Socket
+Socket = load("sockets").Socket
 http_packet = load("http_packet")
 
 implement $HTTPServer => {
@@ -12,34 +12,34 @@ implement $HTTPServer => {
 
   $start => (ip="0.0.0.0", port=8080) {
     sock = Socket()
-    sock\setsockopt(1, 2, 1\u32(false))
-    sock\bind((ip, port))
-    sock\listen()
-    sock\set_nonblocking()
+    sock.setsockopt(1, 2, (1).u32(false))
+    sock.bind((ip, port))
+    sock.listen()
+    sock.set_nonblocking()
     while true => {
       try => {
-        client = sock\accept()
-        request = http_packet\HTTPRequest\unpack(
-          client\recv()
+        client = sock.accept()
+        request = http_packet.HTTPRequest.unpack(
+          client.recv()
         )
-        if ?? == $__routes or (not $__routes has request\method) or (not $__routes[request\method] has request\path) => {
-          if ?? != $__routes and $__routes has request\method and  $__routes[request\method] has '_' => {
-            response = $__routes[request\method]['_'](request)
+        if ?? == $__routes or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {
+          if ?? != $__routes and $__routes has request.method and  $__routes[request.method] has '_' => {
+            response = $__routes[request.method]['_'](request)
           } else => {
-            response = http_packet\HTTPResponse(
+            response = http_packet.HTTPResponse(
               headers={},
               status=404,
-              content="<h1>El recurso '" + request\path + "' no esta disponible</h1>",
+              content="<h1>El recurso '" + request.path + "' no esta disponible</h1>",
               content_type="text/html; charset=UTF-8"
             )
           }
         } else => {
-          response = $__routes[request\method][request\path](request)
+          response = $__routes[request.method][request.path](request)
         }
-        client\send(response\pack())
-        client\close()
+        client.send(response.pack())
+        client.close()
       } catch "Timeout" :_ => continue
     }
-    sock\close()
+    sock.close()
   }
 }

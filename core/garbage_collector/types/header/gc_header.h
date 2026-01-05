@@ -14,6 +14,7 @@
 struct __GC_Header {
   Xen_uint8_t color;
   Xen_uint8_t generation;
+  Xen_uint8_t released;
   Xen_uint16_t age;
   Xen_size_t size;
   void (*trace)(struct __GC_Header*);
@@ -30,7 +31,9 @@ typedef struct __GC_Header Xen_GCHeader;
 typedef struct __GC_Handle Xen_GCHandle;
 
 static inline struct __GC_Handle* Xen_GCHandle_New(void) {
-  return Xen_Alloc(sizeof(struct __GC_Handle));
+  Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
+  handle->ptr = NULL;
+  return handle;
 }
 
 static inline struct __GC_Handle* Xen_GCHandle_New_From(Xen_GCHeader* h) {

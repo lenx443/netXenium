@@ -99,11 +99,12 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
   ir_print(blocks);
 #endif
   ProgramCode_t pc;
+  pc.consts = Xen_GCHandle_New();
   if (!blocks_compiler(blocks, &pc)) {
     block_list_free(blocks);
     return NULL;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts);
+  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts->ptr);
   block_list_free(blocks);
 #ifndef NDEBUG
 //  bc_print(pc);
@@ -151,11 +152,12 @@ CALLABLE_ptr compiler_ast(Xen_Instance* ast_node, Xen_uint8_t mode) {
   ir_print(blocks);
 #endif
   ProgramCode_t pc;
+  pc.consts = Xen_GCHandle_New();
   if (!blocks_compiler(blocks, &pc)) {
     block_list_free(blocks);
     return NULL;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts);
+  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts->ptr);
   block_list_free(blocks);
 #ifndef NDEBUG
 //  bc_print(pc);

@@ -13,7 +13,7 @@
 
 static void frame_trace(Xen_GCHeader* h) {
   struct RunContext* ctx = (struct RunContext*)h;
-  if_nil_neval(ctx->ctx_closure) {
+  if_nil_neval(ctx->ctx_closure->ptr) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)ctx->ctx_closure->ptr);
   }
   if (ctx->ctx_caller) {

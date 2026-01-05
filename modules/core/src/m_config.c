@@ -37,7 +37,7 @@ static Xen_Instance* fn_add_relative_path(Xen_Instance* self,
     return NULL;
   }
   Xen_c_string_t current_path = NULL;
-  if (Xen_SIZE((*xen_globals->vm)->modules_stack) > 0) {
+  if (Xen_SIZE((*xen_globals->vm)->modules_stack->ptr) > 0) {
     Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(
         (Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
     current_path = mod_top->mod_path;

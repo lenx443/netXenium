@@ -11,6 +11,7 @@
 #define XEN_GC_HEAD                                                            \
   Xen_uint8_t color;                                                           \
   Xen_uint8_t generation;                                                      \
+  Xen_uint8_t released;                                                        \
   Xen_uint16_t age;                                                            \
   Xen_size_t size;                                                             \
   void (*trace)(struct __GC_Header*);                                          \

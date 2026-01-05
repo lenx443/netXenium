@@ -75,7 +75,7 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
     }
     Xen_IGC_XPOP(2);
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       return NULL;
     }

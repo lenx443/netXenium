@@ -124,7 +124,7 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
       binding->args[idx].provided = 1;
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       Xen_IGC_Pop();
       return NULL;
@@ -222,7 +222,7 @@ Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       Xen_IGC_XPOP(roots);
       return NULL;
@@ -269,8 +269,9 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
   Xen_Function_ptr fun = (Xen_Function_ptr)fun_inst;
   Xen_Instance* ret = NULL;
   if (fun->fun_type == 1) {
-    Xen_Instance* fun_ctx = Xen_Ctx_New(nil, (Xen_Instance*)fun->closure->ptr,
-                                        nil, args, kwargs, NULL, fun->fun_code);
+    Xen_Instance* fun_ctx =
+        Xen_Ctx_New(nil, (Xen_Instance*)fun->closure->ptr, nil, args, kwargs,
+                    NULL, (CALLABLE_ptr)fun->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, fun_ctx)) {
       return NULL;
     }
@@ -320,7 +321,7 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
@@ -349,7 +350,7 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except)->type,
+        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
       run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;

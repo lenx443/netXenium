@@ -7,17 +7,27 @@
 #include "instance.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
+#include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 
 static void basic_builder_trace(Xen_GCHeader* h) {
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)h;
-  if (builder->__map) {
+  if (builder->__map->ptr) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)builder->__map->ptr);
   }
-  if (builder->base) {
+  if (builder->base->ptr) {
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)builder->base->ptr);
   }
+}
+
+static Xen_Instance* basic_builder_alloc(Xen_Instance* self, Xen_Instance* args,
+                                         Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Basic_Builder* builder = (Xen_Basic_Builder*)Xen_Instance_Alloc(
+      xen_globals->implements->basic_builder);
+  builder->base = Xen_GCHandle_New();
+  return (Xen_Instance*)builder;
 }
 
 static Xen_Instance* basic_builder_destroy(Xen_Instance* self,
@@ -36,7 +46,7 @@ Xen_Implement __Basic_Builder_Implement = {
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
     .__inst_trace = basic_builder_trace,
     .__props = NULL,
-    .__alloc = NULL,
+    .__alloc = basic_builder_alloc,
     .__create = NULL,
     .__destroy = basic_builder_destroy,
     .__string = NULL,

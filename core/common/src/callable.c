@@ -7,7 +7,7 @@
 
 static void callable_trace(Xen_GCHeader* h) {
   CALLABLE_ptr callable = (CALLABLE_ptr)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)callable->code.consts);
+  Xen_GC_Trace_GCHeader((Xen_GCHeader*)callable->code.consts->ptr);
 }
 
 static void callable_destroy(Xen_GCHeader* h) {
@@ -29,7 +29,7 @@ CALLABLE_ptr callable_new(ProgramCode_t bpc) {
 static void callable_vector_trace(Xen_GCHeader* h) {
   CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)h;
   for (Xen_size_t i = 0; i < cv->count; i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)cv->callables[i]);
+    Xen_GC_Trace_GCHeader((Xen_GCHeader*)cv->callables[i]->ptr);
   }
 }
 
