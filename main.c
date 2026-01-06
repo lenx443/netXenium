@@ -66,6 +66,7 @@ int main(int argc, char** argv) {
           argv[1], "<start>", dir,
           (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
           XEN_MODULE_GUEST);
+      Xen_Dealloc(dir);
     } else {
       module = Xen_Module_Load(
           argv[1], "<start>", ".",
