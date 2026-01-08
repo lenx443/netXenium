@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,7 +30,11 @@
 
 static void vector_trace(Xen_GCHeader* h) {
   Xen_Vector* vector = (Xen_Vector*)h;
+  int __debug = 0;
   for (size_t i = 0; i < vector->__size; i++) {
+    if (__debug) {
+      printf("iter = %lu\n", i);
+    }
     Xen_GC_Trace_GCHeader((Xen_GCHeader*)vector->values[i]->ptr);
   }
 }

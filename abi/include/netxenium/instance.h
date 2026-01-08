@@ -17,6 +17,7 @@ struct __Implement;
 
 #define XEN_INSTANCE_FLAG_STATIC (1 << 0)
 #define XEN_INSTANCE_FLAG_MAPPED (1 << 1)
+#define XEN_INSTANCE_FLAG_SELF_FREE (1 << 2)
 
 #define Xen_INSTANCE_SET(impl, flags) .__impl = impl, .__flags = (flags)
 

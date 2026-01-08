@@ -268,7 +268,7 @@ static Xen_Instance* string_char_code(Xen_Instance* self, Xen_Instance* args,
   return result;
 }
 
-static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
+static Xen_Instance* string_bytez(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
@@ -277,6 +277,17 @@ static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* bytes =
       Xen_Bytes_From_Array(Xen_SIZE(string), (Xen_uint8_t*)string->characters);
   Xen_Bytes_Append(bytes, 0);
+  return bytes;
+}
+
+static Xen_Instance* string_bytes(Xen_Instance* self, Xen_Instance* args,
+                                  Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  Xen_String* string = (Xen_String*)self;
+  Xen_Instance* bytes =
+      Xen_Bytes_From_Array(Xen_SIZE(string), (Xen_uint8_t*)string->characters);
   return bytes;
 }
 
@@ -429,6 +440,7 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
       !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,
                                     nil) ||
+      !Xen_VM_Store_Native_Function(props, "bytez", string_bytez, nil) ||
       !Xen_VM_Store_Native_Function(props, "bytes", string_bytes, nil) ||
       !Xen_VM_Store_Native_Function(props, "split", string_split, nil) ||
       !Xen_VM_Store_Native_Function(props, "split_once", string_split_once,

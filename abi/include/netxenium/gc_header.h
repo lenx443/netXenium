@@ -17,10 +17,11 @@
   void (*trace)(struct __GC_Header*);                                          \
   void (*destroy)(struct __GC_Header*);                                        \
   struct __GC_Header* next;                                                    \
-  struct __GC_Header* prev;
+  struct __GC_Header* prev;                                                    \
+  struct __GC_Handle* rs_handles;                                              \
+  Xen_size_t rs_count;
 
 struct __GC_Header;
-
 struct __GC_Handle;
 
 typedef struct __GC_Header Xen_GCHeader;

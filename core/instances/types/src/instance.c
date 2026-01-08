@@ -70,12 +70,20 @@ void __instance_free(Xen_GCHeader* h) {
     return;
   }
   if (!XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_STATIC)) {
-    if (inst->__impl->__destroy)
-      inst->__impl->__destroy(inst, NULL, NULL);
-    if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
-      Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
+    if ((inst->__flags & XEN_INSTANCE_FLAG_SELF_FREE) == 1) {
+      if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
+        Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
+      }
+      if (inst->__impl->__destroy)
+        inst->__impl->__destroy(inst, NULL, NULL);
+    } else {
+      if (inst->__impl->__destroy)
+        inst->__impl->__destroy(inst, NULL, NULL);
+      if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
+        Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
+      }
+      Xen_Dealloc(h);
     }
-    Xen_Dealloc(h);
   }
 }
 

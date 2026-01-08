@@ -27,6 +27,7 @@ typedef uint8_t Xen_Instance_Flag;
 
 #define XEN_INSTANCE_FLAG_STATIC (1 << 0)
 #define XEN_INSTANCE_FLAG_MAPPED (1 << 1)
+#define XEN_INSTANCE_FLAG_SELF_FREE (1 << 2)
 
 #define XEN_INSTANCE_GET_FLAG(inst, flag)                                      \
   (((((struct __Instance*)inst)->__flags) & (flag)) != 0)

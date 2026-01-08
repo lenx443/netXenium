@@ -80,21 +80,6 @@ void Xen_GC_MinorCollect(void) {
   Xen_GC_Reset_Young();
   Xen_GC_Mark_Young();
   Xen_GC_Sweep_Young();
-  Xen_size_t out = 0;
-  for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-
-    struct __GC_Header* child = e->handle->ptr;
-
-    if (!child)
-      continue;
-
-    if (e->parent->generation == GC_OLD && child->generation == GC_YOUNG) {
-      xen_globals->gc_heap->remembered_set[out++] =
-          xen_globals->gc_heap->remembered_set[i];
-    }
-  }
-  xen_globals->gc_heap->remembered_count = out;
   xen_globals->gc_heap->pressure = 0;
 }
 
@@ -105,7 +90,6 @@ void Xen_GC_MajorCollect(void) {
   Xen_GC_Mark();
   Xen_GC_Sweep_Young_Major();
   Xen_GC_Sweep_Old();
-  xen_globals->gc_heap->remembered_count = 0;
   xen_globals->gc_heap->major_pressure = 0;
   xen_globals->gc_heap->pressure = 0;
 }
@@ -144,21 +128,8 @@ struct __GC_Header* Xen_GC_Pop_Gray(void) {
       ->gray_stack[--xen_globals->gc_heap->gray_stack_count];
 }
 
-void Xen_GC_Remove_RS_Child(struct __GC_Header* child) {
-  Xen_size_t out = 0;
-  for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-    if (e->handle->ptr != child) {
-      xen_globals->gc_heap->remembered_set[out++] =
-          xen_globals->gc_heap->remembered_set[i];
-    }
-  }
-  xen_globals->gc_heap->remembered_count = out;
-}
-
 void Xen_GC_Promote_toOld(struct __GC_Header* h) {
   assert(h->generation == GC_YOUNG);
-  Xen_GC_Remove_RS_Child(h);
   if (h->prev) {
     h->prev->next = h->next;
   }
@@ -177,6 +148,8 @@ void Xen_GC_Promote_toOld(struct __GC_Header* h) {
   h->generation = GC_OLD;
   h->color = GC_WHITE;
   h->age = 0;
+  h->rs_handles = NULL;
+  h->rs_count = 0;
 
   h->prev = NULL;
   h->next = xen_globals->gc_heap->old;
@@ -226,17 +199,6 @@ void Xen_GC_Mark(void) {
       Xen_GC_Push_Gray(xen_globals->gc_heap->roots[i]);
     }
   }
-  for (size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-    struct __GC_Header* child = e->handle->ptr;
-
-    if (!child)
-      continue;
-
-    if (child->color == GC_WHITE) {
-      Xen_GC_Push_Gray(child);
-    }
-  }
   while (xen_globals->gc_heap->gray_stack_count > 0) {
     struct __GC_Header* inst = Xen_GC_Pop_Gray();
     Xen_GC_Trace(inst);
@@ -253,17 +215,12 @@ void Xen_GC_Mark_Young(void) {
       Xen_GC_Push_Gray(root);
     }
   }
-  for (Xen_size_t i = 0; i < xen_globals->gc_heap->remembered_count; i++) {
-    struct __GC_Edge* e = &xen_globals->gc_heap->remembered_set[i];
-
-    struct __GC_Header* child = e->handle->ptr;
-
-    if (!child)
-      continue;
-
-    if (child->generation == GC_YOUNG && child->color == GC_WHITE) {
-      Xen_GC_Push_Gray(child);
+  Xen_GCHeader* curr = xen_globals->gc_heap->young;
+  while (curr) {
+    if (curr->rs_handles && curr->color == GC_WHITE) {
+      Xen_GC_Push_Gray(curr);
     }
+    curr = curr->next;
   }
   while (xen_globals->gc_heap->gray_stack_count > 0) {
     struct __GC_Header* inst = Xen_GC_Pop_Gray();
@@ -303,6 +260,13 @@ void Xen_GC_Sweep_Young(void) {
       curr->color = GC_WHITE;
       curr->age++;
       if (curr->age >= XEN_GC_PROMOTION_AGE) {
+        Xen_GCHandle* h = curr->rs_handles;
+        while (h) {
+          h->flags &= ~GC_HANDLE_RS;
+          h = h->rs_next;
+        }
+        curr->rs_handles = NULL;
+        curr->rs_count = 0;
         Xen_GC_Promote_toOld(curr);
       }
     }
@@ -380,7 +344,6 @@ void Xen_GC_Sweep_Old(void) {
 }
 
 void Xen_GC_Shutdown(void) {
-  xen_globals->gc_heap->remembered_count = 0;
   Xen_GC_MajorCollect();
   assert(xen_globals->gc_heap->young == NULL);
   assert(xen_globals->gc_heap->old == NULL);
@@ -390,7 +353,12 @@ void Xen_GC_Shutdown(void) {
 
 void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
                         struct __GC_Header* child) {
+  struct __GC_Header* old_child = (*handle)->ptr;
   (*handle)->ptr = child;
+
+  if (old_child && ((*handle)->flags & GC_HANDLE_RS) == 1) {
+    (*handle)->flags &= ~GC_HANDLE_RS;
+  }
 
   if (!parent || !child)
     return;
@@ -402,14 +370,12 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
   }
 
   if (parent->generation == GC_OLD && child->generation == GC_YOUNG) {
-    if ((*handle)->in_rs) {
-      return;
+    if (!((*handle)->flags & GC_HANDLE_RS)) {
+      (*handle)->flags |= GC_HANDLE_RS;
+      (*handle)->rs_next = child->rs_handles;
+      child->rs_handles = *handle;
+      child->rs_count++;
     }
-    assert(xen_globals->gc_heap->remembered_count < __XEN_GC_MAX_REMEMBERED__);
-    xen_globals->gc_heap
-        ->remembered_set[xen_globals->gc_heap->remembered_count++] =
-        (struct __GC_Edge){parent, *handle};
-    (*handle)->in_rs = 1;
   }
 }
 

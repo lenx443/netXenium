@@ -11,6 +11,8 @@
 #define GC_YOUNG 1
 #define GC_OLD 2
 
+#define GC_HANDLE_RS (1 << 0)
+
 struct __GC_Header {
   Xen_uint8_t color;
   Xen_uint8_t generation;
@@ -21,11 +23,14 @@ struct __GC_Header {
   void (*destroy)(struct __GC_Header*);
   struct __GC_Header* next;
   struct __GC_Header* prev;
+  struct __GC_Handle* rs_handles;
+  Xen_size_t rs_count;
 };
 
 struct __GC_Handle {
-  Xen_uint8_t in_rs;
+  Xen_uint8_t flags;
   struct __GC_Header* ptr;
+  struct __GC_Handle* rs_next;
 };
 
 typedef struct __GC_Header Xen_GCHeader;
@@ -33,15 +38,17 @@ typedef struct __GC_Handle Xen_GCHandle;
 
 static inline struct __GC_Handle* Xen_GCHandle_New(void) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
-  handle->in_rs = 0;
+  handle->flags = 0;
   handle->ptr = NULL;
+  handle->rs_next = NULL;
   return handle;
 }
 
 static inline struct __GC_Handle* Xen_GCHandle_New_From(Xen_GCHeader* h) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
-  handle->in_rs = 0;
+  handle->flags = 0;
   handle->ptr = h;
+  handle->rs_next = NULL;
   return handle;
 }
 
