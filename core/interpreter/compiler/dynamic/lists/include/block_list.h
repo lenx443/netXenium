@@ -1,8 +1,8 @@
 #ifndef __BLOCK_LIST_H__
 #define __BLOCK_LIST_H__
 
+#include "gc_header.h"
 #include "ir_bytecode.h"
-#include "vm_consts.h"
 #include "xen_typedefs.h"
 
 struct block_node {
@@ -12,7 +12,8 @@ struct block_node {
 };
 
 struct block_list {
-  vm_Consts_ptr consts;
+  Xen_GCHeader gc;
+  Xen_GCHandle* consts;
   Xen_ulong_t total_offset;
   struct block_node* head;
   struct block_node* tail;
@@ -28,6 +29,5 @@ void block_free(block_node_ptr);
 
 block_list_ptr block_list_new(void);
 int block_list_push_node(block_list_ptr, block_node_ptr);
-void block_list_free(block_list_ptr);
 
 #endif

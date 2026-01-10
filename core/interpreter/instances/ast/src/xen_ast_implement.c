@@ -18,9 +18,9 @@
 #include "xen_tuple.h"
 #include "xen_vector.h"
 
-static void ast_trace(Xen_GCHeader* h) {
+static void ast_trace(Xen_Instance* h) {
   Xen_AST_Node* ast = (Xen_AST_Node*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)ast->children);
+  Xen_GC_Trace_GCHeader(ast->children);
 }
 
 static Xen_Instance* ast_alloc(Xen_Instance* self, Xen_Instance* args,
@@ -31,10 +31,8 @@ static Xen_Instance* ast_alloc(Xen_Instance* self, Xen_Instance* args,
   ast->name = NULL;
   ast->value = NULL;
   ast->sta = (Xen_Source_Address){0};
-  ast->children = Xen_Vector_New();
-  if (!ast->children) {
-    return NULL;
-  }
+  ast->children = Xen_GCHandle_New_From((Xen_GCHeader*)ast,
+                                        (Xen_GCHeader*)Xen_Vector_New());
   return (Xen_Instance*)ast;
 }
 
@@ -46,6 +44,7 @@ static Xen_Instance* ast_destroy(Xen_Instance* self, Xen_Instance* args,
     Xen_Dealloc((void*)ast->name);
   if (ast->name)
     Xen_Dealloc((void*)ast->value);
+  Xen_GCHandle_Free(ast->children);
   return nil;
 }
 
@@ -67,8 +66,8 @@ static Xen_Instance* ast_get_index(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance* index = Xen_Tuple_Get_Index(args, 0);
   Xen_AST_Node* ast = (Xen_AST_Node*)self;
-  Xen_Instance* value =
-      Xen_Vector_Get_Index(ast->children, Xen_Number_As_ULong(index));
+  Xen_Instance* value = Xen_Vector_Get_Index((Xen_Instance*)ast->children->ptr,
+                                             Xen_Number_As_ULong(index));
   return value;
 }
 
@@ -93,7 +92,7 @@ static Xen_Instance* ast_children(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_AST_Node* ast = (Xen_AST_Node*)self;
-  return ast->children;
+  return (Xen_Instance*)ast->children->ptr;
 }
 
 Xen_Implement __AST_Implement = {
@@ -128,7 +127,8 @@ int Xen_AST_Init(void) {
       !Xen_VM_Store_Native_Function(props, "children", ast_children, nil)) {
     return 0;
   }
-  __AST_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __AST_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

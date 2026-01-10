@@ -378,6 +378,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         }
         size_t len = lexer->pos - start;
         char buffer[len + 4];
+        memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, "0x");
         if (len)
           strncpy(buffer + 2, sf->sf_content + start, len);
@@ -392,6 +393,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         }
         size_t len = lexer->pos - start;
         char buffer[len + 4];
+        memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, "0b");
         if (len)
           strncpy(buffer + 2, sf->sf_content + start, len);
@@ -419,6 +421,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         }
         size_t len = lexer->pos - start;
         char buffer[len + 3];
+        memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, "0");
         if (len)
           strncpy(buffer + 1, sf->sf_content + start, len);
@@ -431,6 +434,7 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
         }
         size_t len = lexer->pos - start;
         char buffer[len + 4];
+        memset(buffer, 0, sizeof(buffer));
         strcpy(buffer, "0.");
         if (len)
           strncpy(buffer + 2, sf->sf_content + start, len);

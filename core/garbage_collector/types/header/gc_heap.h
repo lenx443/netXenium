@@ -38,6 +38,7 @@ struct __GC_Heap {
 
   Xen_bool_t started;
   Xen_bool_t marking;
+  Xen_bool_t promote_trace;
 };
 
 #endif

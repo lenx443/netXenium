@@ -661,21 +661,26 @@ static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 static void op_list_unpack(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* seq = STACK_POP;
+  Xen_IGC_Push(seq);
   if (Xen_IMPL(seq) != xen_globals->implements->tuple &&
       Xen_IMPL(seq) != xen_globals->implements->vector) {
+    Xen_IGC_Pop();
     Xen_ListError(seq);
     ERROR;
   }
   if (oparg != Xen_SIZE(seq)) {
+    Xen_IGC_Pop();
     ERROR;
   }
   for (uint8_t i = oparg; i > 0; --i) {
     Xen_Instance* val = Xen_Attr_Index_Size_Get(seq, i - 1);
     if (!val) {
+      Xen_IGC_Pop();
       ERROR;
     }
     STACK_PUSH(val);
   }
+  Xen_IGC_Pop();
 }
 
 static void op_list_unpack_start(VM_Run* vmr, RunContext_ptr ctx,

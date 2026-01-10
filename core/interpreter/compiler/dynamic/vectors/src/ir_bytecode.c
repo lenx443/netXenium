@@ -129,7 +129,7 @@ void ir_print(block_list_ptr bl) {
   Xen_size_t b_count = 0;
   while (current) {
     printf("--- Block %lu:\n", b_count++);
-    ir_print_block(current, bl->consts);
+    ir_print_block(current, (vm_Consts_ptr)bl->consts->ptr);
     current = current->next;
   }
 }

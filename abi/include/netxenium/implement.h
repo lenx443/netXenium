@@ -1,7 +1,6 @@
 #ifndef __IMPLEMENT_H__
 #define __IMPLEMENT_H__
 
-#include "gc_header.h"
 #include "instance.h"
 #include "xen_typedefs.h"
 struct __Instance;
@@ -20,7 +19,7 @@ struct __ImplementStruct {
   char* __impl_name;
   Xen_size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;
-  void (*__inst_trace)(Xen_GCHeader*);
+  void (*__inst_trace)(Xen_Instance*);
   struct __Instance* __props;
   struct __Implement* __base;
   Xen_Native_Func __alloc;

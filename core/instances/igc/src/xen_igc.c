@@ -23,7 +23,7 @@ static struct __IGC_Roots* __igc_roots_list = NULL;
 static void __igc_roots_trace(Xen_GCHeader* h) {
   struct __IGC_Roots* roots = (struct __IGC_Roots*)h;
   for (Xen_size_t i = 0; i < roots->count; i++) {
-    Xen_GC_Trace_GCHeader(roots->roots[i]->ptr);
+    Xen_GC_Trace_GCHeader(roots->roots[i]);
   }
 }
 
@@ -59,7 +59,7 @@ static void __igc_roots_ensure_capacity(struct __IGC_Roots* roots) {
 
 static void __igc_roots_push(struct __IGC_Roots* roots, Xen_GCHeader* h) {
   __igc_roots_ensure_capacity(roots);
-  roots->roots[roots->count] = Xen_GCHandle_New();
+  roots->roots[roots->count] = Xen_GCHandle_New((Xen_GCHeader*)roots);
   Xen_GC_Write_Field((struct __GC_Header*)roots,
                      (struct __GC_Handle**)&roots->roots[roots->count++], h);
 }

@@ -50,7 +50,7 @@ int Xen_Vector_Push(Xen_Instance* vector_inst, Xen_Instance* value) {
     vector->values = new_mem;
     vector->capacity = new_cap;
   }
-  vector->values[vector->__size] = Xen_GCHandle_New();
+  vector->values[vector->__size] = Xen_GCHandle_New((Xen_GCHeader*)vector);
   Xen_GC_Write_Field((Xen_GCHeader*)vector,
                      (Xen_GCHandle**)&vector->values[vector->__size++],
                      (Xen_GCHeader*)value);

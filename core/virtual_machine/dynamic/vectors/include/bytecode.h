@@ -19,7 +19,7 @@ typedef Bytecode_Array_t* Bytecode_Array_ptr;
 Bytecode_Array_ptr bc_new(void);
 void bc_clear(Bytecode_Array_ptr);
 void bc_free(const Bytecode_Array_ptr);
-int bc_emit(Bytecode_Array_ptr, uint8_t, uint8_t, Xen_Source_Address);
+void bc_emit(Bytecode_Array_ptr, uint8_t, uint8_t, Xen_Source_Address);
 
 #ifndef NDEBUG
 struct ProgramCode;

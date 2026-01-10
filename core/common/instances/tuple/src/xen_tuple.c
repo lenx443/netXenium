@@ -30,7 +30,7 @@ Xen_Instance* Xen_Tuple_From_Array(Xen_size_t size, Xen_Instance** array) {
     return NULL;
   }
   for (size_t i = 0; i < size; i++) {
-    tuple->instances[tuple->__size] = Xen_GCHandle_New();
+    tuple->instances[tuple->__size] = Xen_GCHandle_New((Xen_GCHeader*)tuple);
     Xen_GC_Write_Field((Xen_GCHeader*)tuple,
                        (Xen_GCHandle**)&tuple->instances[tuple->__size++],
                        (Xen_GCHeader*)array[i]);

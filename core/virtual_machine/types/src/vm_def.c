@@ -32,15 +32,15 @@ static void InterruptHandler(int sign) {
 
 static void vm_def_trace(Xen_GCHeader* h) {
   VM* _vm = (VM*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->args->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->modules_stack->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_instances->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->globals_props->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->paths_modules->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)_vm->config->ptr);
+  Xen_GC_Trace_GCHeader(_vm->args);
+  Xen_GC_Trace_GCHeader(_vm->modules);
+  Xen_GC_Trace_GCHeader(_vm->modules_stack);
+  Xen_GC_Trace_GCHeader(_vm->globals_instances);
+  Xen_GC_Trace_GCHeader(_vm->globals_props);
+  Xen_GC_Trace_GCHeader(_vm->paths_modules);
+  Xen_GC_Trace_GCHeader(_vm->config);
   if (vm->except.active) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vm->except.except->ptr);
+    Xen_GC_Trace_GCHeader(vm->except.except);
   }
 }
 
@@ -79,14 +79,14 @@ bool vm_create(void) {
   vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
   vm->ctx_id_count = 0;
   vm->vm_ctx_stack = NULL;
-  vm->args = Xen_GCHandle_New();
-  vm->modules = Xen_GCHandle_New();
-  vm->modules_stack = Xen_GCHandle_New();
-  vm->globals_instances = Xen_GCHandle_New();
-  vm->globals_props = Xen_GCHandle_New();
-  vm->paths_modules = Xen_GCHandle_New();
-  vm->config = Xen_GCHandle_New();
-  vm->except.except = Xen_GCHandle_New();
+  vm->args = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->modules_stack = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->globals_instances = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->globals_props = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->paths_modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->config = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->except.except = Xen_GCHandle_New((Xen_GCHeader*)vm);
   Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));
   if (!args_array) {
     return 0;

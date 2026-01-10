@@ -116,7 +116,8 @@ int Xen_Boolean_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__not", boolean_not, nil)) {
     return 0;
   }
-  __Boolean_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Boolean_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

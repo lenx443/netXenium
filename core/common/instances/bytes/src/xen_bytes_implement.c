@@ -302,7 +302,8 @@ int Xen_Bytes_Init(void) {
   Xen_VM_Store_Native_Function(props, "signed", bytes_signed, nil);
   Xen_VM_Store_Native_Function(props, "unsigned", bytes_unsigned, nil);
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Bytes_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Bytes_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   return 1;
 }
 

@@ -24,10 +24,10 @@
 #include "xen_tuple.h"
 #include "xen_vector.h"
 
-static void method_trace(Xen_GCHeader* h) {
+static void method_trace(Xen_Instance* h) {
   Xen_Method* method = (Xen_Method*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)method->function);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)method->self);
+  Xen_GC_Trace_GCHeader(method->function);
+  Xen_GC_Trace_GCHeader(method->self);
 }
 
 static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
@@ -38,8 +38,10 @@ static Xen_Instance* method_alloc(struct __Instance* self, Xen_Instance* args,
   if (!method) {
     return NULL;
   }
-  method->function = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
-  method->self = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
+  method->function =
+      Xen_GCHandle_New_From((Xen_GCHeader*)method, (Xen_GCHeader*)nil);
+  method->self =
+      Xen_GCHandle_New_From((Xen_GCHeader*)method, (Xen_GCHeader*)nil);
   return (Xen_Instance*)method;
 }
 
@@ -404,7 +406,8 @@ int Xen_Method_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Method_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Method_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   return 1;
 }
 

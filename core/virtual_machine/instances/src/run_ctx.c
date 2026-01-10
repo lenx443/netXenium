@@ -26,7 +26,7 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
   ctx->ctx_running = 0;
   ctx->ctx_error = 0;
   if (!caller || Xen_Nil_Eval(caller)) {
-    ctx->ctx_caller = NULL;
+    ctx->ctx_caller->ptr = NULL;
   } else {
     Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_caller, caller);
   }

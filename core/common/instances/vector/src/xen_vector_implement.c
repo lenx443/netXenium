@@ -28,14 +28,10 @@
 #include "xen_vector_instance.h"
 #include "xen_vector_iterator.h"
 
-static void vector_trace(Xen_GCHeader* h) {
+static void vector_trace(Xen_Instance* h) {
   Xen_Vector* vector = (Xen_Vector*)h;
-  int __debug = 0;
   for (size_t i = 0; i < vector->__size; i++) {
-    if (__debug) {
-      printf("iter = %lu\n", i);
-    }
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)vector->values[i]->ptr);
+    Xen_GC_Trace_GCHeader(vector->values[i]);
   }
 }
 
@@ -311,7 +307,8 @@ int Xen_Vector_Init(void) {
       !Xen_VM_Store_Native_Function(props, "top", vector_top, nil)) {
     return 0;
   }
-  __Vector_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Vector_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

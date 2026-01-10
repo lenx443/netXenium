@@ -4,7 +4,6 @@
 
 #include "attrs.h"
 #include "block_list.h"
-#include "bytecode.h"
 #include "callable.h"
 #include "compiler.h"
 #include "compiler_ext.h"
@@ -13,7 +12,6 @@
 #include "ir_bytecode.h"
 #include "operators.h"
 #include "parser.h"
-#include "program_code.h"
 #include "source_file.h"
 #include "vm.h"
 #include "vm_backtrace.h"
@@ -24,7 +22,6 @@
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
 #include "xen_except.h"
-#include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_method.h"
 #include "xen_nil.h"
@@ -70,13 +67,11 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
   block_node_ptr main_block = block_new();
   if (!main_block) {
     Xen_IGC_Pop();
-    block_list_free(blocks);
     return NULL;
   }
   if (!block_list_push_node(blocks, main_block)) {
     Xen_IGC_Pop();
     block_free(main_block);
-    block_list_free(blocks);
     return NULL;
   }
 #ifndef NDEBUG
@@ -87,35 +82,19 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
     printf("Compiler Error\n");
 #endif
     Xen_IGC_Pop();
-    block_list_free(blocks);
     return NULL;
   }
   Xen_IGC_Pop();
   if (!blocks_linealizer(blocks)) {
-    block_list_free(blocks);
     return NULL;
   }
 #ifndef NDEBUG
   ir_print(blocks);
 #endif
-  ProgramCode_t pc;
-  pc.consts = Xen_GCHandle_New();
-  if (!blocks_compiler(blocks, &pc)) {
-    block_list_free(blocks);
-    return NULL;
-  }
-  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts->ptr);
-  block_list_free(blocks);
-#ifndef NDEBUG
-//  bc_print(pc);
-#endif
-  CALLABLE_ptr code = callable_new(pc);
+  CALLABLE_ptr code = blocks_compiler(blocks);
   if (!code) {
-    Xen_GC_Pop_Root();
-    bc_free(pc.code);
     return NULL;
   }
-  Xen_GC_Pop_Root();
   return code;
 }
 
@@ -126,12 +105,10 @@ CALLABLE_ptr compiler_ast(Xen_Instance* ast_node, Xen_uint8_t mode) {
   }
   block_node_ptr main_block = block_new();
   if (!main_block) {
-    block_list_free(blocks);
     return NULL;
   }
   if (!block_list_push_node(blocks, main_block)) {
     block_free(main_block);
-    block_list_free(blocks);
     return NULL;
   }
 #ifndef NDEBUG
@@ -141,34 +118,18 @@ CALLABLE_ptr compiler_ast(Xen_Instance* ast_node, Xen_uint8_t mode) {
 #ifndef NDEBUG
     printf("Compiler Error\n");
 #endif
-    block_list_free(blocks);
     return NULL;
   }
   if (!blocks_linealizer(blocks)) {
-    block_list_free(blocks);
     return NULL;
   }
 #ifndef NDEBUG
   ir_print(blocks);
 #endif
-  ProgramCode_t pc;
-  pc.consts = Xen_GCHandle_New();
-  if (!blocks_compiler(blocks, &pc)) {
-    block_list_free(blocks);
-    return NULL;
-  }
-  Xen_GC_Push_Root((Xen_GCHeader*)pc.consts->ptr);
-  block_list_free(blocks);
-#ifndef NDEBUG
-//  bc_print(pc);
-#endif
-  CALLABLE_ptr code = callable_new(pc);
+  CALLABLE_ptr code = blocks_compiler(blocks);
   if (!code) {
-    Xen_GC_Pop_Root();
-    bc_free(pc.code);
     return NULL;
   }
-  Xen_GC_Pop_Root();
   return code;
 }
 
@@ -178,10 +139,12 @@ CALLABLE_ptr compiler_ast(Xen_Instance* ast_node, Xen_uint8_t mode) {
   ir_emit((*c->b_current)->instr_array, opcode, oparg, sta)
 #define emit_jump(opcode, block, sta)                                          \
   ir_emit_jump((*c->b_current)->instr_array, opcode, block, sta)
-#define co_push_name(name) vm_consts_push_name(c->b_list->consts, name)
-#define co_push_instance(inst) vm_consts_push_instance(c->b_list->consts, inst)
+#define co_push_name(name)                                                     \
+  vm_consts_push_name((vm_Consts_ptr)c->b_list->consts->ptr, name)
+#define co_push_instance(inst)                                                 \
+  vm_consts_push_instance((vm_Consts_ptr)c->b_list->consts->ptr, inst)
 #define co_push_callable(callable)                                             \
-  vm_consts_push_callable(c->b_list->consts, callable)
+  vm_consts_push_callable((vm_Consts_ptr)c->b_list->consts->ptr, callable)
 
 #define B_PTR block_node_ptr
 #define B_NEW() block_new()

@@ -26,10 +26,10 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static void tuple_trace(Xen_GCHeader* h) {
+static void tuple_trace(Xen_Instance* h) {
   Xen_Tuple* tuple = (Xen_Tuple*)h;
   for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)tuple->instances[i]->ptr);
+    Xen_GC_Trace_GCHeader(tuple->instances[i]);
   }
 }
 
@@ -49,6 +49,9 @@ static Xen_Instance* tuple_destroy(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Tuple* tuple = (Xen_Tuple*)self;
+  for (size_t i = 0; i < Xen_SIZE(tuple); i++) {
+    Xen_GCHandle_Free(tuple->instances[i]);
+  }
   Xen_Dealloc(tuple->instances);
   return nil;
 }
@@ -216,7 +219,8 @@ int Xen_Tuple_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__iter", tuple_iter, nil)) {
     return 0;
   }
-  __Tuple_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Tuple_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

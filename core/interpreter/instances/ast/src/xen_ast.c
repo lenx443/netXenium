@@ -40,7 +40,7 @@ int Xen_AST_Node_Push_Child(Xen_Instance* ast_inst, Xen_Instance* child) {
     return 0;
   }
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
-  return Xen_Vector_Push(ast->children, child);
+  return Xen_Vector_Push((Xen_Instance*)ast->children->ptr, child);
 }
 
 const char* Xen_AST_Node_Name(Xen_Instance* ast) {
@@ -64,16 +64,16 @@ int Xen_AST_Node_Value_Cmp(Xen_Instance* ast, const char* value) {
 }
 
 size_t Xen_AST_Node_Children_Size(Xen_Instance* ast) {
-  return Xen_SIZE(((Xen_AST_Node*)ast)->children);
+  return Xen_SIZE((Xen_Instance*)((Xen_AST_Node*)ast)->children->ptr);
 }
 
 Xen_Instance* Xen_AST_Node_Children(Xen_Instance* ast) {
-  return ((Xen_AST_Node*)ast)->children;
+  return (Xen_Instance*)((Xen_AST_Node*)ast)->children->ptr;
 }
 
 Xen_Instance* Xen_AST_Node_Get_Child(Xen_Instance* ast_inst, size_t index) {
   Xen_AST_Node* ast = (Xen_AST_Node*)ast_inst;
-  return Xen_Vector_Get_Index(ast->children, index);
+  return Xen_Vector_Get_Index((Xen_Instance*)ast->children->ptr, index);
 }
 
 Xen_Instance* Xen_AST_Node_Wrap(Xen_Instance* node, const char* wrap) {

@@ -7,11 +7,17 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 
+static void __instance_trace(Xen_GCHeader* h) {
+  if (Xen_IMPL(h)->__inst_trace)
+    Xen_IMPL(h)->__inst_trace((Xen_Instance*)h);
+}
+
 Xen_Instance* Xen_Instance_Alloc(Xen_Implement* impl) {
   assert(impl != NULL);
   Xen_Instance* inst = (Xen_Instance*)Xen_GC_New(
-      impl->__inst_size, impl->__inst_trace, __instance_free);
+      impl->__inst_size, __instance_trace, __instance_free);
   inst->__impl = impl;
+  inst->__idestroy = impl->__destroy;
   inst->__size = 0;
   inst->__flags = impl->__inst_default_flags;
   return inst;
@@ -38,7 +44,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   }
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
-    mapped->__map = Xen_GCHandle_New();
+    mapped->__map = Xen_GCHandle_New((Xen_GCHeader*)mapped);
     Xen_GC_Write_Field((struct __GC_Header*)mapped,
                        (struct __GC_Handle**)&mapped->__map,
                        (struct __GC_Header*)Xen_Map_New());
@@ -74,11 +80,11 @@ void __instance_free(Xen_GCHeader* h) {
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
         Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
       }
-      if (inst->__impl->__destroy)
-        inst->__impl->__destroy(inst, NULL, NULL);
+      if (inst->__idestroy)
+        inst->__idestroy(inst, NULL, NULL);
     } else {
-      if (inst->__impl->__destroy)
-        inst->__impl->__destroy(inst, NULL, NULL);
+      if (inst->__idestroy)
+        inst->__idestroy(inst, NULL, NULL);
       if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
         Xen_GCHandle_Free(((Xen_Instance_Mapped*)inst)->__map);
       }

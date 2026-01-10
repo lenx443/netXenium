@@ -30,24 +30,28 @@ struct __GC_Header {
 struct __GC_Handle {
   Xen_uint8_t flags;
   struct __GC_Header* ptr;
+  struct __GC_Header* owner;
   struct __GC_Handle* rs_next;
 };
 
 typedef struct __GC_Header Xen_GCHeader;
 typedef struct __GC_Handle Xen_GCHandle;
 
-static inline struct __GC_Handle* Xen_GCHandle_New(void) {
+static inline struct __GC_Handle* Xen_GCHandle_New(struct __GC_Header* owner) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
   handle->flags = 0;
   handle->ptr = NULL;
+  handle->owner = owner;
   handle->rs_next = NULL;
   return handle;
 }
 
-static inline struct __GC_Handle* Xen_GCHandle_New_From(Xen_GCHeader* h) {
+static inline struct __GC_Handle*
+Xen_GCHandle_New_From(struct __GC_Header* owner, Xen_GCHeader* h) {
   Xen_GCHandle* handle = Xen_Alloc(sizeof(struct __GC_Handle));
   handle->flags = 0;
   handle->ptr = h;
+  handle->owner = owner;
   handle->rs_next = NULL;
   return handle;
 }

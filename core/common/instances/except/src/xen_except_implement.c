@@ -131,7 +131,8 @@ int Xen_Except_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Except_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Except_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   return 1;
 }
 

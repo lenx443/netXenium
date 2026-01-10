@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "gc_header.h"
 #include "instance.h"
 #include "source_file.h"
 
@@ -11,7 +12,7 @@ struct Xen_AST_Node_Instance {
   const char* name;
   const char* value;
   Xen_Source_Address sta;
-  Xen_Instance* children;
+  Xen_GCHandle* children;
 };
 
 typedef struct Xen_AST_Node_Instance Xen_AST_Node;

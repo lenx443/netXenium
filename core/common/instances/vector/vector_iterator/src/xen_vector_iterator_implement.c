@@ -14,10 +14,10 @@
 #include "xen_vector.h"
 #include "xen_vector_iterator_instance.h"
 
-static void vector_iterator_trace(Xen_GCHeader* h) {
+static void vector_iterator_trace(Xen_Instance* h) {
   Xen_Vector_Iterator* it = (Xen_Vector_Iterator*)h;
-  if (it->vector) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)it->vector);
+  if (it->vector && it->vector->ptr) {
+    Xen_GC_Trace_GCHeader(it->vector);
   }
 }
 
@@ -30,7 +30,7 @@ static Xen_Instance* vector_iterator_alloc(Xen_Instance* self,
   if (!it) {
     return NULL;
   }
-  it->vector = Xen_GCHandle_New();
+  it->vector = Xen_GCHandle_New((Xen_GCHeader*)it);
   it->index = -1;
   return (Xen_Instance*)it;
 }
@@ -106,7 +106,7 @@ int Xen_Vector_Iterator_Init(void) {
     return 0;
   }
   __Vector_Iterator_Implement.__props =
-      Xen_GCHandle_New_From((Xen_GCHeader*)props);
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

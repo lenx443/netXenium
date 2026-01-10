@@ -89,7 +89,8 @@ int Xen_Nil_Init(void) {
     return 0;
   }
   Xen_IGC_Fork_Push(impls_maps, props);
-  __Nil_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Nil_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   return 1;
 }
 

@@ -27,17 +27,40 @@ void block_free(block_node_ptr block) {
   Xen_Dealloc(block);
 }
 
+static void block_list_trace(Xen_GCHeader* h) {
+  block_list_ptr blocks = (block_list_ptr)h;
+  Xen_GC_Trace_GCHeader(blocks->consts);
+}
+
+static void block_list_free(Xen_GCHeader* h) {
+  block_list_ptr blocks = (block_list_ptr)h;
+  if (!blocks) {
+    return;
+  }
+  Xen_GCHandle_Free(blocks->consts);
+  block_node_ptr current = blocks->head;
+  while (current) {
+    block_node_ptr next = current->next;
+    block_free(current);
+    current = next;
+  }
+  blocks->head = NULL;
+  blocks->tail = NULL;
+  Xen_Dealloc(blocks);
+}
+
 block_list_ptr block_list_new(void) {
-  block_list_ptr new_list = Xen_Alloc(sizeof(block_list_t));
+  block_list_ptr new_list = (block_list_ptr)Xen_GC_New(
+      sizeof(block_list_t), block_list_trace, block_list_free);
   if (!new_list) {
     return NULL;
   }
-  new_list->consts = vm_consts_new();
+  new_list->consts = Xen_GCHandle_New_From((struct __GC_Header*)new_list,
+                                           (Xen_GCHeader*)vm_consts_new());
   if (!new_list->consts) {
     Xen_Dealloc(new_list);
     return NULL;
   }
-  Xen_GC_Push_Root((Xen_GCHeader*)new_list->consts);
   new_list->head = NULL;
   new_list->tail = NULL;
   return new_list;
@@ -53,20 +76,4 @@ int block_list_push_node(block_list_ptr blocks, block_node_ptr block) {
     blocks->tail->next = block;
   blocks->tail = block;
   return 1;
-}
-
-void block_list_free(block_list_ptr blocks) {
-  if (!blocks) {
-    return;
-  }
-  Xen_GC_Pop_Root();
-  block_node_ptr current = blocks->head;
-  while (current) {
-    block_node_ptr next = current->next;
-    block_free(current);
-    current = next;
-  }
-  blocks->head = NULL;
-  blocks->tail = NULL;
-  Xen_Dealloc(blocks);
 }

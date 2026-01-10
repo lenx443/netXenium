@@ -387,10 +387,10 @@ static Xen_Instance* string_trim(Xen_Instance* self, Xen_Instance* args,
   Xen_String* string = (Xen_String*)self;
   Xen_size_t start = 0;
   Xen_size_t end = string->__size;
-  while (isspace(string->characters[start]) && start < end) {
+  while (start < end && isspace(string->characters[start])) {
     start++;
   }
-  while (isspace(string->characters[end - 1]) && end > start) {
+  while (end > start && isspace(string->characters[end - 1])) {
     end--;
   }
   Xen_string_t result_str = Xen_ZAlloc(end - start + 1, 1);
@@ -448,7 +448,8 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "trim", string_trim, nil)) {
     return 0;
   }
-  __String_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __String_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

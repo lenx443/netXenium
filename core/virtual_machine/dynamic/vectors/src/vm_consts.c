@@ -16,9 +16,9 @@
 
 static void vm_consts_trace(Xen_GCHeader* h) {
   vm_Consts_ptr consts = (vm_Consts_ptr)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_names->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_instances->ptr);
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)consts->c_callables->ptr);
+  Xen_GC_Trace_GCHeader(consts->c_names);
+  Xen_GC_Trace_GCHeader(consts->c_instances);
+  Xen_GC_Trace_GCHeader(consts->c_callables);
 }
 
 static void vm_consts_destroy(Xen_GCHeader* h) {
@@ -59,9 +59,9 @@ vm_Consts_ptr vm_consts_new(void) {
     return NULL;
   }
   CALLABLE_Vector_ptr c_callables = callable_vector_new();
-  consts->c_names = Xen_GCHandle_New();
-  consts->c_instances = Xen_GCHandle_New();
-  consts->c_callables = Xen_GCHandle_New();
+  consts->c_names = Xen_GCHandle_New((Xen_GCHeader*)consts);
+  consts->c_instances = Xen_GCHandle_New((Xen_GCHeader*)consts);
+  consts->c_callables = Xen_GCHandle_New((Xen_GCHeader*)consts);
   Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHandle**)&consts->c_names,
                      (Xen_GCHeader*)c_names);
   Xen_GC_Write_Field((Xen_GCHeader*)consts,
@@ -82,9 +82,9 @@ vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
   if (!consts) {
     return NULL;
   }
-  consts->c_names = Xen_GCHandle_New();
-  consts->c_instances = Xen_GCHandle_New();
-  consts->c_callables = Xen_GCHandle_New();
+  consts->c_names = Xen_GCHandle_New((Xen_GCHeader*)consts);
+  consts->c_instances = Xen_GCHandle_New((Xen_GCHeader*)consts);
+  consts->c_callables = Xen_GCHandle_New((Xen_GCHeader*)consts);
   Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHandle**)&consts->c_names,
                      (Xen_GCHeader*)c_names);
   Xen_GC_Write_Field((Xen_GCHeader*)consts,

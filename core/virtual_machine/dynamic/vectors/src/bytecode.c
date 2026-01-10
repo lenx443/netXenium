@@ -34,24 +34,20 @@ void bc_free(const Bytecode_Array_ptr bc) {
   Xen_Dealloc(bc);
 }
 
-int bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg,
-            Xen_Source_Address sta) {
+void bc_emit(Bytecode_Array_ptr bc, uint8_t opcode, uint8_t oparg,
+             Xen_Source_Address sta) {
   if (!bc) {
-    return 0;
+    return;
   }
   bc_Instruct_t instr = {{opcode, oparg}, sta};
   if (bc->bc_size >= bc->bc_capacity) {
     int new_capacity = (bc->bc_capacity == 0) ? 8 : bc->bc_capacity * 2;
     bc_Instruct_ptr new_mem =
         Xen_Realloc(bc->bc_array, new_capacity * sizeof(bc_Instruct_t));
-    if (!new_mem) {
-      return 0;
-    }
     bc->bc_array = new_mem;
     bc->bc_capacity = new_capacity;
   }
   bc->bc_array[bc->bc_size++] = instr;
-  return 1;
 }
 
 #ifndef NDEBUG

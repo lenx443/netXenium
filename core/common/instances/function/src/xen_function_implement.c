@@ -21,19 +21,19 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-static void function_trace(Xen_GCHeader* h) {
+static void function_trace(Xen_Instance* h) {
   Xen_Function_ptr inst = (Xen_Function_ptr)h;
-  if (inst->fun_type == 1) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->fun_code->ptr);
+  if (inst->fun_type == 1 && inst->fun_code && inst->fun_code->ptr) {
+    Xen_GC_Trace_GCHeader(inst->fun_code);
   }
   if (inst->closure->ptr) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->closure->ptr);
+    Xen_GC_Trace_GCHeader(inst->closure);
   }
   if (inst->args_names->ptr) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_names->ptr);
+    Xen_GC_Trace_GCHeader(inst->args_names);
   }
   if (inst->args_default_values->ptr) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)inst->args_default_values->ptr);
+    Xen_GC_Trace_GCHeader(inst->args_default_values);
   }
 }
 
@@ -46,11 +46,14 @@ static Xen_Instance* function_alloc(struct __Instance* self, Xen_Instance* args,
     return NULL;
   }
   inst->fun_type = 0;
-  inst->fun_code = Xen_GCHandle_New();
+  inst->fun_code = Xen_GCHandle_New((Xen_GCHeader*)inst);
   inst->fun_native = NULL;
-  inst->closure = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
-  inst->args_names = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
-  inst->args_default_values = Xen_GCHandle_New_From((Xen_GCHeader*)nil);
+  inst->closure =
+      Xen_GCHandle_New_From((Xen_GCHeader*)inst, (Xen_GCHeader*)nil);
+  inst->args_names =
+      Xen_GCHandle_New_From((Xen_GCHeader*)inst, (Xen_GCHeader*)nil);
+  inst->args_default_values =
+      Xen_GCHandle_New_From((Xen_GCHeader*)inst, (Xen_GCHeader*)nil);
   inst->args_requireds = -1;
   return (Xen_Instance*)inst;
 }

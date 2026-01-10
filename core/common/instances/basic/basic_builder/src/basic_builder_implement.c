@@ -11,13 +11,13 @@
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 
-static void basic_builder_trace(Xen_GCHeader* h) {
+static void basic_builder_trace(Xen_Instance* h) {
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)h;
   if (builder->__map->ptr) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)builder->__map->ptr);
+    Xen_GC_Trace_GCHeader(builder->__map);
   }
   if (builder->base->ptr) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)builder->base->ptr);
+    Xen_GC_Trace_GCHeader(builder->base);
   }
 }
 
@@ -26,7 +26,7 @@ static Xen_Instance* basic_builder_alloc(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Basic_Builder* builder = (Xen_Basic_Builder*)Xen_Instance_Alloc(
       xen_globals->implements->basic_builder);
-  builder->base = Xen_GCHandle_New();
+  builder->base = Xen_GCHandle_New((Xen_GCHeader*)builder);
   return (Xen_Instance*)builder;
 }
 

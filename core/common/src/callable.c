@@ -1,13 +1,14 @@
 #include "callable.h"
 #include "bytecode.h"
 #include "gc_header.h"
+#include "vm_consts.h"
 #include "xen_alloc.h"
 #include "xen_gc.h"
 #include "xen_typedefs.h"
 
 static void callable_trace(Xen_GCHeader* h) {
   CALLABLE_ptr callable = (CALLABLE_ptr)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)callable->code.consts->ptr);
+  Xen_GC_Trace_GCHeader(callable->code.consts);
 }
 
 static void callable_destroy(Xen_GCHeader* h) {
@@ -16,20 +17,26 @@ static void callable_destroy(Xen_GCHeader* h) {
   Xen_Dealloc(h);
 }
 
-CALLABLE_ptr callable_new(ProgramCode_t bpc) {
+CALLABLE_ptr callable_new(vm_Consts_ptr consts, Xen_size_t stack_depth) {
   CALLABLE_ptr new_callable = (CALLABLE_ptr)Xen_GC_New(
       sizeof(CALLABLE), callable_trace, callable_destroy);
   if (!new_callable) {
     return NULL;
   }
-  new_callable->code = bpc;
+  new_callable->code.code = bc_new();
+  new_callable->code.consts =
+      Xen_GCHandle_New((struct __GC_Header*)new_callable);
+  Xen_GC_Write_Field((Xen_GCHeader*)new_callable,
+                     (Xen_GCHandle**)&new_callable->code.consts,
+                     (Xen_GCHeader*)consts);
+  new_callable->code.stack_depth = stack_depth;
   return new_callable;
 }
 
 static void callable_vector_trace(Xen_GCHeader* h) {
   CALLABLE_Vector_ptr cv = (CALLABLE_Vector_ptr)h;
   for (Xen_size_t i = 0; i < cv->count; i++) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)cv->callables[i]->ptr);
+    Xen_GC_Trace_GCHeader(cv->callables[i]);
   }
 }
 
@@ -58,7 +65,7 @@ void callable_vector_push(CALLABLE_Vector_ptr cv, CALLABLE_ptr callable) {
     cv->callables = Xen_Realloc(cv->callables, new_cap * sizeof(Xen_GCHandle*));
     cv->cap = new_cap;
   }
-  cv->callables[cv->count] = Xen_GCHandle_New();
+  cv->callables[cv->count] = Xen_GCHandle_New((Xen_GCHeader*)cv);
   Xen_GC_Write_Field((Xen_GCHeader*)cv,
                      (Xen_GCHandle**)&cv->callables[cv->count++],
                      (Xen_GCHeader*)callable);

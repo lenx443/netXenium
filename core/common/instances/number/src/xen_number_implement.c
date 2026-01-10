@@ -14,6 +14,7 @@
 #include "xen_boolean_instance.h"
 #include "xen_bytes.h"
 #include "xen_function.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -826,7 +827,8 @@ int Xen_Number_Init(void) {
       !Xen_VM_Store_Native_Function(props, "u128", number_u128, nil)) {
     return 0;
   }
-  __Number_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Number_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

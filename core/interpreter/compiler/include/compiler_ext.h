@@ -2,9 +2,9 @@
 #define __COMPILER_EXT_H__
 
 #include "block_list.h"
-#include "program_code.h"
+#include "callable.h"
 
 int blocks_linealizer(block_list_ptr);
-int blocks_compiler(block_list_ptr, ProgramCode_t*);
+CALLABLE_ptr blocks_compiler(block_list_ptr);
 
 #endif

@@ -28,16 +28,16 @@
 
 #define XEN_MAP_CAPACITY 128
 
-static void map_trace(Xen_GCHeader* h) {
+static void map_trace(Xen_Instance* h) {
   Xen_Map* map = (Xen_Map*)h;
-  if (map->map_keys)
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)map->map_keys->ptr);
+  if (map->map_keys && map->map_keys->ptr)
+    Xen_GC_Trace_GCHeader(map->map_keys);
   if (map->map_buckets) {
     for (size_t i = 0; i < map->map_capacity; i++) {
       struct __Map_Node* current = map->map_buckets[i];
       while (current) {
-        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->key->ptr);
-        Xen_GC_Trace_GCHeader((Xen_GCHeader*)current->value->ptr);
+        Xen_GC_Trace_GCHeader(current->key);
+        Xen_GC_Trace_GCHeader(current->value);
         current = current->next;
       }
     }
@@ -56,8 +56,9 @@ static Xen_Instance* map_alloc(Xen_Instance* self, Xen_Instance* args,
   for (size_t i = 0; i < XEN_MAP_CAPACITY; i++) {
     map->map_buckets[i] = NULL;
   }
-  map->map_keys = Xen_GCHandle_New_From((Xen_GCHeader*)__instance_new(
-      xen_globals->implements->vector, nil, nil, 0));
+  map->map_keys = Xen_GCHandle_New_From(
+      (Xen_GCHeader*)map, (Xen_GCHeader*)__instance_new(
+                              xen_globals->implements->vector, nil, nil, 0));
   if (!map->map_keys) {
     Xen_Dealloc(map->map_buckets);
     map->map_buckets = NULL;
@@ -323,7 +324,8 @@ int Xen_Map_Init(void) {
       !Xen_VM_Store_Native_Function(props, "push", map_push, nil)) {
     return 0;
   }
-  __Map_Implement.__props = Xen_GCHandle_New_From((Xen_GCHeader*)props);
+  __Map_Implement.__props =
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

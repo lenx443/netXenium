@@ -8,6 +8,7 @@ struct __Implement;
 #define Xen_INSTANCE_HEAD                                                      \
   XEN_GC_HEAD                                                                  \
   struct __Implement* __impl;                                                  \
+  Xen_Native_Func __idestroy;                                                  \
   Xen_size_t __size;                                                           \
   Xen_Instance_Flag __flags
 

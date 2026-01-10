@@ -16,15 +16,15 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 
-static void basic_trace(Xen_GCHeader* h) {
+static void basic_trace(Xen_Instance* h) {
   struct __Implement* impl = (struct __Implement*)h;
   if (impl->__props && impl->__props->ptr &&
       Xen_Nil_NEval((Xen_Instance*)impl->__props->ptr)) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__props->ptr);
+    Xen_GC_Trace_GCHeader(impl->__props);
   }
   if (impl->__base && impl->__base->ptr &&
       Xen_Nil_NEval((Xen_Instance*)impl->__base->ptr)) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)impl->__base->ptr);
+    Xen_GC_Trace_GCHeader(impl->__base);
   }
 }
 
@@ -38,8 +38,8 @@ static Xen_Instance* basic_alloc(struct __Instance* self, Xen_Instance* args,
   }
   impl->__impl_name = NULL;
   impl->__inst_trace = NULL;
-  impl->__props = Xen_GCHandle_New();
-  impl->__base = Xen_GCHandle_New();
+  impl->__props = Xen_GCHandle_New((Xen_GCHeader*)impl);
+  impl->__base = Xen_GCHandle_New((Xen_GCHeader*)impl);
   impl->__inst_size = sizeof(struct __Instance);
   impl->__create = NULL;
   impl->__destroy = NULL;

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "callable.h"
 #include "gc_header.h"
 
 typedef uint8_t Xen_Instance_Flag;
@@ -12,6 +13,7 @@ typedef uint8_t Xen_Instance_Flag;
 #define Xen_INSTANCE_HEAD                                                      \
   struct __GC_Header __gc;                                                     \
   struct __Implement* __impl;                                                  \
+  Xen_Native_Func __idestroy;                                                  \
   size_t __size;                                                               \
   Xen_Instance_Flag __flags
 

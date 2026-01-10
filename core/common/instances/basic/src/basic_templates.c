@@ -45,9 +45,9 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
   return (Xen_Instance*)impl;
 }
 
-void Xen_Basic_Mapped_Trace(Xen_GCHeader* h) {
+void Xen_Basic_Mapped_Trace(Xen_Instance* h) {
   Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)h;
-  Xen_GC_Trace_GCHeader((Xen_GCHeader*)mapped->__map->ptr);
+  Xen_GC_Trace_GCHeader(mapped->__map);
 }
 
 Xen_Instance* Xen_Basic_String(Xen_Instance* self, Xen_Instance* args,

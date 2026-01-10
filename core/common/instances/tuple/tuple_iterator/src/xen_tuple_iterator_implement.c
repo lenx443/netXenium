@@ -15,10 +15,10 @@
 #include "xen_tuple_iterator_instance.h"
 #include "xen_typedefs.h"
 
-static void tuple_iterator_trace(Xen_GCHeader* h) {
+static void tuple_iterator_trace(Xen_Instance* h) {
   Xen_Tuple_Iterator* it = (Xen_Tuple_Iterator*)h;
-  if (it->tuple) {
-    Xen_GC_Trace_GCHeader((Xen_GCHeader*)it->tuple);
+  if (it->tuple && it->tuple->ptr) {
+    Xen_GC_Trace_GCHeader(it->tuple);
   }
 }
 
@@ -31,7 +31,7 @@ static Xen_Instance* tuple_iterator_alloc(Xen_Instance* self,
   if (!it) {
     return NULL;
   }
-  it->tuple = Xen_GCHandle_New();
+  it->tuple = Xen_GCHandle_New((Xen_GCHeader*)it);
   it->index = -1;
   return (Xen_Instance*)it;
 }
@@ -105,7 +105,7 @@ int Xen_Tuple_Iterator_Init(void) {
     return 0;
   }
   __Tuple_Iterator_Implement.__props =
-      Xen_GCHandle_New_From((Xen_GCHeader*)props);
+      Xen_GCHandle_New_From((Xen_GCHeader*)impls_maps, (Xen_GCHeader*)props);
   Xen_IGC_Fork_Push(impls_maps, props);
   return 1;
 }

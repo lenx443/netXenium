@@ -9,7 +9,7 @@
 #include "xen_life.h"
 #include "xen_typedefs.h"
 
-#define XEN_GC_PROMOTION_AGE 4
+#define XEN_GC_PROMOTION_AGE 2
 #define XEN_GC_MAJOR_EVERY_MINORS 8
 
 static struct __GC_Heap __gc_heap = {
@@ -28,6 +28,7 @@ static struct __GC_Heap __gc_heap = {
     .pressure = 0,
     .started = 1,
     .marking = 0,
+    .promote_trace = 0,
 };
 
 void Xen_GC_GetReady(void) {
@@ -158,10 +159,28 @@ void Xen_GC_Promote_toOld(struct __GC_Header* h) {
   xen_globals->gc_heap->old = h;
 }
 
-void Xen_GC_Trace_GCHeader(struct __GC_Header* h) {
-  assert(h != NULL);
-  if (h->color == GC_WHITE) {
-    Xen_GC_Push_Gray(h);
+void Xen_GC_Promote_Trace(struct __GC_Header* h) {
+  xen_globals->gc_heap->promote_trace = 1;
+  Xen_GC_Trace(h);
+  xen_globals->gc_heap->promote_trace = 0;
+}
+
+void Xen_GC_Trace_GCHeader(struct __GC_Handle* handle) {
+  assert(handle != NULL && handle->ptr != NULL);
+  Xen_GCHeader* child = handle->ptr;
+  if (xen_globals->gc_heap->promote_trace) {
+    Xen_GCHeader* parent = handle->owner;
+    if (parent->generation == GC_OLD && child->generation == GC_YOUNG &&
+        !(handle->flags & GC_HANDLE_RS)) {
+      handle->flags |= GC_HANDLE_RS;
+      handle->rs_next = child->rs_handles;
+      child->rs_handles = handle;
+      child->rs_count++;
+    }
+    return;
+  }
+  if (child->color == GC_WHITE) {
+    Xen_GC_Push_Gray(child);
   }
 }
 
@@ -211,7 +230,7 @@ void Xen_GC_Mark_Young(void) {
   xen_globals->gc_heap->marking = 1;
   for (Xen_size_t i = 0; i < xen_globals->gc_heap->roots_count; i++) {
     struct __GC_Header* root = xen_globals->gc_heap->roots[i];
-    if (root->color == GC_WHITE) {
+    if (root->generation == GC_YOUNG && root->color == GC_WHITE) {
       Xen_GC_Push_Gray(root);
     }
   }
@@ -224,8 +243,10 @@ void Xen_GC_Mark_Young(void) {
   }
   while (xen_globals->gc_heap->gray_stack_count > 0) {
     struct __GC_Header* inst = Xen_GC_Pop_Gray();
-    Xen_GC_Trace(inst);
-    inst->color = GC_BLACK;
+    if (inst->generation == GC_YOUNG) {
+      Xen_GC_Trace(inst);
+      inst->color = GC_BLACK;
+    }
   }
   xen_globals->gc_heap->marking = 0;
 }
@@ -260,6 +281,8 @@ void Xen_GC_Sweep_Young(void) {
       curr->color = GC_WHITE;
       curr->age++;
       if (curr->age >= XEN_GC_PROMOTION_AGE) {
+        Xen_GC_Promote_toOld(curr);
+        Xen_GC_Promote_Trace(curr);
         Xen_GCHandle* h = curr->rs_handles;
         while (h) {
           h->flags &= ~GC_HANDLE_RS;
@@ -267,7 +290,6 @@ void Xen_GC_Sweep_Young(void) {
         }
         curr->rs_handles = NULL;
         curr->rs_count = 0;
-        Xen_GC_Promote_toOld(curr);
       }
     }
 

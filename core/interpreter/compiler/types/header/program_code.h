@@ -7,7 +7,7 @@
 struct ProgramCode {
   Xen_GCHandle* consts;
   Bytecode_Array_ptr code;
-  size_t stack_depth;
+  Xen_size_t stack_depth;
 };
 
 typedef struct ProgramCode ProgramCode_t;

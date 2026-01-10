@@ -19,7 +19,7 @@ void Xen_GC_Push_Gray(struct __GC_Header*);
 struct __GC_Header* Xen_GC_Pop_Gray(void);
 void Xen_GC_Remove_RS_Child(struct __GC_Header*);
 void Xen_GC_Promote_toOld(struct __GC_Header*);
-void Xen_GC_Trace_GCHeader(struct __GC_Header*);
+void Xen_GC_Trace_GCHeader(struct __GC_Handle*);
 void Xen_GC_Trace(struct __GC_Header*);
 void Xen_GC_Reset_Young(void);
 void Xen_GC_Reset_Old(void);

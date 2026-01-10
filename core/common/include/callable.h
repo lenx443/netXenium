@@ -3,6 +3,7 @@
 
 #include "gc_header.h"
 #include "program_code.h"
+#include "vm_consts.h"
 #include "xen_typedefs.h"
 
 struct __Instance;
@@ -33,7 +34,7 @@ struct Callable_Vector {
 typedef struct Callable_Vector CALLABLE_Vector;
 typedef CALLABLE_Vector* CALLABLE_Vector_ptr;
 
-CALLABLE_ptr callable_new(ProgramCode_t);
+CALLABLE_ptr callable_new(vm_Consts_ptr, Xen_size_t);
 
 CALLABLE_Vector_ptr callable_vector_new(void);
 void callable_vector_push(CALLABLE_Vector_ptr, CALLABLE_ptr);
