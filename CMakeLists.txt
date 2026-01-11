@@ -306,7 +306,6 @@ add_executable(tester
   tests/test_map.c
   tests/test_boolean.c
   tests/test_modules.c
-  tests/test_load_script.c
   tests/test_vector.c
   tests/test_tuple.c
   tests/test_main.c
@@ -321,6 +320,5 @@ add_test(NAME TestString      COMMAND tester      "STRING")
 add_test(NAME TestMap         COMMAND tester      "MAP")
 add_test(NAME TestBoolean     COMMAND tester      "BOOLEAN")
 add_test(NAME TestModules     COMMAND tester      "MODULES")
-add_test(NAME TestLoadScript  COMMAND tester      "LOAD_SCRIPT")
 add_test(NAME TestVector      COMMAND tester      "VECTOR")
 add_test(NAME TestTuple       COMMAND tester      "TUPLE")

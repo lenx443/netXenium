@@ -7,42 +7,11 @@
 #include "history.h"
 #include "interpreter.h"
 #include "list.h"
-#include "macros.h"
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "vm.h"
 #include "xen_alloc.h"
-
-void load_script(char* filename) {
-  FILE* fp = fopen(filename, "r");
-  if (!fp) {
-    return;
-  }
-  char line[CMDSIZ];
-  LIST_ptr buffer = list_new();
-  if (!buffer) {
-    program.exit_code = EXIT_FAILURE;
-    return;
-  }
-  while (fgets(line, CMDSIZ, fp)) {
-    if (!string_utf8_push_back(buffer, line)) {
-      list_free(buffer);
-      fclose(fp);
-      program.exit_code = EXIT_FAILURE;
-      return;
-    }
-  }
-  fclose(fp);
-  char* file_content = string_utf8_get(buffer);
-  list_free(buffer);
-  if (!file_content) {
-    program.exit_code = EXIT_FAILURE;
-    return;
-  }
-  interpreter(filename, file_content, Xen_COMPILE_PROGRAM);
-  Xen_Dealloc(file_content);
-}
 
 void shell_loop(void) {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"

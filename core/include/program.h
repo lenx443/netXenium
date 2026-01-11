@@ -17,7 +17,6 @@ typedef enum {
   SUGGEST_MODE,
 } ExecMode;
 
-void load_script(char*);
 void shell_loop(void);
 
 extern Program_State program;

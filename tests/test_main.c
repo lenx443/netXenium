@@ -8,7 +8,6 @@ void test_string_run(void);
 void test_map_run(void);
 void test_boolean_run(void);
 void test_modules_run(void);
-void test_load_script_run(void);
 void test_vector_run(void);
 void test_tuple_run(void);
 
@@ -26,8 +25,6 @@ int main(int argc, char** argv) {
     test_boolean_run();
   if (strcmp(op, "MODULE") == 0)
     test_modules_run();
-  if (strcmp(op, "LOAD_SCRIPT") == 0)
-    test_load_script_run();
   if (strcmp(op, "VECTOR") == 0)
     test_vector_run();
   if (strcmp(op, "TUPLE") == 0)
