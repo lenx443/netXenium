@@ -1,7 +1,10 @@
 #include "implement.h"
+#include "attrs.h"
 #include "basic.h"
+#include "instance.h"
 #include "xen_cstrings.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_nil.h"
 
 Xen_Implement* Xen_Implement_From_Struct(Xen_ImplementStruct impl_struct) {
@@ -36,4 +39,19 @@ void Xen_Implement_SetProps(Xen_Implement* impl, Xen_Instance* props) {
   Xen_GC_Write_Field((struct __GC_Header*)impl,
                      (struct __GC_Handle**)&impl->__props,
                      (struct __GC_Header*)props);
+}
+
+Xen_Instance* Xen_Create(Xen_Implement* impl, Xen_Instance* args,
+                         Xen_Instance* kwargs) {
+  Xen_Instance* inst = __instance_new(impl, args, kwargs, 0);
+  if (!inst) {
+    return NULL;
+  }
+  Xen_IGC_Push(inst);
+  if (!Xen_Attr_Create(inst, args, kwargs)) {
+    Xen_IGC_Pop();
+    return NULL;
+  }
+  Xen_IGC_Pop();
+  return inst;
 }

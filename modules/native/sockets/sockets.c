@@ -961,6 +961,9 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
       props,
       (Xen_Map_Pair_Str){"IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP)});
   Xen_Map_Push_Pair_Str(
+      props, (Xen_Map_Pair_Str){"IPPROTO_ICMPV6",
+                                Xen_Number_From_Int(IPPROTO_ICMPV6)});
+  Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});

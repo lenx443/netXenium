@@ -76,6 +76,27 @@ static Xen_Instance* module_get_attr(Xen_Instance* self, Xen_Instance* args,
   return attr;
 }
 
+static Xen_Instance* module_set_attr(Xen_Instance* self, Xen_Instance* args,
+                                     Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_Instance_Mapped* mapped = (Xen_Instance_Mapped*)self;
+  Xen_Instance* key = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(key) != xen_globals->implements->string) {
+    return NULL;
+  }
+  Xen_IGC_Push(key);
+  Xen_Instance* value = Xen_Tuple_Get_Index(args, 1);
+  if (!Xen_Map_Push_Pair((Xen_Instance*)mapped->__map->ptr,
+                         (Xen_Map_Pair){key, value})) {
+    return NULL;
+  }
+  Xen_IGC_Pop();
+  return nil;
+}
+
 struct __Implement __Module_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Module",
@@ -91,6 +112,7 @@ struct __Implement __Module_Implement = {
     .__callable = NULL,
     .__hash = NULL,
     .__get_attr = module_get_attr,
+    .__set_attr = module_set_attr,
 };
 
 struct __Implement* Xen_Module_GetImplement(void) {

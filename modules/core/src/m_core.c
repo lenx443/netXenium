@@ -8,11 +8,9 @@
 #include "instance.h"
 #include "m_core.h"
 #include "program.h"
-#include "run_ctx_instance.h"
-#include "vm.h"
 #include "xen_alloc.h"
+#include "xen_life.h"
 #include "xen_module.h"
-#include "xen_module_instance.h"
 #include "xen_module_types.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -20,7 +18,6 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
-#include "xen_vector.h"
 
 static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
                              Xen_Instance* kwargs) {
@@ -62,8 +59,7 @@ static Xen_Instance* fn_echo(Xen_Instance* self, Xen_Instance* args,
     fputs(Xen_String_As_CString(string), stdout);
     return nil;
   }
-  Xen_Instance* out_reg = xen_register_prop_get(
-      "__out", ((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_id);
+  Xen_Instance* out_reg = xen_register_prop_get("__out");
   if (!out_reg) {
     return NULL;
   }
@@ -192,56 +188,7 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_c_string_t mod_name = Xen_String_As_CString(inst);
-  Xen_Instance* current_path = NULL;
-  if (Xen_SIZE((*xen_globals->vm)->modules_stack->ptr) > 0) {
-    Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(
-        (Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
-    current_path = Xen_String_From_CString(mod_top->mod_path);
-  } else {
-    current_path = Xen_String_From_CString((*xen_globals->vm)->path_current);
-  }
-  Xen_Instance* paths_stack = Xen_Vector_New();
-  for (Xen_size_t i = Xen_SIZE((*xen_globals->vm)->paths_modules->ptr);
-       i-- > 0;) {
-    Xen_Instance* path = Xen_Vector_Get_Index(
-        (Xen_Instance*)(*xen_globals->vm)->paths_modules->ptr, i);
-    Xen_Vector_Push(paths_stack, path);
-  }
-  Xen_Vector_Push(paths_stack, current_path);
-  while (Xen_SIZE(paths_stack) > 0) {
-    Xen_Instance* path = Xen_Vector_Pop(paths_stack);
-    if (Xen_IMPL(path) != xen_globals->implements->string) {
-      return NULL;
-    }
-    Xen_c_string_t path_str = Xen_String_As_CString(path);
-    Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path_str, mod_name);
-    if (psize == -1) {
-      return NULL;
-    }
-    Xen_string_t full_path = Xen_Alloc(psize + 1);
-    snprintf(full_path, psize + 1, "%s/%s.nxm", path_str, mod_name);
-    Xen_Instance* mod =
-        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_GUEST);
-    if (mod) {
-      Xen_Dealloc(full_path);
-      return mod;
-    }
-    Xen_Dealloc(full_path);
-    psize = snprintf(NULL, 0, "%s/lib%s.so", path_str, mod_name);
-    if (psize == -1) {
-      return NULL;
-    }
-    full_path = Xen_Alloc(psize + 1);
-    snprintf(full_path, psize + 1, "%s/lib%s.so", path_str, mod_name);
-    mod =
-        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_NATIVE);
-    if (mod) {
-      Xen_Dealloc(full_path);
-      return mod;
-    }
-    Xen_Dealloc(full_path);
-  }
-  return NULL;
+  return Xen_Load(mod_name);
 }
 
 static Xen_Module_Function_Table core_functions = {

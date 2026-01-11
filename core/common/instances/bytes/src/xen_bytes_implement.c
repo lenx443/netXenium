@@ -136,6 +136,31 @@ static Xen_Instance* bytes_append(Xen_Instance* self, Xen_Instance* args,
   Xen_Bytes_Append_Array(self, Xen_SIZE(bytes), ((Xen_Bytes*)bytes)->bytes);
   return nil;
 }
+static Xen_Instance* bytes_erase(Xen_Instance* self, Xen_Instance* args,
+                                 Xen_Instance* kwargs) {
+  Xen_Bytes* bytes = (Xen_Bytes*)self;
+  Xen_Function_ArgSpec args_def[] = {
+      {"index", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_size_t index = Xen_Number_As_ULongLong(
+      Xen_Function_ArgBinding_Search(binding, "index")->value);
+  Xen_Function_ArgBinding_Free(binding);
+  if (index >= bytes->__size) {
+    return NULL;
+  }
+  for (Xen_size_t i = index; i < bytes->__size - 1; i++) {
+    bytes->bytes[i] = bytes->bytes[i + 1];
+  }
+  bytes->__size--;
+  return nil;
+}
 
 static Xen_Instance* bytes_prop_string(Xen_Instance* self, Xen_Instance* args,
                                        Xen_Instance* kwargs) {
@@ -297,6 +322,7 @@ int Xen_Bytes_Init(void) {
   Xen_VM_Store_Native_Function(props, "__get_index", bytes_opr_get_index, nil);
   Xen_VM_Store_Native_Function(props, "__set_index", bytes_opr_set_index, nil);
   Xen_VM_Store_Native_Function(props, "append", bytes_append, nil);
+  Xen_VM_Store_Native_Function(props, "erase", bytes_erase, nil);
   Xen_VM_Store_Native_Function(props, "string", bytes_prop_string, nil);
   Xen_VM_Store_Native_Function(props, "slice", bytes_slice, nil);
   Xen_VM_Store_Native_Function(props, "signed", bytes_signed, nil);

@@ -117,7 +117,7 @@ static void op_load_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     ERROR;
   }
   Xen_c_string_t reg = Xen_String_As_CString(c_name);
-  Xen_Instance* inst = xen_register_prop_get(reg, ctx->ctx_id);
+  Xen_Instance* inst = xen_register_prop_get(reg);
   if (!inst) {
     if (!Xen_VM_Except_Active()) {
       Xen_UndefReg(reg);
@@ -193,8 +193,7 @@ static void op_store_prop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     ERROR;
   }
   Xen_Instance* inst = STACK_POP;
-  if (!xen_register_prop_set(Xen_String_As_CString(c_name), inst,
-                             ctx->ctx_id)) {
+  if (!xen_register_prop_set(Xen_String_As_CString(c_name), inst)) {
     ERROR;
   }
 }

@@ -39,4 +39,6 @@ typedef struct __ImplementStruct Xen_ImplementStruct;
 
 void Xen_Implement_SetProps(Xen_Implement*, Xen_Instance*);
 
+Xen_Instance* Xen_Create(Xen_Implement*, Xen_Instance*, Xen_Instance*);
+
 #endif

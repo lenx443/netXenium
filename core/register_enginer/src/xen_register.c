@@ -3,7 +3,6 @@
 
 #include "implement.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "vm.h"
 #include "vm_def.h"
@@ -75,8 +74,7 @@ static struct Xen_RegisterStream streams[] = {
     {NULL, false, NULL, NULL},
 };
 
-int xen_register_prop_set(const char* name, struct __Instance* inst,
-                          ctx_id_t id) {
+int xen_register_prop_set(const char* name, struct __Instance* inst) {
   if (!name || !inst) {
     return 1;
   }
@@ -92,7 +90,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
   }
   Xen_INSTANCE* self =
       (Xen_Instance*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self->ptr;
-  if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
+  if (Xen_Nil_NEval(self)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       if (!Xen_Map_Push_Pair_Str(
               (Xen_Instance*)((Xen_INSTANCE_MAPPED*)self)->__map->ptr,
@@ -111,7 +109,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst,
   return 1;
 }
 
-Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
+Xen_INSTANCE* xen_register_prop_get(const char* name) {
   if (!name) {
     return NULL;
   }
@@ -127,7 +125,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name, ctx_id_t id) {
   }
   Xen_INSTANCE* self =
       (Xen_Instance*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self->ptr;
-  if (Xen_Nil_NEval(self) && VM_CHECK_ID(id)) {
+  if (Xen_Nil_NEval(self)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       Xen_INSTANCE* prop = Xen_Map_Get_Str(
           (Xen_Instance*)((Xen_INSTANCE_MAPPED*)self)->__map->ptr, name);

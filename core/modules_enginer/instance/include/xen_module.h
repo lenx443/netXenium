@@ -15,4 +15,6 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def, Xen_c_string_t);
 Xen_Instance* Xen_Module_Load(Xen_c_string_t, Xen_c_string_t, Xen_c_string_t,
                               Xen_Instance*, Xen_uint8_t);
 
+Xen_Instance* Xen_Load(Xen_c_string_t);
+
 #endif
