@@ -1470,6 +1470,7 @@ Xen_Instance* parser_if_stmt(Parser* p) {
     if (!elif_then) {
       return NULL;
     }
+    skip_newline_if_before_is(p, (Lexer_Token){TKN_KEYWORD, "elif", {0}});
     if (!Xen_AST_Node_Push_Child(elif, elif_condition)) {
       return NULL;
     }
