@@ -1,9 +1,6 @@
 #include <arpa/inet.h>
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <asm-generic/socket.h>
-#include <bits/fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <linux/in.h>
 #include <string.h>
 #include <sys/endian.h>
@@ -11,7 +8,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "netxenium/instance.h"
 #include "netxenium/netXenium.h"
 
 #define SOCKET_CAP_READ (1 << 0)
@@ -22,7 +18,7 @@
 #define SOCKET_CAP_CONNECT (1 << 5)
 #define SOCKET_CAP_NONBLOCK (1 << 6)
 
-static Xen_Implement* Socket_Implememnt_Pointer = NULL;
+static Xen_Implement* Socket_Implement_Pointer = NULL;
 
 static void SocketTimeout(void) {
   Xen_VM_Except_Throw(Xen_Except_New("Timeout", "Operation timed out"));
@@ -262,7 +258,7 @@ static Xen_Instance* socket_accept(Xen_Instance* self, Xen_Instance* args,
       return NULL;
     }
     Socket* client =
-        (Socket*)__instance_new(Socket_Implememnt_Pointer, nil, nil, 0);
+        (Socket*)__instance_new(Socket_Implement_Pointer, nil, nil, 0);
     client->f = client_fd;
     client->open = 1;
     client->domain = sock->domain;
@@ -284,7 +280,7 @@ static Xen_Instance* socket_accept(Xen_Instance* self, Xen_Instance* args,
       return NULL;
     }
     Socket* client =
-        (Socket*)__instance_new(Socket_Implememnt_Pointer, nil, nil, 0);
+        (Socket*)__instance_new(Socket_Implement_Pointer, nil, nil, 0);
     client->f = client_fd;
     client->open = 1;
     client->domain = sock->domain;
@@ -909,7 +905,7 @@ static Xen_Instance* socket_close(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
-static Xen_ImplementStruct Socket_Implememnt = {
+static Xen_ImplementStruct Socket_Implement = {
     .__impl_name = "Socket",
     .__inst_size = sizeof(Socket),
     .__create = socket_create,
@@ -920,7 +916,7 @@ static Xen_ImplementStruct Socket_Implememnt = {
 static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if ((Socket_Implememnt_Pointer =
+  if ((Socket_Implement_Pointer =
            (Xen_Implement*)Xen_Attr_Get_Str(self, "Socket")) == Xen_NULL) {
     return Xen_NULL;
   }
@@ -969,12 +965,12 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
       props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR)});
-  Xen_Implement_SetProps(Socket_Implememnt_Pointer, props);
+  Xen_Implement_SetProps(Socket_Implement_Pointer, props);
   return nil;
 }
 
 static Xen_ImplementStruct* implements[] = {
-    &Socket_Implememnt,
+    &Socket_Implement,
     NULL,
 };
 
