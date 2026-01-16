@@ -1,9 +1,13 @@
 #include "net_ip.h"
 #include "netxenium/netXenium.h"
 
+extern Xen_Instance* MODULE_SOCKETS;
+Xen_Instance* MODULE_SOCKETS = NULL;
+
 static Xen_Instance* Net_Init(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  MODULE_SOCKETS = Xen_Load("sockets");
   IP_init(self);
   return nil;
 }

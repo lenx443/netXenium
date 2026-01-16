@@ -24,6 +24,8 @@
 #include "xen_tuple.h"
 #include "xen_vector.h"
 
+#include <string.h>
+
 static void method_trace(Xen_Instance* h) {
   Xen_Method* method = (Xen_Method*)h;
   Xen_GC_Trace_GCHeader(method->function);

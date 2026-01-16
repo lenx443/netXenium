@@ -21,6 +21,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
+#include <string.h>
+
 static void function_trace(Xen_Instance* h) {
   Xen_Function_ptr inst = (Xen_Function_ptr)h;
   if (inst->fun_type == 1 && inst->fun_code && inst->fun_code->ptr) {

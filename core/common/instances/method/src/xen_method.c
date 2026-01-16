@@ -17,6 +17,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
+#include <string.h>
+
 Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   if (!function || !self) {
     return NULL;

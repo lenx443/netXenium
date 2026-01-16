@@ -1,6 +1,8 @@
 #ifndef __GC_HEADER_H__
 #define __GC_HEADER_H__
 
+#include <stddef.h>
+
 #include "xen_alloc.h"
 #include "xen_typedefs.h"
 

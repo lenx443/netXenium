@@ -25,7 +25,7 @@ static void Xen_Number_Normalize(Xen_Number* n) {
 
   while (n->scale > 0 && (n->digits[0] % 10 == 0)) {
     uint64_t carry = 0;
-    for (ssize_t i = n->size - 1; i >= 0; i--) {
+    for (Xen_ssize_t i = n->size - 1; i >= 0; i--) {
       uint64_t cur = (carry << 32) | n->digits[i];
       n->digits[i] = (uint32_t)(cur / 10);
       carry = cur % 10;
@@ -154,7 +154,7 @@ static Xen_Number* Xen_Number_BigDiv_u32(Xen_Number* a, uint32_t d) {
 
   uint64_t rem = 0;
 
-  for (ssize_t i = a->size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = a->size - 1; i >= 0; i--) {
     uint64_t cur = (rem << 32) | a->digits[i];
     q->digits[i] = (uint32_t)(cur / d);
     rem = cur % d;
@@ -216,7 +216,7 @@ static Xen_Number* Xen_Number_BigDiv(Xen_Number* u, Xen_Number* v) {
   }
   un[u->size] = carry;
 
-  for (ssize_t j = m; j >= 0; j--) {
+  for (Xen_ssize_t j = m; j >= 0; j--) {
     uint64_t u2 = ((uint64_t)un[j + n] << 32) | un[j + n - 1];
     uint64_t qhat = u2 / vn[n - 1];
     uint64_t rhat = u2 % vn[n - 1];
@@ -276,7 +276,7 @@ fail:
 static uint32_t BigMod_SingleLimb(const uint32_t* a, size_t a_size,
                                   uint32_t b) {
   uint64_t r = 0;
-  for (ssize_t i = a_size - 1; i >= 0; i--) {
+  for (Xen_ssize_t i = a_size - 1; i >= 0; i--) {
     uint64_t cur = (r << 32) | a[i];
     r = cur % b;
   }
@@ -323,7 +323,7 @@ static Xen_Number* Xen_Number_BigMod(Xen_Number* a, Xen_Number* b) {
   size_t n = remainder->size;
   size_t m = divisor->size;
 
-  for (ssize_t i = n - 1; i >= (ssize_t)(m - 1); i--) {
+  for (Xen_ssize_t i = n - 1; i >= (Xen_ssize_t)(m - 1); i--) {
     uint64_t r_hi = (i >= 1) ? remainder->digits[i - 1] : 0;
     uint64_t r_cur = ((uint64_t)remainder->digits[i] << 32) | r_hi;
 

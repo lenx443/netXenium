@@ -25,6 +25,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
+#include <string.h>
+
 static Xen_bool_t check_impl(Xen_Instance* v, Xen_Function_ArgImpl impl) {
   (void)v;
   switch (impl) {

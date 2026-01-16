@@ -141,7 +141,7 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Function_ArgSpec args_def[] = {
-      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_ANY,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
@@ -155,14 +155,24 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   switch (sock->domain) {
   case AF_INET: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
-    memset(&sock->local.ipv4, 0, sizeof(sock->local.ipv4));
-    sock->local.ipv4.sin_family = sock->domain;
-    sock->local.ipv4.sin_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &sock->local.ipv4.sin_addr) != 1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      memset(&sock->local.ipv4, 0, sizeof(sock->local.ipv4));
+      sock->local.ipv4.sin_family = sock->domain;
+      sock->local.ipv4.sin_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &sock->local.ipv4.sin_addr) !=
+          1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(sock->local.ipv4)) {
+        return NULL;
+      }
+      memcpy(&sock->local.ipv4, Xen_Bytes_Get(addr), sizeof(sock->local.ipv4));
+    } else {
       return NULL;
     }
     if (bind(sock->f, (struct sockaddr*)&sock->local.ipv4,
@@ -172,14 +182,24 @@ static Xen_Instance* socket_bind(Xen_Instance* self, Xen_Instance* args,
     break;
   }
   case AF_INET6: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
-    memset(&sock->local.ipv6, 0, sizeof(sock->local.ipv6));
-    sock->local.ipv6.sin6_family = sock->domain;
-    sock->local.ipv6.sin6_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &sock->local.ipv6.sin6_addr) != 1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      memset(&sock->local.ipv6, 0, sizeof(sock->local.ipv6));
+      sock->local.ipv6.sin6_family = sock->domain;
+      sock->local.ipv6.sin6_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &sock->local.ipv6.sin6_addr) !=
+          1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(sock->local.ipv6)) {
+        return NULL;
+      }
+      memcpy(&sock->local.ipv6, Xen_Bytes_Get(addr), sizeof(sock->local.ipv6));
+    } else {
       return NULL;
     }
     if (bind(sock->f, (struct sockaddr*)&sock->local.ipv6,
@@ -325,14 +345,25 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   switch (sock->domain) {
   case AF_INET: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
-    memset(&sock->remote.ipv4, 0, sizeof(sock->remote.ipv4));
-    sock->remote.ipv4.sin_family = sock->domain;
-    sock->remote.ipv4.sin_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &sock->remote.ipv4.sin_addr) != 1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      memset(&sock->remote.ipv4, 0, sizeof(sock->remote.ipv4));
+      sock->remote.ipv4.sin_family = sock->domain;
+      sock->remote.ipv4.sin_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &sock->remote.ipv4.sin_addr) !=
+          1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(sock->remote.ipv4)) {
+        return NULL;
+      }
+      memcpy(&sock->remote.ipv4, Xen_Bytes_Get(addr),
+             sizeof(sock->remote.ipv4));
+    } else {
       return NULL;
     }
     if (connect(sock->f, (struct sockaddr*)&sock->remote.ipv4,
@@ -345,15 +376,25 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
     break;
   }
   case AF_INET6: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
-    memset(&sock->remote.ipv6, 0, sizeof(sock->remote.ipv6));
-    sock->remote.ipv6.sin6_family = sock->domain;
-    sock->remote.ipv6.sin6_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &sock->remote.ipv6.sin6_addr) !=
-        1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      memset(&sock->remote.ipv6, 0, sizeof(sock->remote.ipv6));
+      sock->remote.ipv6.sin6_family = sock->domain;
+      sock->remote.ipv6.sin6_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &sock->remote.ipv6.sin6_addr) !=
+          1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(sock->remote.ipv6)) {
+        return NULL;
+      }
+      memcpy(&sock->remote.ipv6, Xen_Bytes_Get(addr),
+             sizeof(sock->remote.ipv6));
+    } else {
       return NULL;
     }
     if (connect(sock->f, (struct sockaddr*)&sock->remote.ipv6,
@@ -476,15 +517,24 @@ static Xen_Instance* socket_sendto(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgBinding_Free(binding);
   switch (sock->domain) {
   case AF_INET: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
     struct sockaddr_in remote;
     memset(&remote, 0, sizeof(remote));
-    remote.sin_family = sock->domain;
-    remote.sin_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &remote.sin_addr) != 1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      remote.sin_family = sock->domain;
+      remote.sin_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &remote.sin_addr) != 1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(remote)) {
+        return NULL;
+      }
+      memcpy(&remote, Xen_Bytes_Get(addr), sizeof(remote));
+    } else {
       return NULL;
     }
     Xen_ssize_t s = sendto(sock->f, Xen_Bytes_Get(data), Xen_SIZE(data), 0,
@@ -498,15 +548,24 @@ static Xen_Instance* socket_sendto(Xen_Instance* self, Xen_Instance* args,
     return Xen_Number_From_Long(s);
   }
   case AF_INET6: {
-    struct Socket_Address_IP address;
-    if (!Socket_Addr_IP_Get(addr, &address)) {
-      return NULL;
-    }
     struct sockaddr_in6 remote;
     memset(&remote, 0, sizeof(remote));
-    remote.sin6_family = sock->domain;
-    remote.sin6_port = htons(address.port);
-    if (inet_pton(sock->domain, address.ip, &remote.sin6_addr) != 1) {
+    if (Xen_IsTuple(addr)) {
+      struct Socket_Address_IP address;
+      if (!Socket_Addr_IP_Get(addr, &address)) {
+        return NULL;
+      }
+      remote.sin6_family = sock->domain;
+      remote.sin6_port = htons(address.port);
+      if (inet_pton(sock->domain, address.ip, &remote.sin6_addr) != 1) {
+        return NULL;
+      }
+    } else if (Xen_IsBytes(addr)) {
+      if (Xen_SIZE(addr) != sizeof(remote)) {
+        return NULL;
+      }
+      memcpy(&remote, Xen_Bytes_Get(addr), sizeof(remote));
+    } else {
       return NULL;
     }
     Xen_ssize_t s = sendto(sock->f, Xen_Bytes_Get(data), Xen_SIZE(data), 0,
