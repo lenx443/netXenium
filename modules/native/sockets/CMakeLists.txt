@@ -2,12 +2,6 @@ add_library(xen_libsockets sockets.c)
 
 set_target_properties(xen_libsockets PROPERTIES OUTPUT_NAME "sockets")
 
-target_compile_options(xen_libsockets PRIVATE
-  -ffreestanding
-  -fno-builtin
-  -nostdlib
-)
-
 target_link_options(xen_libsockets PRIVATE
   -nodefaultlibs
 )

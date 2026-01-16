@@ -1,10 +1,11 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/in.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <string.h>
-#include <sys/endian.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -812,12 +813,16 @@ static Xen_Instance* socket_set_nonblocking(Xen_Instance* self,
   Xen_Function_ArgBinding_Free(binding);
   if (nonblock == Xen_True) {
     int flags = fcntl(sock->f, F_GETFL, 0);
-    fcntl(sock->f, F_SETFL, flags | O_NONBLOCK);
+    if (fcntl(sock->f, F_SETFL, flags | O_NONBLOCK) == -1) {
+      return NULL;
+    }
     sock->caps |= SOCKET_CAP_NONBLOCK;
   } else {
     int flags = fcntl(sock->f, F_GETFL, 0);
     flags &= ~O_NONBLOCK;
-    fcntl(sock->f, F_SETFL, flags);
+    if (fcntl(sock->f, F_SETFL, flags) == -1) {
+      return NULL;
+    }
     sock->caps &= ~SOCKET_CAP_NONBLOCK;
   }
   return nil;
@@ -1085,6 +1090,7 @@ static Xen_Instance* sockets_getaddrinfo(Xen_Instance* self, Xen_Instance* args,
                                                   rproto, raddr, rcanonname});
     Xen_Vector_Push(result, rtuple);
   }
+  freeaddrinfo(res);
   return result;
 }
 

@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
+#include "gc_header.h"
 #include "instance.h"
-#include "netxenium/gc_header.h"
 
 struct Xen_Vector_Instance {
   Xen_INSTANCE_HEAD;

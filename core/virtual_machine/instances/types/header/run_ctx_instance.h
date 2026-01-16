@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "gc_header.h"
 #include "instance.h"
-#include "netxenium/gc_header.h"
 #include "run_ctx.h"
 #include "vm_catch_stack.h"
 

@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 #include "callable.h"
+#include "gc_header.h"
 #include "instance.h"
-#include "netxenium/gc_header.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "run_ctx_stack.h"

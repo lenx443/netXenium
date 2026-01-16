@@ -1,5 +1,6 @@
-#include <asm-generic/fcntl.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "netxenium/netXenium.h"

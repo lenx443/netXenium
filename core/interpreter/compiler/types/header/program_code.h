@@ -2,7 +2,7 @@
 #define __PROGRAM_CODE_H__
 
 #include "bytecode.h"
-#include "netxenium/gc_header.h"
+#include "gc_header.h"
 
 struct ProgramCode {
   Xen_GCHandle* consts;

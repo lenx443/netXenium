@@ -2,12 +2,6 @@ add_library(xen_libio io.c)
 
 set_target_properties(xen_libio PROPERTIES OUTPUT_NAME "io")
 
-target_compile_options(xen_libio PRIVATE
-  -ffreestanding
-  -fno-builtin
-  -nostdlib
-)
-
 target_link_options(xen_libio PRIVATE
   -nodefaultlibs
 )

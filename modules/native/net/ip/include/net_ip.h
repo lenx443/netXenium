@@ -3,8 +3,7 @@
 
 #include "netxenium/netXenium.h"
 
-#include <bits/in_addr.h>
-#include <linux/in6.h>
+#include <netinet/in.h>
 
 #define NET_IPV4 1
 #define NET_IPV6 2
