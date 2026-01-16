@@ -14,6 +14,7 @@ target_link_options(xen_libsockets PRIVATE
 
 target_include_directories(xen_libsockets PRIVATE
   ${NETXENIUM_ABI_INCLUDE_PATH}
+  ${NETXENIUM_NET_INCLUDE}
 )
 
 target_link_libraries(xen_libsockets PRIVATE

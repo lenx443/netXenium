@@ -296,6 +296,7 @@ install(TARGETS ntxenium RUNTIME DESTINATION bin)
 
 add_subdirectory(modules/native/io)
 add_subdirectory(modules/native/sockets)
+add_subdirectory(modules/native/net)
 
 enable_testing()
 
