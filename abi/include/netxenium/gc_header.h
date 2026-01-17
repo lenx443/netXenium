@@ -1,6 +1,8 @@
 #ifndef __GC_HEADER_H__
 #define __GC_HEADER_H__
 
+#include "xen_typedefs.h"
+
 #define GC_WHITE 1
 #define GC_GRAY 2
 #define GC_BLACK 3
@@ -22,9 +24,19 @@
   Xen_size_t rs_count;
 
 struct __GC_Header;
-struct __GC_Handle;
+
+struct __GC_Handle {
+  Xen_uint8_t flags;
+  struct __GC_Header* ptr;
+  struct __GC_Header* owner;
+  struct __GC_Handle* rs_next;
+};
 
 typedef struct __GC_Header Xen_GCHeader;
 typedef struct __GC_Handle Xen_GCHandle;
+
+struct __GC_Handle* Xen_GCHandle_New(struct __GC_Header*);
+struct __GC_Handle* Xen_GCHandle_New_From(struct __GC_Header*, Xen_GCHeader*);
+void Xen_GCHandle_Free(struct __GC_Handle*);
 
 #endif

@@ -67,6 +67,7 @@ static void __igc_roots_push(struct __IGC_Roots* roots, Xen_GCHeader* h) {
 static void __igc_roots_pop(struct __IGC_Roots* roots) {
   assert(roots->count > 0);
   roots->count--;
+  Xen_GCHandle_Free(roots->roots[roots->count]);
 }
 
 void Xen_IGC_Init(void) {

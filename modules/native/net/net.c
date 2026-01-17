@@ -1,3 +1,4 @@
+#include "net_endpoint.h"
 #include "net_ip.h"
 #include "netxenium/netXenium.h"
 
@@ -9,11 +10,13 @@ static Xen_Instance* Net_Init(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE;
   MODULE_SOCKETS = Xen_Load("sockets");
   IP_init(self);
+  EndPoint_init(self);
   return nil;
 }
 
 Xen_ImplementStruct* implements[] = {
     &IP_implmenet,
+    &EndPoint_implmenet,
     NULL,
 };
 

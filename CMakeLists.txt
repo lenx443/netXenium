@@ -34,6 +34,7 @@ endif()
 set(NETXENIUM_DEAFULT_INCLUDES
   core/garbage_collector/include/
   core/garbage_collector/types/header/
+  core/garbage_collector/types/include/
   core/include/
   core/common/header/
   core/common/include/
@@ -109,6 +110,7 @@ set(SOURCES
 
   # Recolector De Basura
   core/garbage_collector/src/xen_gc.c
+  core/garbage_collector/types/src/gc_header.c
 
   # Codigo Commun
   core/common/src/xen_alloc.c

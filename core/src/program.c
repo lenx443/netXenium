@@ -53,7 +53,6 @@ void shell_loop(void) {
         continue;
       }
       fputs("\n", stdout);
-      Xen_Dealloc(cmd_str);
       break;
     }
 #endif

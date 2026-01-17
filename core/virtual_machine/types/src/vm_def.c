@@ -159,5 +159,6 @@ void vm_destroy(void) {
   Xen_GCHandle_Free(vm->paths_modules);
   Xen_GCHandle_Free(vm->config);
   Xen_GCHandle_Free(vm->except.except);
+  vm_backtrace_free(vm->except.bt);
   Xen_GC_Pop_Root();
 }
