@@ -48,6 +48,8 @@ static Xen_Instance* endpoint_create(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgSpec args_def[] = {
       {"endp", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {"type", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_NUMBER,
+       XEN_FUNCTION_ARG_OPTIONAL, NULL},
       {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
   };
   Xen_Function_ArgBinding* binding =
@@ -57,6 +59,14 @@ static Xen_Instance* endpoint_create(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_c_string_t endp = Xen_String_As_CString(
       Xen_Function_ArgBinding_Search(binding, "endp")->value);
+  Xen_Function_ArgBound* type_arg =
+      Xen_Function_ArgBinding_Search(binding, "type");
+  Xen_Instance* type = NULL;
+  if (type_arg->provided) {
+    type = type_arg->value;
+  } else {
+    type = Xen_Number_From_Int(0);
+  }
   Xen_Function_ArgBinding_Free(binding);
   Xen_c_string_t ip_start;
   Xen_size_t ip_len;
@@ -114,16 +124,24 @@ static Xen_Instance* endpoint_create(Xen_Instance* self, Xen_Instance* args,
   strncpy(port_str, port_start, port_len);
   ip_str[ip_len] = '\0';
   port_str[port_len] = '\0';
-  Xen_Instance* ip_inst =
-      Xen_String_From_CString(ip_len > 0 ? ip_str : "0.0.0.0");
-  Xen_Instance* ip_args = Xen_Tuple_From_Array(1, &ip_inst);
+  int type_value = Xen_Number_As_Int(type);
+  Xen_Instance* ip_inst = Xen_String_From_CString(
+      ip_len > 0 ? ip_str : (type_value == NET_IPV6 ? "::" : "0.0.0.0"));
+  Xen_Instance* ip_args =
+      Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip_inst, type});
   Xen_Instance* ip = Xen_Create(IP_IMPLEMENT_ptr, ip_args, nil);
+  if (!ip) {
+    Xen_Dealloc(ip_str);
+    Xen_Dealloc(port_str);
+    return NULL;
+  }
   Xen_IGC_WRITE_FIELD(endpoint, endpoint->ip, ip);
   if (!parse_u16(port_str, &endpoint->port)) {
     Xen_Dealloc(ip_str);
     Xen_Dealloc(port_str);
     return NULL;
   }
+  endpoint->port = htons(endpoint->port);
   Xen_Dealloc(ip_str);
   Xen_Dealloc(port_str);
   return nil;
@@ -155,9 +173,26 @@ static Xen_Instance* endpoint_port(Xen_Instance* self, Xen_Instance* args,
   return Xen_Number_From_Int(endpoint->port);
 }
 
+static Xen_Instance* endpoint_tuple(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  EndPoint* endpoint = (EndPoint*)self;
+  Xen_string_t ip_str = Net_IP_As_CString((Xen_Instance*)endpoint->ip->ptr);
+  if (!ip_str) {
+    return NULL;
+  }
+  Xen_Instance* ip = Xen_String_From_CString(ip_str);
+  Xen_Dealloc(ip_str);
+  Xen_Instance* port = Xen_Number_From_Int(endpoint->port);
+  Xen_Instance* tuple = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
+  return tuple;
+}
+
 Xen_Implement* ENDPOINT_IMPLEMENT_ptr = NULL;
 Xen_ImplementStruct EndPoint_implmenet = {
-    .__impl_name = "EndPoint",
+    .__impl_name = "Endpoint",
     .__inst_size = sizeof(EndPoint),
     .__inst_trace = endpoint_trace,
     .__alloc = endpoint_alloc,
@@ -167,9 +202,18 @@ Xen_ImplementStruct EndPoint_implmenet = {
 };
 
 void EndPoint_init(Xen_Instance* module) {
-  ENDPOINT_IMPLEMENT_ptr = (Xen_Implement*)Xen_Attr_Get_Str(module, "EndPoint");
+  ENDPOINT_IMPLEMENT_ptr = (Xen_Implement*)Xen_Attr_Get_Str(module, "Endpoint");
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "ip", endpoint_ip, nil);
   Xen_VM_Store_Native_Function(props, "port", endpoint_port, nil);
+  Xen_VM_Store_Native_Function(props, "tuple", endpoint_tuple, nil);
   Xen_Implement_SetProps(ENDPOINT_IMPLEMENT_ptr, props);
+}
+
+Xen_Instance* Net_EndPoint_IP(Xen_Instance* endpoint) {
+  return (Xen_Instance*)((EndPoint*)endpoint)->ip->ptr;
+}
+
+Xen_uint16_t Net_EndPoint_Port(Xen_Instance* endpoint) {
+  return ((EndPoint*)endpoint)->port;
 }

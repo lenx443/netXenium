@@ -10,6 +10,7 @@ struct Xen_Module_Instance {
   Xen_bool_t mod_initialized;
   Xen_c_string_t mod_name;
   Xen_c_string_t mod_path;
+  void* mod_handle;
 };
 
 typedef struct Xen_Module_Instance Xen_Module;

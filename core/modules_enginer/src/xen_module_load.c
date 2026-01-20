@@ -15,7 +15,7 @@ static int load_module_core(struct Xen_Module_Def* mod) {
   if (core_success)
     return 0;
   core_success = 1;
-  Xen_Instance* mod_inst = Xen_Module_From_Def(*mod, "builtin://");
+  Xen_Instance* mod_inst = Xen_Module_From_Def(*mod, "builtin://", NULL);
   if (!mod_inst) {
     return 0;
   }
@@ -35,7 +35,7 @@ int Xen_Module_Load_Startup(void) {
         return 0;
       }
     } else {
-      Xen_Instance* mod_inst = Xen_Module_From_Def(*mod, "builtin://");
+      Xen_Instance* mod_inst = Xen_Module_From_Def(*mod, "builtin://", NULL);
       if (!mod_inst) {
         return 0;
       }

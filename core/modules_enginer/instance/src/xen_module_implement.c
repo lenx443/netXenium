@@ -15,6 +15,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
+#include <dlfcn.h>
+
 static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -32,6 +34,9 @@ static Xen_Instance* module_destroy(Xen_Instance* self, Xen_Instance* args,
   Xen_Module* module = (Xen_Module*)self;
   Xen_Dealloc((void*)module->mod_name);
   Xen_Dealloc((void*)module->mod_path);
+  if (module->mod_handle) {
+    dlclose(module->mod_handle);
+  }
   return nil;
 }
 

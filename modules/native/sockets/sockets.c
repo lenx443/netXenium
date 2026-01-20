@@ -332,7 +332,7 @@ static Xen_Instance* socket_connect(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   Xen_Function_ArgSpec args_def[] = {
-      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_ANY,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };
@@ -503,7 +503,7 @@ static Xen_Instance* socket_sendto(Xen_Instance* self, Xen_Instance* args,
   Xen_Function_ArgSpec args_def[] = {
       {"data", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_BYTES,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
-      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_TUPLE,
+      {"addr", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_ANY,
        XEN_FUNCTION_ARG_REQUIRED, NULL},
       {Xen_NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, Xen_NULL},
   };

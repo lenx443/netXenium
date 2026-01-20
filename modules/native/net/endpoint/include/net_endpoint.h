@@ -14,4 +14,7 @@ extern Xen_ImplementStruct EndPoint_implmenet;
 
 void EndPoint_init(Xen_Instance*);
 
+Xen_Instance* Net_EndPoint_IP(Xen_Instance*);
+Xen_uint16_t Net_EndPoint_Port(Xen_Instance*);
+
 #endif

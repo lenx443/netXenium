@@ -1,6 +1,7 @@
 add_library(xen_libnet
   ip/src/net_ip.c
   endpoint/src/net_endpoint.c
+  tcp/src/net_tcp.c
   net.c
 )
 
@@ -14,6 +15,7 @@ target_include_directories(xen_libnet PRIVATE
   ${NETXENIUM_ABI_INCLUDE_PATH}
   ip/include
   endpoint/include
+  tcp/include
 )
 
 target_link_libraries(xen_libnet PRIVATE

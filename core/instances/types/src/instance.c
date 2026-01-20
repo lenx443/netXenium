@@ -93,6 +93,10 @@ void __instance_free(Xen_GCHeader* h) {
   }
 }
 
+struct __Implement* Xen_IMPL(void* inst) {
+  return (((struct __Instance*)inst)->__impl);
+}
+
 Xen_size_t Xen_SIZE(void* inst) {
   return (((struct __Instance*)inst)->__size);
 }

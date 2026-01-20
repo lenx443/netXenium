@@ -49,9 +49,7 @@ void __instance_free(Xen_GCHeader*);
 typedef Xen_INSTANCE Xen_Instance;
 typedef Xen_INSTANCE_MAPPED Xen_Instance_Mapped;
 
-static inline struct __Implement* Xen_IMPL(void* inst) {
-  return (((struct __Instance*)inst)->__impl);
-}
+struct __Implement* Xen_IMPL(void*);
 
 Xen_size_t Xen_SIZE(void*);
 

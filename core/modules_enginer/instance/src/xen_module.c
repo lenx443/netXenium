@@ -32,11 +32,12 @@ Xen_Instance* Xen_Module_New(void) {
   module->mod_initializing = 0;
   module->mod_name = NULL;
   module->mod_path = NULL;
+  module->mod_handle = NULL;
   return (Xen_Instance*)module;
 }
 
 Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
-                                  Xen_c_string_t mod_path) {
+                                  Xen_c_string_t mod_path, void* handle) {
   Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(
       (Xen_Instance*)(*xen_globals->vm)->modules->ptr, mod_def.mod_name);
   if (Xen_Map_Has_Str((Xen_Instance*)(*xen_globals->vm)->modules->ptr,
@@ -52,6 +53,7 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
   module->mod_initializing = 1;
   module->mod_name = Xen_CString_Dup(mod_def.mod_name);
   module->mod_path = Xen_CString_Dup(mod_path);
+  module->mod_handle = handle;
   Xen_Map_Push_Pair_Str(
       (Xen_Instance*)(*xen_globals->vm)->modules->ptr,
       (Xen_Map_Pair_Str){mod_def.mod_name, (Xen_Instance*)module});
@@ -222,9 +224,8 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       return NULL;
     }
     struct Xen_Module_Def* mod_def = mod_start(xen_globals);
-    module = (Xen_Module*)Xen_Module_From_Def(*mod_def, mod_path);
+    module = (Xen_Module*)Xen_Module_From_Def(*mod_def, mod_path, handle);
     Xen_Dealloc(mod_def);
-    dlclose(handle);
     return (Xen_Instance*)module;
   }
   return NULL;

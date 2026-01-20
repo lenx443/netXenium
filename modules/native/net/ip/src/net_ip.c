@@ -131,21 +131,13 @@ static Xen_Instance* ip_prop_string(Xen_Instance* self, Xen_Instance* args,
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
     return NULL;
   }
-  IP* ip = (IP*)self;
-  if (ip->ip_type == NET_IPV4) {
-    char buffer[INET_ADDRSTRLEN];
-    if (!inet_ntop(AF_INET, &ip->ipv4, buffer, sizeof(buffer))) {
-      return NULL;
-    }
-    return Xen_String_From_CString(buffer);
-  } else if (ip->ip_type == NET_IPV6) {
-    char buffer[INET6_ADDRSTRLEN];
-    if (!inet_ntop(AF_INET6, &ip->ipv6, buffer, sizeof(buffer))) {
-      return NULL;
-    }
-    return Xen_String_From_CString(buffer);
+  Xen_string_t ip = Net_IP_As_CString(self);
+  if (!ip) {
+    return NULL;
   }
-  return NULL;
+  Xen_Instance* result = Xen_String_From_CString(ip);
+  Xen_Dealloc(ip);
+  return result;
 }
 
 static Xen_Instance* ip_type(Xen_Instance* self, Xen_Instance* args,
@@ -173,4 +165,24 @@ void IP_init(Xen_Instance* module) {
   Xen_Map_Push_Pair_Str(
       props, (Xen_Map_Pair_Str){"IPV6", Xen_Number_From_Int(NET_IPV6)});
   Xen_Implement_SetProps(IP_IMPLEMENT_ptr, props);
+}
+
+Xen_string_t Net_IP_As_CString(Xen_Instance* ip_inst) {
+  IP* ip = (IP*)ip_inst;
+  if (ip->ip_type == NET_IPV4) {
+    Xen_string_t buffer = Xen_Alloc(INET_ADDRSTRLEN);
+    if (!inet_ntop(AF_INET, &ip->ipv4, buffer, INET_ADDRSTRLEN)) {
+      Xen_Dealloc(buffer);
+      return NULL;
+    }
+    return buffer;
+  } else if (ip->ip_type == NET_IPV6) {
+    Xen_string_t buffer = Xen_Alloc(INET6_ADDRSTRLEN);
+    if (!inet_ntop(AF_INET6, &ip->ipv6, buffer, INET6_ADDRSTRLEN)) {
+      Xen_Dealloc(buffer);
+      return NULL;
+    }
+    return buffer;
+  }
+  return NULL;
 }

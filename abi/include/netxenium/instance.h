@@ -29,6 +29,8 @@ Xen_Instance* Xen_Instance_Alloc(struct __Implement*);
 Xen_Instance* __instance_new(struct __Implement*, Xen_Instance*, Xen_Instance*,
                              Xen_Instance_Flag);
 
+struct __Implement* Xen_IMPL(void*);
+
 Xen_size_t Xen_SIZE(void*);
 
 #endif

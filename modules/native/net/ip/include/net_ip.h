@@ -22,4 +22,6 @@ extern Xen_ImplementStruct IP_implmenet;
 
 void IP_init(Xen_Instance*);
 
+Xen_string_t Net_IP_As_CString(Xen_Instance*);
+
 #endif
