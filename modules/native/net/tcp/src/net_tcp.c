@@ -48,9 +48,9 @@ Xen_Instance* Net_TCP_Server(Xen_Instance* self, Xen_Instance* args,
     memcpy(&sin6.sin6_addr, &ip->ipv6, sizeof(sin6.sin6_addr));
     sin6.sin6_port = port;
     sin6.sin6_family = AF_INET6;
-    Xen_Instance* sin_bytes =
+    Xen_Instance* sin6_bytes =
         Xen_Bytes_From_Array(sizeof(sin6), (Xen_uint8_t*)&sin6);
-    Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin_bytes);
+    Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin6_bytes);
     Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil);
   } else {
     return NULL;

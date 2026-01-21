@@ -189,6 +189,31 @@ static Xen_Instance* endpoint_tuple(Xen_Instance* self, Xen_Instance* args,
   Xen_Instance* tuple = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
   return tuple;
 }
+static Xen_Instance* endpoint_bytes(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  if (!Xen_Function_ArgEmpty(args, kwargs)) {
+    return NULL;
+  }
+  Xen_Instance* bytes = NULL;
+  IP* ip = (IP*)Net_EndPoint_IP(self);
+  Xen_uint16_t port = Net_EndPoint_Port(self);
+  if (ip->ip_type == NET_IPV4) {
+    struct sockaddr_in sin;
+    memcpy(&sin.sin_addr, &ip->ipv4, sizeof(sin.sin_addr));
+    sin.sin_port = port;
+    sin.sin_family = AF_INET;
+    bytes = Xen_Bytes_From_Array(sizeof(sin), (Xen_uint8_t*)&sin);
+  } else if (ip->ip_type == NET_IPV6) {
+    struct sockaddr_in6 sin6;
+    memcpy(&sin6.sin6_addr, &ip->ipv6, sizeof(sin6.sin6_addr));
+    sin6.sin6_port = port;
+    sin6.sin6_family = AF_INET6;
+    bytes = Xen_Bytes_From_Array(sizeof(sin6), (Xen_uint8_t*)&sin6);
+  } else {
+    return NULL;
+  }
+  return bytes;
+}
 
 Xen_Implement* ENDPOINT_IMPLEMENT_ptr = NULL;
 Xen_ImplementStruct EndPoint_implmenet = {
@@ -207,6 +232,7 @@ void EndPoint_init(Xen_Instance* module) {
   Xen_VM_Store_Native_Function(props, "ip", endpoint_ip, nil);
   Xen_VM_Store_Native_Function(props, "port", endpoint_port, nil);
   Xen_VM_Store_Native_Function(props, "tuple", endpoint_tuple, nil);
+  Xen_VM_Store_Native_Function(props, "bytes", endpoint_bytes, nil);
   Xen_Implement_SetProps(ENDPOINT_IMPLEMENT_ptr, props);
 }
 
