@@ -2380,7 +2380,8 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
       current = current->next;
     }
     if (current) {
-      if (!emit_jump(JUMP, CC_TOP.b_continue, Xen_AST_Node_STA(node))) {
+      if (!emit_jump(JUMP, current->context.b_continue,
+                     Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else {
