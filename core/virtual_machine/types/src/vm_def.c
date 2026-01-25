@@ -36,6 +36,9 @@ static void vm_def_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader(_vm->modules);
   Xen_GC_Trace_GCHeader(_vm->modules_stack);
   Xen_GC_Trace_GCHeader(_vm->globals_instances);
+  if (_vm->globals_scopes->ptr) {
+    Xen_GC_Trace_GCHeader(_vm->globals_scopes);
+  };
   Xen_GC_Trace_GCHeader(_vm->globals_props);
   Xen_GC_Trace_GCHeader(_vm->paths_modules);
   Xen_GC_Trace_GCHeader(_vm->config);
@@ -83,6 +86,7 @@ bool vm_create(void) {
   vm->modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->modules_stack = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->globals_instances = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->globals_scopes = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->globals_props = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->paths_modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->config = Xen_GCHandle_New((Xen_GCHeader*)vm);
@@ -115,6 +119,10 @@ bool vm_create(void) {
     run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
+  Xen_GC_Write_Field((struct __GC_Header*)vm,
+                     (struct __GC_Handle**)&vm->globals_scopes,
+                     (struct __GC_Header*)Xen_VM_Scopes_New());
+  Xen_VM_Scopes_Push((Xen_VM_Scopes*)vm->globals_scopes->ptr);
   Xen_IGC_WRITE_FIELD(vm, vm->globals_props, Xen_Map_New());
   if (!vm->globals_props) {
     run_context_stack_free(&vm->vm_ctx_stack);

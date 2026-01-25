@@ -31,7 +31,8 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
 #endif
   Xen_Instance* ctx_inst = Xen_Ctx_New(
       nil, nil, nil, nil, nil,
-      (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr, code);
+      (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+      (Xen_VM_Scopes*)(*xen_globals->vm)->globals_scopes->ptr, code);
   if (!ctx_inst) {
     return NULL;
   }

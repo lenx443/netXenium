@@ -15,7 +15,7 @@
 
 void shell_loop(void) {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
-              "Type " VERDE "help" RESET " for more info\n");
+              "Type " VERDE "exit" RESET " for quit\n");
   const char* home = getenv("HOME");
   if (home == NULL) {
     printf("No se encontro la variable entorno HOME\n");

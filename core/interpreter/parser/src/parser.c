@@ -64,6 +64,7 @@ static bool is_list(Parser*);
 static bool is_assigment(Parser*);
 static bool is_suffix(Parser*);
 static bool is_keyword(Parser*);
+static bool is_decl_keyword(Parser*);
 static bool is_flow_keyword(Parser*);
 
 static Xen_Instance* parser_stmt_list(Parser*);
@@ -101,6 +102,7 @@ static Xen_Instance* parser_arg_assignment(Parser*);
 static Xen_Instance* parser_index(Parser*);
 static Xen_Instance* parser_attr(Parser*);
 static Xen_Instance* parser_keyword(Parser*);
+static Xen_Instance* parser_decl_stmt(Parser*);
 static Xen_Instance* parser_if_stmt(Parser*);
 static Xen_Instance* parser_while_stmt(Parser*);
 static Xen_Instance* parser_for_stmt(Parser*);
@@ -187,6 +189,18 @@ bool is_keyword(Parser* p) {
     return true;
   }
   return false;
+}
+
+static bool is_decl_keyword(Parser* p) {
+  Lexer_Token_Type type = p->token.tkn_type;
+  Xen_string_t text = p->token.tkn_text;
+  if (type != TKN_KEYWORD) {
+    return 0;
+  }
+  if (strcmp(text, "local") == 0) {
+    return 1;
+  }
+  return 0;
 }
 
 bool is_flow_keyword(Parser* p) {
@@ -1398,33 +1412,53 @@ Xen_Instance* parser_attr(Parser* p) {
 Xen_Instance* parser_keyword(Parser* p) {
   if (p->token.tkn_type != TKN_KEYWORD) {
     return parser_assignment(p);
-  }
-  if (strcmp(p->token.tkn_text, "if") == 0) {
+  } else if (is_decl_keyword(p)) {
+    return parser_decl_stmt(p);
+  } else if (strcmp(p->token.tkn_text, "if") == 0) {
     return parser_if_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "while") == 0) {
+  } else if (strcmp(p->token.tkn_text, "while") == 0) {
     return parser_while_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "for") == 0) {
+  } else if (strcmp(p->token.tkn_text, "for") == 0) {
     return parser_for_stmt(p);
-  }
-  if (is_flow_keyword(p)) {
+  } else if (is_flow_keyword(p)) {
     return parser_flow_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "return") == 0) {
+  } else if (strcmp(p->token.tkn_text, "return") == 0) {
     return parser_return_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "implement") == 0) {
+  } else if (strcmp(p->token.tkn_text, "implement") == 0) {
     return parser_implement_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "throw") == 0) {
+  } else if (strcmp(p->token.tkn_text, "throw") == 0) {
     return parser_throw_stmt(p);
-  }
-  if (strcmp(p->token.tkn_text, "try") == 0) {
+  } else if (strcmp(p->token.tkn_text, "try") == 0) {
     return parser_try_stmt(p);
   }
   Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
   return NULL;
+}
+
+static Xen_Instance* parser_decl_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
+  }
+  Xen_Instance* dcl_stmt =
+      Xen_AST_Node_New("DeclStatement", p->token.tkn_text, p->token.sta);
+  parser_next(p);
+  if (p->token.tkn_type != TKN_IDENTIFIER) {
+    Xen_SyntaxError("Invalid left-hand side in declaration.");
+    return NULL;
+  }
+  Xen_Instance* lhs = Xen_AST_Node_New("Name", p->token.tkn_text, p->token.sta);
+  Xen_AST_Node_Push_Child(dcl_stmt, lhs);
+  parser_next(p);
+  if (p->token.tkn_type == TKN_ASSIGNMENT) {
+    parser_next(p);
+    Xen_Instance* rhs = parser_expr(p);
+    if (!rhs) {
+      return NULL;
+    }
+    Xen_AST_Node_Push_Child(dcl_stmt, rhs);
+  }
+  return dcl_stmt;
 }
 
 Xen_Instance* parser_if_stmt(Parser* p) {

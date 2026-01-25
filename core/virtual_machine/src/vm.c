@@ -12,6 +12,7 @@
 #include "vm_backtrace.h"
 #include "vm_def.h"
 #include "vm_run.h"
+#include "vm_scope.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
 #include "xen_gc.h"
@@ -61,14 +62,24 @@ Xen_INSTANCE* Xen_VM_Load_Instance(const char* name, ctx_id_t id) {
   if (!name || !VM_CHECK_ID(id)) {
     return NULL;
   }
-  RunContext_ptr current = (RunContext_ptr)Xen_VM_Current_Ctx();
-  while (current && Xen_Nil_NEval((Xen_Instance*)current)) {
+  RunContext_ptr current_ctx = (RunContext_ptr)Xen_VM_Current_Ctx();
+  while (current_ctx && Xen_Nil_NEval((Xen_Instance*)current_ctx)) {
+    Xen_VM_Scope* current_scope =
+        ((Xen_VM_Scopes*)current_ctx->ctx_scopes->ptr)->scopes;
+    while (current_scope) {
+      Xen_Instance* inst =
+          Xen_Map_Get_Str((Xen_Instance*)current_scope->symbols->ptr, name);
+      if (inst != NULL) {
+        return inst;
+      }
+      current_scope = current_scope->next;
+    }
     Xen_Instance* inst =
-        Xen_Map_Get_Str((Xen_Instance*)current->ctx_instances->ptr, name);
+        Xen_Map_Get_Str((Xen_Instance*)current_ctx->ctx_instances->ptr, name);
     if (inst != NULL) {
       return inst;
     }
-    current = (RunContext_ptr)current->ctx_closure->ptr;
+    current_ctx = (RunContext_ptr)current_ctx->ctx_closure->ptr;
   }
   return NULL;
 }
@@ -89,7 +100,7 @@ int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
       run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
           ? run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
           : nil,
-      closure, self, args, kwargs, NULL, callable);
+      closure, self, args, kwargs, NULL, NULL, callable);
   if (!ctx_inst) {
     return 0;
   }

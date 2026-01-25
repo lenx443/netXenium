@@ -65,12 +65,14 @@ int main(int argc, char** argv) {
       module = Xen_Module_Load(
           argv[1], "<start>", dir,
           (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+          (Xen_VM_Scopes*)(*xen_globals->vm)->globals_scopes->ptr,
           XEN_MODULE_GUEST);
       Xen_Dealloc(dir);
     } else {
       module = Xen_Module_Load(
           argv[1], "<start>", ".",
           (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+          (Xen_VM_Scopes*)(*xen_globals->vm)->globals_scopes->ptr,
           XEN_MODULE_GUEST);
     }
     if (Xen_VM_Except_Active()) {

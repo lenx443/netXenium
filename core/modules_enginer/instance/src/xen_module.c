@@ -10,6 +10,7 @@
 #include "string_utf8.h"
 #include "vm.h"
 #include "vm_run.h"
+#include "vm_scope.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_function.h"
@@ -102,7 +103,9 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
 
 Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
                               Xen_c_string_t mod_path,
-                              Xen_Instance* mod_globals, Xen_uint8_t mod_type) {
+                              Xen_Instance* mod_globals_instances,
+                              Xen_VM_Scopes* mod_globals_scopes,
+                              Xen_uint8_t mod_type) {
   if (mod_type == XEN_MODULE_GUEST) {
     Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(
         (Xen_Instance*)(*xen_globals->vm)->modules->ptr, mod_name);
@@ -164,7 +167,7 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
 #endif
     Xen_Instance* ctx_inst =
         Xen_Ctx_New(nil, Xen_VM_Current_Ctx(), (Xen_Instance*)module, nil, nil,
-                    mod_globals, code);
+                    mod_globals_instances, mod_globals_scopes, code);
     if (!ctx_inst) {
       Xen_Vector_Pop((Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
       return NULL;
@@ -261,8 +264,8 @@ Xen_Instance* Xen_Load(Xen_c_string_t mod_name) {
     }
     Xen_string_t full_path = Xen_Alloc(psize + 1);
     snprintf(full_path, psize + 1, "%s/%s.nxm", path_str, mod_name);
-    Xen_Instance* mod =
-        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_GUEST);
+    Xen_Instance* mod = Xen_Module_Load(full_path, mod_name, path_str, NULL,
+                                        NULL, XEN_MODULE_GUEST);
     if (mod) {
       Xen_Dealloc(full_path);
       return mod;
@@ -274,8 +277,8 @@ Xen_Instance* Xen_Load(Xen_c_string_t mod_name) {
     }
     full_path = Xen_Alloc(psize + 1);
     snprintf(full_path, psize + 1, "%s/lib%s.so", path_str, mod_name);
-    mod =
-        Xen_Module_Load(full_path, mod_name, path_str, NULL, XEN_MODULE_NATIVE);
+    mod = Xen_Module_Load(full_path, mod_name, path_str, NULL, NULL,
+                          XEN_MODULE_NATIVE);
     if (mod) {
       Xen_Dealloc(full_path);
       return mod;

@@ -23,6 +23,11 @@ static inline int Xen_Interrupt(void) {
       Xen_Except_New("Interrupt", "Execution was interrupted."));
 }
 
+static inline int Xen_DeclError(Xen_c_string_t name) {
+  return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
+      "DeclError", "variable '%s' already declared in this scope.", name));
+}
+
 static inline int Xen_UndefName(Xen_c_string_t name) {
   return Xen_VM_Except_Throw(
       Xen_Except_New_CFormat("UndefError", "Name '%s' is not defined.", name));

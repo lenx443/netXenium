@@ -219,6 +219,7 @@ set(SOURCES
   core/virtual_machine/types/src/vm_def.c
   core/virtual_machine/types/src/vm_instructs.c
   core/virtual_machine/types/src/vm_stack.c
+  core/virtual_machine/types/src/vm_scope.c
 
   # Instancias de la maquina virtual
   core/virtual_machine/instances/src/run_ctx.c

@@ -2,6 +2,7 @@
 #include "callable.h"
 #include "instance.h"
 #include "run_ctx_instance.h"
+#include "vm_scope.h"
 #include "vm_stack.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -12,7 +13,7 @@
 Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
                           Xen_Instance* self, Xen_Instance* args,
                           Xen_Instance* kwargs, Xen_Instance* instances,
-                          CALLABLE_ptr code) {
+                          Xen_VM_Scopes* scopes, CALLABLE_ptr code) {
   RunContext_ptr ctx = (RunContext_ptr)__instance_new(
       xen_globals->implements->run_frame, nil, nil, 0);
   if (!ctx) {
@@ -57,6 +58,15 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     return NULL;
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_instances, instances);
+  if (scopes) {
+    Xen_GC_Write_Field((struct __GC_Header*)ctx,
+                       (struct __GC_Handle**)&ctx->ctx_scopes,
+                       (struct __GC_Header*)scopes);
+  } else {
+    Xen_GC_Write_Field((struct __GC_Header*)ctx,
+                       (struct __GC_Handle**)&ctx->ctx_scopes,
+                       (struct __GC_Header*)Xen_VM_Scopes_New());
+  }
   if (code) {
     Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_code,
                        (Xen_GCHeader*)code);

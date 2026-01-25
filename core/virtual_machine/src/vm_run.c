@@ -24,6 +24,7 @@
 #include "vm_def.h"
 #include "vm_instructs.h"
 #include "vm_run.h"
+#include "vm_scope.h"
 #include "vm_stack.h"
 #include "xen_alloc.h"
 #include "xen_boolean.h"
@@ -83,6 +84,46 @@ static void op_pop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   for (uint8_t i = 0; i < oparg; i++) {
     STACK_POP;
   }
+}
+
+static void op_decl_local(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
+  if (Xen_Map_Has((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
+                      ->scopes->symbols->ptr,
+                  c_name)) {
+    Xen_DeclError(Xen_String_As_CString(c_name));
+    ERROR;
+    return;
+  }
+  Xen_Instance* val = STACK_POP;
+  Xen_Map_Push_Pair((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
+                        ->scopes->symbols->ptr,
+                    (Xen_Map_Pair){c_name, val});
+}
+
+static void op_decl_local_nval(VM_Run* vmr, RunContext_ptr ctx,
+                               Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
+  if (Xen_Map_Has((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
+                      ->scopes->symbols->ptr,
+                  c_name)) {
+    Xen_DeclError(Xen_String_As_CString(c_name));
+    ERROR;
+    return;
+  }
+  Xen_Map_Push_Pair((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
+                        ->scopes->symbols->ptr,
+                    (Xen_Map_Pair){c_name, nil});
 }
 
 static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -169,16 +210,33 @@ static void op_store(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   if (!c_name) {
     ERROR;
   }
-  Xen_Instance* inst = STACK_POP;
-  if (!inst) {
-    ERROR;
+  Xen_Instance* val = STACK_POP;
+  Xen_Instance* dest = NULL;
+  Xen_IGC_Push(val);
+  RunContext_ptr current_ctx = (RunContext_ptr)Xen_VM_Current_Ctx();
+  while (current_ctx && Xen_Nil_NEval((Xen_Instance*)current_ctx)) {
+    Xen_VM_Scope* current_scope =
+        ((Xen_VM_Scopes*)current_ctx->ctx_scopes->ptr)->scopes;
+    while (current_scope) {
+      if (Xen_Map_Has((Xen_Instance*)current_scope->symbols->ptr, c_name)) {
+        dest = (Xen_Instance*)current_scope->symbols->ptr;
+        goto end;
+      }
+      current_scope = current_scope->next;
+    }
+    if (Xen_Map_Has((Xen_Instance*)current_ctx->ctx_instances->ptr, c_name)) {
+      dest = (Xen_Instance*)current_ctx->ctx_instances->ptr;
+      goto end;
+    }
+    current_ctx = (RunContext_ptr)current_ctx->ctx_closure->ptr;
   }
-  Xen_IGC_Push(inst);
-  if (!Xen_Map_Push_Pair((Xen_Instance*)ctx->ctx_instances->ptr,
-                         (Xen_Map_Pair){c_name, inst})) {
-    Xen_IGC_Pop();
+end:
+  if (!dest) {
+    Xen_UndefName(Xen_String_As_CString(c_name));
     ERROR;
+    return;
   }
+  Xen_Map_Push_Pair(dest, (Xen_Map_Pair){c_name, val});
   Xen_IGC_Pop();
 }
 
@@ -226,6 +284,16 @@ static void op_store_attr(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     }
     ERROR;
   }
+}
+
+static void op_scope_push(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_VM_Scopes_Push((Xen_VM_Scopes*)ctx->ctx_scopes->ptr);
+}
+
+static void op_scope_pop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_VM_Scopes_Pop((Xen_VM_Scopes*)ctx->ctx_scopes->ptr);
 }
 
 static void op_make_tuple(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -812,7 +880,7 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                      (Xen_GCHandle**)&((Xen_Basic_Builder*)builder)->base,
                      (Xen_GCHeader*)base);
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
-                                      builder, nil, nil, NULL, code);
+                                      builder, nil, nil, NULL, NULL, code);
   if (!new_ctx) {
     ERROR;
   }
@@ -842,7 +910,7 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
   ((Xen_Basic_Builder*)builder)->name =
       Xen_CString_Dup(Xen_String_As_CString(name));
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
-                                      builder, nil, nil, NULL, code);
+                                      builder, nil, nil, NULL, NULL, code);
   if (!new_ctx) {
     ERROR;
   }
@@ -915,10 +983,14 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [LOAD_PROP] = op_load_prop,
     [LOAD_INDEX] = op_load_index,
     [LOAD_ATTR] = op_load_attr,
+    [DECL_LOCAL] = op_decl_local,
+    [DECL_LOCAL_NVAL] = op_decl_local_nval,
     [STORE] = op_store,
     [STORE_PROP] = op_store_prop,
     [STORE_INDEX] = op_store_index,
     [STORE_ATTR] = op_store_attr,
+    [SCOPE_PUSH] = op_scope_push,
+    [SCOPE_POP] = op_scope_pop,
     [MAKE_TUPLE] = op_make_tuple,
     [MAKE_VECTOR] = op_make_vector,
     [MAKE_VECTOR_FROM_ITERABLE] = op_make_vector_from_iterable,

@@ -252,7 +252,10 @@ static int compile_assignment_expr_primary_suffix_attr(Compiler*,
                                                        Xen_Instance*);
 static int compile_assignment_expr_list(Compiler*, Xen_Instance*);
 
+static int compile_decl_statement(Compiler*, Xen_Instance*);
+
 static int compile_block(Compiler*, Xen_Instance*);
+static int compile_block_nscoped(Compiler*, Xen_Instance*);
 
 static int compile_if_statement(Compiler*, Xen_Instance*);
 
@@ -272,6 +275,7 @@ static int compile_try_statement(Compiler*, Xen_Instance*);
 
 int compile_program(Compiler* c, Xen_Instance* node) {
   if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
+    emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
     if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
       if (!compile_statement_list(c, node)) {
         return 0;
@@ -284,6 +288,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     } else {
       return 0;
     }
+    emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
     if ((c->flags & COMPILE_FLAG_FUNCTION_INLINE) == 0) {
       if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
         return 0;
@@ -301,6 +306,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   } else {
+    emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
     Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
     if (!stmt_list) {
       return 0;
@@ -312,6 +318,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     } else {
       return 0;
     }
+    emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
     if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
@@ -351,6 +358,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "Assignment") == 0) {
       if (!compile_assignment(c, stmt)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(stmt, "DeclStatement") == 0) {
+      if (!compile_decl_statement(c, stmt)) {
         return 0;
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "IfStatement") == 0) {
@@ -2139,7 +2150,47 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
   return 1;
 }
 
+static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
+  if (Xen_AST_Node_Children_Size(node) == 1) {
+    Xen_Instance* name = Xen_AST_Node_Get_Child(node, 0);
+    Xen_size_t idx = co_push_name(Xen_AST_Node_Value(name));
+    emit(DECL_LOCAL_NVAL, idx, Xen_AST_Node_STA(name));
+  } else if (Xen_AST_Node_Children_Size(node) == 2) {
+    Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 1);
+    if (!compile_expr(c, lhs)) {
+      return 0;
+    }
+    Xen_Instance* name = Xen_AST_Node_Get_Child(node, 0);
+    Xen_size_t idx = co_push_name(Xen_AST_Node_Value(name));
+    emit(DECL_LOCAL, idx, Xen_AST_Node_STA(name));
+  } else {
+    return 0;
+  }
+  return 1;
+}
+
 int compile_block(Compiler* c, Xen_Instance* node) {
+  emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
+  Xen_Instance* block = Xen_AST_Node_Get_Child(node, 0);
+  if (!block) {
+    return 0;
+  }
+  if (Xen_AST_Node_Name_Cmp(block, "Statement") == 0) {
+    if (!compile_statement(c, block)) {
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(block, "StatementList") == 0) {
+    if (!compile_statement_list(c, block)) {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+  emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
+  return 1;
+}
+
+int compile_block_nscoped(Compiler* c, Xen_Instance* node) {
   Xen_Instance* block = Xen_AST_Node_Get_Child(node, 0);
   if (!block) {
     return 0;
@@ -2325,6 +2376,7 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(end_block);
     return 0;
   }
+  emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
   if (!compile_assignment_expr(c, target)) {
     B_FREE(end_block);
     return 0;
@@ -2338,12 +2390,13 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(end_block);
     return 0;
   }
-  if (!compile_block(c, block)) {
+  if (!compile_block_nscoped(c, block)) {
     B_FREE(end_block);
     CCS_POP;
     return 0;
   }
   CCS_POP;
+  emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
   if (!emit_jump(JUMP, for_block, Xen_AST_Node_STA(node))) {
     B_FREE(end_block);
     return 0;
