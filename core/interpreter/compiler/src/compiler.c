@@ -2552,7 +2552,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   if (Xen_AST_Node_Value_Cmp(name_type, "Identifier") == 0) {
-    if (!emit(DECL_LOCAL, local_name, Xen_AST_Node_STA(node))) {
+    if (!emit(DECL_VAR, local_name, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(name_type, "Property") == 0) {

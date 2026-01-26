@@ -152,8 +152,9 @@ implement $HTTPRequest => {
   }
 
   $pack => {
-    buffer = $method + " " + $path + " " + $http_version + "\r\n"
+    local buffer = $method + " " + $path + " " + $http_version + "\r\n"
     if ?? != $host => buffer = buffer + "Host: " + $host
+    local header
     for header in $headers => {
       buffer = buffer + header + ": " + $headers[header] + "\r\n"
     }
