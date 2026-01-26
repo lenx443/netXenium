@@ -82,13 +82,14 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     char buffer[len + 1];
     strncpy(buffer, sf->sf_content + start, len);
     buffer[len] = '\0';
-    if (strcmp(buffer, "local") == 0 || strcmp(buffer, "if") == 0 ||
-        strcmp(buffer, "elif") == 0 || strcmp(buffer, "else") == 0 ||
-        strcmp(buffer, "while") == 0 || strcmp(buffer, "for") == 0 ||
-        strcmp(buffer, "in") == 0 || strcmp(buffer, "break") == 0 ||
-        strcmp(buffer, "continue") == 0 || strcmp(buffer, "return") == 0 ||
-        strcmp(buffer, "implement") == 0 || strcmp(buffer, "throw") == 0 ||
-        strcmp(buffer, "try") == 0 || strcmp(buffer, "catch") == 0) {
+    if (strcmp(buffer, "local") == 0 || strcmp(buffer, "var") == 0 ||
+        strcmp(buffer, "if") == 0 || strcmp(buffer, "elif") == 0 ||
+        strcmp(buffer, "else") == 0 || strcmp(buffer, "while") == 0 ||
+        strcmp(buffer, "for") == 0 || strcmp(buffer, "in") == 0 ||
+        strcmp(buffer, "break") == 0 || strcmp(buffer, "continue") == 0 ||
+        strcmp(buffer, "return") == 0 || strcmp(buffer, "implement") == 0 ||
+        strcmp(buffer, "throw") == 0 || strcmp(buffer, "try") == 0 ||
+        strcmp(buffer, "catch") == 0) {
       token = Token(lexer, TKN_KEYWORD, sf->sf_content + start, len);
     } else if (strcmp(buffer, "has") == 0) {
       token = Token(lexer, TKN_HAS, sf->sf_content + start, len);

@@ -1,13 +1,13 @@
-sockets = load("sockets")
+local sockets = load("sockets")
 
-SERVER_ADDRESS = ("127.0.0.1", 8844)
+local SERVER_ADDRESS = ("127.0.0.1", 8844)
 
 try => {
-  sock = sockets\Socket(type=sockets\Socket\SOCK_DGRAM)
+  local sock = sockets.Socket(type=sockets.Socket.SOCK_DGRAM)
   while true => {
     print("\nMsg: ")
-    sock\sendto(readline()\bytes(), SERVER_ADDRESS)
-    data = sock\recvfrom()
-    println(data[0]\string())
+    sock.sendto(readline().bytes(), SERVER_ADDRESS)
+    local data = sock.recvfrom()
+    println(data[0].string())
   }
 } catch "Interrupt" :_ => {}

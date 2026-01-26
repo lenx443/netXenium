@@ -1,11 +1,11 @@
 load("config")
 
-http_packet = load("http_packet")
-http_server = load("http_server")
+var http_packet = load("http_packet")
+var http_server = load("http_server")
 
-WEB_PATH = ("./www")
+var WEB_PATH = ("./www")
 
-get_routes = {
+var get_routes = {
   ['/']-> => (req) {
     return http_packet.HTTPResponse.from_file(
       WEB_PATH + "/index.html"
@@ -19,14 +19,14 @@ get_routes = {
   }
 }
 
-methods = {
+var methods = {
   GET -> get_routes
 }
 
 $$__start => (args) {
   try => {
     println("• Start Server")
-    server = http_server.HTTPServer()
+    local server = http_server.HTTPServer()
     server.set_routes(methods)
     server.start()
   } catch "Interrupt" :_ => {

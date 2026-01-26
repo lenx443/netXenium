@@ -1,12 +1,12 @@
-sockets = load("sockets")
+local sockets = load("sockets")
 
 try => {
-  sock = sockets\Socket(type=sockets\Socket\SOCK_DGRAM)
-  sock\bind(("0.0.0.0", 8844))
+  local sock = sockets.Socket(type=sockets.Socket.SOCK_DGRAM)
+  sock.bind(("0.0.0.0", 8844))
   while true => {
-    data = sock\recvfrom()
-    println(data[0]\string())
+    local data = sock.recvfrom()
+    println(data[0].string())
     print("\nMsg: ")
-    sock\sendto(readline()\bytes(), data[1])
+    sock.sendto(readline().bytes(), data[1])
   }
 } catch "Interrupt" :_ => {}

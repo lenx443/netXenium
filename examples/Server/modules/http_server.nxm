@@ -1,5 +1,5 @@
-Socket = load("sockets").Socket
-http_packet = load("http_packet")
+var Socket = load("sockets").Socket
+var http_packet = load("http_packet")
 
 implement $HTTPServer => {
   $__create => {
@@ -11,15 +11,16 @@ implement $HTTPServer => {
   }
 
   $start => (ip="0.0.0.0", port=8080) {
-    sock = Socket()
+    local sock = Socket()
     sock.setsockopt(1, 2, (1).u32(false))
     sock.bind((ip, port))
     sock.listen()
     sock.set_nonblocking()
+    local response
     while true => {
       try => {
-        client = sock.accept()
-        request = http_packet.HTTPRequest.unpack(
+        local client = sock.accept()
+        local request = http_packet.HTTPRequest.unpack(
           client.recv()
         )
         if ?? == $__routes or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {

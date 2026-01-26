@@ -1,4 +1,4 @@
-File = load("io").File
+var File = load("io").File
 
 implement $HTTPResponse => {
   $__create => (headers,
@@ -14,13 +14,14 @@ implement $HTTPResponse => {
   }
 
   $from_file => (file, error=??) {
+    local err
     try => {
-      f = File(file)
-      content = f.read().string()
+      local f = File(file)
+      local content = f.read().string()
       f.close()
-      parts = file.split(('.',))
-      ext = parts[size(parts) - 1]
-      content_type = "text/plain"
+      local parts = file.split(('.',))
+      local ext = parts[size(parts) - 1]
+      local content_type = "text/plain"
       if content_types has ext => {
         content_type = content_types[ext]
       }
@@ -31,12 +32,12 @@ implement $HTTPResponse => {
       )
     } catch :err => {
       if ?? != error => {
-        f = File(error)
-        content = f.read().string()
+        local f = File(error)
+        local content = f.read().string()
         f.close()
-        parts = error.split(('.',))
-        ext = parts[size(parts) - 1]
-        content_type = "text/plain"
+        local parts = error.split(('.',))
+        local ext = parts[size(parts) - 1]
+        local content_type = "text/plain"
         if size(parts) > 1 and content_types has ext => {
           content_type = content_types[ext]
         }
@@ -51,11 +52,12 @@ implement $HTTPResponse => {
   }
 
   $pack => {
-    buffer = "HTTP/1.1 " + string($status) + " " + reasons[$status] + "\r\n"
+    local buffer = "HTTP/1.1 " + string($status) + " " + reasons[$status] + "\r\n"
     if ?? != $content and $content and $complete => {
       buffer = buffer + "Content-Length: " + string(size($content)) + "\r\n"
       buffer = buffer + "Content-Type: " + $content_type + "\r\n"
     }
+    local header
     for header in $headers => {
       buffer = buffer + header + ": " + $headers[header] + "\r\n"
     }
@@ -64,12 +66,12 @@ implement $HTTPResponse => {
     return buffer.bytes()
   }
 
-  content_types = {
+  var content_types = {
     txt -> "text/plain",
     html -> "text/html; charset=UTF-8"
   }
 
-  reasons = {
+  var reasons = {
     [100] -> "Continue",
     [101] -> "Switching Protocols",
     [102] -> "Processing",
@@ -161,17 +163,19 @@ implement $HTTPRequest => {
   }
 
   $unpack => (packet) {
-    buffer = packet.string()
-    lines = buffer.split(('\r\n',))
-    head = lines[0].split((' ',))
-    __method = head[0]
-    __path = head[1]
-    __version = head[2]
-    __headers = map()
-    idx = 1
+    local buffer = packet.string()
+    local lines = buffer.split(('\r\n',))
+    local head = lines[0].split((' ',))
+    local __method = head[0]
+    local __path = head[1]
+    local __version = head[2]
+    local __headers = map()
+    local idx = 1
     while idx < size(lines) => {
-      line = lines[idx]
+      local line = lines[idx]
       if line == "\r\n" => break
+      local name
+      local value
       name, value = line.split_once(':')
       __headers[name] = value.trim()
       idx = idx + 1

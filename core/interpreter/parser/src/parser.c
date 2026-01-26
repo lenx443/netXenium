@@ -197,7 +197,7 @@ static bool is_decl_keyword(Parser* p) {
   if (type != TKN_KEYWORD) {
     return 0;
   }
-  if (strcmp(text, "local") == 0) {
+  if (strcmp(text, "local") == 0 || strcmp(text, "var") == 0) {
     return 1;
   }
   return 0;

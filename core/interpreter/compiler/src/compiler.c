@@ -346,6 +346,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
       if (!compile_assignment(c, stmt)) {
         return 0;
       }
+    } else if (Xen_AST_Node_Name_Cmp(stmt, "DeclStatement") == 0) {
+      if (!compile_decl_statement(c, stmt)) {
+        return 0;
+      }
     } else {
       c->sta = Xen_AST_Node_STA(stmt);
       Xen_SyntaxError("Invalid statement inside implementation body.");
@@ -2151,10 +2155,17 @@ int compile_assignment_expr_list(Compiler* c, Xen_Instance* node) {
 }
 
 static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
+  Xen_c_string_t type = Xen_AST_Node_Value(node);
   if (Xen_AST_Node_Children_Size(node) == 1) {
     Xen_Instance* name = Xen_AST_Node_Get_Child(node, 0);
     Xen_size_t idx = co_push_name(Xen_AST_Node_Value(name));
-    emit(DECL_LOCAL_NVAL, idx, Xen_AST_Node_STA(name));
+    if (strcmp(type, "local") == 0) {
+      emit(DECL_LOCAL_NVAL, idx, Xen_AST_Node_STA(name));
+    } else if (strcmp(type, "var") == 0) {
+      emit(DECL_VAR_NVAL, idx, Xen_AST_Node_STA(name));
+    } else {
+      return 0;
+    }
   } else if (Xen_AST_Node_Children_Size(node) == 2) {
     Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 1);
     if (!compile_expr(c, lhs)) {
@@ -2162,7 +2173,13 @@ static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
     }
     Xen_Instance* name = Xen_AST_Node_Get_Child(node, 0);
     Xen_size_t idx = co_push_name(Xen_AST_Node_Value(name));
-    emit(DECL_LOCAL, idx, Xen_AST_Node_STA(name));
+    if (strcmp(type, "local") == 0) {
+      emit(DECL_LOCAL, idx, Xen_AST_Node_STA(name));
+    } else if (strcmp(type, "var") == 0) {
+      emit(DECL_VAR, idx, Xen_AST_Node_STA(name));
+    } else {
+      return 0;
+    }
   } else {
     return 0;
   }
@@ -2535,7 +2552,7 @@ int compile_implement_statement(Compiler* c, Xen_Instance* node) {
     return 0;
   }
   if (Xen_AST_Node_Value_Cmp(name_type, "Identifier") == 0) {
-    if (!emit(STORE, local_name, Xen_AST_Node_STA(node))) {
+    if (!emit(DECL_LOCAL, local_name, Xen_AST_Node_STA(node))) {
       return 0;
     }
   } else if (Xen_AST_Node_Value_Cmp(name_type, "Property") == 0) {

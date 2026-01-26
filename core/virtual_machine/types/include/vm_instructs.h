@@ -27,6 +27,8 @@ enum vm_Instruct {
   LOAD_ATTR,
   DECL_LOCAL,
   DECL_LOCAL_NVAL,
+  DECL_VAR,
+  DECL_VAR_NVAL,
   STORE,
   STORE_PROP,
   STORE_INDEX,
