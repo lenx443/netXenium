@@ -12,6 +12,8 @@ static STACK_EFFECT(decl_local_stack_effect, -1)
 static STACK_EFFECT(decl_local_nval_stack_effect, 0)
 static STACK_EFFECT(decl_var_stack_effect, -1)
 static STACK_EFFECT(decl_var_nval_stack_effect, 0)
+static STACK_EFFECT(decl_global_stack_effect, -1)
+static STACK_EFFECT(decl_global_nval_stack_effect, 0)
 static STACK_EFFECT(store_stack_effect, -1)
 static STACK_EFFECT(store_prop_stack_effect, -1)
 static STACK_EFFECT(store_index_stack_effect, -3)
@@ -63,6 +65,8 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [DECL_LOCAL_NVAL] = {"DECL_LOCAL_NVAL", decl_local_nval_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [DECL_VAR] = {"DECL_VAR", decl_var_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [DECL_VAR_NVAL] = {"DECL_VAR_NVAL", decl_var_nval_stack_effect, INSTRUCT_FLAG_CO_NAME},
+    [DECL_GLOBAL] = {"DECL_GLOBAL", decl_global_stack_effect, INSTRUCT_FLAG_CO_NAME},
+    [DECL_GLOBAL_NVAL] = {"DECL_GLOBAL_NVAL", decl_global_nval_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [STORE] = {"STORE", store_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [STORE_PROP] = {"STORE_PROP", store_prop_stack_effect, INSTRUCT_FLAG_CO_NAME},
     [STORE_INDEX] = {"STORE_INDEX", store_index_stack_effect, 0},

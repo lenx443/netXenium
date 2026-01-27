@@ -148,7 +148,7 @@ static void op_decl_var(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
   Xen_IGC_Push(val);
   if (Xen_Map_Has((Xen_Instance*)ctx->ctx_instances->ptr, c_name)) {
-    Xen_DeclError(Xen_String_As_CString(c_name));
+    Xen_DeclError_Context(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
     return;
@@ -170,11 +170,56 @@ static void op_decl_var_nval(VM_Run* vmr, RunContext_ptr ctx,
     return;
   }
   if (Xen_Map_Has((Xen_Instance*)ctx->ctx_instances->ptr, c_name)) {
-    Xen_DeclError(Xen_String_As_CString(c_name));
+    Xen_DeclError_Context(Xen_String_As_CString(c_name));
     ERROR;
     return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)ctx->ctx_instances->ptr,
+                    (Xen_Map_Pair){c_name, nil});
+}
+
+static void op_decl_global(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
+  Xen_Instance* val = STACK_POP;
+  if (strcmp(Xen_String_As_CString(c_name), "_") == 0) {
+    return;
+  }
+  Xen_IGC_Push(val);
+  if (Xen_Map_Has((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+                  c_name)) {
+    Xen_DeclError_Global(Xen_String_As_CString(c_name));
+    Xen_IGC_Pop();
+    ERROR;
+    return;
+  }
+  Xen_Map_Push_Pair((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+                    (Xen_Map_Pair){c_name, val});
+  Xen_IGC_Pop();
+}
+
+static void op_decl_global_nval(VM_Run* vmr, RunContext_ptr ctx,
+                                Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* c_name = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_names->ptr),
+      oparg);
+  if (strcmp(Xen_String_As_CString(c_name), "_") == 0) {
+    return;
+  }
+  if (Xen_Map_Has((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
+                  c_name)) {
+    Xen_DeclError_Global(Xen_String_As_CString(c_name));
+    ERROR;
+    return;
+  }
+  Xen_Map_Push_Pair((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
                     (Xen_Map_Pair){c_name, nil});
 }
 
@@ -1042,6 +1087,8 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [DECL_LOCAL_NVAL] = op_decl_local_nval,
     [DECL_VAR] = op_decl_var,
     [DECL_VAR_NVAL] = op_decl_var_nval,
+    [DECL_GLOBAL] = op_decl_global,
+    [DECL_GLOBAL_NVAL] = op_decl_global_nval,
     [STORE] = op_store,
     [STORE_PROP] = op_store_prop,
     [STORE_INDEX] = op_store_index,

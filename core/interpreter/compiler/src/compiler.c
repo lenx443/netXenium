@@ -2163,6 +2163,8 @@ static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
       emit(DECL_LOCAL_NVAL, idx, Xen_AST_Node_STA(name));
     } else if (strcmp(type, "var") == 0) {
       emit(DECL_VAR_NVAL, idx, Xen_AST_Node_STA(name));
+    } else if (strcmp(type, "global") == 0) {
+      emit(DECL_GLOBAL_NVAL, idx, Xen_AST_Node_STA(name));
     } else {
       return 0;
     }
@@ -2177,6 +2179,8 @@ static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
       emit(DECL_LOCAL, idx, Xen_AST_Node_STA(name));
     } else if (strcmp(type, "var") == 0) {
       emit(DECL_VAR, idx, Xen_AST_Node_STA(name));
+    } else if (strcmp(type, "global") == 0) {
+      emit(DECL_GLOBAL, idx, Xen_AST_Node_STA(name));
     } else {
       return 0;
     }
