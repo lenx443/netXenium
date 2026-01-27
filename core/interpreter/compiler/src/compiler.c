@@ -253,6 +253,7 @@ static int compile_assignment_expr_primary_suffix_attr(Compiler*,
 static int compile_assignment_expr_list(Compiler*, Xen_Instance*);
 
 static int compile_decl_statement(Compiler*, Xen_Instance*);
+static int compile_decl_fn_statement(Compiler*, Xen_Instance*);
 
 static int compile_block(Compiler*, Xen_Instance*);
 static int compile_block_nscoped(Compiler*, Xen_Instance*);
@@ -366,6 +367,10 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "DeclStatement") == 0) {
       if (!compile_decl_statement(c, stmt)) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Name_Cmp(stmt, "DeclFnStatement") == 0) {
+      if (!compile_decl_fn_statement(c, stmt)) {
         return 0;
       }
     } else if (Xen_AST_Node_Name_Cmp(stmt, "IfStatement") == 0) {
@@ -2187,6 +2192,17 @@ static int compile_decl_statement(Compiler* c, Xen_Instance* node) {
   } else {
     return 0;
   }
+  return 1;
+}
+
+static int compile_decl_fn_statement(Compiler* c, Xen_Instance* node) {
+  Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 1);
+  if (!compile_expr_function(c, lhs)) {
+    return 0;
+  }
+  Xen_Instance* name = Xen_AST_Node_Get_Child(node, 0);
+  Xen_size_t idx = co_push_name(Xen_AST_Node_Value(name));
+  emit(DECL_VAR, idx, Xen_AST_Node_STA(name));
   return 1;
 }
 

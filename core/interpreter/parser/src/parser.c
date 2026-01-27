@@ -103,6 +103,7 @@ static Xen_Instance* parser_index(Parser*);
 static Xen_Instance* parser_attr(Parser*);
 static Xen_Instance* parser_keyword(Parser*);
 static Xen_Instance* parser_decl_stmt(Parser*);
+static Xen_Instance* parser_decl_fn_stmt(Parser*);
 static Xen_Instance* parser_if_stmt(Parser*);
 static Xen_Instance* parser_while_stmt(Parser*);
 static Xen_Instance* parser_for_stmt(Parser*);
@@ -1415,6 +1416,8 @@ Xen_Instance* parser_keyword(Parser* p) {
     return parser_assignment(p);
   } else if (is_decl_keyword(p)) {
     return parser_decl_stmt(p);
+  } else if (strcmp(p->token.tkn_text, "fn") == 0) {
+    return parser_decl_fn_stmt(p);
   } else if (strcmp(p->token.tkn_text, "if") == 0) {
     return parser_if_stmt(p);
   } else if (strcmp(p->token.tkn_text, "while") == 0) {
@@ -1459,6 +1462,34 @@ static Xen_Instance* parser_decl_stmt(Parser* p) {
     }
     Xen_AST_Node_Push_Child(dcl_stmt, rhs);
   }
+  return dcl_stmt;
+}
+
+static Xen_Instance* parser_decl_fn_stmt(Parser* p) {
+  if (p->token.tkn_type != TKN_KEYWORD) {
+    Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
+  }
+  Xen_Instance* dcl_stmt =
+      Xen_AST_Node_New("DeclFnStatement", NULL, p->token.sta);
+  parser_next(p);
+  if (p->token.tkn_type != TKN_IDENTIFIER) {
+    Xen_SyntaxError("Invalid left-hand side in declaration.");
+    return NULL;
+  }
+  Xen_Instance* lhs = Xen_AST_Node_New("Name", p->token.tkn_text, p->token.sta);
+  Xen_AST_Node_Push_Child(dcl_stmt, lhs);
+  parser_next(p);
+  if (p->token.tkn_type != TKN_BLOCK) {
+    Xen_SyntaxError(
+        "Right-hand value cannot be omitted in function declaration.");
+    return NULL;
+  }
+  Xen_Instance* rhs = parser_function(p);
+  if (!rhs) {
+    return NULL;
+  }
+  Xen_AST_Node_Push_Child(dcl_stmt, rhs);
   return dcl_stmt;
 }
 
