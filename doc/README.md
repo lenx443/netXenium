@@ -1,2 +1,2 @@
 ## Documentación
-- [Variables](doc/es/variables)
+- [Variables](es/variables)
