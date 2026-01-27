@@ -20,3 +20,4 @@ Makefile
 .cache/
 /build/
 scripts/
+.vscode
