@@ -6,6 +6,8 @@
 
 Más que un simple lenguaje, netXenium es una **plataforma de control y orquestación de redes**, pensada para convertir comportamientos complejos en scripts claros, reproducibles y fáciles de razonar.
 
+[Documentación](doc/)
+
 ---
 
 ### ¿Para qué se usa netXenium?
