@@ -48,7 +48,7 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
   if (fun->fun_type == 1) {
     Xen_Instance* fun_ctx = Xen_Ctx_New(
         nil, (Xen_Instance*)fun->closure->ptr, (Xen_Instance*)method->self->ptr,
-        args, kwargs, NULL, NULL, (CALLABLE_ptr)fun->fun_code->ptr);
+        args, kwargs, NULL, NULL, NULL, (CALLABLE_ptr)fun->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, fun_ctx)) {
       return NULL;
     }

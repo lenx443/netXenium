@@ -25,17 +25,22 @@ static inline int Xen_Interrupt(void) {
 
 static inline int Xen_DeclError(Xen_c_string_t name) {
   return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
-      "DeclError", "variable '%s' already declared in this scope.", name));
+      "DeclError", "Variable '%s' already declared in this scope.", name));
 }
 
 static inline int Xen_DeclError_Context(Xen_c_string_t name) {
   return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
-      "DeclError", "variable '%s' already declared in this context.", name));
+      "DeclError", "Variable '%s' already declared in this context.", name));
 }
 
 static inline int Xen_DeclError_Global(Xen_c_string_t name) {
   return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
-      "DeclError", "variable '%s' already declared in global scope.", name));
+      "DeclError", "Variable '%s' already declared in global scope.", name));
+}
+
+static inline int Xen_DeclError_Global_NScoped(Xen_c_string_t name) {
+  return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
+      "DeclError", "Variable '%s' was defined outside of an accessible global scope.", name));
 }
 
 static inline int Xen_UndefName(Xen_c_string_t name) {

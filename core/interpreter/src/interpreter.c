@@ -13,8 +13,8 @@
 #include "xen_nil.h"
 #include "xen_typedefs.h"
 
-Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
-                          uint8_t compile_mode) {
+Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content, uint8_t compile_mode,
+                          Xen_Instance *globals, Xen_Instance* instances, Xen_VM_Scopes*scopes) {
   if (!file_name || !file_content) {
     return NULL;
   }
@@ -29,10 +29,7 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content,
 #ifndef NDEBUG
   printf("== Running ==\n");
 #endif
-  Xen_Instance* ctx_inst = Xen_Ctx_New(
-      nil, nil, nil, nil, nil,
-      (Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
-      (Xen_VM_Scopes*)(*xen_globals->vm)->globals_scopes->ptr, code);
+  Xen_Instance* ctx_inst = Xen_Ctx_New(nil, nil, nil, nil, nil, globals, instances, scopes, code);
   if (!ctx_inst) {
     return NULL;
   }

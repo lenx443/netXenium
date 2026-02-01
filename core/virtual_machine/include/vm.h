@@ -20,10 +20,6 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func, Xen_INSTANCE*,
                                           Xen_Instance*, Xen_Instance*);
 Xen_INSTANCE* Xen_VM_Load_Instance(const char*, ctx_id_t);
 void Xen_VM_Ctx_Clear(RunContext_ptr);
-int Xen_VM_New_Ctx_Callable(CALLABLE_ptr, Xen_Instance*, struct __Instance*,
-                            Xen_Instance*, Xen_Instance*);
-Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr, struct __Instance*,
-                                   Xen_Instance*, Xen_Instance*, Xen_Instance*);
 inline static Xen_Instance* Xen_VM_Except(void) {
   return (Xen_Instance*)(*xen_globals->vm)->except.except->ptr;
 }

@@ -28,6 +28,8 @@ static void frame_trace(Xen_Instance* h) {
   if (ctx->ctx_kwargs->ptr) {
     Xen_GC_Trace_GCHeader(ctx->ctx_kwargs);
   }
+  if (ctx->ctx_globals->ptr)
+    Xen_GC_Trace_GCHeader(ctx->ctx_globals);
   if (ctx->ctx_instances->ptr)
     Xen_GC_Trace_GCHeader(ctx->ctx_instances);
   if (ctx->ctx_scopes->ptr)
@@ -58,6 +60,7 @@ static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
   ctx_new->ctx_stack = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
   ctx_new->ctx_args = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
   ctx_new->ctx_kwargs = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
+  ctx_new->ctx_globals = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
   ctx_new->ctx_instances = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
   ctx_new->ctx_scopes = Xen_GCHandle_New((Xen_GCHeader*)ctx_new);
   ctx_new->ctx_ip = 0;
@@ -78,6 +81,7 @@ static Xen_Instance* frame_destroy(Xen_INSTANCE* self, Xen_INSTANCE* args,
   Xen_GCHandle_Free(ctx->ctx_stack);
   Xen_GCHandle_Free(ctx->ctx_args);
   Xen_GCHandle_Free(ctx->ctx_kwargs);
+  Xen_GCHandle_Free(ctx->ctx_globals);
   Xen_GCHandle_Free(ctx->ctx_instances);
   Xen_GCHandle_Free(ctx->ctx_scopes);
   return nil;

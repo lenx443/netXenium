@@ -21,6 +21,7 @@ struct RunContext {
   Xen_GCHandle* ctx_stack;
   Xen_GCHandle* ctx_args;
   Xen_GCHandle* ctx_kwargs;
+  Xen_GCHandle* ctx_globals;
   Xen_GCHandle* ctx_instances;
   Xen_GCHandle* ctx_scopes;
   Xen_ulong_t ctx_ip;

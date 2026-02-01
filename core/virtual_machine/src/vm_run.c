@@ -190,15 +190,28 @@ static void op_decl_global(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     return;
   }
   Xen_IGC_Push(val);
-  if (Xen_Map_Has((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
-                  c_name)) {
+  Xen_Instance* globals = NULL;
+  RunContext_ptr current = ctx;
+  while (current && Xen_Nil_NEval((Xen_Instance*)current)) {
+    if (current->ctx_globals->ptr) {
+      globals = (Xen_Instance*)current->ctx_globals->ptr;
+      break;
+    }
+    current = (RunContext_ptr)current->ctx_closure->ptr;
+  }
+  if (!globals) {
+    Xen_DeclError_Global_NScoped(Xen_String_As_CString(c_name));
+    Xen_IGC_Pop();
+    ERROR;
+    return;
+  }
+  if (Xen_Map_Has(globals, c_name)) {
     Xen_DeclError_Global(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
     return;
   }
-  Xen_Map_Push_Pair((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
-                    (Xen_Map_Pair){c_name, val});
+  Xen_Map_Push_Pair(globals, (Xen_Map_Pair){c_name, val});
   Xen_IGC_Pop();
 }
 
@@ -980,7 +993,7 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
                      (Xen_GCHandle**)&((Xen_Basic_Builder*)builder)->base,
                      (Xen_GCHeader*)base);
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
-                                      builder, nil, nil, NULL, NULL, code);
+                                      builder, nil, nil, NULL, NULL, NULL, code);
   if (!new_ctx) {
     ERROR;
   }
@@ -1010,7 +1023,7 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx,
   ((Xen_Basic_Builder*)builder)->name =
       Xen_CString_Dup(Xen_String_As_CString(name));
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx,
-                                      builder, nil, nil, NULL, NULL, code);
+                                      builder, nil, nil, NULL, NULL, NULL, code);
   if (!new_ctx) {
     ERROR;
   }

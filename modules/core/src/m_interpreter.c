@@ -36,7 +36,7 @@ static Xen_Instance* fn_interpreter(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_IGC_XPOP(roots);
   return interpreter(Xen_String_As_CString(name), Xen_String_As_CString(code),
-                     mode);
+                     mode, NULL, NULL, NULL);
 }
 
 static Xen_Instance* fn_parse(Xen_Instance* self, Xen_Instance* args,

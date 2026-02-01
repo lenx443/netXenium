@@ -123,7 +123,7 @@ Xen_Instance* Xen_Basic_Set_Attr_Static(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL || Xen_IMPL(self)->__props->ptr == NULL ||
       Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
+      Xen_IMPL(Xen_IMPL(self)->__props->ptr) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 2) {
@@ -188,7 +188,7 @@ Xen_Instance* Xen_Basic_Set_Attr_Mapped(Xen_Instance* self, Xen_Instance* args,
   NATIVE_CLEAR_ARG_NEVER_USE
   if (Xen_IMPL(self)->__props == NULL ||
       Xen_Nil_Eval((Xen_Instance*)Xen_IMPL(self)->__props->ptr) ||
-      Xen_IMPL(Xen_IMPL(self)->__props) != xen_globals->implements->map) {
+      Xen_IMPL(Xen_IMPL(self)->__props->ptr) != xen_globals->implements->map) {
     return NULL;
   }
   if (Xen_SIZE(args) != 2) {

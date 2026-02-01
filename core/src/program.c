@@ -5,13 +5,18 @@
 #include "colors.h"
 #include "compiler.h"
 #include "history.h"
+#include "instance.h"
 #include "interpreter.h"
 #include "list.h"
 #include "program.h"
 #include "read_string_utf8.h"
 #include "string_utf8.h"
 #include "vm.h"
+#include "vm_scope.h"
 #include "xen_alloc.h"
+#include "xen_gc.h"
+#include "xen_igc.h"
+#include "xen_map.h"
 
 void shell_loop(void) {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
@@ -24,7 +29,13 @@ void shell_loop(void) {
   char history_path[1024];
   snprintf(history_path, 1024, "%s/.xenium_history", home);
   history = history_new(history_path);
-
+  Xen_Instance* globals = Xen_Map_New();
+  Xen_Instance* instances = Xen_Map_New();
+  Xen_VM_Scopes* scopes = Xen_VM_Scopes_New();
+  Xen_IGC_Push(globals);
+  Xen_IGC_Push(instances);
+  Xen_GC_Push_Root((Xen_GCHeader*)scopes);
+  Xen_VM_Scopes_Push(scopes);
   while (1) {
 #ifndef SHELL_BASIC
     LIST_ptr cmd = read_string_utf8();
@@ -56,7 +67,7 @@ void shell_loop(void) {
       break;
     }
 #endif
-    if (!interpreter("<stdin>", cmd_str, Xen_COMPILE_REPL)) {
+    if (!interpreter("<stdin>", cmd_str, Xen_COMPILE_REPL, globals, instances, scopes)) {
       Xen_Dealloc(cmd_str);
       if (program.closed)
         break;
@@ -66,6 +77,8 @@ void shell_loop(void) {
     if (program.closed)
       break;
   }
+  Xen_IGC_XPOP(2);
+  Xen_GC_Pop_Root();
   history_save(*history);
   history_free(history);
 }

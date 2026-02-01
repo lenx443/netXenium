@@ -308,7 +308,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   } else {
-    emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
+    if (COMPILE_MODE != Xen_COMPILE_REPL) emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
     Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
     if (!stmt_list) {
       return 0;
@@ -320,7 +320,7 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     } else {
       return 0;
     }
-    emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
+    if (COMPILE_MODE != Xen_COMPILE_REPL) emit(SCOPE_POP, 0, Xen_AST_Node_STA(node));
     if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }

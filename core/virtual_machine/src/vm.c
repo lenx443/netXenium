@@ -17,6 +17,7 @@
 #include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_life.h"
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_nil.h"
@@ -81,6 +82,10 @@ Xen_INSTANCE* Xen_VM_Load_Instance(const char* name, ctx_id_t id) {
     }
     current_ctx = (RunContext_ptr)current_ctx->ctx_closure->ptr;
   }
+  Xen_Instance* inst = Xen_Map_Get_Str((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr, name);
+  if (inst != NULL) {
+    return inst;
+  }
   return NULL;
 }
 
@@ -88,47 +93,6 @@ void Xen_VM_Ctx_Clear(RunContext_ptr ctx) {
   ctx->ctx_code = NULL;
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
-}
-
-int Xen_VM_New_Ctx_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
-                            struct __Instance* self, Xen_Instance* args,
-                            Xen_Instance* kwargs) {
-  if (!callable) {
-    return 0;
-  }
-  Xen_Instance* ctx_inst = Xen_Ctx_New(
-      run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
-          ? run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)
-          : nil,
-      closure, self, args, kwargs, NULL, NULL, callable);
-  if (!ctx_inst) {
-    return 0;
-  }
-  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, ctx_inst)) {
-    return 0;
-  }
-  RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(
-      &(*xen_globals->vm)->vm_ctx_stack);
-  Xen_GC_Write_Field((struct __GC_Header*)ctx,
-                     (struct __GC_Handle**)&ctx->ctx_code,
-                     (struct __GC_Header*)callable);
-  return 1;
-}
-
-Xen_Instance* Xen_VM_Call_Callable(CALLABLE_ptr callable, Xen_Instance* closure,
-                                   struct __Instance* self, Xen_Instance* args,
-                                   Xen_Instance* kwargs) {
-  if (!callable) {
-    return NULL;
-  }
-  if (!Xen_VM_New_Ctx_Callable(callable, closure, self, args, kwargs)) {
-    return NULL;
-  }
-  Xen_Instance* ret = vm_run_top();
-  if (!ret) {
-    return NULL;
-  }
-  return ret;
 }
 
 void Xen_VM_Except_Backtrace_Show(void) {

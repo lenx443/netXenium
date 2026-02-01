@@ -13,9 +13,8 @@
 
 typedef Xen_ulong_t ctx_id_t;
 
-Xen_Instance* Xen_Ctx_New(Xen_Instance*, Xen_Instance*, Xen_Instance*,
-                          Xen_Instance*, Xen_Instance*, Xen_Instance*,
-                          Xen_VM_Scopes*, CALLABLE_ptr);
+Xen_Instance* Xen_Ctx_New(Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_Instance*,
+                          Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*, CALLABLE_ptr);
 
 ctx_id_t run_ctx_id(Xen_Instance*);
 

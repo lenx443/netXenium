@@ -85,7 +85,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
     Xen_Instance* new_ctx = Xen_Ctx_New(
         run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack),
         (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
-        args, kwargs, NULL, NULL, (CALLABLE_ptr)function->fun_code->ptr);
+        args, kwargs, NULL, NULL, NULL, (CALLABLE_ptr)function->fun_code->ptr);
     if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
       return NULL;
     }

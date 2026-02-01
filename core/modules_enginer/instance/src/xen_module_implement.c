@@ -1,7 +1,7 @@
 #include "xen_module_implement.h"
 #include "basic.h"
-#include "basic_templates.h"
 #include "callable.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "xen_alloc.h"
@@ -17,6 +17,13 @@
 
 #include <dlfcn.h>
 
+
+static void module_trace(Xen_Instance* h) {
+  Xen_Module* module = (Xen_Module*)h;
+  Xen_GC_Trace_GCHeader(module->__map);
+  Xen_GC_Trace_GCHeader(module->mod_globals);
+}
+
 static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -25,6 +32,7 @@ static Xen_Instance* module_alloc(Xen_Instance* self, Xen_Instance* args,
   if (!module) {
     return NULL;
   }
+  module->mod_globals = Xen_GCHandle_New_From((Xen_GCHeader*)module, (Xen_GCHeader*)Xen_Map_New());
   return (Xen_Instance*)module;
 }
 
@@ -37,6 +45,7 @@ static Xen_Instance* module_destroy(Xen_Instance* self, Xen_Instance* args,
   if (module->mod_handle) {
     dlclose(module->mod_handle);
   }
+  Xen_GCHandle_Free(module->mod_globals);
   return nil;
 }
 
@@ -107,7 +116,7 @@ struct __Implement __Module_Implement = {
     .__impl_name = "Module",
     .__inst_size = sizeof(struct Xen_Module_Instance),
     .__inst_default_flags = XEN_INSTANCE_FLAG_MAPPED,
-    .__inst_trace = Xen_Basic_Mapped_Trace,
+    .__inst_trace = module_trace,
     .__props = NULL,
     .__alloc = module_alloc,
     .__create = NULL,

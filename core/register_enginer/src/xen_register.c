@@ -135,7 +135,8 @@ Xen_INSTANCE* xen_register_prop_get(const char* name) {
       return prop;
     }
   IMPL:
-    if_nil_neval(self->__impl->__props) {
+    if (self->__impl->__props && self->__impl->__props->ptr &&
+        Xen_Nil_NEval((Xen_Instance*)self->__impl->__props->ptr)) {
       Xen_INSTANCE* impl_prop =
           Xen_Map_Get_Str((Xen_Instance*)self->__impl->__props->ptr, name);
       if (!impl_prop) {

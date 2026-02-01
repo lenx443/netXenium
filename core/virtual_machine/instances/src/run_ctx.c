@@ -10,10 +10,9 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 
-Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
-                          Xen_Instance* self, Xen_Instance* args,
-                          Xen_Instance* kwargs, Xen_Instance* instances,
-                          Xen_VM_Scopes* scopes, CALLABLE_ptr code) {
+Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Instance* self,
+                          Xen_Instance* args, Xen_Instance* kwargs, Xen_Instance* globals,
+                          Xen_Instance* instances, Xen_VM_Scopes* scopes, CALLABLE_ptr code) {
   RunContext_ptr ctx = (RunContext_ptr)__instance_new(
       xen_globals->implements->run_frame, nil, nil, 0);
   if (!ctx) {
@@ -38,11 +37,17 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_closure, closure);
   }
   if (!self) {
-    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_self,
-                       (Xen_GCHeader*)nil);
+    Xen_GC_Write_Field(
+      (Xen_GCHeader*)ctx,
+      (Xen_GCHandle**)&ctx->ctx_self,
+      (Xen_GCHeader*)nil
+    );
   } else {
-    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_self,
-                       (Xen_GCHeader*)self);
+    Xen_GC_Write_Field(
+      (Xen_GCHeader*)ctx,
+      (Xen_GCHandle**)&ctx->ctx_self,
+      (Xen_GCHeader*)self
+    );
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_args, args);
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_kwargs, kwargs);
@@ -58,21 +63,34 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure,
     return NULL;
   }
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_instances, instances);
+  if (globals) {
+    if (Xen_IMPL(globals) != xen_globals->implements->map) {
+      Xen_IGC_Pop();
+      return NULL;
+    }
+    Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_globals, globals);
+  }
   if (scopes) {
-    Xen_GC_Write_Field((struct __GC_Header*)ctx,
-                       (struct __GC_Handle**)&ctx->ctx_scopes,
-                       (struct __GC_Header*)scopes);
+    Xen_GC_Write_Field(
+      (struct __GC_Header*)ctx,
+      (struct __GC_Handle**)&ctx->ctx_scopes,
+      (struct __GC_Header*)scopes
+    );
   } else {
-    Xen_GC_Write_Field((struct __GC_Header*)ctx,
-                       (struct __GC_Handle**)&ctx->ctx_scopes,
-                       (struct __GC_Header*)Xen_VM_Scopes_New());
+    Xen_GC_Write_Field(
+      (struct __GC_Header*)ctx,
+      (struct __GC_Handle**)&ctx->ctx_scopes,
+      (struct __GC_Header*)Xen_VM_Scopes_New()
+    );
   }
   if (code) {
-    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_code,
-                       (Xen_GCHeader*)code);
+    Xen_GC_Write_Field(
+      (Xen_GCHeader*)ctx,
+      (Xen_GCHandle**)&ctx->ctx_code,
+      (Xen_GCHeader*)code
+    );
   }
-  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack,
-                      vm_stack_new(code->code.stack_depth + 1));
+  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack, vm_stack_new(code->code.stack_depth + 1));
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
 }
