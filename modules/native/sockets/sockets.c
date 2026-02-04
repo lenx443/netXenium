@@ -1068,9 +1068,7 @@ static Xen_Instance* sockets_getaddrinfo(Xen_Instance* self, Xen_Instance* args,
       raddr = Xen_String_From_CString(buffer);
     } else if (p->ai_family == AF_INET6) {
       char buffer[INET6_ADDRSTRLEN];
-      if (!inet_ntop(p->ai_family,
-                     &((struct sockaddr_in6*)p->ai_addr)->sin6_addr, buffer,
-                     sizeof(buffer))) {
+      if (!inet_ntop(p->ai_family, &((struct sockaddr_in6*)p->ai_addr)->sin6_addr, buffer, sizeof(buffer))) {
         freeaddrinfo(res);
         return NULL;
       }
@@ -1085,9 +1083,9 @@ static Xen_Instance* sockets_getaddrinfo(Xen_Instance* self, Xen_Instance* args,
     } else {
       rcanonname = Xen_String_From_CString("");
     }
-    Xen_Instance* rtuple =
-        Xen_Tuple_From_Array(6, (Xen_Instance*[]){rflags, rfamily, rsocktype,
-                                                  rproto, raddr, rcanonname});
+    Xen_Instance* rtuple = Xen_Tuple_From_Array(6, (Xen_Instance*[]){
+        rflags, rfamily, rsocktype, rproto, raddr, rcanonname
+    });
     Xen_Vector_Push(result, rtuple);
   }
   freeaddrinfo(res);
@@ -1097,8 +1095,7 @@ static Xen_Instance* sockets_getaddrinfo(Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
-  if ((Socket_Implement_Pointer =
-           (Xen_Implement*)Xen_Attr_Get_Str(self, "Socket")) == Xen_NULL) {
+  if ((Socket_Implement_Pointer = (Xen_Implement*)Xen_Attr_Get_Str(self, "Socket")) == Xen_NULL) {
     return Xen_NULL;
   }
   Xen_Instance* props = Xen_Map_New();
@@ -1113,39 +1110,23 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   Xen_VM_Store_Native_Function(props, "shutdown", socket_shutdown, nil);
   Xen_VM_Store_Native_Function(props, "setsockopt", socket_setsockopt, nil);
   Xen_VM_Store_Native_Function(props, "getsockopt", socket_getsockopt, nil);
-  Xen_VM_Store_Native_Function(props, "set_nonblocking", socket_set_nonblocking,
-                               nil);
+  Xen_VM_Store_Native_Function(props, "set_nonblocking", socket_set_nonblocking, nil);
   Xen_VM_Store_Native_Function(props, "set_timeout", socket_set_timeout, nil);
   Xen_VM_Store_Native_Function(props, "getsockname", socket_getsockname, nil);
   Xen_VM_Store_Native_Function(props, "getpeername", socket_getpeername, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(AF_INET)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"AF_INET6", Xen_Number_From_Int(AF_INET6)});
-  Xen_Map_Push_Pair_Str(
-      props,
-      (Xen_Map_Pair_Str){"SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM)});
-  Xen_Map_Push_Pair_Str(
-      props,
-      (Xen_Map_Pair_Str){"IPPROTO_TCP", Xen_Number_From_Int(IPPROTO_TCP)});
-  Xen_Map_Push_Pair_Str(
-      props,
-      (Xen_Map_Pair_Str){"IPPROTO_UDP", Xen_Number_From_Int(IPPROTO_UDP)});
-  Xen_Map_Push_Pair_Str(
-      props,
-      (Xen_Map_Pair_Str){"IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"IPPROTO_ICMPV6",
-                                Xen_Number_From_Int(IPPROTO_ICMPV6)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});
-  Xen_Map_Push_Pair_Str(
-      props, (Xen_Map_Pair_Str){"SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(AF_INET)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"AF_INET6", Xen_Number_From_Int(AF_INET6)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_RAW", Xen_Number_From_Int(SOCK_RAW)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_TCP", Xen_Number_From_Int(IPPROTO_TCP)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_UDP", Xen_Number_From_Int(IPPROTO_UDP)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_ICMPV6", Xen_Number_From_Int(IPPROTO_ICMPV6)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR)});
   Xen_Implement_SetProps(Socket_Implement_Pointer, props);
   return nil;
 }
