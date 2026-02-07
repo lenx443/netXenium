@@ -722,10 +722,10 @@ Xen_Instance* parser_relational(Parser* p) {
   if (!left) {
     return NULL;
   }
-  while (p->token.tkn_type == TKN_LT || p->token.tkn_type == TKN_GT ||
-         p->token.tkn_type == TKN_LE || p->token.tkn_type == TKN_GE ||
-         p->token.tkn_type == TKN_EQ || p->token.tkn_type == TKN_NE ||
-         p->token.tkn_type == TKN_HAS) {
+  while (p->token.tkn_type == TKN_LT  || p->token.tkn_type == TKN_GT ||
+         p->token.tkn_type == TKN_LE  || p->token.tkn_type == TKN_GE ||
+         p->token.tkn_type == TKN_EQ  || p->token.tkn_type == TKN_NE ||
+         p->token.tkn_type == TKN_HAS || p->token.tkn_type == TKN_IS) {
     char* op = Xen_CString_Dup(p->token.tkn_text);
     if (!op) {
       return NULL;

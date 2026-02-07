@@ -797,6 +797,13 @@ Xen_Instance* compile_expr_constant(int* error, Compiler* c,
       }
       Xen_IGC_XPOP(roots);
       return result;
+    } else if (Xen_AST_Node_Value_Cmp(node, "is") == 0) {
+      if (lhs_expr == rhs_expr) {
+        Xen_IGC_XPOP(roots);
+        return Xen_True;
+      }
+      Xen_IGC_XPOP(roots);
+      return Xen_False;
     } else if (Xen_AST_Node_Value_Cmp(node, "&") == 0) {
       Xen_Instance* result =
           Xen_Operator_Eval_Pair(lhs_expr, rhs_expr, Xen_OPR_BAND);
@@ -1561,6 +1568,10 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "has") == 0) {
       if (!emit(BINARYOP, Xen_OPR_HAS, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
+    } else if (Xen_AST_Node_Value_Cmp(node, "is") == 0) {
+      if (!emit(BINARYOP_IS, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "&") == 0) {

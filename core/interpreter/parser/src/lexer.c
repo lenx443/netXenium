@@ -94,6 +94,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_KEYWORD, sf->sf_content + start, len);
     } else if (strcmp(buffer, "has") == 0) {
       token = Token(lexer, TKN_HAS, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "is") == 0) {
+      token = Token(lexer, TKN_IS, sf->sf_content + start, len);
     } else if (strcmp(buffer, "not") == 0) {
       token = Token(lexer, TKN_NOT, sf->sf_content + start, len);
     } else if (strcmp(buffer, "and") == 0) {

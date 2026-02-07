@@ -645,6 +645,21 @@ static void op_binaryop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   STACK_PUSH(rsult);
 }
 
+static void op_binaryop_is(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* second = STACK_POP;
+  Xen_Instance* first = STACK_POP;
+  Xen_IGC_Push(first);
+  Xen_IGC_Push(second);
+  if (first == second) {
+    Xen_IGC_XPOP(2);
+    STACK_PUSH(Xen_True);
+    return;
+  }
+  Xen_IGC_XPOP(2);
+  STACK_PUSH(Xen_False);
+}
+
 static void op_unary_positive(VM_Run* vmr, RunContext_ptr ctx,
                               Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
@@ -1066,57 +1081,58 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong
 }
 
 static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
-    [NOP] = op_nop,
-    [PUSH] = op_push,
-    [POP] = op_pop,
-    [LOAD] = op_load,
-    [LOAD_PROP] = op_load_prop,
-    [LOAD_INDEX] = op_load_index,
-    [LOAD_ATTR] = op_load_attr,
-    [DECL_LOCAL] = op_decl_local,
-    [DECL_LOCAL_NVAL] = op_decl_local_nval,
-    [DECL_VAR] = op_decl_var,
-    [DECL_VAR_NVAL] = op_decl_var_nval,
-    [DECL_GLOBAL] = op_decl_global,
-    [DECL_GLOBAL_NVAL] = op_decl_global_nval,
-    [STORE] = op_store,
-    [STORE_PROP] = op_store_prop,
-    [STORE_INDEX] = op_store_index,
-    [STORE_ATTR] = op_store_attr,
-    [SCOPE_PUSH] = op_scope_push,
-    [SCOPE_POP] = op_scope_pop,
-    [MAKE_TUPLE] = op_make_tuple,
-    [MAKE_VECTOR] = op_make_vector,
+    [NOP] =                       op_nop,
+    [PUSH] =                      op_push,
+    [POP] =                       op_pop,
+    [LOAD] =                      op_load,
+    [LOAD_PROP] =                 op_load_prop,
+    [LOAD_INDEX] =                op_load_index,
+    [LOAD_ATTR] =                 op_load_attr,
+    [DECL_LOCAL] =                op_decl_local,
+    [DECL_LOCAL_NVAL] =           op_decl_local_nval,
+    [DECL_VAR] =                  op_decl_var,
+    [DECL_VAR_NVAL] =             op_decl_var_nval,
+    [DECL_GLOBAL] =               op_decl_global,
+    [DECL_GLOBAL_NVAL] =          op_decl_global_nval,
+    [STORE] =                     op_store,
+    [STORE_PROP] =                op_store_prop,
+    [STORE_INDEX] =               op_store_index,
+    [STORE_ATTR] =                op_store_attr,
+    [SCOPE_PUSH] =                op_scope_push,
+    [SCOPE_POP] =                 op_scope_pop,
+    [MAKE_TUPLE] =                op_make_tuple,
+    [MAKE_VECTOR] =               op_make_vector,
     [MAKE_VECTOR_FROM_ITERABLE] = op_make_vector_from_iterable,
-    [MAKE_MAP] = op_make_map,
-    [MAKE_FUNCTION] = op_make_function,
-    [MAKE_FUNCTION_NARGS] = op_make_function_nargs,
-    [CALL] = op_call,
-    [CALL_KW] = op_call_kw,
-    [BINARYOP] = op_binaryop,
-    [UNARY_POSITIVE] = op_unary_positive,
-    [UNARY_NEGATIVE] = op_unary_negative,
-    [UNARY_BIT_NOT] = op_unary_bit_not,
-    [UNARY_NOT] = op_unary_not,
-    [COPY] = op_copy,
-    [PRINT_TOP] = op_print_top,
-    [THROW] = op_throw,
-    [JUMP] = op_jump,
-    [JUMP_IF_TRUE] = op_jump_if_true,
-    [JUMP_IF_FALSE] = op_jump_if_false,
-    [ITER_GET] = op_iter_get,
-    [ITER_FOR] = op_iter_for,
-    [LIST_UNPACK] = op_list_unpack,
-    [LIST_UNPACK_START] = op_list_unpack_start,
-    [LIST_UNPACK_END] = op_list_unpack_end,
-    [CATCH_STACK_PUSH] = op_catch_stack_push,
-    [CATCH_STACK_POP] = op_catch_stack_pop,
-    [CATCH_STACK_TYPE] = op_catch_stack_type,
-    [BUILD_IMPLEMENT] = op_build_implement,
-    [BUILD_IMPLEMENT_NBASE] = op_build_implement_nbase,
-    [RETURN] = op_return,
-    [RETURN_TOP] = op_return_top,
-    [RETURN_BUILD_IMPLEMENT] = op_return_build_implement,
+    [MAKE_MAP] =                  op_make_map,
+    [MAKE_FUNCTION] =             op_make_function,
+    [MAKE_FUNCTION_NARGS] =       op_make_function_nargs,
+    [CALL] =                      op_call,
+    [CALL_KW] =                   op_call_kw,
+    [BINARYOP] =                  op_binaryop,
+    [BINARYOP_IS] =               op_binaryop_is,
+    [UNARY_POSITIVE] =            op_unary_positive,
+    [UNARY_NEGATIVE] =            op_unary_negative,
+    [UNARY_BIT_NOT] =             op_unary_bit_not,
+    [UNARY_NOT] =                 op_unary_not,
+    [COPY] =                      op_copy,
+    [PRINT_TOP] =                 op_print_top,
+    [THROW] =                     op_throw,
+    [JUMP] =                      op_jump,
+    [JUMP_IF_TRUE] =              op_jump_if_true,
+    [JUMP_IF_FALSE] =             op_jump_if_false,
+    [ITER_GET] =                  op_iter_get,
+    [ITER_FOR] =                  op_iter_for,
+    [LIST_UNPACK] =               op_list_unpack,
+    [LIST_UNPACK_START] =         op_list_unpack_start,
+    [LIST_UNPACK_END] =           op_list_unpack_end,
+    [CATCH_STACK_PUSH] =          op_catch_stack_push,
+    [CATCH_STACK_POP] =           op_catch_stack_pop,
+    [CATCH_STACK_TYPE] =          op_catch_stack_type,
+    [BUILD_IMPLEMENT] =           op_build_implement,
+    [BUILD_IMPLEMENT_NBASE] =     op_build_implement_nbase,
+    [RETURN] =                    op_return,
+    [RETURN_TOP] =                op_return_top,
+    [RETURN_BUILD_IMPLEMENT] =    op_return_build_implement,
 };
 
 static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
@@ -1178,8 +1194,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
           break;
         }
         vm_backtrace_push((*xen_globals->vm)->except.bt, ((CALLABLE_ptr)current_context->ctx_code->ptr)
-                ->code.code->bc_array[((RunContext_ptr)Xen_VM_Current_Ctx())
-                ->ctx_ip - 1].sta);
+                ->code.code->bc_array[((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_ip - 1].sta);
         current_ctx_inst = (Xen_Instance*)current_context->ctx_caller->ptr;
         Xen_VM_Set_Current_Ctx(current_ctx_inst);
       }
