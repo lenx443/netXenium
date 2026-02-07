@@ -1,3 +1,5 @@
+#include "vm_scope.h"
+#include "xen_nil.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <signal.h>
@@ -8,7 +10,6 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "program.h"
-#include "run_ctx_stack.h"
 #include "vm_backtrace.h"
 #include "vm_def.h"
 #include "xen_alloc.h"
@@ -32,6 +33,7 @@ static void InterruptHandler(int sign) {
 
 static void vm_def_trace(Xen_GCHeader* h) {
   VM* _vm = (VM*)h;
+  Xen_GC_Trace_GCHeader(_vm->current_ctx);
   Xen_GC_Trace_GCHeader(_vm->args);
   Xen_GC_Trace_GCHeader(_vm->modules);
   Xen_GC_Trace_GCHeader(_vm->modules_stack);
@@ -48,7 +50,6 @@ static void vm_def_trace(Xen_GCHeader* h) {
 }
 
 static void vm_def_destroy(Xen_GCHeader* h) {
-  run_context_stack_free(&((VM_ptr)h)->vm_ctx_stack);
   Xen_Dealloc(h);
 }
 
@@ -80,8 +81,7 @@ bool vm_create(void) {
   if (vm != NULL)
     return 1;
   vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
-  vm->ctx_id_count = 0;
-  vm->vm_ctx_stack = NULL;
+  vm->current_ctx = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)nil);
   vm->args = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->modules_stack = Xen_GCHandle_New((Xen_GCHeader*)vm);
@@ -106,17 +106,14 @@ bool vm_create(void) {
   Xen_Dealloc(args_array);
   Xen_IGC_WRITE_FIELD(vm, vm->modules, Xen_Map_New());
   if (!vm->modules) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   Xen_IGC_WRITE_FIELD(vm, vm->modules_stack, Xen_Vector_New());
   if (!vm->modules_stack) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   Xen_IGC_WRITE_FIELD(vm, vm->globals_instances, Xen_Map_New());
   if (!vm->globals_instances) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   Xen_GC_Write_Field((struct __GC_Header*)vm,
@@ -125,21 +122,17 @@ bool vm_create(void) {
   Xen_VM_Scopes_Push((Xen_VM_Scopes*)vm->globals_scopes->ptr);
   Xen_IGC_WRITE_FIELD(vm, vm->globals_props, Xen_Map_New());
   if (!vm->globals_props) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   char path_current[1024];
   if (!getcwd(path_current, 1024)) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   vm->path_current = Xen_CString_Dup(path_current);
   if (!vm_load_modules_paths()) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     return 0;
   }
   if (!vm_load_config()) {
-    run_context_stack_free(&vm->vm_ctx_stack);
     Xen_Dealloc((void*)vm->path_current);
     return 0;
   }

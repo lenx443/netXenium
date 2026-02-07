@@ -16,7 +16,6 @@
 #include "program.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
-#include "run_ctx_stack.h"
 #include "vm.h"
 #include "vm_backtrace.h"
 #include "vm_catch_stack.h"
@@ -247,7 +246,7 @@ static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     ERROR;
   }
   Xen_c_string_t name = Xen_String_As_CString(c_name);
-  Xen_Instance* inst = Xen_VM_Load_Instance(name, ctx->ctx_id);
+  Xen_Instance* inst = Xen_VM_Load_Instance(name);
   if (!inst) {
     if (!Xen_VM_Except_Active()) {
       Xen_UndefName(name);
@@ -996,9 +995,7 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   if (!new_ctx) {
     ERROR;
   }
-  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
-    ERROR;
-  }
+  Xen_VM_Set_Current_Ctx(new_ctx);
 }
 
 static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -1020,35 +1017,33 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_
   if (!new_ctx) {
     ERROR;
   }
-  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
-    ERROR;
-  }
+  Xen_VM_Set_Current_Ctx(new_ctx);
 }
 
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret = Xen_Vector_Get_Index(
       (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)ctx->ctx_code->ptr)->code.consts->ptr)->c_instances->ptr), oparg);
-  Xen_size_t current_id = ctx->ctx_id;
-  run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
-  RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
-  if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, ret);
+  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
+  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
+    vmr->halt = 1;
   }
 }
 
 static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret = STACK_POP;
-  Xen_size_t current_id = ctx->ctx_id;
-  run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
-  RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
-  if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, ret);
+  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
+  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
+    vmr->halt = 1;
   }
 }
 
@@ -1060,13 +1055,13 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong
     ERROR
   }
   Xen_Map_Push_Pair_Str((Xen_Instance*)ctx->ctx_instances->ptr, (Xen_Map_Pair_Str){builder->name, impl});
-  Xen_size_t current_id = ctx->ctx_id;
-  run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
-  RunContext_ptr ctx_top = (RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
-  if (ctx_top && current_id > vmr->ctx_id) {
-    vm_stack_push((struct vm_Stack*)ctx_top->ctx_stack->ptr, impl);
+  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
+  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, impl);
   } else {
     vmr->retval = impl;
+    vmr->halt = 1;
   }
 }
 
@@ -1147,20 +1142,20 @@ static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
   return instr;
 }
 
-Xen_Instance* vm_run(Xen_size_t id) {
-  VM_Run vmr = {id, NULL, 0};
+Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
+  Xen_Instance* __last_current_ctx_value = Xen_VM_Current_Ctx();
+  Xen_VM_Set_Current_Ctx(ctx_inst);
+  VM_Run vmr = {NULL, 0};
 #ifndef NDEBUG
   const char* previous_op = "No-OP";
   Xen_ssize_t previous_offset = -1;
 #endif
   bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
-  while ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack) &&
-        ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack)) ->ctx_id >= id &&
-         !vmr.halt && !program.closed) {
+  while (!vmr.halt && !program.closed) {
     if (Xen_VM_Except_Active()) {
-      while ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack) &&
-            ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))->ctx_id >= id) {
-        RunContext_ptr current_context = (RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
+      Xen_Instance* current_ctx_inst = Xen_VM_Current_Ctx();
+      while (current_ctx_inst && Xen_Nil_NEval(current_ctx_inst)) {
+        RunContext_ptr current_context = (RunContext_ptr)current_ctx_inst;
         struct VM_Catch_Stack* current_handler = vm_catch_stack_pop(&current_context->ctx_catch_stack);
         while (current_handler) {
           if (!current_handler->except_type) {
@@ -1183,28 +1178,25 @@ Xen_Instance* vm_run(Xen_size_t id) {
           break;
         }
         vm_backtrace_push((*xen_globals->vm)->except.bt, ((CALLABLE_ptr)current_context->ctx_code->ptr)
-                ->code.code->bc_array[((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))
+                ->code.code->bc_array[((RunContext_ptr)Xen_VM_Current_Ctx())
                 ->ctx_ip - 1].sta);
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+        current_ctx_inst = (Xen_Instance*)current_context->ctx_caller->ptr;
+        Xen_VM_Set_Current_Ctx(current_ctx_inst);
       }
       if (Xen_VM_Except_Active()) {
+        Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
         return NULL;
       }
-    } else if (((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))->ctx_error) {
-      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+    } else if (((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_error) {
 #ifndef NDEBUG
       printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
              previous_offset);
 #endif
-      while ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack) &&
-            ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))->ctx_id >= id) {
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
-      }
+      Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
       return NULL;
     }
-    RunContext_ptr ctx = (RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
+    RunContext_ptr ctx = (RunContext_ptr)Xen_VM_Current_Ctx();
     if (!ctx->ctx_running) {
-      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       continue;
     }
     previous_instruct = vm_run_instruct(&vmr, (Xen_Instance*)ctx);
@@ -1213,13 +1205,6 @@ Xen_Instance* vm_run(Xen_size_t id) {
     previous_offset = ctx->ctx_ip - 1;
 #endif
   }
-  while ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack) &&
-        ((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))->ctx_id >= id) {
-    run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
-  }
+  Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
   return vmr.retval;
-}
-
-Xen_Instance* vm_run_top(void) {
-  return vm_run(((RunContext_ptr)run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack))->ctx_id);
 }

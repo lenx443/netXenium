@@ -48,8 +48,6 @@ static Xen_Instance* frame_alloc(Xen_INSTANCE* self, Xen_Instance* args,
     return NULL;
   }
   Xen_IGC_Push((Xen_Instance*)ctx_new);
-  ctx_new->ctx_flags = 0;
-  ctx_new->ctx_id = 0;
   ctx_new->ctx_catch_stack = NULL;
   ctx_new->ctx_closure =
       Xen_GCHandle_New_From((Xen_GCHeader*)ctx_new, (Xen_GCHeader*)nil);

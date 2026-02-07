@@ -6,12 +6,10 @@
 #include "instance.h"
 #include "run_ctx.h"
 #include "run_ctx_instance.h"
-#include "run_ctx_stack.h"
 #include "source_file.h"
 #include "vm.h"
 #include "vm_backtrace.h"
 #include "vm_def.h"
-#include "vm_run.h"
 #include "vm_scope.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
@@ -24,7 +22,22 @@
 #include "xen_typedefs.h"
 
 Xen_Instance* Xen_VM_Current_Ctx(void) {
-  return run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack);
+  return ((Xen_Instance*)(*xen_globals->vm)->current_ctx->ptr);
+}
+
+void Xen_VM_Set_Current_Ctx(Xen_Instance* ctx) {
+  if ((*xen_globals->vm)->current_ctx->ptr)
+    ((RunContext_ptr)(*xen_globals->vm)->current_ctx->ptr)->ctx_running = 0;
+  if (!ctx) {
+    (*xen_globals->vm)->current_ctx->ptr = NULL;
+    return;
+  }
+  Xen_GC_Write_Field(
+    (Xen_GCHeader*)*xen_globals->vm,
+    (Xen_GCHandle**)&(*xen_globals->vm)->current_ctx,
+    (Xen_GCHeader*)ctx
+  );
+  ((RunContext_ptr)(*xen_globals->vm)->current_ctx->ptr)->ctx_running = 1;
 }
 
 bool Xen_VM_Store_Global(const char* name, Xen_Instance* val) {
@@ -59,10 +72,7 @@ Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
   return ret;
 }
 
-Xen_INSTANCE* Xen_VM_Load_Instance(const char* name, ctx_id_t id) {
-  if (!name || !VM_CHECK_ID(id)) {
-    return NULL;
-  }
+Xen_INSTANCE* Xen_VM_Load_Instance(const char* name) {
   RunContext_ptr current_ctx = (RunContext_ptr)Xen_VM_Current_Ctx();
   while (current_ctx && Xen_Nil_NEval((Xen_Instance*)current_ctx)) {
     Xen_VM_Scope* current_scope =
@@ -103,10 +113,8 @@ void Xen_VM_Except_Backtrace_Show(void) {
   }
   for (Xen_size_t i = 0; i < (*xen_globals->vm)->except.bt->bt_count; i++) {
     printf("file: \"%s\"; line: %ld; column: %ld;\n",
-           (*xen_globals->source_table)
-               ->st_files
-                   [(Xen_size_t)(*xen_globals->vm)->except.bt->bt_addrs[i].id]
-               ->sf_name,
+           (*xen_globals->source_table)->st_files
+           [(Xen_size_t)(*xen_globals->vm)->except.bt->bt_addrs[i].id]->sf_name,
            (*xen_globals->vm)->except.bt->bt_addrs[i].line,
            (*xen_globals->vm)->except.bt->bt_addrs[i].column);
   }

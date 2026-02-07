@@ -2,7 +2,6 @@
 
 #include "instance.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "xen_function.h"
 #include "xen_nil.h"
 #include "xen_string.h"
@@ -11,8 +10,7 @@
 void test_modules_run(void);
 
 void test_modules_run(void) {
-  Xen_Instance* echo_fun = Xen_VM_Load_Instance(
-      "echo", (*xen_globals->vm)->vm_ctx_stack->ctx->ctx_id);
+  Xen_Instance* echo_fun = Xen_VM_Load_Instance("echo");
   assert(echo_fun != NULL);
   Xen_Instance* text = Xen_String_From_CString("Hola Mundo\n");
   assert(Xen_Nil_NEval(text));

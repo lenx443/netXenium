@@ -170,7 +170,7 @@ static Xen_Instance* endpoint_port(Xen_Instance* self, Xen_Instance* args,
     return NULL;
   }
   EndPoint* endpoint = (EndPoint*)self;
-  return Xen_Number_From_Int(endpoint->port);
+  return Xen_Number_From_Int(ntohs(endpoint->port));
 }
 
 static Xen_Instance* endpoint_tuple(Xen_Instance* self, Xen_Instance* args,

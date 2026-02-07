@@ -19,8 +19,6 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Insta
     return NULL;
   }
   Xen_IGC_Push((Xen_Instance*)ctx);
-  ctx->ctx_flags = CTX_FLAG_PROPS;
-  ctx->ctx_id = 0;
   ctx->ctx_catch_stack = NULL;
   ctx->ctx_ip = 0;
   ctx->ctx_running = 0;
@@ -93,11 +91,4 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Insta
   Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack, vm_stack_new(code->code.stack_depth + 1));
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
-}
-
-ctx_id_t run_ctx_id(Xen_Instance* ctx) {
-  if (!ctx || ctx->__impl != xen_globals->implements->run_frame) {
-    return 0;
-  }
-  return ((RunContext_ptr)ctx)->ctx_id;
 }

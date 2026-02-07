@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "list.h"
 #include "macros.h"
+#include "run_ctx.h"
 #include "string_utf8.h"
 #include "vm.h"
 #include "vm_run.h"
@@ -169,11 +170,7 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       Xen_Vector_Pop((Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
       return NULL;
     }
-    if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, ctx_inst)) {
-      Xen_Vector_Pop((Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
-      return NULL;
-    }
-    Xen_Instance* retval = vm_run_top();
+    Xen_Instance* retval = vm_run(ctx_inst);
     if (Xen_VM_Except_Active()) {
       Xen_Vector_Pop((Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
       return NULL;

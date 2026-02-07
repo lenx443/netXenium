@@ -6,13 +6,10 @@
 
 #include "gc_header.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "vm_catch_stack.h"
 
 struct RunContext {
   Xen_INSTANCE_HEAD;
-  uint8_t ctx_flags;
-  ctx_id_t ctx_id;
   struct VM_Catch_Stack* ctx_catch_stack;
   Xen_GCHandle* ctx_closure;
   Xen_GCHandle* ctx_caller;

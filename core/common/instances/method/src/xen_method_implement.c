@@ -7,7 +7,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "instance_life.h"
-#include "run_ctx_stack.h"
+#include "run_ctx.h"
 #include "vm.h"
 #include "vm_def.h"
 #include "vm_stack.h"
@@ -83,55 +83,46 @@ static Xen_Instance* method_callable(struct __Instance* self,
   Xen_Function_ptr function = (Xen_Function_ptr)method->function->ptr;
   if (function->fun_type == 1) {
     Xen_Instance* new_ctx = Xen_Ctx_New(
-        run_context_stack_peek_top(&(*xen_globals->vm)->vm_ctx_stack),
+        Xen_VM_Current_Ctx(),
         (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
         args, kwargs, NULL, NULL, NULL, (CALLABLE_ptr)function->fun_code->ptr);
-    if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, new_ctx)) {
-      return NULL;
-    }
+    Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)function->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
-      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;
     }
     for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       Xen_Instance* arg = Xen_Vector_Get_Index(args, i);
       if (!name) {
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
       if (!Xen_Map_Push_Pair(
               (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
               (Xen_Map_Pair){name, arg})) {
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
     }
     if (Xen_IMPL(kwargs) == xen_globals->implements->map) {
       Xen_Instance* kwargs_it = Xen_Attr_Iter(kwargs);
       if (!kwargs_it) {
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
         return NULL;
       }
       Xen_Instance* keyword = NULL;
       while ((keyword = Xen_Attr_Next(kwargs_it)) != NULL) {
         if (!Xen_Map_Has((Xen_Instance*)function->args_names->ptr, keyword)) {
-          run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
         if (Xen_Map_Has(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 keyword)) {
-          run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
         Xen_Instance* value = Xen_Map_Get(kwargs, keyword);
         if (!Xen_Map_Push_Pair(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 (Xen_Map_Pair){keyword, value})) {
-          run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
       }
@@ -145,7 +136,6 @@ static Xen_Instance* method_callable(struct __Instance* self,
     Xen_Instance* defaults_it =
         Xen_Attr_Iter((Xen_Instance*)function->args_default_values->ptr);
     if (!defaults_it) {
-      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;
     }
     Xen_Instance* default_name = NULL;
@@ -158,7 +148,6 @@ static Xen_Instance* method_callable(struct __Instance* self,
         if (!Xen_Map_Push_Pair(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 (Xen_Map_Pair){default_name, default_value})) {
-          run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
           return NULL;
         }
       }
@@ -166,16 +155,12 @@ static Xen_Instance* method_callable(struct __Instance* self,
     if (!Xen_VM_Except_Active() ||
         strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
-      run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
       return NULL;
     }
     (*xen_globals->vm)->except.active = 0;
     for (Xen_ssize_t i = 0; i < function->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
-      if (!Xen_Map_Has(
-              (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
-              name)) {
-        run_context_stack_pop_top(&(*xen_globals->vm)->vm_ctx_stack);
+      if (!Xen_Map_Has((Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr, name)) {
         return NULL;
       }
     }
@@ -185,10 +170,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
     if (!ret) {
       return NULL;
     }
-    vm_stack_push((struct vm_Stack*)((RunContext_ptr)run_context_stack_peek_top(
-                                         &(*xen_globals->vm)->vm_ctx_stack))
-                      ->ctx_stack->ptr,
-                  ret);
+    vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, ret);
   }
   return nil;
 }

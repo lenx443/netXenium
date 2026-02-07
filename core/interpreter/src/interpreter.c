@@ -6,9 +6,7 @@
 #include "instance.h"
 #include "interpreter.h"
 #include "run_ctx.h"
-#include "run_ctx_stack.h"
 #include "vm.h"
-#include "vm_def.h"
 #include "vm_run.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
@@ -33,10 +31,7 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content, ui
   if (!ctx_inst) {
     return NULL;
   }
-  if (!run_context_stack_push(&(*xen_globals->vm)->vm_ctx_stack, ctx_inst)) {
-    return NULL;
-  }
-  Xen_Instance* retval = vm_run_top();
+  Xen_Instance* retval = vm_run(ctx_inst);
   if (Xen_VM_Except_Active()) {
     Xen_VM_Except_Backtrace_Show();
     return NULL;

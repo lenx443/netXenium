@@ -235,7 +235,6 @@ set(SOURCES
   # Implementaciones de los codigos
   # fuente de las listas enlazadas
   # de la maquina virtual
-  core/virtual_machine/dynamic/lists/src/run_ctx_stack.c
   core/virtual_machine/dynamic/lists/src/vm_catch_stack.c
 
   # Codigo de Instancias

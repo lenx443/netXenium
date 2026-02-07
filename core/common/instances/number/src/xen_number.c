@@ -1865,27 +1865,57 @@ Xen_Instance* Xen_Number_BOr(Xen_Instance* a_inst, Xen_Instance* b_inst) {
 }
 
 Xen_Instance* Xen_Number_BNot(Xen_Instance* n_inst) {
-  if (!n_inst)
-    return NULL;
+    if (!n_inst) return NULL;
 
-  Xen_Number* n = (Xen_Number*)n_inst;
+    Xen_Number* n = (Xen_Number*)n_inst;
 
-  if (n->scale > 0)
-    return NULL;
+    if (n->scale > 0) return NULL;
 
-  Xen_Instance* one = Xen_Number_From_Int(1);
+    size_t bits = n->size * 32;
+    if (bits == 0) bits = 1;
 
-  Xen_Number* r = (Xen_Number*)Xen_Number_Add((Xen_Instance*)n, one);
+    size_t limbs = n->size;
 
-  if (n->sign == 1) {
-    r->sign = -1;
-  } else if (n->sign == -1) {
+    Xen_Number* r =
+        (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+    r->digits = Xen_ZAlloc(limbs, sizeof(uint32_t));
+    r->size = limbs;
     r->sign = 1;
-  } else {
-    return NULL;
-  }
 
-  return (Xen_Instance*)r;
+    if (n->sign >= 0) {
+        for (size_t i = 0; i < limbs; i++) {
+            r->digits[i] = (i < n->size) ? n->digits[i] : 0;
+        }
+    } else {
+        uint64_t carry = 1;
+        for (size_t i = 0; i < limbs; i++) {
+            uint32_t v = (i < n->size) ? n->digits[i] : 0;
+            r->digits[i] = ~v + carry;
+            carry = (r->digits[i] == 0) ? 1 : 0;
+        }
+    }
+
+    for (size_t i = 0; i < limbs; i++) {
+        r->digits[i] = ~r->digits[i];
+    }
+
+    uint32_t msb_mask = 1u << ((bits - 1) % 32);
+    if (r->digits[limbs - 1] & msb_mask) {
+        uint64_t carry = 1;
+        for (size_t i = 0; i < limbs; i++) {
+            r->digits[i] = ~r->digits[i] + carry;
+            carry = (r->digits[i] == 0) ? 1 : 0;
+        }
+        r->sign = -1;
+    } else {
+        r->sign = 1;
+    }
+
+    r->scale = 0;
+    r->size = limbs;
+
+    Xen_Number_Normalize(r);
+    return (Xen_Instance*)r;
 }
 
 Xen_Instance* Xen_Number_SHL(Xen_Instance* n_inst, Xen_uint64_t nbits) {
