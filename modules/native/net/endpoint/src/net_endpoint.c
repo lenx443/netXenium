@@ -1,6 +1,5 @@
 #include "net_endpoint.h"
 #include "net_ip.h"
-#include "netxenium/netXenium.h"
 #include <string.h>
 
 static Xen_bool_t parse_u16(Xen_c_string_t s, Xen_uint16_t* out) {
@@ -185,7 +184,7 @@ static Xen_Instance* endpoint_tuple(Xen_Instance* self, Xen_Instance* args,
   }
   Xen_Instance* ip = Xen_String_From_CString(ip_str);
   Xen_Dealloc(ip_str);
-  Xen_Instance* port = Xen_Number_From_Int(endpoint->port);
+  Xen_Instance* port = Xen_Number_From_Int(ntohs(endpoint->port));
   Xen_Instance* tuple = Xen_Tuple_From_Array(2, (Xen_Instance*[]){ip, port});
   return tuple;
 }

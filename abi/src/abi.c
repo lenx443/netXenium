@@ -3,12 +3,16 @@
 #include <stdio.h>
 
 #include "implement.h"
-#include "netxenium/netXenium.h"
 #include "netxenium/xen_boolean.h"
 #include "xen_alloc.h"
 #include "xen_life.h"
 #include "xen_module_types.h"
 #include "xen_typedefs.h"
+
+struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t, Xen_Native_Func,
+                                         struct Xen_Module_Function*,
+                                         Xen_ImplementStruct**);
+void Xen_Debug_Print(Xen_c_string_t, ...);
 
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t name,
                                          Xen_Native_Func init,

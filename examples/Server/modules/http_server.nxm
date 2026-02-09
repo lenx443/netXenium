@@ -1,5 +1,6 @@
 var Socket = load("sockets").Socket
 var http_packet = load("http_packet")
+var net = load("net")
 
 implement $HTTPServer => {
   $__create => {
@@ -10,12 +11,12 @@ implement $HTTPServer => {
     $__routes = routes
   }
 
-  $start => (ip="0.0.0.0", port=8080) {
-    local sock = Socket()
+  $start => (endpoint=":8080", debug=false) {
+    local endp = net.Endpoint(endpoint)
+    local sock = net.TCPServer(endp)
     sock.setsockopt(1, 2, (1).u32(false))
-    sock.bind((ip, port))
-    sock.listen()
     sock.set_nonblocking()
+    if debug => println("running at $:$" & endp.tuple())
     local response
     while true => {
       try => {
@@ -23,8 +24,9 @@ implement $HTTPServer => {
         local request = http_packet.HTTPRequest.unpack(
           client.recv()
         )
-        if ?? == $__routes or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {
-          if ?? != $__routes and $__routes has request.method and  $__routes[request.method] has '_' => {
+        if debug => println(request.method, " ", request.path)
+        if $__routes is ?? or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {
+          if (not $__routes is ??) and $__routes has request.method and  $__routes[request.method] has '_' => {
             response = $__routes[request.method]['_'](request)
           } else => {
             response = http_packet.HTTPResponse(

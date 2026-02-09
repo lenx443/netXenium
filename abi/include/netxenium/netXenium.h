@@ -24,6 +24,8 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+#include "xen_life.h"
+#include "operators.h"
 
 #define Xen_NULL ((void*)0)
 
@@ -48,6 +50,5 @@ struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t, Xen_Native_Func,
                                          struct Xen_Module_Function*,
                                          Xen_ImplementStruct**);
 void Xen_Debug_Print(Xen_c_string_t, ...);
-void Xen_GetReady(void*);
 
 #endif

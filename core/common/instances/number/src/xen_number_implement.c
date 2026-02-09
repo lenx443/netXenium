@@ -342,7 +342,7 @@ static Xen_Instance* number_opr_bit_and(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
-  Xen_Instance* result = Xen_Number_BAnd(self, num);
+  Xen_Instance* result = Xen_Number_BitOp(self, num, Xen_BOP_AND);
   if (!result) {
     return NULL;
   }
@@ -358,7 +358,7 @@ static Xen_Instance* number_opr_bit_xor(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
-  Xen_Instance* result = Xen_Number_BXor(self, num);
+  Xen_Instance* result = Xen_Number_BitOp(self, num, Xen_BOP_XOR);
   if (!result) {
     return NULL;
   }
@@ -374,7 +374,7 @@ static Xen_Instance* number_opr_bit_or(Xen_Instance* self, Xen_Instance* args,
     return NULL;
 
   Xen_Instance* num = Xen_Tuple_Get_Index(args, 0);
-  Xen_Instance* result = Xen_Number_BOr(self, num);
+  Xen_Instance* result = Xen_Number_BitOp(self, num, Xen_BOP_OR);
   if (!result) {
     return NULL;
   }

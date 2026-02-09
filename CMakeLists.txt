@@ -118,6 +118,7 @@ set(SOURCES
   core/common/src/operators.c
   core/common/src/callable.c
   core/common/src/attrs.c
+  core/common/src/xen_cbuffer.c
 
   # Implementacion del tipo `Basic`
   core/common/instances/basic/src/basic.c

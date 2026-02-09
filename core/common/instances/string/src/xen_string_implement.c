@@ -14,7 +14,9 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_bytes.h"
+#include "xen_cbuffer.h"
 #include "xen_cstrings.h"
+#include "xen_except_instance.h"
 #include "xen_function.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -216,6 +218,53 @@ static Xen_Instance* string_opr_not(Xen_Instance* self, Xen_Instance* args,
     return Xen_False;
   }
   return Xen_True;
+}
+
+static Xen_Instance* string_opr_band(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_String* string = (Xen_String*)self;
+  Xen_Instance *values = Xen_Tuple_Get_Index(args, 0);
+  Xen_CBuffer* cbuf = Xen_CBuffer_New();
+  Xen_Instance *it = Xen_Attr_Iter(values);
+  if (!it) {
+    return NULL;
+  }
+  Xen_IGC_Push(it);
+  Xen_Instance *current = NULL;
+  Xen_bool_t it_end = 0;
+  for (Xen_size_t i = 0; i < string->__size; i++) {
+    if (string->characters[i] == '$') {
+      if (i < string->__size - 1 && string->characters[i + 1] == '$') {
+        Xen_CBuffer_Append_Char(cbuf, '$');
+        i++;
+        continue;
+      }
+      current = Xen_Attr_Next(it);
+      if (!current) {
+        if (!Xen_VM_Except_Active() || strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type, "RangeEnd") != 0) {
+          Xen_IGC_Pop();
+          return NULL;
+        }
+        (*xen_globals->vm)->except.active = 0;
+        it_end = 1;
+      }
+      if (it_end) {
+        Xen_CBuffer_Append_Char(cbuf, '$');
+      } else {
+        Xen_Instance* str = Xen_Attr_String(current);
+        Xen_CBuffer_Append_CStr(cbuf, Xen_String_As_CString(str));
+      }
+    } else {
+      Xen_CBuffer_Append_Char(cbuf, string->characters[i]);
+    }
+  }
+  Xen_IGC_Pop();
+  Xen_Instance* rsult = Xen_CBuffer_As_String(cbuf);
+  Xen_CBuffer_Free(cbuf);
+  return rsult;
 }
 
 static Xen_Instance* string_prop_upper(Xen_Instance* self, Xen_Instance* args,
@@ -436,6 +485,7 @@ int Xen_String_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__mul", string_opr_mul, nil) ||
       !Xen_VM_Store_Native_Function(props, "__boolean", string_boolean, nil) ||
       !Xen_VM_Store_Native_Function(props, "__not", string_opr_not, nil) ||
+      !Xen_VM_Store_Native_Function(props, "__band", string_opr_band, nil) ||
       !Xen_VM_Store_Native_Function(props, "upper", string_prop_upper, nil) ||
       !Xen_VM_Store_Native_Function(props, "lower", string_prop_lower, nil) ||
       !Xen_VM_Store_Native_Function(props, "char_code", string_char_code,

@@ -435,6 +435,19 @@ Xen_Instance* parser_map(Parser* p) {
     if (!Xen_AST_Node_Push_Child(element_head, expr)) {
       return NULL;
     }
+  } else if (p->token.tkn_type == TKN_BLOCK) {
+    skip_newline(p);
+    Xen_Instance* expr_node = parser_function(p);
+    if (!expr_node) {
+      return NULL;
+    }
+    Xen_Instance* expr = Xen_AST_Node_Wrap(expr_node, "Expr");
+    if (!expr) {
+      return NULL;
+    }
+    if (!Xen_AST_Node_Push_Child(element_head, expr)) {
+      return NULL;
+    }
   }
   skip_newline(p);
   if (!Xen_AST_Node_Push_Child(map, element_head)) {
@@ -491,7 +504,21 @@ Xen_Instance* parser_map(Parser* p) {
       if (!Xen_AST_Node_Push_Child(element, expr)) {
         return NULL;
       }
+    }  else if (p->token.tkn_type == TKN_BLOCK) {
+      skip_newline(p);
+      Xen_Instance* expr_node = parser_function(p);
+      if (!expr_node) {
+        return NULL;
+      }
+      Xen_Instance* expr = Xen_AST_Node_Wrap(expr_node, "Expr");
+      if (!expr) {
+        return NULL;
+      }
+      if (!Xen_AST_Node_Push_Child(element, expr)) {
+        return NULL;
+      }
     }
+
     skip_newline(p);
     if (!Xen_AST_Node_Push_Child(map, element)) {
       return NULL;

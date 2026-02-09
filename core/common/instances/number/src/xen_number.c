@@ -1764,10 +1764,6 @@ Xen_Instance* Xen_Number_Sub(Xen_Instance* a_inst, Xen_Instance* b_inst) {
   return (Xen_Instance*)result;
 }
 
-static inline uint32_t sign_fill(Xen_Number* n) {
-  return n->sign == -1 ? UINT32_MAX : 0;
-}
-
 static inline void bnormalize(Xen_Number* x) {
   uint32_t fill = (x->sign == -1) ? UINT32_MAX : 0;
   while (x->size > 1 && x->digits[x->size - 1] == fill) {
@@ -1783,83 +1779,57 @@ static inline void bnormalize(Xen_Number* x) {
   }
 }
 
-Xen_Instance* Xen_Number_BAnd(Xen_Instance* a_inst, Xen_Instance* b_inst) {
-  if (!a_inst || !b_inst)
-    return NULL;
-
-  Xen_Number* a = (Xen_Number*)a_inst;
-  Xen_Number* b = (Xen_Number*)b_inst;
-
-  if (a->scale > 0 || b->scale > 0) {
-    return NULL;
-  }
-
-  Xen_size_t size = a->size < b->size ? b->size : a->size;
-
-  Xen_Number* r =
-      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
-  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
-  r->size = size;
-
-  for (Xen_size_t i = 0; i < size; i++) {
-    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
-    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
-    r->digits[i] = wa & wb;
-  }
-  bnormalize(r);
-  return (Xen_Instance*)r;
+static inline uint32_t get_word(const Xen_Number* n, Xen_size_t i) {
+  if (i < n->size)
+    return n->digits[i];
+  return (n->sign == -1) ? UINT32_MAX : 0;
 }
 
-Xen_Instance* Xen_Number_BXor(Xen_Instance* a_inst, Xen_Instance* b_inst) {
+Xen_Instance* Xen_Number_BitOp(Xen_Instance* a_inst, Xen_Instance* b_inst, Xen_BitOp op) {
   if (!a_inst || !b_inst)
     return NULL;
 
   Xen_Number* a = (Xen_Number*)a_inst;
   Xen_Number* b = (Xen_Number*)b_inst;
 
-  if (a->scale > 0 || b->scale > 0) {
+  if (a->scale > 0 || b->scale > 0)
     return NULL;
-  }
 
-  Xen_size_t size = a->size < b->size ? b->size : a->size;
+  Xen_size_t size =
+    (a->size > b->size ? a->size : b->size) + 1;
 
   Xen_Number* r =
-      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
+    (Xen_Number*)__instance_new(
+      xen_globals->implements->number, nil, nil, 0
+    );
+
   r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
   r->size = size;
 
-  for (Xen_size_t i = 0; i < size; i++) {
-    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
-    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
-    r->digits[i] = wa ^ wb;
-  }
-  bnormalize(r);
-  return (Xen_Instance*)r;
-}
-
-Xen_Instance* Xen_Number_BOr(Xen_Instance* a_inst, Xen_Instance* b_inst) {
-  if (!a_inst || !b_inst)
-    return NULL;
-
-  Xen_Number* a = (Xen_Number*)a_inst;
-  Xen_Number* b = (Xen_Number*)b_inst;
-
-  if (a->scale > 0 || b->scale > 0) {
-    return NULL;
-  }
-
-  Xen_size_t size = a->size < b->size ? b->size : a->size;
-
-  Xen_Number* r =
-      (Xen_Number*)__instance_new(xen_globals->implements->number, nil, nil, 0);
-  r->digits = Xen_ZAlloc(size, sizeof(uint32_t));
-  r->size = size;
+  uint32_t carry_a = 1;
+  uint32_t carry_b = 1;
 
   for (Xen_size_t i = 0; i < size; i++) {
-    int32_t wa = (i < a->size) ? a->digits[i] : sign_fill(a);
-    int32_t wb = (i < b->size) ? b->digits[i] : sign_fill(b);
-    r->digits[i] = wa | wb;
+    uint32_t wa = get_word(a, i);
+    uint32_t wb = get_word(b, i);
+
+    if (a->sign == -1) {
+      wa = ~wa + carry_a;
+      carry_a = (wa == 0);
+    }
+
+    if (b->sign == -1) {
+      wb = ~wb + carry_b;
+      carry_b = (wb == 0);
+    }
+
+    switch (op) {
+      case Xen_BOP_AND: r->digits[i] = wa & wb; break;
+      case Xen_BOP_OR:  r->digits[i] = wa | wb; break;
+      case Xen_BOP_XOR: r->digits[i] = wa ^ wb; break;
+    }
   }
+
   bnormalize(r);
   return (Xen_Instance*)r;
 }

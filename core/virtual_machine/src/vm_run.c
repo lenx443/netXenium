@@ -1161,6 +1161,7 @@ static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
 Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
   Xen_Instance* __last_current_ctx_value = Xen_VM_Current_Ctx();
   Xen_VM_Set_Current_Ctx(ctx_inst);
+  Xen_IGC_Push(__last_current_ctx_value);
   VM_Run vmr = {NULL, 0};
 #ifndef NDEBUG
   const char* previous_op = "No-OP";
@@ -1199,6 +1200,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
         Xen_VM_Set_Current_Ctx(current_ctx_inst);
       }
       if (Xen_VM_Except_Active()) {
+        Xen_IGC_Pop();
         Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
         return NULL;
       }
@@ -1207,6 +1209,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
       printf("VM Error: opcode '%s'; offset %ld;\n", previous_op,
              previous_offset);
 #endif
+      Xen_IGC_Pop();
       Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
       return NULL;
     }
@@ -1220,6 +1223,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
     previous_offset = ctx->ctx_ip - 1;
 #endif
   }
+  Xen_IGC_Pop();
   Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
   return vmr.retval;
 }

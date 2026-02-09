@@ -6,12 +6,12 @@ var http_server = load("http_server")
 var WEB_PATH = ("./www")
 
 var get_routes = {
-  ['/']-> => (req) {
+  ['/'] => (req) {
     return http_packet.HTTPResponse.from_file(
       WEB_PATH + "/index.html"
     )
   },
-  _-> => (req) {
+  _ => (req) {
     return http_packet.HTTPResponse.from_file(
       WEB_PATH + req.path,
       error=WEB_PATH + "/not_found.html"
@@ -28,7 +28,7 @@ $$__start => (args) {
     println("• Start Server")
     local server = http_server.HTTPServer()
     server.set_routes(methods)
-    server.start()
+    server.start(debug=true)
   } catch "Interrupt" :_ => {
     println("• Stop Server")
   }

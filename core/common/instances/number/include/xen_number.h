@@ -3,6 +3,12 @@
 
 #include "instance.h"
 
+typedef enum {
+  Xen_BOP_AND,
+  Xen_BOP_OR,
+  Xen_BOP_XOR
+} Xen_BitOp;
+
 Xen_bool_t Xen_IsNumber(Xen_Instance*);
 
 Xen_Instance* Xen_Number_Trunc(Xen_Instance*);
@@ -44,9 +50,7 @@ Xen_Instance* Xen_Number_Mod(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Pow(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Add(Xen_Instance*, Xen_Instance*);
 Xen_Instance* Xen_Number_Sub(Xen_Instance*, Xen_Instance*);
-Xen_Instance* Xen_Number_BAnd(Xen_Instance*, Xen_Instance*);
-Xen_Instance* Xen_Number_BXor(Xen_Instance*, Xen_Instance*);
-Xen_Instance* Xen_Number_BOr(Xen_Instance*, Xen_Instance*);
+Xen_Instance* Xen_Number_BitOp(Xen_Instance*, Xen_Instance*, Xen_BitOp);
 Xen_Instance* Xen_Number_BNot(Xen_Instance*);
 Xen_Instance* Xen_Number_SHL(Xen_Instance*, Xen_uint64_t);
 Xen_Instance* Xen_Number_SHR(Xen_Instance*, Xen_uint64_t);

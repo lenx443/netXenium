@@ -191,6 +191,19 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
   return Xen_Load(mod_name);
 }
 
+static Xen_Instance* fn_get_props(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+  if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
+    return (Xen_Instance*)((Xen_Instance_Mapped*)inst)->__map->ptr;
+  }
+  return nil;
+}
+
 static Xen_Module_Function_Table core_functions = {
     {"exit", fn_exit},
     {"echo", fn_echo},
@@ -201,6 +214,7 @@ static Xen_Module_Function_Table core_functions = {
     {"id", fn_id},
     {"impl", fn_impl},
     {"load", fn_load},
+    {"get_props", fn_get_props},
     {NULL, NULL},
 };
 
