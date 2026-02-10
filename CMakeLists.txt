@@ -31,7 +31,7 @@ if(SHELL_BASIC)
   add_compile_options(-DSHELL_BASIC)
 endif()
 
-set(NETXENIUM_DEAFULT_INCLUDES
+set(NETXENIUM_DEFAULT_INCLUDES
   core/garbage_collector/include/
   core/garbage_collector/types/header/
   core/garbage_collector/types/include/
@@ -78,8 +78,8 @@ set(NETXENIUM_DEAFULT_INCLUDES
   core/interpreter/compiler/dynamic/vectors/include/
   core/virtual_machine/include/
   core/virtual_machine/types/include/
-  core/virtual_machine/instances/include/
-  core/virtual_machine/instances/types/header/
+  core/virtual_machine/instances/frame/include/
+  core/virtual_machine/instances/frame/types/header/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
@@ -167,7 +167,7 @@ set(SOURCES
   core/common/instances/tuple/tuple_iterator/src/xen_tuple_iterator_implement.c
   core/common/instances/tuple/tuple_iterator/src/xen_tuple_iterator.c
 
-  # implementacion del tipo `method`
+  # implementacion del tipo `Method`
   core/common/instances/method/src/xen_method_implement.c
   core/common/instances/method/src/xen_method.c
 
@@ -223,8 +223,8 @@ set(SOURCES
   core/virtual_machine/types/src/vm_scope.c
 
   # Instancias de la maquina virtual
-  core/virtual_machine/instances/src/run_ctx.c
-  core/virtual_machine/instances/src/run_frame.c
+  core/virtual_machine/instances/frame/src/run_ctx.c
+  core/virtual_machine/instances/frame/src/run_frame.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de la
@@ -277,7 +277,7 @@ add_library(libntxenium
   abi/src/abi.c
   ${SOURCES}
 )
-target_include_directories(libntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES} ${NETXENIUM_ABI_INCLUDE_PATH})
+target_include_directories(libntxenium PRIVATE ${NETXENIUM_DEFAULT_INCLUDES} ${NETXENIUM_ABI_INCLUDE_PATH})
 
 set_target_properties(libntxenium PROPERTIES OUTPUT_NAME "ntxenium")
 
@@ -291,7 +291,7 @@ add_executable(ntxenium
   ${SOURCES}
 )
 
-target_include_directories(ntxenium PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
+target_include_directories(ntxenium PRIVATE ${NETXENIUM_DEFAULT_INCLUDES})
 
 target_compile_options(ntxenium PRIVATE -DXEN_CORE)
 
@@ -315,7 +315,7 @@ add_executable(tester
   tests/test_main.c
 )
 
-target_include_directories(tester PRIVATE ${NETXENIUM_DEAFULT_INCLUDES})
+target_include_directories(tester PRIVATE ${NETXENIUM_DEFAULT_INCLUDES})
 
 target_compile_options(tester PRIVATE -DXEN_TEST)
 
