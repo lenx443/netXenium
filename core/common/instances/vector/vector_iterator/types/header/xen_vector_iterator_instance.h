@@ -5,7 +5,7 @@
 #include "xen_typedefs.h"
 
 struct Xen_Vector_Iterator_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle* vector;
   Xen_ssize_t index;
 };

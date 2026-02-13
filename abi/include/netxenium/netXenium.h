@@ -3,6 +3,8 @@
 
 #include "attrs.h"
 #include "basic_templates.h"
+#include "compiler.h"
+#include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
@@ -26,6 +28,8 @@
 #include "xen_vector.h"
 #include "xen_life.h"
 #include "operators.h"
+#include "interpreter.h"
+#include "vm_scope.h"
 
 #define Xen_NULL ((void*)0)
 

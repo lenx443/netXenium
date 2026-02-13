@@ -9,7 +9,7 @@
 #define NET_IPV6 2
 
 typedef struct {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_uint8_t ip_type;
   union {
     struct in_addr ipv4;

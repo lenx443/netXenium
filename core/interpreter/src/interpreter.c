@@ -41,3 +41,7 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content, ui
   }
   return retval;
 }
+
+Xen_Instance* Xen_Eval(Xen_c_string_t content) {
+  return interpreter("<eval>", content, Xen_COMPILE_EXPR, NULL, NULL, NULL);
+}

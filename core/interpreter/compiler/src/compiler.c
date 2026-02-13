@@ -32,7 +32,8 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-#define COMPILE_FLAG_FUNCTION_INLINE (1 << 0)
+#define COMPILE_FLAG_FUNCTION_INLINE  (1 << 0)
+#define COMPILE_FLAG_EXPR             (1 << 1)
 
 typedef struct {
   block_list_ptr b_list;
@@ -307,6 +308,19 @@ int compile_program(Compiler* c, Xen_Instance* node) {
     if (!emit(RETURN_BUILD_IMPLEMENT, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
+  } else if (COMPILE_MODE == Xen_COMPILE_EXPR) {
+    c->flags |= COMPILE_FLAG_EXPR;
+    Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
+    if (!stmt_list) {
+      return 0;
+    }
+    if (Xen_AST_Node_Name_Cmp(stmt_list, "StatementList") == 0) {
+      if (!compile_statement_list(c, stmt_list)) {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
   } else {
     if (COMPILE_MODE != Xen_COMPILE_REPL) emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
     Xen_Instance* stmt_list = Xen_AST_Node_Get_Child(node, 0);
@@ -343,7 +357,15 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
   if (!stmt) {
     return 0;
   }
-  if (COMPILE_MODE == Xen_COMPILE_IMPLEMENT) {
+  if (c->flags & COMPILE_FLAG_EXPR) {
+    if (Xen_AST_Node_Name_Cmp(stmt, "Expr") == 0) {
+      if (!compile_expr_statement(c, stmt)) {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  } else if (COMPILE_MODE == Xen_COMPILE_IMPLEMENT) {
     if (Xen_AST_Node_Name_Cmp(stmt, "Assignment") == 0) {
       if (!compile_assignment(c, stmt)) {
         return 0;
@@ -422,7 +444,7 @@ int compile_expr_statement(Compiler* c, Xen_Instance* node) {
       return 0;
     }
   }
-  if (c->flags & COMPILE_FLAG_FUNCTION_INLINE) {
+  if ((c->flags & COMPILE_FLAG_FUNCTION_INLINE) || (c->flags & COMPILE_FLAG_EXPR)) {
     if (!emit(RETURN_TOP, 0, Xen_AST_Node_STA(node))) {
       return 0;
     }
@@ -1603,6 +1625,14 @@ int compile_expr_binary(Compiler* c, Xen_Instance* node) {
 }
 
 int compile_expr_function(Compiler* c, Xen_Instance* node) {
+  int type = 0;
+  if (Xen_AST_Node_Value_Cmp(node, "fn") == 0) {
+    type = 1;
+  } else if (Xen_AST_Node_Value_Cmp(node, "async") == 0) {
+    type = 2;
+  } else {
+    return 0;
+  }
   Xen_size_t roots = 0;
   Xen_Instance* args_positionals_requireds_vector = Xen_Vector_New();
   if (!args_positionals_requireds_vector) {
@@ -1676,9 +1706,19 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    if (!emit(MAKE_FUNCTION_NARGS, co_code_idx, Xen_AST_Node_STA(node))) {
-      Xen_IGC_XPOP(roots);
-      return 0;
+    switch (type) {
+    case 1:
+      if (!emit(MAKE_FUNCTION_NARGS, co_code_idx, Xen_AST_Node_STA(node))) {
+        Xen_IGC_XPOP(roots);
+        return 0;
+      }
+      break;
+    case 2:
+      if (!emit(MAKE_FUNCTION_ASYNC_NARGS, co_code_idx, Xen_AST_Node_STA(node))) {
+        Xen_IGC_XPOP(roots);
+        return 0;
+      }
+      break;
     }
   } else {
     Xen_Instance* args_positionals_requireds =
@@ -1717,9 +1757,19 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    if (!emit(MAKE_FUNCTION, co_code_idx, Xen_AST_Node_STA(node))) {
-      Xen_IGC_XPOP(roots);
-      return 0;
+    switch (type) {
+    case 1:
+      if (!emit(MAKE_FUNCTION, co_code_idx, Xen_AST_Node_STA(node))) {
+        Xen_IGC_XPOP(roots);
+        return 0;
+      }
+      break;
+    case 2:
+      if (!emit(MAKE_FUNCTION_ASYNC, co_code_idx, Xen_AST_Node_STA(node))) {
+        Xen_IGC_XPOP(roots);
+        return 0;
+      }
+      break;
     }
   }
   Xen_IGC_XPOP(roots);

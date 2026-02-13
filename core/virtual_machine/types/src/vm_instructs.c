@@ -25,6 +25,8 @@ static STACK_EFFECT(make_vector_from_iterable_stack_effect, 0)
 static STACK_EFFECT(make_map_stack_effect, -oparg * 2 + 1)
 static STACK_EFFECT(make_function_stack_effect, -1)
 static STACK_EFFECT(make_function_nargs_stack_effect, 1)
+static STACK_EFFECT(make_function_async_stack_effect, -1)
+static STACK_EFFECT(make_function_async_nargs_stack_effect, 1)
 static STACK_EFFECT(call_stack_effect, -oparg)
 static STACK_EFFECT(call_kw_stack_effect, -oparg - 1)
 static STACK_EFFECT(binaryop_stack_effect, -1)
@@ -79,6 +81,8 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [MAKE_MAP] =                  {"MAKE_MAP",                  make_map_stack_effect,                  INSTRUCT_FLAG_ARG},
     [MAKE_FUNCTION] =             {"MAKE_FUNCTION",             make_function_stack_effect,             INSTRUCT_FLAG_CO_CALLABLE},
     [MAKE_FUNCTION_NARGS] =       {"MAKE_FUNCTION_NARGS",       make_function_nargs_stack_effect,       INSTRUCT_FLAG_CO_CALLABLE},
+    [MAKE_FUNCTION_ASYNC] =       {"MAKE_FUNCTION_ASYNC",       make_function_async_stack_effect,       INSTRUCT_FLAG_CO_CALLABLE},
+    [MAKE_FUNCTION_ASYNC_NARGS] = {"MAKE_FUNCTION_ASYNC_NARGS", make_function_async_nargs_stack_effect, INSTRUCT_FLAG_CO_CALLABLE},
     [CALL] =                      {"CALL",                      call_stack_effect,                      INSTRUCT_FLAG_ARG},
     [CALL_KW] =                   {"CALL_KW",                   call_kw_stack_effect,                   INSTRUCT_FLAG_ARG},
     [BINARYOP] =                  {"BINARYOP",                  binaryop_stack_effect,                  INSTRUCT_FLAG_ARG},

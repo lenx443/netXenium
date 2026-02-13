@@ -2,6 +2,7 @@
 #include "attrs.h"
 #include "basic.h"
 #include "callable.h"
+#include "coroutine.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
@@ -47,6 +48,7 @@ static Xen_Instance* function_alloc(struct __Instance* self, Xen_Instance* args,
     return NULL;
   }
   inst->fun_type = 0;
+  inst->fun_async = 0;
   inst->fun_code = Xen_GCHandle_New((Xen_GCHeader*)inst);
   inst->fun_native = NULL;
   inst->closure =
@@ -81,7 +83,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
         Xen_VM_Current_Ctx(),
         (Xen_Instance*)inst->closure->ptr, nil, args, kwargs, NULL, NULL, NULL,
         (CALLABLE_ptr)inst->fun_code->ptr);
-    Xen_VM_Set_Current_Ctx(new_ctx);
+    if (!inst->fun_async) Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)inst->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
@@ -160,6 +162,10 @@ static Xen_Instance* function_callable(struct __Instance* self,
               name)) {
         return NULL;
       }
+    }
+    if (inst->fun_async) {
+      Xen_Instance* coro = Xen_Coroutine_New(new_ctx);
+      vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
   } else if (inst->fun_type == 2) {
     Xen_Instance* ret = inst->fun_native(nil, args, kwargs);

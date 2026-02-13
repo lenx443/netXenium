@@ -5,7 +5,7 @@
 #include "instance.h"
 
 struct Xen_Tuple_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle** instances;
 };
 

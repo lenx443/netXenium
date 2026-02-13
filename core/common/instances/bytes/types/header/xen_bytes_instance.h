@@ -5,7 +5,7 @@
 #include "xen_typedefs.h"
 
 struct Xen_Bytes_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_uint8_t* bytes;
   Xen_size_t capacity;
 };

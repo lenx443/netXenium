@@ -1,6 +1,7 @@
 #include "xen_method.h"
 #include "attrs.h"
 #include "callable.h"
+#include "coroutine.h"
 #include "instance.h"
 #include "run_ctx.h"
 #include "vm.h"
@@ -135,6 +136,11 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
               name)) {
         return NULL;
       }
+    }
+    if (fun->fun_async) {
+      ret = Xen_Coroutine_New(fun_ctx);
+    } else {
+      ret = vm_run(fun_ctx);
     }
     ret = vm_run(fun_ctx);
     if (!ret) {

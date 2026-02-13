@@ -80,6 +80,8 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/virtual_machine/types/include/
   core/virtual_machine/instances/frame/include/
   core/virtual_machine/instances/frame/types/header/
+  core/virtual_machine/instances/coroutine/include
+  core/virtual_machine/instances/coroutine/types/header/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/instances/include
@@ -222,9 +224,13 @@ set(SOURCES
   core/virtual_machine/types/src/vm_stack.c
   core/virtual_machine/types/src/vm_scope.c
 
-  # Instancias de la maquina virtual
+  # Implementacion del tipo `RunFrame`
   core/virtual_machine/instances/frame/src/run_ctx.c
   core/virtual_machine/instances/frame/src/run_frame.c
+
+  # Implementacion del tipo `RunFrame`
+  core/virtual_machine/instances/coroutine/src/coroutine_implement.c
+  core/virtual_machine/instances/coroutine/src/coroutine.c
 
   # Implementaciones de los codigos
   # fuente de los vectores de la

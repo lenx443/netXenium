@@ -42,16 +42,13 @@ typedef struct {
   Xen_Function_ArgSpec* spec;
 } Xen_Function_ArgBinding;
 
-Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance*, Xen_Instance*,
-                                                Xen_Function_ArgSpec*);
+Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance*, Xen_Instance*, Xen_Function_ArgSpec*);
 void Xen_Function_ArgBinding_Free(Xen_Function_ArgBinding*);
-Xen_Function_ArgBound* Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding*,
-                                                      Xen_c_string_t);
+Xen_Function_ArgBound* Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding*, Xen_c_string_t);
 Xen_bool_t Xen_Function_ArgEmpty(Xen_Instance*, Xen_Instance*);
 
 Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func, Xen_Instance*);
-Xen_INSTANCE* Xen_Function_From_Callable(CALLABLE_ptr, Xen_Instance*,
-                                         Xen_Instance*, Xen_Instance*);
+Xen_INSTANCE* Xen_Function_From_Callable(CALLABLE_ptr, Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_bool_t);
 Xen_Instance* Xen_Function_Call(Xen_Instance*, Xen_Instance*, Xen_Instance*);
 
 #endif

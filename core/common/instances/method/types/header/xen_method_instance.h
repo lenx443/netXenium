@@ -4,7 +4,7 @@
 #include "instance.h"
 
 struct Xen_Method_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle* function;
   Xen_GCHandle* self;
 };

@@ -9,7 +9,7 @@
 #include "vm_catch_stack.h"
 
 struct RunContext {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   struct VM_Catch_Stack* ctx_catch_stack;
   Xen_GCHandle* ctx_closure;
   Xen_GCHandle* ctx_caller;

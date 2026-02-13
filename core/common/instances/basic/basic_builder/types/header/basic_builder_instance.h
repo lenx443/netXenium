@@ -5,7 +5,7 @@
 #include "xen_typedefs.h"
 
 struct Xen_Basic_Builder_Instance {
-  Xen_INSTANCE_MAPPED_HEAD;
+  Xen_INSTANCE_MAPPED_HEAD
   Xen_c_string_t name;
   Xen_GCHandle* base;
 };

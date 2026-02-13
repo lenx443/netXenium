@@ -7,8 +7,9 @@
 #include "xen_typedefs.h"
 
 struct Xen_Function_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_uint8_t fun_type;
+  Xen_bool_t fun_async;
   Xen_GCHandle* fun_code;
   Xen_Native_Func fun_native;
   Xen_GCHandle* closure;

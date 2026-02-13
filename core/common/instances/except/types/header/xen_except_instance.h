@@ -5,7 +5,7 @@
 #include "xen_typedefs.h"
 
 struct Xen_Except_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_c_string_t type;
   Xen_c_string_t message;
 };

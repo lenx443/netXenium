@@ -171,7 +171,7 @@ bool is_factor(Parser* p) {
 
 bool is_list(Parser* p) {
   return p->token.tkn_type == TKN_QUESTION || p->token.tkn_type == TKN_BLOCK ||
-         is_factor(p);
+         p->token.tkn_type == TKN_ASYNC || is_factor(p);
 }
 
 bool is_assigment(Parser* p) {
@@ -978,12 +978,20 @@ Xen_Instance* parser_or(Parser* p) {
 }
 
 Xen_Instance* parser_function(Parser* p) {
-  if (p->token.tkn_type != TKN_BLOCK) {
+  if (p->token.tkn_type != TKN_BLOCK && p->token.tkn_type != TKN_ASYNC) {
     return parser_or(p);
+  }
+  Xen_c_string_t fn_type = "fn";
+  if (p->token.tkn_type == TKN_ASYNC) {
+    fn_type = "async";
+    parser_next(p);
+  }
+  if (p->token.tkn_type != TKN_BLOCK) {
+    return NULL;
   }
   parser_next(p);
   skip_newline(p);
-  Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", NULL, p->token.sta);
+  Xen_Instance* func = Xen_AST_Node_New("FunctionExpr", fn_type, p->token.sta);
   if (!func) {
     return NULL;
   }

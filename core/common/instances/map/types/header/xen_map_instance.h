@@ -13,7 +13,7 @@ struct __Map_Node {
 };
 
 struct Xen_Map_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle* map_keys;
   struct __Map_Node** map_buckets;
   size_t map_capacity;

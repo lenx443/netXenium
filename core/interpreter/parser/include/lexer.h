@@ -19,6 +19,7 @@ typedef enum {
   TKN_NOT,
   TKN_AND,
   TKN_OR,
+  TKN_ASYNC,
   TKN_PROPERTY,
   TKN_STRING,
   TKN_NUMBER,

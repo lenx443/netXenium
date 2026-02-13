@@ -13,7 +13,7 @@
 static Xen_Implement* File_Implement_Pointer = NULL;
 
 typedef struct {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_intptr_t f;
   Xen_bool_t open;
   Xen_uint64_t caps;

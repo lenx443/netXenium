@@ -15,11 +15,11 @@ typedef uint8_t Xen_Instance_Flag;
   struct __Implement* __impl;                                                  \
   Xen_Native_Func __idestroy;                                                  \
   size_t __size;                                                               \
-  Xen_Instance_Flag __flags
+  Xen_Instance_Flag __flags;
 
 #define Xen_INSTANCE_MAPPED_HEAD                                               \
-  Xen_INSTANCE_HEAD;                                                           \
-  Xen_GCHandle* __map
+  Xen_INSTANCE_HEAD                                                           \
+  Xen_GCHandle* __map;
 
 #define Xen_INSTANCE struct __Instance
 
@@ -35,10 +35,10 @@ typedef uint8_t Xen_Instance_Flag;
   (((((struct __Instance*)inst)->__flags) & (flag)) != 0)
 
 Xen_INSTANCE {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
 };
 Xen_INSTANCE_MAPPED {
-  Xen_INSTANCE_MAPPED_HEAD;
+  Xen_INSTANCE_MAPPED_HEAD
 };
 
 Xen_INSTANCE* Xen_Instance_Alloc(struct __Implement*);

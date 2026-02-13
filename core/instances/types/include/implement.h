@@ -10,7 +10,7 @@
 struct __Instance;
 
 struct __Implement {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   char* __impl_name;
   size_t __inst_size;
   Xen_Instance_Flag __inst_default_flags;

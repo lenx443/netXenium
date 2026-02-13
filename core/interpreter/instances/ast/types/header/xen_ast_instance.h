@@ -8,7 +8,7 @@
 #include "source_file.h"
 
 struct Xen_AST_Node_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   const char* name;
   const char* value;
   Xen_Source_Address sta;

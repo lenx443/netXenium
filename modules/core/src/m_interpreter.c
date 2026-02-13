@@ -39,6 +39,19 @@ static Xen_Instance* fn_interpreter(Xen_Instance* self, Xen_Instance* args,
                      mode, NULL, NULL, NULL);
 }
 
+static Xen_Instance* fn_eval(Xen_Instance* self, Xen_Instance* args,
+                                    Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* code = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(code) != xen_globals->implements->string) {
+    return NULL;
+  }
+  return Xen_Eval(Xen_String_As_CString(code));
+}
+
 static Xen_Instance* fn_parse(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -62,6 +75,7 @@ static Xen_Instance* fn_parse(Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Module_Function_Table interpreter_functions = {
     {"interpreter", fn_interpreter},
+    {"eval", fn_eval},
     {"parse", fn_parse},
     {NULL, NULL},
 };

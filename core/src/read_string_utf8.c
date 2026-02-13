@@ -394,14 +394,11 @@ LIST_ptr read_string_utf8(void) {
               string_utf8_strcmp_cstring(cmd, previus_history->command) != 0) {
             HISTORY_struct new_history_line;
             char* cmd_cstring = string_utf8_get(cmd);
-            if (cmd_cstring == NULL) {
-            } else {
-              int cmd_size = Xen_CString_Len(cmd_cstring);
-              strncpy(new_history_line.command, cmd_cstring, cmd_size);
-              new_history_line.command[cmd_size] = '\0';
-              history_push_line(history, new_history_line);
-              Xen_Dealloc(cmd_cstring);
-            }
+            int cmd_size = Xen_CString_Len(cmd_cstring);
+            strncpy(new_history_line.command, cmd_cstring, cmd_size);
+            new_history_line.command[cmd_size] = '\0';
+            history_push_line(history, new_history_line);
+            Xen_Dealloc(cmd_cstring);
           }
         }
         history_position = -1;

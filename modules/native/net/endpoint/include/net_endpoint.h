@@ -4,7 +4,7 @@
 #include "netxenium/netXenium.h"
 
 typedef struct {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle* ip;
   Xen_uint16_t port;
 } EndPoint;

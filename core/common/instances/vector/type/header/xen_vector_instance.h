@@ -7,7 +7,7 @@
 #include "instance.h"
 
 struct Xen_Vector_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   Xen_GCHandle** values;
   size_t capacity;
 };

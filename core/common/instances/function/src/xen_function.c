@@ -1,6 +1,7 @@
 #include "xen_function.h"
 #include "attrs.h"
 #include "callable.h"
+#include "coroutine.h"
 #include "gc_header.h"
 #include "instance.h"
 #include "run_ctx.h"
@@ -188,9 +189,8 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
 }
 
 Xen_INSTANCE*
-Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure,
-                           Xen_Instance* args_names_list,
-                           Xen_Instance* args_default_values_list) {
+Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure, Xen_Instance* args_names_list,
+                           Xen_Instance* args_default_values_list, Xen_bool_t async) {
   if (Xen_SIZE(args_names_list) < Xen_SIZE(args_default_values_list)) {
     return NULL;
   }
@@ -202,6 +202,7 @@ Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure,
   }
   Xen_IGC_XPUSH((Xen_Instance*)fun, roots);
   fun->fun_type = 1;
+  fun->fun_async = async;
   Xen_Instance* args_names = Xen_Map_New();
   if (!args_names) {
     Xen_IGC_XPOP(roots);
@@ -351,7 +352,11 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
         return NULL;
       }
     }
-    ret = vm_run(fun_ctx);
+    if (fun->fun_async) {
+      ret = Xen_Coroutine_New(fun_ctx);
+    } else {
+      ret = vm_run(fun_ctx);
+    }
     if (!ret) {
       return NULL;
     }

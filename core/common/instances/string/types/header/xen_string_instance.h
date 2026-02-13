@@ -6,7 +6,7 @@
 #include "instance.h"
 
 struct Xen_String_Instance {
-  Xen_INSTANCE_MAPPED_HEAD;
+  Xen_INSTANCE_MAPPED_HEAD
   char *characters;
 };
 

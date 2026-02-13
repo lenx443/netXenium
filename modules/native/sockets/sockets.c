@@ -58,7 +58,7 @@ static Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP in) {
 }
 
 typedef struct {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   int f;
   Xen_bool_t open;
   int domain;

@@ -1,5 +1,6 @@
 #include "instance_life.h"
 #include "basic_builder_implement.h"
+#include "coroutine_implement.h"
 #include "run_frame.h"
 #include "xen_ast_implement.h"
 #include "xen_boolean_implement.h"
@@ -64,6 +65,7 @@ void Xen_Instance_GetReady(void) {
   implements.ast = Xen_AST_GetImplement();
   implements.run_frame = Xen_Run_Frame_GetImplement();
   implements.module = Xen_Module_GetImplement();
+  implements.coroutine = Xen_Coroutine_GetImplement();
   xen_globals->implements = &implements;
 }
 

@@ -10,11 +10,11 @@ struct __Implement;
   struct __Implement* __impl;                                                  \
   Xen_Native_Func __idestroy;                                                  \
   Xen_size_t __size;                                                           \
-  Xen_Instance_Flag __flags
+  Xen_Instance_Flag __flags;
 
 #define Xen_INSTANCE_MAPPED_HEAD                                               \
-  Xen_INSTANCE_HEAD;                                                           \
-  struct __Instance* __map
+  Xen_INSTANCE_HEAD                                                           \
+  struct __Instance* __map;
 
 #define XEN_INSTANCE_FLAG_STATIC (1 << 0)
 #define XEN_INSTANCE_FLAG_MAPPED (1 << 1)

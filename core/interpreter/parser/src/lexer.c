@@ -102,6 +102,8 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_AND, sf->sf_content + start, len);
     } else if (strcmp(buffer, "or") == 0) {
       token = Token(lexer, TKN_OR, sf->sf_content + start, len);
+    } else if (strcmp(buffer, "async") == 0) {
+      token = Token(lexer, TKN_ASYNC, sf->sf_content + start, len);
     } else {
       token = Token(lexer, TKN_IDENTIFIER, sf->sf_content + start, len);
     }

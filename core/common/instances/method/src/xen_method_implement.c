@@ -3,6 +3,7 @@
 #include "basic.h"
 #include "basic_templates.h"
 #include "callable.h"
+#include "coroutine.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
@@ -86,7 +87,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
         Xen_VM_Current_Ctx(),
         (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
         args, kwargs, NULL, NULL, NULL, (CALLABLE_ptr)function->fun_code->ptr);
-    Xen_VM_Set_Current_Ctx(new_ctx);
+    if (!function->fun_async) Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)function->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
@@ -163,6 +164,10 @@ static Xen_Instance* method_callable(struct __Instance* self,
       if (!Xen_Map_Has((Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr, name)) {
         return NULL;
       }
+    }
+    if (function->fun_async) {
+      Xen_Instance* coro = Xen_Coroutine_New(new_ctx);
+      vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
   } else if (function->fun_type == 2) {
     Xen_Instance* ret =

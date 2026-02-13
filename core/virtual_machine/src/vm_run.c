@@ -514,7 +514,7 @@ static void op_make_function(VM_Run* vmr, RunContext_ptr ctx,
   Xen_IGC_Push(args_names);
   Xen_IGC_Push(args_deafult_values);
   Xen_Instance* function = Xen_Function_From_Callable(
-      code, (Xen_Instance*)ctx, args_names, args_deafult_values);
+      code, (Xen_Instance*)ctx, args_names, args_deafult_values, 0);
   if (!function) {
     Xen_IGC_XPOP(2);
     Xen_GC_Pop_Root();
@@ -535,7 +535,48 @@ static void op_make_function_nargs(VM_Run* vmr, RunContext_ptr ctx,
                              ->c_callables->ptr),
       oparg);
   Xen_Instance* function =
-      Xen_Function_From_Callable(code, (Xen_Instance*)ctx, nil, nil);
+      Xen_Function_From_Callable(code, (Xen_Instance*)ctx, nil, nil, 0);
+  if (!function) {
+    ERROR;
+  }
+  STACK_PUSH(function);
+}
+
+static void op_make_function_async(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
+  Xen_Instance* args_names = STACK_POP;
+  Xen_Instance* args_deafult_values = STACK_POP;
+  Xen_GC_Push_Root((Xen_GCHeader*)code);
+  Xen_IGC_Push(args_names);
+  Xen_IGC_Push(args_deafult_values);
+  Xen_Instance* function = Xen_Function_From_Callable(
+      code, (Xen_Instance*)ctx, args_names, args_deafult_values, 1);
+  if (!function) {
+    Xen_IGC_XPOP(2);
+    Xen_GC_Pop_Root();
+    ERROR;
+  }
+  Xen_IGC_XPOP(2);
+  STACK_PUSH(function);
+  Xen_GC_Pop_Root();
+}
+
+static void op_make_function_async_nargs(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  CALLABLE_ptr code = callable_vector_get(
+      (CALLABLE_Vector*)(((vm_Consts_ptr)(CALLABLE_Vector*)((CALLABLE_ptr)ctx
+                                                                ->ctx_code->ptr)
+                              ->code.consts->ptr)
+                             ->c_callables->ptr),
+      oparg);
+  Xen_Instance* function =
+      Xen_Function_From_Callable(code, (Xen_Instance*)ctx, nil, nil, 1);
   if (!function) {
     ERROR;
   }
@@ -1106,6 +1147,8 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [MAKE_MAP] =                  op_make_map,
     [MAKE_FUNCTION] =             op_make_function,
     [MAKE_FUNCTION_NARGS] =       op_make_function_nargs,
+    [MAKE_FUNCTION_ASYNC] =       op_make_function_async,
+    [MAKE_FUNCTION_ASYNC_NARGS] = op_make_function_async_nargs,
     [CALL] =                      op_call,
     [CALL_KW] =                   op_call_kw,
     [BINARYOP] =                  op_binaryop,

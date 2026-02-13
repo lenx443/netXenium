@@ -8,7 +8,7 @@
 #include "xen_typedefs.h"
 
 struct Xen_Number_Instance {
-  Xen_INSTANCE_HEAD;
+  Xen_INSTANCE_HEAD
   uint32_t* digits;
   Xen_size_t scale;
   Xen_size_t size;
