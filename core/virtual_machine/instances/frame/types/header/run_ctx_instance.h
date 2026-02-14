@@ -22,6 +22,7 @@ struct RunContext {
   Xen_GCHandle* ctx_instances;
   Xen_GCHandle* ctx_scopes;
   Xen_ulong_t ctx_ip;
+  Xen_uint8_t ctx_flags;
   bool ctx_running;
   bool ctx_error;
 };

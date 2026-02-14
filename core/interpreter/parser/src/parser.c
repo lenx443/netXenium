@@ -987,6 +987,7 @@ Xen_Instance* parser_function(Parser* p) {
     parser_next(p);
   }
   if (p->token.tkn_type != TKN_BLOCK) {
+    Xen_SyntaxError("Invalid block syntax");
     return NULL;
   }
   parser_next(p);

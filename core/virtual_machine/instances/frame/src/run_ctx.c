@@ -92,3 +92,7 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Insta
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
 }
+
+void Xen_Ctx_Enable_End(Xen_Instance*ctx_inst) {
+  ((RunContext_ptr)ctx_inst)->ctx_flags |= RUN_CTX_FLAG_END;
+}

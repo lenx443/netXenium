@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -1082,7 +1083,7 @@ static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
       (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)ctx->ctx_code->ptr)->code.consts->ptr)->c_instances->ptr), oparg);
   RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
   Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
     vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
@@ -1095,7 +1096,7 @@ static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* ret = STACK_POP;
   RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
   Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
     vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
   } else {
     vmr->retval = ret;
@@ -1113,7 +1114,7 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong
   Xen_Map_Push_Pair_Str((Xen_Instance*)ctx->ctx_instances->ptr, (Xen_Map_Pair_Str){builder->name, impl});
   RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
   Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller)) {
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
     vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, impl);
   } else {
     vmr->retval = impl;
@@ -1213,8 +1214,9 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
   bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
   while (!vmr.halt && !program.closed) {
     if (Xen_VM_Except_Active()) {
+      RunContext_ptr previous_context = NULL;
       Xen_Instance* current_ctx_inst = Xen_VM_Current_Ctx();
-      while (current_ctx_inst && Xen_Nil_NEval(current_ctx_inst)) {
+      while (current_ctx_inst && Xen_Nil_NEval(current_ctx_inst) && (previous_context == NULL|| !CTX_GET_FLAG(previous_context, RUN_CTX_FLAG_END))) {
         RunContext_ptr current_context = (RunContext_ptr)current_ctx_inst;
         struct VM_Catch_Stack* current_handler = vm_catch_stack_pop(&current_context->ctx_catch_stack);
         while (current_handler) {
@@ -1239,6 +1241,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
         }
         vm_backtrace_push((*xen_globals->vm)->except.bt, ((CALLABLE_ptr)current_context->ctx_code->ptr)
                 ->code.code->bc_array[((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_ip - 1].sta);
+        previous_context = current_context;
         current_ctx_inst = (Xen_Instance*)current_context->ctx_caller->ptr;
         Xen_VM_Set_Current_Ctx(current_ctx_inst);
       }
