@@ -18,7 +18,6 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content, ui
   }
   CALLABLE_ptr code = compiler(file_name, file_content, compile_mode);
   if (Xen_VM_Except_Active()) {
-    Xen_VM_Except_Backtrace_Show();
     return NULL;
   }
   if (!code) {
@@ -32,10 +31,6 @@ Xen_Instance* interpreter(Xen_c_string_t file_name, const char* file_content, ui
     return NULL;
   }
   Xen_Instance* retval = vm_run(ctx_inst);
-  if (Xen_VM_Except_Active()) {
-    Xen_VM_Except_Backtrace_Show();
-    return NULL;
-  }
   if (!retval) {
     return NULL;
   }

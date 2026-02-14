@@ -68,6 +68,16 @@ void shell_loop(void) {
     }
 #endif
     if (!interpreter("<stdin>", cmd_str, Xen_COMPILE_REPL, globals, instances, scopes)) {
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+      }
+      Xen_Dealloc(cmd_str);
+      if (program.closed)
+        break;
+      continue;
+    }
+    if (Xen_VM_Except_Active()) {
+      Xen_VM_Except_Backtrace_Show();
       Xen_Dealloc(cmd_str);
       if (program.closed)
         break;

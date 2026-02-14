@@ -355,6 +355,8 @@ int compile_statement_list(Compiler* c, Xen_Instance* node) {
 int compile_statement(Compiler* c, Xen_Instance* node) {
   Xen_Instance* stmt = Xen_AST_Node_Get_Child(node, 0);
   if (!stmt) {
+    c->sta = Xen_AST_Node_STA(node);
+    Xen_SyntaxError("Empty statement is not allowed.");
     return 0;
   }
   if (c->flags & COMPILE_FLAG_EXPR) {
@@ -363,6 +365,8 @@ int compile_statement(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else {
+      c->sta = Xen_AST_Node_STA(stmt);
+      Xen_SyntaxError("Expected expression.");
       return 0;
     }
   } else if (COMPILE_MODE == Xen_COMPILE_IMPLEMENT) {
