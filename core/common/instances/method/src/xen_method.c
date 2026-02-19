@@ -142,7 +142,6 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
     } else {
       ret = vm_run(fun_ctx);
     }
-    ret = vm_run(fun_ctx);
     if (!ret) {
       Xen_IGC_XPOP(roots);
       return NULL;
