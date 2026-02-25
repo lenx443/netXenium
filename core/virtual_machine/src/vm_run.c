@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "async.h"
 #include "attrs.h"
 #include "basic.h"
 #include "basic_builder_instance.h"
@@ -10,6 +11,7 @@
 #include "bc_instruct.h"
 #include "bytecode.h"
 #include "callable.h"
+#include "coroutine_instance.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"
@@ -1077,31 +1079,32 @@ static void op_build_implement_nbase(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_
   Xen_VM_Set_Current_Ctx(new_ctx);
 }
 
+static void __return(VM_Run* vmr, RunContext_ptr ctx, Xen_Instance* retval) {
+  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
+  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
+  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
+    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, retval);
+  } else {
+    if (Xen_Async_Get_Active()) {
+      Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+      coro->status = Xen_CORO_TERMINATE;
+    }
+    vmr->retval = retval;
+    vmr->halt = 1;
+  }
+}
+
 static void op_return(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret = Xen_Vector_Get_Index(
       (Xen_Instance*)(((vm_Consts_ptr)(Xen_Instance*)((CALLABLE_ptr)ctx->ctx_code->ptr)->code.consts->ptr)->c_instances->ptr), oparg);
-  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
-  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
-    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
-  } else {
-    vmr->retval = ret;
-    vmr->halt = 1;
-  }
+  __return(vmr, ctx, ret);
 }
 
 static void op_return_top(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* ret = STACK_POP;
-  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
-  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
-    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, ret);
-  } else {
-    vmr->retval = ret;
-    vmr->halt = 1;
-  }
+  __return(vmr, ctx, ret);
 }
 
 static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -1112,14 +1115,7 @@ static void op_return_build_implement(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong
     ERROR
   }
   Xen_Map_Push_Pair_Str((Xen_Instance*)ctx->ctx_instances->ptr, (Xen_Map_Pair_Str){builder->name, impl});
-  RunContext_ptr ctx_caller = (RunContext_ptr)ctx->ctx_caller->ptr;
-  Xen_VM_Set_Current_Ctx((Xen_Instance *)ctx_caller);
-  if (ctx_caller && Xen_Nil_NEval((Xen_Instance*)ctx_caller) && !CTX_GET_FLAG(ctx, RUN_CTX_FLAG_END)) {
-    vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, impl);
-  } else {
-    vmr->retval = impl;
-    vmr->halt = 1;
-  }
+  __return(vmr, ctx, impl);
 }
 
 static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {

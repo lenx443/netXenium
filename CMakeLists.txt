@@ -66,6 +66,8 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/common/instances/except/types/header/
   core/common/instances/bytes/include/
   core/common/instances/bytes/types/header/
+  core/common/instances/queue/include/
+  core/common/instances/queue/types/header/
   core/interpreter/include/
   core/interpreter/instances/ast/include/
   core/interpreter/instances/ast/types/header/
@@ -84,6 +86,7 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/virtual_machine/instances/coroutine/types/header/
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
+  core/virtual_machine/async/include/
   core/instances/include
   core/instances/types/include/
   core/instances/igc/include/
@@ -181,6 +184,10 @@ set(SOURCES
   core/common/instances/bytes/src/xen_bytes_implement.c
   core/common/instances/bytes/src/xen_bytes.c
 
+  # implementacion del tipo `Queue`
+  core/common/instances/queue/src/xen_queue_implement.c
+  core/common/instances/queue/src/xen_queue.c
+
   # Implementacion del tipo `AST`
   core/interpreter/instances/ast/src/xen_ast.c
   core/interpreter/instances/ast/src/xen_ast_implement.c
@@ -243,6 +250,10 @@ set(SOURCES
   # fuente de las listas enlazadas
   # de la maquina virtual
   core/virtual_machine/dynamic/lists/src/vm_catch_stack.c
+
+  # motor de asincronia de la
+  # maquina virtual
+  core/virtual_machine/async/src/async.c
 
   # Codigo de Instancias
   core/instances/src/instance_life.c

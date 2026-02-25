@@ -24,6 +24,11 @@ typedef struct {
     Xen_GCHandle* except;
     vm_backtrace* bt;
   } except;
+  struct {
+    Xen_bool_t active;
+    Xen_GCHandle* tasks;
+    Xen_GCHandle* resumed;
+  } evloop;
 } VM;
 
 typedef VM* VM_ptr;

@@ -1,10 +1,8 @@
 #include "m_async.h"
+#include "async.h"
 #include "callable.h"
-#include "coroutine_instance.h"
 #include "instance.h"
 #include "netxenium/xen_function.h"
-#include "run_ctx.h"
-#include "vm_run.h"
 #include "xen_function.h"
 #include "xen_life.h"
 #include "xen_module_types.h"
@@ -27,10 +25,7 @@ fn_run(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
     return NULL;
   }
-  Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
-  Xen_Instance* ctx = (Xen_Instance*)coro->context->ptr;
-  Xen_Ctx_Enable_End(ctx);
-  return vm_run(ctx);
+  return Xen_Async_Run(coro_inst);
 }
 
 Xen_Module_Function_Table functions = {

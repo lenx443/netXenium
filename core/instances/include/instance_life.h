@@ -19,6 +19,7 @@ struct __Implement_Pointers {
   Xen_Implement* function;
   Xen_Implement* except;
   Xen_Implement* bytes;
+  Xen_Implement* queue;
   Xen_Implement* ast;
   Xen_Implement* run_frame;
   Xen_Implement* module;

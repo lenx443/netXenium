@@ -14,6 +14,7 @@
 #include "xen_module_implement.h"
 #include "xen_nil_implement.h"
 #include "xen_number_implement.h"
+#include "xen_queue_implement.h"
 #include "xen_string_implement.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_iterator_implement.h"
@@ -44,6 +45,7 @@ static Instance_Life Instances[] = {
     {Xen_Method_Init, Xen_Method_Finish},
     {Xen_Except_Init, Xen_Except_Finish},
     {Xen_Bytes_Init, Xen_Bytes_Finish},
+    {Xen_Queue_Init, Xen_Queue_Finish},
     {Xen_AST_Init, Xen_AST_Finish},
 };
 
@@ -62,6 +64,7 @@ void Xen_Instance_GetReady(void) {
   implements.function = Xen_Function_GetImplement();
   implements.except = Xen_Except_GetImplement();
   implements.bytes = Xen_Bytes_GetImplement();
+  implements.queue = Xen_Queue_GetImplement();
   implements.ast = Xen_AST_GetImplement();
   implements.run_frame = Xen_Run_Frame_GetImplement();
   implements.module = Xen_Module_GetImplement();
