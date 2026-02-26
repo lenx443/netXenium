@@ -803,6 +803,18 @@ static void op_unary_not(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   STACK_PUSH(result);
 }
 
+static void op_task(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  STACK_POP;
+  STACK_PUSH(nil);
+}
+
+static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  STACK_POP;
+  STACK_PUSH(nil);
+}
+
 static void op_copy(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* val = STACK_POP;
@@ -1154,6 +1166,8 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [UNARY_NEGATIVE] =            op_unary_negative,
     [UNARY_BIT_NOT] =             op_unary_bit_not,
     [UNARY_NOT] =                 op_unary_not,
+    [TASK] =                      op_task,
+    [AWAIT] =                     op_await,
     [COPY] =                      op_copy,
     [PRINT_TOP] =                 op_print_top,
     [THROW] =                     op_throw,

@@ -53,6 +53,8 @@ enum vm_Instruct {
   UNARY_NEGATIVE,
   UNARY_BIT_NOT,
   UNARY_NOT,
+  TASK,
+  AWAIT,
   COPY,
   PRINT_TOP,
   THROW,

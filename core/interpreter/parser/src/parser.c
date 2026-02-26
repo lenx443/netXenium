@@ -149,17 +149,19 @@ bool is_expr(Parser* p) {
 
 bool is_primary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_STRING || token == TKN_NUMBER ||
+  if (token == TKN_STRING          || token == TKN_NUMBER     ||
       token == TKN_DOUBLE_QUESTION || token == TKN_IDENTIFIER ||
-      token == TKN_PROPERTY || token == TKN_LPARENT || token == TKN_LBRACE)
+      token == TKN_PROPERTY        || token == TKN_LPARENT    ||
+      token == TKN_LBRACE)
     return true;
   return false;
 }
 
 bool is_unary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
-  if (token == TKN_ADD || token == TKN_MINUS || token == TKN_NOT ||
-      token == TKN_MUL || token == TKN_BIT_NOT) {
+  if (token == TKN_ADD || token == TKN_MINUS   || token == TKN_NOT  ||
+      token == TKN_MUL || token == TKN_BIT_NOT || token == TKN_TASK ||
+      token == TKN_AWAIT) {
     return true;
   }
   return false;
@@ -171,7 +173,7 @@ bool is_factor(Parser* p) {
 
 bool is_list(Parser* p) {
   return p->token.tkn_type == TKN_QUESTION || p->token.tkn_type == TKN_BLOCK ||
-         p->token.tkn_type == TKN_ASYNC || is_factor(p);
+         p->token.tkn_type == TKN_ASYNC    || is_factor(p);
 }
 
 bool is_assigment(Parser* p) {
