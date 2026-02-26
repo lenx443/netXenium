@@ -19,3 +19,9 @@ La palabra clave `local` declara una variable con alcance léxico limitado al sc
 var foo = 3
 ```
 La palabra clave `var` declara una variable en el contexto de ejecución actual, creando un binding dinámico entre un identificador y un valor dentro del entorno activo, conforme a las reglas de resolución de nombres del lenguaje.
+
+---
+```netXenium
+global foo = 13
+```
+La palabra clave `global` declara una variable en el contexto de ejecución global, creando un binding dinámico entre un identificador y un valor dentro del entorno global del modulo, conforme a las reglas de resolución de nombres del lenguaje.
