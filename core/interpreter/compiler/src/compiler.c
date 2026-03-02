@@ -1378,6 +1378,9 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
       if (!emit(AWAIT, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
+      if (!emit(AWAIT_RESUME, 0, Xen_AST_Node_STA(node))) {
+        return 0;
+      }
     } else {
       return 0;
     }

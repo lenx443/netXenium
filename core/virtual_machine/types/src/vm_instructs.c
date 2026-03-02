@@ -36,7 +36,8 @@ static STACK_EFFECT(unary_negative_stack_effect, 0)
 static STACK_EFFECT(unary_bit_not_stack_effect, 0)
 static STACK_EFFECT(unary_not_stack_effect, 0)
 static STACK_EFFECT(task_stack_effect, 0)
-static STACK_EFFECT(await_stack_effect, 0)
+static STACK_EFFECT(await_stack_effect, -1)
+static STACK_EFFECT(await_resume_stack_effect, 1)
 static STACK_EFFECT(copy_stack_effect, 1)
 static STACK_EFFECT(print_top_stack_effect, 0)
 static STACK_EFFECT(throw_stack_effect, -1)
@@ -95,6 +96,7 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [UNARY_NOT] =                 {"UNARY_NOT",                 unary_not_stack_effect,                 0},
     [TASK] =                      {"TASK",                      task_stack_effect,                      0},
     [AWAIT] =                     {"AWAIT",                     await_stack_effect,                     0},
+    [AWAIT_RESUME] =              {"AWAIT_RESUME",              await_resume_stack_effect,              0},
     [COPY] =                      {"COPY",                      copy_stack_effect,                      0},
     [PRINT_TOP] =                 {"PRINT_TOP",                 print_top_stack_effect,                 0},
     [THROW] =                     {"THROW",                     throw_stack_effect,                     0},

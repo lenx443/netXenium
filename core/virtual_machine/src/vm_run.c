@@ -804,17 +804,17 @@ static void op_task(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   if (!Xen_Async_Get_Active()) {
     Xen_AsyncError();
-    ERROR
+    ERROR;
   }
   Xen_Instance* coro_inst = STACK_POP;
   if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
     Xen_AsyncError_Impl();
-    ERROR
+    ERROR;
   }
   Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
   if (coro->status != Xen_CORO_CREATED) {
     Xen_AsyncError_Already();
-    ERROR
+    ERROR;
   }
   STACK_PUSH(coro_inst);
   Xen_Async_Push(coro_inst);
@@ -826,26 +826,48 @@ static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   if (!Xen_Async_Get_Active()) {
     Xen_AsyncError();
-    ERROR
+    ERROR;
   }
   Xen_Instance* coro_inst = STACK_POP;
   if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
     Xen_AsyncError_Impl();
-    ERROR
+    ERROR;
   }
   Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
   if (coro->status != Xen_CORO_CREATED) {
     Xen_AsyncError_Already();
-    ERROR
+    ERROR;
   }
   Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
   cur_coro->status = Xen_CORO_PAUSE;
-  Xen_GC_Write_Field((struct __GC_Header *)coro,
-                     (struct __GC_Handle **)&coro->caller,
-                     (struct __GC_Header *)cur_coro);
+  Xen_GC_Write_Field((struct __GC_Header *)cur_coro,
+                     (struct __GC_Handle **)&cur_coro->await,
+                     (struct __GC_Header *)coro);
   Xen_Async_Push(coro_inst);
   vmr->retval = nil;
   vmr->halt = 1;
+}
+
+static void op_await_resume(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  if (!Xen_Async_Get_Active()) {
+    Xen_AsyncError();
+    ERROR;
+  }
+  Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+  Xen_Coroutine* awaited = (Xen_Coroutine*)coro->await->ptr;
+  coro->await->ptr = NULL;
+  if (awaited->except.active) {
+    (*xen_globals->vm)->except.active = 1;
+    Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
+                       &(*xen_globals->vm)->except.except,
+                       awaited->except.except->ptr);
+    vm_backtrace_copy(awaited->except.bt, (*xen_globals->vm)->except.bt);
+    vm_backtrace_clear(awaited->except.bt);
+    awaited->except.active = 0;
+    ERROR;
+  }
+  STACK_PUSH((Xen_Instance*)awaited->result->ptr);
 }
 
 static void op_copy(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -1204,6 +1226,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [UNARY_NOT] =                 op_unary_not,
     [TASK] =                      op_task,
     [AWAIT] =                     op_await,
+    [AWAIT_RESUME] =              op_await_resume,
     [COPY] =                      op_copy,
     [PRINT_TOP] =                 op_print_top,
     [THROW] =                     op_throw,

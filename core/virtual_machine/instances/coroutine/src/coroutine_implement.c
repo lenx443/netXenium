@@ -17,7 +17,7 @@
 static void coroutine_trace(Xen_Instance* inst) {
   Xen_Coroutine* coro = (Xen_Coroutine*)inst;
   if (coro->context->ptr) Xen_GC_Trace_GCHeader(coro->context);
-  if (coro->caller->ptr) Xen_GC_Trace_GCHeader(coro->caller);
+  if (coro->await->ptr) Xen_GC_Trace_GCHeader(coro->await);
   if (coro->result->ptr) Xen_GC_Trace_GCHeader(coro->result);
   if (coro->except.active) Xen_GC_Trace_GCHeader(coro->except.except);
 }
@@ -26,7 +26,7 @@ static Xen_Instance* coroutine_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Instance_Alloc(xen_globals->implements->coroutine);
   coro->context = Xen_GCHandle_New((Xen_GCHeader*)coro);
-  coro->caller = Xen_GCHandle_New((Xen_GCHeader*)coro);
+  coro->await = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->result = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->except.except = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->except.bt = vm_backtrace_new();
@@ -37,7 +37,7 @@ static Xen_Instance* coroutine_destroy(Xen_Instance* self, Xen_Instance* args, X
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)self;
   Xen_GCHandle_Free(coro->context);
-  Xen_GCHandle_Free(coro->caller);
+  Xen_GCHandle_Free(coro->await);
   Xen_GCHandle_Free(coro->result);
   Xen_GCHandle_Free(coro->except.except);
   vm_backtrace_free(coro->except.bt);

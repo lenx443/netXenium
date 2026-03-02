@@ -1,9 +1,7 @@
 #include "async.h"
 #include "coroutine_instance.h"
-#include "run_ctx_instance.h"
 #include "vm_backtrace.h"
 #include "vm_run.h"
-#include "vm_stack.h"
 #include "xen_gc.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -21,49 +19,27 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
       Xen_Async_Push(coro_inst);
       break;
     case Xen_CORO_TERMINATED:
-      if (coro->caller->ptr) {
-        Xen_Coroutine* caller = (Xen_Coroutine*)coro->caller->ptr;
-        if (caller->status == Xen_CORO_PAUSE)
-          caller->status = Xen_CORO_RESUME;
-        vm_stack_push((struct vm_Stack*)((RunContext_ptr)caller->context->ptr)->ctx_stack->ptr,
-                      (Xen_Instance*)coro->result->ptr);
-      }
       break;
     case Xen_CORO_EXCEPTED:
-      if (coro->caller->ptr) {
-        Xen_Coroutine* caller = (Xen_Coroutine*)coro->caller->ptr;
-        caller->except.active = 1;
-        Xen_GC_Write_Field((struct __GC_Header *)caller,
-                           &caller->except.except,
-                           (*xen_globals->vm)->except.except->ptr);
-        vm_backtrace_copy((*xen_globals->vm)->except.bt, caller->except.bt);
-      } else {
-        coro->except.active = 1;
-        Xen_GC_Write_Field((struct __GC_Header *)coro,
-                           &coro->except.except,
-                           (*xen_globals->vm)->except.except->ptr);
-        vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
-      }
+      coro->except.active = 1;
+      Xen_GC_Write_Field((struct __GC_Header *)coro,
+                         &coro->except.except,
+                         (*xen_globals->vm)->except.except->ptr);
+      vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
       vm_backtrace_clear((*xen_globals->vm)->except.bt);
       (*xen_globals->vm)->except.active = 0;
       coro->status = Xen_CORO_TERMINATED;
       Xen_Async_Push(coro_inst);
       break;
     case Xen_CORO_RESUME:
-      if (coro->except.active) {
-        (*xen_globals->vm)->except.active = 1;
-        Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
-                           &(*xen_globals->vm)->except.except,
-                           coro->except.except->ptr);
-        vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
-        vm_backtrace_clear(coro->except.bt);
-        coro->except.active = 0;
-      }
       Xen_Async_Set_Resumed(coro_inst);
       vm_run((Xen_Instance*)coro->context->ptr);
       Xen_Async_Push(coro_inst);
       break;
     case Xen_CORO_PAUSE:
+      if (((Xen_Coroutine*)coro->await->ptr)->status == Xen_CORO_TERMINATED) {
+        coro->status = Xen_CORO_RESUME;
+      }
       Xen_Async_Push(coro_inst);
       break;
     default:

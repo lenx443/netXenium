@@ -55,6 +55,7 @@ enum vm_Instruct {
   UNARY_NOT,
   TASK,
   AWAIT,
+  AWAIT_RESUME,
   COPY,
   PRINT_TOP,
   THROW,
