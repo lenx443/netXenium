@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "gc_header.h"
-#include "vm_backtrace.h"
+#include "xen_except_instance.h"
 #include "xen_typedefs.h"
 
 typedef struct {
@@ -19,11 +19,7 @@ typedef struct {
   Xen_c_string_t path_current;
   Xen_GCHandle* paths_modules;
   Xen_GCHandle* config;
-  struct {
-    Xen_bool_t active;
-    Xen_GCHandle* except;
-    vm_backtrace* bt;
-  } except;
+  struct Xen_Except_Status except;
   struct {
     Xen_bool_t active;
     Xen_GCHandle* tasks;

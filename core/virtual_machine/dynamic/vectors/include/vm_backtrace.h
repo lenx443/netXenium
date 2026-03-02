@@ -14,6 +14,7 @@ typedef struct __backtrace vm_backtrace;
 
 vm_backtrace* vm_backtrace_new(void);
 void vm_backtrace_push(vm_backtrace*, Xen_Source_Address);
+void vm_backtrace_copy(vm_backtrace*, vm_backtrace*);
 void vm_backtrace_clear(vm_backtrace*);
 void vm_backtrace_free(vm_backtrace*);
 

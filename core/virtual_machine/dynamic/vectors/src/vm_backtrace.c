@@ -23,6 +23,12 @@ void vm_backtrace_push(vm_backtrace* bt, Xen_Source_Address sta) {
   bt->bt_addrs[bt->bt_count++] = sta;
 }
 
+void vm_backtrace_copy(vm_backtrace* src, vm_backtrace* dst) {
+  for (Xen_size_t i = 0; i < src->bt_count; i++) {
+    vm_backtrace_push(dst, src->bt_addrs[i]);
+  }
+}
+
 void vm_backtrace_clear(vm_backtrace* bt) {
   Xen_Dealloc(bt->bt_addrs);
   bt->bt_addrs = NULL;

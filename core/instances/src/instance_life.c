@@ -46,6 +46,7 @@ static Instance_Life Instances[] = {
     {Xen_Except_Init, Xen_Except_Finish},
     {Xen_Bytes_Init, Xen_Bytes_Finish},
     {Xen_Queue_Init, Xen_Queue_Finish},
+    {Xen_Coroutine_Init, Xen_Coroutine_Finish},
     {Xen_AST_Init, Xen_AST_Finish},
 };
 

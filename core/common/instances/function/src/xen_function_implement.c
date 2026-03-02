@@ -14,6 +14,7 @@
 #include "xen_except_instance.h"
 #include "xen_function_instance.h"
 #include "xen_gc.h"
+#include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_map.h"
 #include "xen_nil.h"
@@ -83,49 +84,58 @@ static Xen_Instance* function_callable(struct __Instance* self,
         Xen_VM_Current_Ctx(),
         (Xen_Instance*)inst->closure->ptr, nil, args, kwargs, NULL, NULL, NULL,
         (CALLABLE_ptr)inst->fun_code->ptr);
+    Xen_IGC_Push(new_ctx);
     if (!inst->fun_async) Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)inst->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
+      Xen_IGC_Pop();
       return NULL;
     }
     for (Xen_size_t i = 0; i < Xen_SIZE(args); i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       Xen_Instance* arg = Xen_Vector_Get_Index(args, i);
       if (!name) {
+        Xen_IGC_Pop();
         return NULL;
       }
       if (!Xen_Map_Push_Pair(
               (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
               (Xen_Map_Pair){name, arg})) {
+        Xen_IGC_Pop();
         return NULL;
       }
     }
     if (Xen_IMPL(kwargs) == xen_globals->implements->map) {
       Xen_Instance* kwargs_it = Xen_Attr_Iter(kwargs);
       if (!kwargs_it) {
+        Xen_IGC_Pop();
         return NULL;
       }
       Xen_Instance* keyword = NULL;
       while ((keyword = Xen_Attr_Next(kwargs_it)) != NULL) {
         if (!Xen_Map_Has((Xen_Instance*)inst->args_names->ptr, keyword)) {
+          Xen_IGC_Pop();
           return NULL;
         }
         if (Xen_Map_Has(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 keyword)) {
+          Xen_IGC_Pop();
           return NULL;
         }
         Xen_Instance* value = Xen_Map_Get(kwargs, keyword);
         if (!Xen_Map_Push_Pair(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 (Xen_Map_Pair){keyword, value})) {
+          Xen_IGC_Pop();
           return NULL;
         }
       }
       if (!Xen_VM_Except_Active() ||
           strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                  "RangeEnd") != 0) {
+        Xen_IGC_Pop();
         return NULL;
       }
       (*xen_globals->vm)->except.active = 0;
@@ -133,6 +143,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
     Xen_Instance* defaults_it =
         Xen_Attr_Iter((Xen_Instance*)inst->args_default_values->ptr);
     if (!defaults_it) {
+      Xen_IGC_Pop();
       return NULL;
     }
     Xen_Instance* default_name = NULL;
@@ -145,6 +156,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
         if (!Xen_Map_Push_Pair(
                 (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
                 (Xen_Map_Pair){default_name, default_value})) {
+          Xen_IGC_Pop();
           return NULL;
         }
       }
@@ -152,6 +164,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
     if (!Xen_VM_Except_Active() ||
         strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
                "RangeEnd") != 0) {
+      Xen_IGC_Pop();
       return NULL;
     }
     (*xen_globals->vm)->except.active = 0;
@@ -160,6 +173,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
       if (!Xen_Map_Has(
               (Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr,
               name)) {
+        Xen_IGC_Pop();
         return NULL;
       }
     }
@@ -167,6 +181,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
       Xen_Instance* coro = Xen_Coroutine_New(new_ctx);
       vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
+    Xen_IGC_Pop();
   } else if (inst->fun_type == 2) {
     Xen_Instance* ret = inst->fun_native(nil, args, kwargs);
     if (!ret) {

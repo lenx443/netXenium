@@ -109,6 +109,21 @@ static inline int Xen_ListError(Xen_Instance* inst) {
       "ListError", "Implementation '%s' is not listable.", impl_name));
 }
 
+static inline int Xen_AsyncError(void) {
+  return Xen_VM_Except_Throw(
+      Xen_Except_New("AsyncError", "Not running in asynchronous mode."));
+}
+
+static inline int Xen_AsyncError_Impl(void) {
+  return Xen_VM_Except_Throw(
+      Xen_Except_New("AsyncError", "This operation requires the object to be a coroutine."));
+}
+
+static inline int Xen_AsyncError_Already(void) {
+  return Xen_VM_Except_Throw(
+      Xen_Except_New("AsyncError", "The coroutine is already running or has already completed."));
+}
+
 static inline int Xen_RangeEnd(void) {
   return Xen_VM_Except_Throw(Xen_Except_New("RangeEnd", NULL));
 }

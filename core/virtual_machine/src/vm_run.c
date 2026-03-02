@@ -46,6 +46,10 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
+#ifndef NDEBUG
+static Xen_size_t counter = 0;
+#endif
+
 #define ERROR                                                                  \
   ctx->ctx_error = 1;                                                          \
   return;
@@ -106,7 +110,6 @@ static void op_decl_local(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     Xen_DeclError(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
                         ->scopes->symbols->ptr,
@@ -130,7 +133,6 @@ static void op_decl_local_nval(VM_Run* vmr, RunContext_ptr ctx,
                   c_name)) {
     Xen_DeclError(Xen_String_As_CString(c_name));
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)((Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
                         ->scopes->symbols->ptr,
@@ -153,7 +155,6 @@ static void op_decl_var(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     Xen_DeclError_Context(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)ctx->ctx_instances->ptr,
                     (Xen_Map_Pair){c_name, val});
@@ -174,7 +175,6 @@ static void op_decl_var_nval(VM_Run* vmr, RunContext_ptr ctx,
   if (Xen_Map_Has((Xen_Instance*)ctx->ctx_instances->ptr, c_name)) {
     Xen_DeclError_Context(Xen_String_As_CString(c_name));
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)ctx->ctx_instances->ptr,
                     (Xen_Map_Pair){c_name, nil});
@@ -205,13 +205,11 @@ static void op_decl_global(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     Xen_DeclError_Global_NScoped(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
-    return;
   }
   if (Xen_Map_Has(globals, c_name)) {
     Xen_DeclError_Global(Xen_String_As_CString(c_name));
     Xen_IGC_Pop();
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair(globals, (Xen_Map_Pair){c_name, val});
   Xen_IGC_Pop();
@@ -232,7 +230,6 @@ static void op_decl_global_nval(VM_Run* vmr, RunContext_ptr ctx,
                   c_name)) {
     Xen_DeclError_Global(Xen_String_As_CString(c_name));
     ERROR;
-    return;
   }
   Xen_Map_Push_Pair((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
                     (Xen_Map_Pair){c_name, nil});
@@ -805,14 +802,50 @@ static void op_unary_not(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
 
 static void op_task(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  STACK_POP;
-  STACK_PUSH(nil);
+  if (!Xen_Async_Get_Active()) {
+    Xen_AsyncError();
+    ERROR
+  }
+  Xen_Instance* coro_inst = STACK_POP;
+  if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
+    Xen_AsyncError_Impl();
+    ERROR
+  }
+  Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
+  if (coro->status != Xen_CORO_CREATED) {
+    Xen_AsyncError_Already();
+    ERROR
+  }
+  STACK_PUSH(coro_inst);
+  Xen_Async_Push(coro_inst);
+  vmr->retval = nil;
+  vmr->halt = 1;
 }
 
 static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
-  STACK_POP;
-  STACK_PUSH(nil);
+  if (!Xen_Async_Get_Active()) {
+    Xen_AsyncError();
+    ERROR
+  }
+  Xen_Instance* coro_inst = STACK_POP;
+  if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
+    Xen_AsyncError_Impl();
+    ERROR
+  }
+  Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
+  if (coro->status != Xen_CORO_CREATED) {
+    Xen_AsyncError_Already();
+    ERROR
+  }
+  Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+  cur_coro->status = Xen_CORO_PAUSE;
+  Xen_GC_Write_Field((struct __GC_Header *)coro,
+                     (struct __GC_Handle **)&coro->caller,
+                     (struct __GC_Header *)cur_coro);
+  Xen_Async_Push(coro_inst);
+  vmr->retval = nil;
+  vmr->halt = 1;
 }
 
 static void op_copy(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -1099,7 +1132,10 @@ static void __return(VM_Run* vmr, RunContext_ptr ctx, Xen_Instance* retval) {
   } else {
     if (Xen_Async_Get_Active()) {
       Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
-      coro->status = Xen_CORO_TERMINATE;
+      coro->status = Xen_CORO_TERMINATED;
+      Xen_GC_Write_Field((struct __GC_Header *)coro,
+                         (struct __GC_Handle **)&coro->result,
+                         (struct __GC_Header *)retval);
     }
     vmr->retval = retval;
     vmr->halt = 1;
@@ -1190,6 +1226,9 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
 };
 
 static bc_Instruct_t vm_run_instruct(VM_Run* vmr, Xen_Instance* ctx_inst) {
+#ifndef NDEBUG
+    counter++;
+#endif
   RunContext_ptr ctx = (RunContext_ptr)ctx_inst;
   bc_Instruct_t instr = ((CALLABLE_ptr)ctx->ctx_code->ptr)->code.code->bc_array[ctx->ctx_ip++];
   if (instr.hdr.bci_opcode >= HALT) {
@@ -1258,6 +1297,10 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
       if (Xen_VM_Except_Active()) {
         Xen_IGC_Pop();
         Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
+        if (Xen_Async_Get_Active()) {
+          Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+          coro->status = Xen_CORO_EXCEPTED;
+        }
         return NULL;
       }
     } else if (((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_error) {
@@ -1267,6 +1310,10 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
 #endif
       Xen_IGC_Pop();
       Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
+      if (Xen_Async_Get_Active()) {
+        Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+        coro->status = Xen_CORO_TERMINATED;
+      }
       return NULL;
     }
     RunContext_ptr ctx = (RunContext_ptr)Xen_VM_Current_Ctx();

@@ -23,6 +23,7 @@ static inline void vm_stack_start(struct vm_Stack* stack) {
 }
 
 static inline void vm_stack_push(struct vm_Stack* stack, Xen_Instance* val) {
+  assert(val != NULL);
   Xen_GC_Write_Field((Xen_GCHeader*)stack, (Xen_GCHandle**)stack->stack_top++,
                      (Xen_GCHeader*)val);
 }

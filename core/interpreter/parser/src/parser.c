@@ -1518,7 +1518,7 @@ static Xen_Instance* parser_decl_fn_stmt(Parser* p) {
   Xen_Instance* lhs = Xen_AST_Node_New("Name", p->token.tkn_text, p->token.sta);
   Xen_AST_Node_Push_Child(dcl_stmt, lhs);
   parser_next(p);
-  if (p->token.tkn_type != TKN_BLOCK) {
+  if (p->token.tkn_type != TKN_BLOCK && p->token.tkn_type != TKN_ASYNC) {
     Xen_SyntaxError(
         "Right-hand value cannot be omitted in function declaration.");
     return NULL;

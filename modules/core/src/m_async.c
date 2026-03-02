@@ -1,11 +1,14 @@
 #include "m_async.h"
 #include "async.h"
+#include "attrs.h"
 #include "callable.h"
 #include "instance.h"
 #include "netxenium/xen_function.h"
 #include "xen_function.h"
 #include "xen_life.h"
 #include "xen_module_types.h"
+#include "xen_nil.h"
+#include "xen_number.h"
 
 static Xen_Instance*
 fn_run(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
@@ -28,6 +31,17 @@ fn_run(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   return Xen_Async_Run(coro_inst);
 }
 
+static Xen_Instance*
+init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  Xen_Attr_Set_Str(self, "CORO_CREATED", Xen_Number_From_Int(Xen_CORO_CREATED));
+  Xen_Attr_Set_Str(self, "CORO_TERMINATED", Xen_Number_From_Int(Xen_CORO_TERMINATED));
+  Xen_Attr_Set_Str(self, "CORO_EXCEPTED", Xen_Number_From_Int(Xen_CORO_EXCEPTED));
+  Xen_Attr_Set_Str(self, "CORO_RESUME", Xen_Number_From_Int(Xen_CORO_RESUME));
+  Xen_Attr_Set_Str(self, "CORO_PAUSE", Xen_Number_From_Int(Xen_CORO_PAUSE));
+  return nil;
+}
+
 Xen_Module_Function_Table functions = {
   {"run", fn_run},
   {NULL, NULL},
@@ -35,7 +49,7 @@ Xen_Module_Function_Table functions = {
 
 struct Xen_Module_Def Module_Async = {
     .mod_name = "Async",
-    .mod_init = NULL,
+    .mod_init = init,
     .mod_functions = functions,
     .mod_implements = NULL,
 };
