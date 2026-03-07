@@ -88,8 +88,12 @@ int xen_register_prop_set(const char* name, struct __Instance* inst) {
       break;
     }
   }
+  Xen_Instance* ctx = Xen_VM_Current_Ctx();
+  if (ctx == NULL || Xen_IMPL(ctx) != xen_globals->implements->run_frame) {
+    return 0;
+  }
   Xen_INSTANCE* self =
-      (Xen_Instance*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self->ptr;
+      (Xen_Instance*)((RunContext_ptr)ctx)->ctx_self->ptr;
   if (Xen_Nil_NEval(self)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
       if (!Xen_Map_Push_Pair_Str(
@@ -115,30 +119,29 @@ Xen_INSTANCE* xen_register_prop_get(const char* name) {
   }
   for (struct Xen_RegisterStream* f = streams; f->prefix; f++) {
     if ((f->exact_match && strcmp(name, f->prefix) == 0) ||
-        (!f->exact_match &&
-         strncmp(name, f->prefix, Xen_CString_Len(f->prefix)) == 0)) {
+        (!f->exact_match && strncmp(name, f->prefix, Xen_CString_Len(f->prefix)) == 0)) {
       if (f->get_handle) {
         return f->get_handle(name);
       }
       break;
     }
   }
-  Xen_INSTANCE* self =
-      (Xen_Instance*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_self->ptr;
+  Xen_Instance* ctx = Xen_VM_Current_Ctx();
+  if (ctx == NULL || Xen_IMPL(ctx) != xen_globals->implements->run_frame) {
+    return NULL;
+  }
+  Xen_INSTANCE* self = (Xen_Instance*)((RunContext_ptr)ctx)->ctx_self->ptr;
   if (Xen_Nil_NEval(self)) {
     if (XEN_INSTANCE_GET_FLAG(self, XEN_INSTANCE_FLAG_MAPPED)) {
-      Xen_INSTANCE* prop = Xen_Map_Get_Str(
-          (Xen_Instance*)((Xen_INSTANCE_MAPPED*)self)->__map->ptr, name);
+      Xen_INSTANCE* prop = Xen_Map_Get_Str((Xen_Instance*)((Xen_INSTANCE_MAPPED*)self)->__map->ptr, name);
       if (!prop) {
         goto IMPL;
       }
       return prop;
     }
   IMPL:
-    if (self->__impl->__props && self->__impl->__props->ptr &&
-        Xen_Nil_NEval((Xen_Instance*)self->__impl->__props->ptr)) {
-      Xen_INSTANCE* impl_prop =
-          Xen_Map_Get_Str((Xen_Instance*)self->__impl->__props->ptr, name);
+    if (self->__impl->__props && self->__impl->__props->ptr && Xen_Nil_NEval((Xen_Instance*)self->__impl->__props->ptr)) {
+      Xen_INSTANCE* impl_prop = Xen_Map_Get_Str((Xen_Instance*)self->__impl->__props->ptr, name);
       if (!impl_prop) {
         return NULL;
       }
@@ -146,8 +149,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name) {
     }
     return NULL;
   }
-  Xen_INSTANCE* root_prop = Xen_Map_Get_Str(
-      (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr, name);
+  Xen_INSTANCE* root_prop = Xen_Map_Get_Str( (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr, name);
   if (!root_prop) {
     return NULL;
   };

@@ -9,6 +9,7 @@
 #include "m_core.h"
 #include "program.h"
 #include "xen_alloc.h"
+#include "xen_boolean.h"
 #include "xen_life.h"
 #include "xen_module.h"
 #include "xen_module_types.h"
@@ -191,6 +192,22 @@ static Xen_Instance* fn_load(Xen_Instance* self, Xen_Instance* args,
   return Xen_Load(mod_name);
 }
 
+static Xen_Instance* fn_check_register(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 1) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+  if (Xen_IMPL(inst) != xen_globals->implements->string) {
+    return NULL;
+  }
+  Xen_Instance* result = xen_register_prop_get(Xen_String_As_CString(inst));
+  if (result == NULL) {
+    return Xen_False;
+  }
+  return Xen_True;
+}
+
 static Xen_Instance* fn_get_props(Xen_Instance* self, Xen_Instance* args,
                              Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -204,6 +221,21 @@ static Xen_Instance* fn_get_props(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
+static Xen_Instance* fn_has_attr(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* attr = Xen_Tuple_Get_Index(args, 1);
+  Xen_Instance* result = Xen_Attr_Get(inst, attr);
+  if (!result) {
+    return Xen_False;
+  }
+  return Xen_True;
+}
+
 static Xen_Module_Function_Table core_functions = {
     {"exit", fn_exit},
     {"echo", fn_echo},
@@ -214,7 +246,9 @@ static Xen_Module_Function_Table core_functions = {
     {"id", fn_id},
     {"impl", fn_impl},
     {"load", fn_load},
+    {"check_register", fn_check_register},
     {"get_props", fn_get_props},
+    {"has_attr", fn_has_attr},
     {NULL, NULL},
 };
 

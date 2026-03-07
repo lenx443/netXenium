@@ -11,6 +11,7 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "ir_bytecode.h"
+#include "netxenium/compiler.h"
 #include "operators.h"
 #include "parser.h"
 #include "source_file.h"
@@ -277,7 +278,7 @@ static int compile_throw_statement(Compiler*, Xen_Instance*);
 static int compile_try_statement(Compiler*, Xen_Instance*);
 
 int compile_program(Compiler* c, Xen_Instance* node) {
-  if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
+  if (COMPILE_MODE == Xen_COMPILE_FUNCTION || COMPILE_MODE == Xen_COMPILE_FUNCTION_ASYNC) {
     emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
     if (Xen_AST_Node_Name_Cmp(node, "StatementList") == 0) {
       if (!compile_statement_list(c, node)) {
@@ -1371,10 +1372,20 @@ int compile_expr_unary(Compiler* c, Xen_Instance* node) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "task") == 0) {
+      if (COMPILE_MODE != Xen_COMPILE_FUNCTION_ASYNC) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_SyntaxError("Asynchronous context required.");
+        return 0;
+      }
       if (!emit(TASK, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
     } else if (Xen_AST_Node_Value_Cmp(node, "await") == 0) {
+      if (COMPILE_MODE != Xen_COMPILE_FUNCTION_ASYNC) {
+        c->sta = Xen_AST_Node_STA(node);
+        Xen_SyntaxError("Asynchronous context required.");
+        return 0;
+      }
       if (!emit(AWAIT, 0, Xen_AST_Node_STA(node))) {
         return 0;
       }
@@ -1711,8 +1722,9 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    CALLABLE_ptr code = compiler_ast(body, Xen_COMPILE_FUNCTION);
+    CALLABLE_ptr code = compiler_ast(body, (type == 2) ? Xen_COMPILE_FUNCTION_ASYNC : Xen_COMPILE_FUNCTION);
     if (!code) {
+      c->sta = Xen_AST_Node_STA(body);
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -1762,8 +1774,9 @@ int compile_expr_function(Compiler* c, Xen_Instance* node) {
       Xen_IGC_XPOP(roots);
       return 0;
     }
-    CALLABLE_ptr code = compiler_ast(body, Xen_COMPILE_FUNCTION);
+    CALLABLE_ptr code = compiler_ast(body, (type == 2) ? Xen_COMPILE_FUNCTION_ASYNC : Xen_COMPILE_FUNCTION);
     if (!code) {
+      c->sta = Xen_AST_Node_STA(body);
       Xen_IGC_XPOP(roots);
       return 0;
     }
@@ -2563,7 +2576,7 @@ int compile_flow_statement(Compiler* c, Xen_Instance* node) {
 }
 
 int compile_return_statement(Compiler* c, Xen_Instance* node) {
-  if (COMPILE_MODE == Xen_COMPILE_FUNCTION) {
+  if (COMPILE_MODE == Xen_COMPILE_FUNCTION || COMPILE_MODE == Xen_COMPILE_FUNCTION_ASYNC) {
     if (Xen_AST_Node_Children_Size(node) == 0) {
       if (!emit(RETURN, 0, Xen_AST_Node_STA(node))) {
         return 0;
