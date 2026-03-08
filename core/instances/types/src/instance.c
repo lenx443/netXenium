@@ -45,9 +45,7 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
   if (XEN_INSTANCE_GET_FLAG(inst, XEN_INSTANCE_FLAG_MAPPED)) {
     Xen_INSTANCE_MAPPED* mapped = (Xen_INSTANCE_MAPPED*)inst;
     mapped->__map = Xen_GCHandle_New((Xen_GCHeader*)mapped);
-    Xen_GC_Write_Field((struct __GC_Header*)mapped,
-                       (struct __GC_Handle**)&mapped->__map,
-                       (struct __GC_Header*)Xen_Map_New());
+    Xen_GC_Write_Field(&mapped->__map, (struct __GC_Header*)Xen_Map_New());
     if (!mapped->__map) {
       Xen_IGC_Pop();
       return NULL;

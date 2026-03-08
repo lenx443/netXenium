@@ -840,9 +840,7 @@ static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
   Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
   cur_coro->status = Xen_CORO_PAUSE;
-  Xen_GC_Write_Field((struct __GC_Header *)cur_coro,
-                     (struct __GC_Handle **)&cur_coro->await,
-                     (struct __GC_Header *)coro);
+  Xen_GC_Write_Field(&cur_coro->await, (struct __GC_Header *)coro);
   Xen_Async_Push(coro_inst);
   vmr->retval = nil;
   vmr->halt = 1;
@@ -859,9 +857,7 @@ static void op_await_resume(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) 
   coro->await->ptr = NULL;
   if (awaited->except.active) {
     (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
-                       &(*xen_globals->vm)->except.except,
-                       awaited->except.except->ptr);
+    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, awaited->except.except->ptr);
     vm_backtrace_copy(awaited->except.bt, (*xen_globals->vm)->except.bt);
     vm_backtrace_clear(awaited->except.bt);
     awaited->except.active = 0;
@@ -1114,9 +1110,7 @@ static void op_build_implement(VM_Run* vmr, RunContext_ptr ctx,
   }
   ((Xen_Basic_Builder*)builder)->name =
       Xen_CString_Dup(Xen_String_As_CString(name));
-  Xen_GC_Write_Field((Xen_GCHeader*)builder,
-                     (Xen_GCHandle**)&((Xen_Basic_Builder*)builder)->base,
-                     (Xen_GCHeader*)base);
+  Xen_GC_Write_Field(&((Xen_Basic_Builder*)builder)->base, (Xen_GCHeader*)base);
   Xen_Instance* new_ctx = Xen_Ctx_New((Xen_Instance*)ctx, (Xen_Instance*)ctx, builder, nil, nil, NULL, NULL, NULL, code);
   if (!new_ctx) {
     ERROR;
@@ -1155,9 +1149,7 @@ static void __return(VM_Run* vmr, RunContext_ptr ctx, Xen_Instance* retval) {
     if (Xen_Async_Get_Active()) {
       Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
       coro->status = Xen_CORO_TERMINATED;
-      Xen_GC_Write_Field((struct __GC_Header *)coro,
-                         (struct __GC_Handle **)&coro->result,
-                         (struct __GC_Header *)retval);
+      Xen_GC_Write_Field(&coro->result, (struct __GC_Header *)retval);
     }
     vmr->retval = retval;
     vmr->halt = 1;

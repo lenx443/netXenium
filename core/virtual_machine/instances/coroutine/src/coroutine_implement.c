@@ -61,9 +61,7 @@ static Xen_Instance* coroutine_except_throw(Xen_Instance* self, Xen_Instance* ar
   Xen_Coroutine* coro = (Xen_Coroutine*)self;
   if (coro->except.active) {
     (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
-                       &(*xen_globals->vm)->except.except,
-                       coro->except.except->ptr);
+    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
     vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
     vm_backtrace_clear(coro->except.bt);
     coro->except.active = 0;

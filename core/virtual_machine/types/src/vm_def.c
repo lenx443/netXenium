@@ -1,6 +1,7 @@
 #include "vm_scope.h"
 #include "xen_nil.h"
 #include "xen_queue.h"
+#include "xen_tuple.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <signal.h>
@@ -60,12 +61,8 @@ static void vm_def_destroy(Xen_GCHeader* h) {
 }
 
 static int vm_load_modules_paths(void) {
-  Xen_IGC_WRITE_FIELD(vm, vm->args, Xen_Vector_New());
-  for (int i = 0; i < program.argc; i++) {
-    Xen_Instance* arg = Xen_String_From_CString(program.argv[i]);
-    Xen_Vector_Push((Xen_Instance*)vm->args->ptr, arg);
-  }
-  Xen_IGC_WRITE_FIELD(vm, vm->paths_modules, Xen_Vector_New());
+  Xen_IGC_WRITE_FIELD(vm->args, Xen_Vector_New());
+  Xen_IGC_WRITE_FIELD(vm->paths_modules, Xen_Vector_New());
   Xen_Instance* default_module_path =
       Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");
   Xen_Vector_Push((Xen_Instance*)vm->paths_modules->ptr, default_module_path);
@@ -73,7 +70,7 @@ static int vm_load_modules_paths(void) {
 }
 
 static int vm_load_config(void) {
-  Xen_IGC_WRITE_FIELD(vm, vm->config, Xen_Map_New());
+  Xen_IGC_WRITE_FIELD(vm->config, Xen_Map_New());
   if (!Xen_Map_Push_Pair_Str(
           (Xen_Instance*)vm->config->ptr,
           (Xen_Map_Pair_Str){"paths_modules",
@@ -111,24 +108,23 @@ bool vm_create(void) {
     }
     args_array[i] = arg_value;
   }
+  Xen_IGC_WRITE_FIELD(vm->args, Xen_Tuple_From_Array(program.argc, args_array));
   Xen_Dealloc(args_array);
-  Xen_IGC_WRITE_FIELD(vm, vm->modules, Xen_Map_New());
+  Xen_IGC_WRITE_FIELD(vm->modules, Xen_Map_New());
   if (!vm->modules) {
     return 0;
   }
-  Xen_IGC_WRITE_FIELD(vm, vm->modules_stack, Xen_Vector_New());
+  Xen_IGC_WRITE_FIELD(vm->modules_stack, Xen_Vector_New());
   if (!vm->modules_stack) {
     return 0;
   }
-  Xen_IGC_WRITE_FIELD(vm, vm->globals_instances, Xen_Map_New());
+  Xen_IGC_WRITE_FIELD(vm->globals_instances, Xen_Map_New());
   if (!vm->globals_instances) {
     return 0;
   }
-  Xen_GC_Write_Field((struct __GC_Header*)vm,
-                     (struct __GC_Handle**)&vm->globals_scopes,
-                     (struct __GC_Header*)Xen_VM_Scopes_New());
+  Xen_GC_Write_Field(&vm->globals_scopes, (struct __GC_Header*)Xen_VM_Scopes_New());
   Xen_VM_Scopes_Push((Xen_VM_Scopes*)vm->globals_scopes->ptr);
-  Xen_IGC_WRITE_FIELD(vm, vm->globals_props, Xen_Map_New());
+  Xen_IGC_WRITE_FIELD(vm->globals_props, Xen_Map_New());
   if (!vm->globals_props) {
     return 0;
   }
@@ -147,11 +143,7 @@ bool vm_create(void) {
   vm->except.active = 0;
   vm->except.bt = vm_backtrace_new();
   vm->evloop.active = 0;
-  Xen_GC_Write_Field(
-    (struct __GC_Header *)vm,
-    (struct __GC_Handle **)&vm->evloop.tasks,
-    (struct __GC_Header *)Xen_Queue_New()
-  );
+  Xen_GC_Write_Field(&vm->evloop.tasks, (struct __GC_Header *)Xen_Queue_New());
   Xen_GC_Push_Root((Xen_GCHeader*)vm);
 
   struct sigaction sa;

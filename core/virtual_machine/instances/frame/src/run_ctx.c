@@ -26,29 +26,20 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Insta
   if (!caller || Xen_Nil_Eval(caller)) {
     ctx->ctx_caller->ptr = NULL;
   } else {
-    Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_caller, caller);
+    Xen_IGC_WRITE_FIELD(ctx->ctx_caller, caller);
   }
   if (!closure || Xen_Nil_Eval(closure)) {
-    Xen_GC_Write_Field((Xen_GCHeader*)ctx, (Xen_GCHandle**)&ctx->ctx_closure,
-                       (Xen_GCHeader*)nil);
+    Xen_GC_Write_Field(&ctx->ctx_closure, (Xen_GCHeader*)nil);
   } else {
-    Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_closure, closure);
+    Xen_IGC_WRITE_FIELD(ctx->ctx_closure, closure);
   }
   if (!self) {
-    Xen_GC_Write_Field(
-      (Xen_GCHeader*)ctx,
-      (Xen_GCHandle**)&ctx->ctx_self,
-      (Xen_GCHeader*)nil
-    );
+    Xen_GC_Write_Field(&ctx->ctx_self, (Xen_GCHeader*)nil);
   } else {
-    Xen_GC_Write_Field(
-      (Xen_GCHeader*)ctx,
-      (Xen_GCHandle**)&ctx->ctx_self,
-      (Xen_GCHeader*)self
-    );
+    Xen_GC_Write_Field(&ctx->ctx_self, (Xen_GCHeader*)self);
   }
-  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_args, args);
-  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_kwargs, kwargs);
+  Xen_IGC_WRITE_FIELD(ctx->ctx_args, args);
+  Xen_IGC_WRITE_FIELD(ctx->ctx_kwargs, kwargs);
   if (!instances) {
     instances = Xen_Map_New();
     if (!instances) {
@@ -60,35 +51,24 @@ Xen_Instance* Xen_Ctx_New(Xen_Instance* caller, Xen_Instance* closure, Xen_Insta
     Xen_IGC_Pop();
     return NULL;
   }
-  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_instances, instances);
+  Xen_IGC_WRITE_FIELD(ctx->ctx_instances, instances);
   if (globals) {
     if (Xen_IMPL(globals) != xen_globals->implements->map) {
       Xen_IGC_Pop();
       return NULL;
     }
-    Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_globals, globals);
+    Xen_IGC_WRITE_FIELD(ctx->ctx_globals, globals);
   }
   if (scopes) {
-    Xen_GC_Write_Field(
-      (struct __GC_Header*)ctx,
-      (struct __GC_Handle**)&ctx->ctx_scopes,
-      (struct __GC_Header*)scopes
-    );
+    Xen_GC_Write_Field(&ctx->ctx_scopes, (struct __GC_Header*)scopes);
   } else {
-    Xen_GC_Write_Field(
-      (struct __GC_Header*)ctx,
-      (struct __GC_Handle**)&ctx->ctx_scopes,
-      (struct __GC_Header*)Xen_VM_Scopes_New()
+    Xen_GC_Write_Field(&ctx->ctx_scopes, (struct __GC_Header*)Xen_VM_Scopes_New()
     );
   }
   if (code) {
-    Xen_GC_Write_Field(
-      (Xen_GCHeader*)ctx,
-      (Xen_GCHandle**)&ctx->ctx_code,
-      (Xen_GCHeader*)code
-    );
+    Xen_GC_Write_Field(&ctx->ctx_code, (Xen_GCHeader*)code);
   }
-  Xen_IGC_WRITE_FIELD(ctx, ctx->ctx_stack, vm_stack_new(code->code.stack_depth + 1));
+  Xen_IGC_WRITE_FIELD(ctx->ctx_stack, vm_stack_new(code->code.stack_depth + 1));
   Xen_IGC_Pop();
   return (Xen_Instance*)ctx;
 }

@@ -62,14 +62,9 @@ vm_Consts_ptr vm_consts_new(void) {
   consts->c_names = Xen_GCHandle_New((Xen_GCHeader*)consts);
   consts->c_instances = Xen_GCHandle_New((Xen_GCHeader*)consts);
   consts->c_callables = Xen_GCHandle_New((Xen_GCHeader*)consts);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHandle**)&consts->c_names,
-                     (Xen_GCHeader*)c_names);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts,
-                     (Xen_GCHandle**)&consts->c_instances,
-                     (Xen_GCHeader*)c_instances);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts,
-                     (Xen_GCHandle**)&consts->c_callables,
-                     (Xen_GCHeader*)c_callables);
+  Xen_GC_Write_Field(&consts->c_names, (Xen_GCHeader*)c_names);
+  Xen_GC_Write_Field(&consts->c_instances, (Xen_GCHeader*)c_instances);
+  Xen_GC_Write_Field(&consts->c_callables, (Xen_GCHeader*)c_callables);
   Xen_GC_Pop_Root();
   return consts;
 }
@@ -85,14 +80,9 @@ vm_Consts_ptr vm_consts_from_values(struct __Instance* c_names,
   consts->c_names = Xen_GCHandle_New((Xen_GCHeader*)consts);
   consts->c_instances = Xen_GCHandle_New((Xen_GCHeader*)consts);
   consts->c_callables = Xen_GCHandle_New((Xen_GCHeader*)consts);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts, (Xen_GCHandle**)&consts->c_names,
-                     (Xen_GCHeader*)c_names);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts,
-                     (Xen_GCHandle**)&consts->c_instances,
-                     (Xen_GCHeader*)c_instances);
-  Xen_GC_Write_Field((Xen_GCHeader*)consts,
-                     (Xen_GCHandle**)&consts->c_callables,
-                     (Xen_GCHeader*)c_callables);
+  Xen_GC_Write_Field(&consts->c_names, (Xen_GCHeader*)c_names);
+  Xen_GC_Write_Field(&consts->c_instances, (Xen_GCHeader*)c_instances);
+  Xen_GC_Write_Field(&consts->c_callables, (Xen_GCHeader*)c_callables);
   return consts;
 }
 

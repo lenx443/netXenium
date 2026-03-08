@@ -373,8 +373,7 @@ void Xen_GC_Shutdown(void) {
   assert(xen_globals->gc_heap->total_bytes == 0);
 }
 
-void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
-                        struct __GC_Header* child) {
+void Xen_GC_Write_Field(struct __GC_Handle** handle, struct __GC_Header* child) {
   struct __GC_Header* old_child = (*handle)->ptr;
   (*handle)->ptr = child;
 
@@ -382,16 +381,16 @@ void Xen_GC_Write_Field(struct __GC_Header* parent, struct __GC_Handle** handle,
     (*handle)->flags &= ~GC_HANDLE_RS;
   }
 
-  if (!parent || !child)
+  if (!child)
     return;
 
   if (xen_globals->gc_heap->marking) {
-    if (parent->color == GC_BLACK && child->color == GC_WHITE) {
+    if ((*handle)->owner->color == GC_BLACK && child->color == GC_WHITE) {
       Xen_GC_Push_Gray(child);
     }
   }
 
-  if (parent->generation == GC_OLD && child->generation == GC_YOUNG) {
+  if ((*handle)->owner->generation == GC_OLD && child->generation == GC_YOUNG) {
     if (!((*handle)->flags & GC_HANDLE_RS)) {
       (*handle)->flags |= GC_HANDLE_RS;
       (*handle)->rs_next = child->rs_handles;

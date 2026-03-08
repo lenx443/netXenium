@@ -35,11 +35,7 @@ void Xen_Queue_Push(Xen_Instance* queue_inst, Xen_Instance* value) {
   if (queue->size >= queue->capacity) Xen_Queue_Grow(queue_inst);
   Xen_size_t mask = queue->capacity - 1;
   queue->buf[queue->tail] = Xen_GCHandle_New((Xen_GCHeader*)queue);
-  Xen_GC_Write_Field(
-    (struct __GC_Header *)queue,
-    (struct __GC_Handle **)&queue->buf[queue->tail],
-    (struct __GC_Header *)value
-  );
+  Xen_GC_Write_Field(&queue->buf[queue->tail], (struct __GC_Header *)value);
   queue->tail = (queue->tail + 1) & mask;
   queue->size++;
 }

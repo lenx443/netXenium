@@ -40,9 +40,7 @@ void Xen_VM_Scopes_Push(Xen_VM_Scopes* scopes) {
   Xen_GC_Push_Root((struct __GC_Header*)new_scope);
   new_scope->symbols = Xen_GCHandle_New((Xen_GCHeader*)new_scope);
   new_scope->next = NULL;
-  Xen_GC_Write_Field((struct __GC_Header*)new_scope,
-                     (struct __GC_Handle**)&new_scope->symbols,
-                     (struct __GC_Header*)Xen_Map_New());
+  Xen_GC_Write_Field(&new_scope->symbols, (struct __GC_Header*)Xen_Map_New());
   if (scopes->scopes) {
     new_scope->next = scopes->scopes;
   }

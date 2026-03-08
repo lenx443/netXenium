@@ -26,9 +26,7 @@ CALLABLE_ptr callable_new(vm_Consts_ptr consts, Xen_size_t stack_depth) {
   new_callable->code.code = bc_new();
   new_callable->code.consts =
       Xen_GCHandle_New((struct __GC_Header*)new_callable);
-  Xen_GC_Write_Field((Xen_GCHeader*)new_callable,
-                     (Xen_GCHandle**)&new_callable->code.consts,
-                     (Xen_GCHeader*)consts);
+  Xen_GC_Write_Field(&new_callable->code.consts, (Xen_GCHeader*)consts);
   new_callable->code.stack_depth = stack_depth;
   return new_callable;
 }
@@ -66,9 +64,7 @@ void callable_vector_push(CALLABLE_Vector_ptr cv, CALLABLE_ptr callable) {
     cv->cap = new_cap;
   }
   cv->callables[cv->count] = Xen_GCHandle_New((Xen_GCHeader*)cv);
-  Xen_GC_Write_Field((Xen_GCHeader*)cv,
-                     (Xen_GCHandle**)&cv->callables[cv->count++],
-                     (Xen_GCHeader*)callable);
+  Xen_GC_Write_Field(&cv->callables[cv->count++], (Xen_GCHeader*)callable);
 }
 
 CALLABLE_ptr callable_vector_get(CALLABLE_Vector_ptr cv, Xen_size_t idx) {

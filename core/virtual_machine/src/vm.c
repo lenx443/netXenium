@@ -4,7 +4,6 @@
 #include "callable.h"
 #include "gc_header.h"
 #include "instance.h"
-#include "run_ctx.h"
 #include "run_ctx_instance.h"
 #include "source_file.h"
 #include "vm.h"
@@ -32,11 +31,7 @@ void Xen_VM_Set_Current_Ctx(Xen_Instance* ctx) {
     (*xen_globals->vm)->current_ctx->ptr = NULL;
     return;
   }
-  Xen_GC_Write_Field(
-    (Xen_GCHeader*)*xen_globals->vm,
-    (Xen_GCHandle**)&(*xen_globals->vm)->current_ctx,
-    (Xen_GCHeader*)ctx
-  );
+  Xen_GC_Write_Field(&(*xen_globals->vm)->current_ctx, (Xen_GCHeader*)ctx);
   ((RunContext_ptr)(*xen_globals->vm)->current_ctx->ptr)->ctx_running = 1;
 }
 
@@ -146,9 +141,7 @@ int Xen_VM_Except_Throw(Xen_Instance* except_inst) {
     return 0;
   }
   (*xen_globals->vm)->except.active = 1;
-  Xen_GC_Write_Field((Xen_GCHeader*)*xen_globals->vm,
-                     (Xen_GCHandle**)&(*xen_globals->vm)->except.except,
-                     (Xen_GCHeader*)except);
+  Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, (Xen_GCHeader*)except);
   Xen_IGC_Pop();
   return 1;
 }

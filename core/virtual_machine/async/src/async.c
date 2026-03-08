@@ -22,9 +22,7 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
       break;
     case Xen_CORO_EXCEPTED:
       coro->except.active = 1;
-      Xen_GC_Write_Field((struct __GC_Header *)coro,
-                         &coro->except.except,
-                         (*xen_globals->vm)->except.except->ptr);
+      Xen_GC_Write_Field(&coro->except.except, (*xen_globals->vm)->except.except->ptr);
       vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
       vm_backtrace_clear((*xen_globals->vm)->except.bt);
       (*xen_globals->vm)->except.active = 0;
@@ -51,9 +49,7 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
   Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
   if (coro->except.active) {
     (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
-                       &(*xen_globals->vm)->except.except,
-                       coro->except.except->ptr);
+    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
     vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
     vm_backtrace_clear(coro->except.bt);
     coro->except.active = 0;
@@ -77,9 +73,7 @@ Xen_Instance* Xen_Async_Get_Resumed(void) {
 }
 
 void Xen_Async_Set_Resumed(Xen_Instance* val) {
-  Xen_GC_Write_Field((struct __GC_Header *)(*xen_globals->vm),
-                     &(*xen_globals->vm)->evloop.resumed,
-                     (struct __GC_Header *)val);
+  Xen_GC_Write_Field(&(*xen_globals->vm)->evloop.resumed, (struct __GC_Header *)val);
 }
 
 void Xen_Async_Push(Xen_Instance* value) {

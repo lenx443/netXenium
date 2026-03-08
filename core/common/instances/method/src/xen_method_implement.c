@@ -57,8 +57,8 @@ static Xen_Instance* method_create(struct __Instance* self, Xen_Instance* args,
   Xen_Method* method = (Xen_Method*)self;
   Xen_Instance* func = Xen_Tuple_Get_Index(args, 0);
   Xen_Instance* func_self = Xen_Tuple_Get_Index(args, 1);
-  Xen_IGC_WRITE_FIELD(method, method->function, func);
-  Xen_IGC_WRITE_FIELD(method, method->self, func_self);
+  Xen_IGC_WRITE_FIELD(method->function, func);
+  Xen_IGC_WRITE_FIELD(method->self, func_self);
   return nil;
 }
 

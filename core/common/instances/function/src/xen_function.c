@@ -182,8 +182,7 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
   fun->fun_type = 2;
   fun->fun_native = fn_fun;
   if_nil_neval(closure) {
-    Xen_GC_Write_Field((Xen_GCHeader*)fun, (Xen_GCHandle**)&fun->closure,
-                       (Xen_GCHeader*)closure);
+    Xen_GC_Write_Field(&fun->closure, (Xen_GCHeader*)closure);
   }
   return (Xen_INSTANCE*)fun;
 }
@@ -252,11 +251,10 @@ Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure, Xen_Ins
       }
     }
   }
-  Xen_GC_Write_Field((Xen_GCHeader*)fun, (Xen_GCHandle**)&fun->fun_code,
-                     (Xen_GCHeader*)code_fun);
-  Xen_IGC_WRITE_FIELD(fun, fun->closure, closure);
-  Xen_IGC_WRITE_FIELD(fun, fun->args_names, args_names);
-  Xen_IGC_WRITE_FIELD(fun, fun->args_default_values, args_default_values);
+  Xen_GC_Write_Field(&fun->fun_code, (Xen_GCHeader*)code_fun);
+  Xen_IGC_WRITE_FIELD(fun->closure, closure);
+  Xen_IGC_WRITE_FIELD(fun->args_names, args_names);
+  Xen_IGC_WRITE_FIELD(fun->args_default_values, args_default_values);
   fun->args_requireds =
       Xen_SIZE(args_names) - Xen_SIZE(args_default_values_list);
   Xen_IGC_XPOP(roots);

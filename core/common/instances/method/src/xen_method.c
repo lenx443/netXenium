@@ -32,8 +32,8 @@ Xen_Instance* Xen_Method_New(Xen_Instance* function, Xen_Instance* self) {
   if (!method) {
     return NULL;
   }
-  Xen_IGC_WRITE_FIELD(method, method->function, function);
-  Xen_IGC_WRITE_FIELD(method, method->self, self);
+  Xen_IGC_WRITE_FIELD(method->function, function);
+  Xen_IGC_WRITE_FIELD(method->self, self);
   return (Xen_Instance*)method;
 }
 

@@ -36,9 +36,9 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
       return NULL;
     }
   }
-  Xen_IGC_WRITE_FIELD(impl, impl->__props, props);
+  Xen_IGC_WRITE_FIELD(impl->__props, props);
   if (base) {
-    Xen_IGC_WRITE_FIELD(impl, impl->__base, base);
+    Xen_IGC_WRITE_FIELD(impl->__base, base);
   }
   impl->__get_attr = Xen_Basic_Get_Attr_Mapped;
   impl->__set_attr = Xen_Basic_Set_Attr_Mapped;

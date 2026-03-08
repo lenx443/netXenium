@@ -134,7 +134,7 @@ static Xen_Instance* endpoint_create(Xen_Instance* self, Xen_Instance* args,
     Xen_Dealloc(port_str);
     return NULL;
   }
-  Xen_IGC_WRITE_FIELD(endpoint, endpoint->ip, ip);
+  Xen_IGC_WRITE_FIELD(endpoint->ip, ip);
   if (!parse_u16(port_str, &endpoint->port)) {
     Xen_Dealloc(ip_str);
     Xen_Dealloc(port_str);
