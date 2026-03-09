@@ -1641,13 +1641,24 @@ Xen_Instance* parser_for_stmt(Parser* p) {
     return NULL;
   }
   parser_next(p);
-  Xen_Instance* target = parser_expr(p);
+  Xen_Instance* target = NULL;
+  if (p->token.tkn_type == TKN_KEYWORD && strcmp(p->token.tkn_text, "local") == 0) {
+    parser_next(p);
+    if (p->token.tkn_type != TKN_IDENTIFIER) {
+      Xen_SyntaxError("Invalid target in for loop.");
+      return NULL;
+    }
+    target = Xen_AST_Node_New("Local", p->token.tkn_text, p->token.sta);
+    parser_next(p);
+  } else {
+    target = parser_expr(p);
+  }
   if (!target) {
     return NULL;
   }
   if (p->token.tkn_type != TKN_KEYWORD ||
       strcmp(p->token.tkn_text, "in") != 0) {
-    Xen_SyntaxError("Missing 'in' in for loop");
+    Xen_SyntaxError("Missing 'in' in for loop.");
     return NULL;
   }
   parser_next(p);

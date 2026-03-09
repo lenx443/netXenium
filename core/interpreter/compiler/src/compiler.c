@@ -2498,13 +2498,16 @@ int compile_for_statement(Compiler* c, Xen_Instance* node) {
     B_FREE(end_block);
     return 0;
   }
-  Xen_Instance* target = Xen_AST_Node_Get_Child(node, 0);
-  if (Xen_AST_Node_Name_Cmp(target, "Expr") != 0) {
-    B_FREE(end_block);
-    return 0;
-  }
   emit(SCOPE_PUSH, 0, Xen_AST_Node_STA(node));
-  if (!compile_assignment_expr(c, target)) {
+  Xen_Instance* target = Xen_AST_Node_Get_Child(node, 0);
+  if (Xen_AST_Node_Name_Cmp(target, "Expr") == 0) {
+    if (!compile_assignment_expr(c, target)) {
+      B_FREE(end_block);
+      return 0;
+    }
+  } else if (Xen_AST_Node_Name_Cmp(target, "Local") == 0) {
+    emit(DECL_LOCAL, co_push_name(Xen_AST_Node_Value(target)), Xen_AST_Node_STA(target));
+  } else {
     B_FREE(end_block);
     return 0;
   }
