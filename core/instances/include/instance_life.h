@@ -24,6 +24,7 @@ struct __Implement_Pointers {
   Xen_Implement* run_frame;
   Xen_Implement* module;
   Xen_Implement* coroutine;
+  Xen_Implement* eventloop;
 };
 
 void Xen_Instance_GetReady(void);

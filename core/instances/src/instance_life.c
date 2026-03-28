@@ -5,6 +5,7 @@
 #include "xen_ast_implement.h"
 #include "xen_boolean_implement.h"
 #include "xen_bytes_implement.h"
+#include "xen_eventloop_implement.h"
 #include "xen_except_implement.h"
 #include "xen_function_implement.h"
 #include "xen_igc.h"
@@ -70,6 +71,7 @@ void Xen_Instance_GetReady(void) {
   implements.run_frame = Xen_Run_Frame_GetImplement();
   implements.module = Xen_Module_GetImplement();
   implements.coroutine = Xen_Coroutine_GetImplement();
+  implements.eventloop = Xen_EventLoop_GetImplement();
   xen_globals->implements = &implements;
 }
 

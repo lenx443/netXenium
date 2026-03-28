@@ -22,8 +22,7 @@ typedef struct {
   struct Xen_Except_Status except;
   struct {
     Xen_bool_t active;
-    Xen_GCHandle* tasks;
-    Xen_GCHandle* resumed;
+    Xen_GCHandle* evloop;
   } evloop;
 } VM;
 

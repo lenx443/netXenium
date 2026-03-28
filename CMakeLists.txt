@@ -87,6 +87,8 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/virtual_machine/dynamic/vectors/include/
   core/virtual_machine/dynamic/lists/include/
   core/virtual_machine/async/include/
+  core/virtual_machine/async/instances/eventloop/types/header/
+  core/virtual_machine/async/instances/eventloop/include/
   core/instances/include
   core/instances/types/include/
   core/instances/igc/include/
@@ -235,7 +237,7 @@ set(SOURCES
   core/virtual_machine/instances/frame/src/run_ctx.c
   core/virtual_machine/instances/frame/src/run_frame.c
 
-  # Implementacion del tipo `RunFrame`
+  # Implementacion del tipo `Coroutine`
   core/virtual_machine/instances/coroutine/src/coroutine_implement.c
   core/virtual_machine/instances/coroutine/src/coroutine.c
 
@@ -254,6 +256,10 @@ set(SOURCES
   # motor de asincronia de la
   # maquina virtual
   core/virtual_machine/async/src/async.c
+
+  # Implementacion del tipo `EventLoop`
+  core/virtual_machine/async/instances/eventloop/src/xen_eventloop_implement.c
+  core/virtual_machine/async/instances/eventloop/src/xen_eventloop.c
 
   # Codigo de Instancias
   core/instances/src/instance_life.c

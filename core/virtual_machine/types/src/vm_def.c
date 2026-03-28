@@ -1,9 +1,4 @@
-#include "vm_scope.h"
-#include "xen_nil.h"
-#include "xen_queue.h"
-#include "xen_tuple.h"
 #define _POSIX_C_SOURCE 200809L
-
 #include <signal.h>
 #include <stdbool.h>
 #include <string.h>
@@ -23,6 +18,9 @@
 #include "xen_map.h"
 #include "xen_string.h"
 #include "xen_vector.h"
+#include "vm_scope.h"
+#include "xen_nil.h"
+#include "xen_tuple.h"
 
 static VM_ptr vm = NULL;
 
@@ -49,10 +47,9 @@ static void vm_def_trace(Xen_GCHeader* h) {
   if (_vm->except.active) {
     Xen_GC_Trace_GCHeader(_vm->except.except);
   }
-  Xen_GC_Trace_GCHeader(_vm->evloop.tasks);
   if (_vm->evloop.active) {
-    if (_vm->evloop.resumed->ptr)
-      Xen_GC_Trace_GCHeader(_vm->evloop.resumed);
+    if (_vm->evloop.evloop->ptr)
+      Xen_GC_Trace_GCHeader(_vm->evloop.evloop);
   }
 }
 
@@ -94,8 +91,7 @@ bool vm_create(void) {
   vm->paths_modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->config = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->except.except = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->evloop.tasks = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->evloop.resumed = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->evloop.evloop = Xen_GCHandle_New((Xen_GCHeader*)vm);
   Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));
   if (!args_array) {
     return 0;
@@ -143,7 +139,6 @@ bool vm_create(void) {
   vm->except.active = 0;
   vm->except.bt = vm_backtrace_new();
   vm->evloop.active = 0;
-  Xen_GC_Write_Field(&vm->evloop.tasks, (struct __GC_Header *)Xen_Queue_New());
   Xen_GC_Push_Root((Xen_GCHeader*)vm);
 
   struct sigaction sa;
@@ -166,8 +161,7 @@ void vm_destroy(void) {
   Xen_GCHandle_Free(vm->paths_modules);
   Xen_GCHandle_Free(vm->config);
   Xen_GCHandle_Free(vm->except.except);
-  Xen_GCHandle_Free(vm->evloop.tasks);
-  Xen_GCHandle_Free(vm->evloop.resumed);
+  Xen_GCHandle_Free(vm->evloop.evloop);
   vm_backtrace_free(vm->except.bt);
   Xen_GC_Pop_Root();
 }

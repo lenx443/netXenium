@@ -31,6 +31,7 @@
 #include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_cstrings.h"
+#include "xen_eventloop.h"
 #include "xen_except.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
@@ -817,7 +818,7 @@ static void op_task(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     ERROR;
   }
   STACK_PUSH(coro_inst);
-  Xen_Async_Push(coro_inst);
+  Xen_EventLoop_Task_Push(Xen_Async_Get_EventLoop(), coro_inst);
   vmr->retval = nil;
   vmr->halt = 1;
 }
@@ -838,10 +839,11 @@ static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
     Xen_AsyncError_Already();
     ERROR;
   }
-  Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+  Xen_Instance* eloop = Xen_Async_Get_EventLoop();
+  Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(eloop);
   cur_coro->status = Xen_CORO_PAUSE;
   Xen_GC_Write_Field(&cur_coro->await, (struct __GC_Header *)coro);
-  Xen_Async_Push(coro_inst);
+  Xen_EventLoop_Task_Push(eloop, coro_inst);
   vmr->retval = nil;
   vmr->halt = 1;
 }
@@ -852,7 +854,7 @@ static void op_await_resume(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) 
     Xen_AsyncError();
     ERROR;
   }
-  Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+  Xen_Coroutine* coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(Xen_Async_Get_EventLoop());
   Xen_Coroutine* awaited = (Xen_Coroutine*)coro->await->ptr;
   coro->await->ptr = NULL;
   if (awaited->except.active) {
@@ -1147,7 +1149,7 @@ static void __return(VM_Run* vmr, RunContext_ptr ctx, Xen_Instance* retval) {
     vm_stack_push((struct vm_Stack*)ctx_caller->ctx_stack->ptr, retval);
   } else {
     if (Xen_Async_Get_Active()) {
-      Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+      Xen_Coroutine* coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(Xen_Async_Get_EventLoop());
       coro->status = Xen_CORO_TERMINATED;
       Xen_GC_Write_Field(&coro->result, (struct __GC_Header *)retval);
     }
@@ -1313,7 +1315,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
         Xen_IGC_Pop();
         Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
         if (Xen_Async_Get_Active()) {
-          Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+          Xen_Coroutine* coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(Xen_Async_Get_EventLoop());
           coro->status = Xen_CORO_EXCEPTED;
         }
         return NULL;
@@ -1326,7 +1328,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
       Xen_IGC_Pop();
       Xen_VM_Set_Current_Ctx(__last_current_ctx_value);
       if (Xen_Async_Get_Active()) {
-        Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Async_Get_Resumed();
+        Xen_Coroutine* coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(Xen_Async_Get_EventLoop());
         coro->status = Xen_CORO_TERMINATED;
       }
       return NULL;

@@ -166,7 +166,8 @@ void Xen_GC_Promote_Trace(struct __GC_Header* h) {
 }
 
 void Xen_GC_Trace_GCHeader(struct __GC_Handle* handle) {
-  assert(handle != NULL && handle->ptr != NULL);
+  if (handle->ptr == NULL) return;
+  assert(handle != NULL);
   Xen_GCHeader* child = handle->ptr;
   if (xen_globals->gc_heap->promote_trace) {
     Xen_GCHeader* parent = handle->owner;

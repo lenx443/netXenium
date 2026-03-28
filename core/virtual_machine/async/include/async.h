@@ -13,12 +13,7 @@
 Xen_Instance* Xen_Async_Run(Xen_Instance*);
 
 Xen_bool_t Xen_Async_Get_Active(void);
+Xen_Instance* Xen_Async_Get_EventLoop(void);
 void Xen_Async_Set_Active(Xen_bool_t);
-
-Xen_Instance* Xen_Async_Get_Resumed(void);
-void Xen_Async_Set_Resumed(Xen_Instance*);
-
-void Xen_Async_Push(Xen_Instance*);
-Xen_Instance* Xen_Async_Pop(void);
 
 #endif
