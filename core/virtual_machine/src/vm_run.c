@@ -842,7 +842,7 @@ static void op_await(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* eloop = Xen_Async_Get_EventLoop();
   Xen_Coroutine* cur_coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(eloop);
   cur_coro->status = Xen_CORO_PAUSE;
-  Xen_GC_Write_Field(&cur_coro->await, (struct __GC_Header *)coro);
+  Xen_GC_Write_Field(&coro->awaiter, (struct __GC_Header *)cur_coro);
   Xen_EventLoop_Task_Push(eloop, coro_inst);
   vmr->retval = nil;
   vmr->halt = 1;
