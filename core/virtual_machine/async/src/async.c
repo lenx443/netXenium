@@ -27,7 +27,7 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
       break;
     case Xen_CORO_TERMINATED:
       if (coro->awaiter->ptr) {
-        Xen_EventLoop_Task_Push(eloop, (Xen_Instance *)coro->awaiter);
+        Xen_EventLoop_Task_Push(eloop, (Xen_Instance *)coro->awaiter->ptr);
       }
       break;
     case Xen_CORO_EXCEPTED:
@@ -45,6 +45,10 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
       Xen_EventLoop_Task_Push(eloop, coro_inst);
       break;
     case Xen_CORO_PAUSE:
+      if (((Xen_Coroutine*)coro->awaited->ptr)->status == Xen_CORO_TERMINATED) {
+        coro->status = Xen_CORO_RESUME;
+        Xen_EventLoop_Task_Push(eloop, coro_inst);
+      }
       break;
     default:
       Xen_IGC_Pop();
