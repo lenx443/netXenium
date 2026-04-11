@@ -236,6 +236,7 @@ static Xen_Instance* file_seek(Xen_Instance* self, Xen_Instance* args,
       }
     }
   }
+  Xen_Function_ArgBinding_Free(args_binding);
   off_t pos = lseek(file->f, offset, whence);
   if (pos < 0) {
     return NULL;

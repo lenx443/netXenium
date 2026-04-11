@@ -9,6 +9,7 @@
 typedef struct Xen_Coroutine_Instance {
   Xen_INSTANCE_HEAD
   Xen_GCHandle* context;
+  Xen_GCHandle* awaited;
   Xen_GCHandle* awaiter;
   Xen_GCHandle* result;
   struct Xen_Except_Status except;

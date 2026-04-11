@@ -855,8 +855,8 @@ static void op_await_resume(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) 
     ERROR;
   }
   Xen_Coroutine* coro = (Xen_Coroutine*)Xen_EventLoop_Get_Resumed(Xen_Async_Get_EventLoop());
-  Xen_Coroutine* awaited = (Xen_Coroutine*)coro->await->ptr;
-  coro->await->ptr = NULL;
+  Xen_Coroutine* awaited = (Xen_Coroutine*)coro->awaited->ptr;
+  coro->awaited->ptr = NULL;
   if (awaited->except.active) {
     (*xen_globals->vm)->except.active = 1;
     Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, awaited->except.except->ptr);
@@ -865,7 +865,7 @@ static void op_await_resume(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) 
     awaited->except.active = 0;
     ERROR;
   }
-  STACK_PUSH((Xen_Instance*)awaited->result->ptr);
+  STACK_PUSH(nil);
 }
 
 static void op_copy(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
