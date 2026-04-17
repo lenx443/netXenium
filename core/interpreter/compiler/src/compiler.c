@@ -1916,7 +1916,282 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
   }
   Xen_Instance* rhs = Xen_AST_Node_Get_Child(node, 1);
   if (Xen_AST_Node_Name_Cmp(rhs, "Expr") == 0) {
-    if (!compile_expr(c, rhs)) {
+    if (Xen_AST_Node_Value_Cmp(node, "+=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_ADD, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "-=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_SUB, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "*=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_MUL, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "/=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_DIV, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "%=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_MOD, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "**=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_POW, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "&=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_BAND, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "^=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_BXOR, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "|=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_BOR, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, "<<=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_SHL, Xen_AST_Node_STA(node));
+    } else if (Xen_AST_Node_Value_Cmp(node, ">>=") == 0) {
+      Xen_Instance* lhs = Xen_AST_Node_Get_Child(node, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Expr") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Primary") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      lhs = Xen_AST_Node_Get_Child(lhs, 0);
+      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
+        c->sta = Xen_AST_Node_STA(lhs);
+        Xen_SyntaxError("Invalid left-hand side in assignment.");
+        return 0;
+      }
+      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
+      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
+      if (!compile_expr(c, rhs)) {
+        return 0;
+      }
+      emit(BINARYOP, Xen_OPR_ASSIGN_SHR, Xen_AST_Node_STA(node));
+    } else if (!compile_expr(c, rhs)) {
       return 0;
     }
   } else if (Xen_AST_Node_Name_Cmp(rhs, "FunctionExpr") == 0) {

@@ -22,9 +22,27 @@ typedef enum {
   Xen_OPR_BOR,
   Xen_OPR_SHL,
   Xen_OPR_SHR,
+  Xen_OPR_ASSIGN_POW,
+  Xen_OPR_ASSIGN_MUL,
+  Xen_OPR_ASSIGN_DIV,
+  Xen_OPR_ASSIGN_MOD,
+  Xen_OPR_ASSIGN_ADD,
+  Xen_OPR_ASSIGN_SUB,
+  Xen_OPR_ASSIGN_BAND,
+  Xen_OPR_ASSIGN_BXOR,
+  Xen_OPR_ASSIGN_BOR,
+  Xen_OPR_ASSIGN_SHL,
+  Xen_OPR_ASSIGN_SHR,
   Xen_OPR_END,
 } Xen_Opr;
 
+struct Xen_Operator_Info {
+  const char *keyword;
+  const char *op;
+  Xen_Opr dfault;
+};
+
+extern struct Xen_Operator_Info Xen_Operators_Map[Xen_OPR_END];
 Xen_Instance* Xen_Operator_Eval_Pair(Xen_Instance*, Xen_Instance*, Xen_Opr);
 
 #endif

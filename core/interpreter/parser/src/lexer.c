@@ -538,13 +538,21 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
   } else if (c == '+') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_ADD, "+", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_ADD, "+=", 2);
+    } else {
+      token = Token(lexer, TKN_ADD, "+", 1);
+    }
   } else if (c == '-') {
     token_start(lexer);
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '>') {
       advance(lexer);
       token = Token(lexer, TKN_ARROW, "->", 2);
+    } else if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_MINUS, "-=", 2);
     } else {
       token = Token(lexer, TKN_MINUS, "-", 1);
     }
@@ -553,18 +561,36 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     advance(lexer);
     if (sf->sf_content[lexer->pos] == '*') {
       advance(lexer);
-      token = Token(lexer, TKN_POW, "**", 2);
+      if (sf->sf_content[lexer->pos] == '=') {
+        advance(lexer);
+        token = Token(lexer, TKN_ASSIGN_POW, "**=", 3);
+      } else {
+        token = Token(lexer, TKN_POW, "**", 2);
+      }
+    } else if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_MUL, "*=", 2);
     } else {
       token = Token(lexer, TKN_MUL, "*", 1);
     }
   } else if (c == '/') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_DIV, "/", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_DIV, "/=", 2);
+    } else {
+      token = Token(lexer, TKN_DIV, "/", 1);
+    }
   } else if (c == '%') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_MOD, "%", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_MOD, "%=", 2);
+    } else {
+      token = Token(lexer, TKN_MOD, "%", 1);
+    }
   } else if (c == '<') {
     token_start(lexer);
     advance(lexer);
@@ -573,7 +599,12 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_LE, "<=", 2);
     } else if (sf->sf_content[lexer->pos] == '<') {
       advance(lexer);
-      token = Token(lexer, TKN_SHIFT_LEFT, "<<", 2);
+      if (sf->sf_content[lexer->pos] == '=') {
+        advance(lexer);
+        token = Token(lexer, TKN_ASSIGN_SHIFT_LEFT, "<<=", 3);
+      } else {
+        token = Token(lexer, TKN_SHIFT_LEFT, "<<", 2);
+      }
     } else {
       token = Token(lexer, TKN_LT, "<", 1);
     }
@@ -585,7 +616,12 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
       token = Token(lexer, TKN_GE, ">=", 2);
     } else if (sf->sf_content[lexer->pos] == '>') {
       advance(lexer);
-      token = Token(lexer, TKN_SHIFT_RIGHT, ">>", 2);
+      if (sf->sf_content[lexer->pos] == '=') {
+        advance(lexer);
+        token = Token(lexer, TKN_ASSIGN_SHIFT_RIGHT, ">>=", 3);
+      } else {
+        token = Token(lexer, TKN_SHIFT_RIGHT, ">>", 2);
+      }
     } else {
       token = Token(lexer, TKN_GT, ">", 1);
     }
@@ -601,15 +637,30 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
   } else if (c == '&') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_BIT_AND, "&", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_BIT_AND, "&=", 2);
+    } else {
+      token = Token(lexer, TKN_BIT_AND, "&", 1);
+    }
   } else if (c == '^') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_BIT_XOR, "^", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_BIT_XOR, "^=", 2);
+    } else {
+      token = Token(lexer, TKN_BIT_XOR, "^", 1);
+    }
   } else if (c == '|') {
     token_start(lexer);
     advance(lexer);
-    token = Token(lexer, TKN_BIT_OR, "|", 1);
+    if (sf->sf_content[lexer->pos] == '=') {
+      advance(lexer);
+      token = Token(lexer, TKN_ASSIGN_BIT_OR, "|=", 2);
+    } else {
+      token = Token(lexer, TKN_BIT_OR, "|", 1);
+    }
   } else if (c == '~') {
     token_start(lexer);
     advance(lexer);

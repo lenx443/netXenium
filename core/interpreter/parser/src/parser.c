@@ -61,7 +61,8 @@ static bool is_primary(Parser*);
 static bool is_unary(Parser*);
 static bool is_factor(Parser*);
 static bool is_list(Parser*);
-static bool is_assigment(Parser*);
+static bool is_assignment(Parser*);
+static bool is_assignment_token(Parser*);
 static bool is_suffix(Parser*);
 static bool is_keyword(Parser*);
 static bool is_decl_keyword(Parser*);
@@ -176,8 +177,19 @@ bool is_list(Parser* p) {
          p->token.tkn_type == TKN_ASYNC    || is_factor(p);
 }
 
-bool is_assigment(Parser* p) {
+bool is_assignment(Parser* p) {
   return is_list(p);
+}
+
+static bool is_assignment_token(Parser* p) {
+  Lexer_Token_Type token = p->token.tkn_type;
+  if (token == TKN_ASSIGNMENT    || token == TKN_ASSIGN_ADD        || token == TKN_ASSIGN_MINUS       ||
+      token == TKN_ASSIGN_MUL    || token == TKN_ASSIGN_DIV        || token == TKN_ASSIGN_MOD         ||
+      token == TKN_ASSIGN_POW    || token == TKN_ASSIGN_BIT_AND    || token == TKN_ASSIGN_BIT_XOR     ||
+      token == TKN_ASSIGN_BIT_OR || token == TKN_ASSIGN_SHIFT_LEFT || token == TKN_ASSIGN_SHIFT_RIGHT) {
+    return true;
+  }
+  return false;
 }
 
 bool is_suffix(Parser* p) {
@@ -188,7 +200,7 @@ bool is_suffix(Parser* p) {
 }
 
 bool is_keyword(Parser* p) {
-  if (p->token.tkn_type == TKN_KEYWORD || is_assigment(p)) {
+  if (p->token.tkn_type == TKN_KEYWORD || is_assignment(p)) {
     return true;
   }
   return false;
@@ -1235,7 +1247,7 @@ Xen_Instance* parser_assignment(Parser* p) {
   if (!lhs) {
     return NULL;
   }
-  if (p->token.tkn_type == TKN_ASSIGNMENT) {
+  if (is_assignment_token(p)) {
     const char* operator = Xen_CString_Dup(p->token.tkn_text);
     parser_next(p);
 

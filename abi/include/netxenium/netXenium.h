@@ -30,6 +30,7 @@
 #include "operators.h"
 #include "interpreter.h"
 #include "vm_scope.h"
+#include "xen_cbuffer.h"
 
 #define Xen_NULL ((void*)0)
 

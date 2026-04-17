@@ -20,6 +20,43 @@ static Xen_Instance* fn_system(Xen_Instance* self, Xen_Instance* args, Xen_Insta
   return Xen_Number_From_Int(sts);
 }
 
+static Xen_Instance* fn_exec_out(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  static Xen_Function_ArgSpec args_def[] = {
+      {"cmd", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_STRING, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+  Xen_Function_ArgBinding* args_binding = Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!args_binding) {
+    return NULL;
+  }
+  const char* cmd = Xen_String_As_CString(Xen_Function_ArgBinding_Search(args_binding, "cmd")->value);
+  Xen_Function_ArgBinding_Free(args_binding);
+  int pipefd[2];
+  if (pipe(pipefd) < 0) return NULL;
+  pid_t pid = fork();
+  if (pid < 0) return NULL;
+  if (pid == 0) {
+    dup2(pipefd[1], STDOUT_FILENO);
+    close(pipefd[0]);
+    close(pipefd[1]);
+    const char* argv[] = {"/bin/sh", "-c", cmd, NULL};
+    execvp(argv[0], (char* const*)argv);
+    _exit(1);
+  }
+  close(pipefd[1]);
+  Xen_CBuffer *buf = Xen_CBuffer_New();
+  char tmp[1024];
+  Xen_size_t n;
+  while ((n = read(pipefd[0], tmp, sizeof(tmp))) > 0) {
+    tmp[n] = '\0';
+    Xen_CBuffer_Append_CStr(buf, tmp);
+  }
+  Xen_Instance* out = Xen_CBuffer_As_String(buf);
+  Xen_CBuffer_Free(buf);
+  return out;
+}
+
 static Xen_Instance* fn_get_dir(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
@@ -88,6 +125,7 @@ static Xen_Instance* fn_list_dir(Xen_Instance* self, Xen_Instance* args, Xen_Ins
 
 struct Xen_Module_Function functions[] = {
   {"system", fn_system},
+  {"exec_out", fn_exec_out},
   {"get_dir", fn_get_dir},
   {"change_dir", fn_change_dir},
   {"list_dir", fn_list_dir},
