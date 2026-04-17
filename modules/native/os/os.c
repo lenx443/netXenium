@@ -50,7 +50,7 @@ static Xen_Instance* fn_exec_out(Xen_Instance* self, Xen_Instance* args, Xen_Ins
   Xen_CBuffer *buf = Xen_CBuffer_New();
   char tmp[1024];
   Xen_size_t n;
-  while ((n = read(pipefd[0], tmp, sizeof(tmp))) > 0) {
+  while ((n = read(pipefd[0], tmp, sizeof(tmp) - 1)) > 0) {
     tmp[n] = '\0';
     Xen_CBuffer_Append_CStr(buf, tmp);
   }

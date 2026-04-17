@@ -58,7 +58,6 @@ static void vm_def_destroy(Xen_GCHeader* h) {
 }
 
 static int vm_load_modules_paths(void) {
-  Xen_IGC_WRITE_FIELD(vm->args, Xen_Vector_New());
   Xen_IGC_WRITE_FIELD(vm->paths_modules, Xen_Vector_New());
   Xen_Instance* default_module_path =
       Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");

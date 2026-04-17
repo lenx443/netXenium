@@ -215,9 +215,9 @@ static Xen_Instance* string_opr_not(Xen_Instance* self, Xen_Instance* args,
                                     Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   if (Xen_SIZE(self) == 0) {
-    return Xen_False;
+    return Xen_True;
   }
-  return Xen_True;
+  return Xen_False;
 }
 
 static Xen_Instance* string_opr_band(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
