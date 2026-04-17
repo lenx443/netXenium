@@ -1,8 +1,10 @@
 #include "netxenium/netXenium.h"
 #include "netxenium/xen_function.h"
+#include <bits/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 static Xen_Instance* fn_system(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
@@ -54,7 +56,15 @@ static Xen_Instance* fn_exec_out(Xen_Instance* self, Xen_Instance* args, Xen_Ins
   }
   Xen_Instance* out = Xen_CBuffer_As_String(buf);
   Xen_CBuffer_Free(buf);
-  return out;
+  int status;
+  waitpid(pid, &status, 0);
+  if (WIFEXITED(status)) {
+    Xen_Instance* result = Xen_Tuple_From_Array(2, (Xen_Instance *[]){
+      out, Xen_Number_From_Int(WEXITSTATUS(status))
+    });
+    return result;
+  }
+  return NULL;
 }
 
 static Xen_Instance* fn_get_dir(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
