@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <string.h>
 
 static Xen_Instance* fn_system(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
