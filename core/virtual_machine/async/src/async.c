@@ -7,9 +7,8 @@
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_life.h"
-#include "xen_nil.h"
 
-Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
+void Xen_Async_Run(Xen_Instance* new_coro) {
   int __last_active = (*xen_globals->vm)->evloop.active;
   Xen_Instance* __last_evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
   Xen_IGC_Push(__last_evloop);
@@ -17,6 +16,25 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
   (*xen_globals->vm)->evloop.active = 1;
   Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, eloop);
   Xen_EventLoop_Task_Push(eloop, new_coro);
+  while (!Xen_EventLoop_Task_Empty(eloop)) {
+    Xen_Async_Run_Tasks();
+  }
+  Xen_Async_Set_Active(0);
+  Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
+  if (coro->except.active) {
+    (*xen_globals->vm)->except.active = 1;
+    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
+    vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
+    vm_backtrace_clear(coro->except.bt);
+    coro->except.active = 0;
+  }
+  Xen_IGC_Pop();
+  Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, __last_evloop);
+  (*xen_globals->vm)->evloop.active = __last_active;
+}
+
+void Xen_Async_Run_Tasks(void) {
+  Xen_Instance* eloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
   Xen_Instance* coro_inst = NULL;
   while ((coro_inst = Xen_EventLoop_Task_Pop(eloop)) != NULL) {
     Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
@@ -51,25 +69,9 @@ Xen_Instance* Xen_Async_Run(Xen_Instance* new_coro) {
       }
       break;
     default:
-      Xen_IGC_Pop();
-      Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, __last_evloop);
-      (*xen_globals->vm)->evloop.active = __last_active;
-      return NULL;
+      return;
     }
   }
-  Xen_Async_Set_Active(0);
-  Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
-  if (coro->except.active) {
-    (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
-    vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
-    vm_backtrace_clear(coro->except.bt);
-    coro->except.active = 0;
-  }
-  Xen_IGC_Pop();
-  Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, __last_evloop);
-  (*xen_globals->vm)->evloop.active = __last_active;
-  return nil;
 }
 
 Xen_bool_t Xen_Async_Get_Active(void) {

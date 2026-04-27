@@ -8,6 +8,7 @@ Xen_bool_t Xen_IsBytes(Xen_Instance*);
 Xen_Instance* Xen_Bytes_New(void);
 Xen_Instance* Xen_Bytes_From_Array(Xen_size_t, Xen_uint8_t*);
 void Xen_Bytes_Append(Xen_Instance*, Xen_uint8_t);
+void Xen_Bytes_Append_At(Xen_Instance*, Xen_size_t, Xen_uint8_t);
 void Xen_Bytes_Append_Array(Xen_Instance*, Xen_size_t, Xen_uint8_t*);
 const Xen_uint8_t* Xen_Bytes_Get(Xen_Instance*);
 

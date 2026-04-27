@@ -4,7 +4,7 @@
 #include "callable.h"
 #include "gc_header.h"
 #include "instance.h"
-#include "netxenium/xen_function.h"
+#include "xen_function.h"
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_except.h"

@@ -21,6 +21,10 @@ Xen_Instance* Xen_EventLoop_Task_Pop(Xen_Instance *eloop) {
   return Xen_Queue_Pop((Xen_Instance*)((Xen_EventLoop*)eloop)->tasks->ptr);
 }
 
+int Xen_EventLoop_Task_Empty(Xen_Instance *eloop) {
+  return Xen_Queue_Empty((Xen_Instance*)((Xen_EventLoop*)eloop)->tasks->ptr);
+}
+
 void Xen_EventLoop_Set_Resumed(Xen_Instance *eloop, Xen_Instance *task) {
   Xen_GC_Write_Field(&((Xen_EventLoop*)eloop)->resumed, (Xen_GCHeader*)task);
 }

@@ -10,7 +10,8 @@
 #define Xen_CORO_RESUME 4
 #define Xen_CORO_PAUSE 5
 
-Xen_Instance* Xen_Async_Run(Xen_Instance*);
+void Xen_Async_Run(Xen_Instance*);
+void Xen_Async_Run_Tasks(void);
 
 Xen_bool_t Xen_Async_Get_Active(void);
 Xen_Instance* Xen_Async_Get_EventLoop(void);

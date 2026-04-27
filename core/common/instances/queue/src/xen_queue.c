@@ -50,3 +50,7 @@ Xen_Instance* Xen_Queue_Pop(Xen_Instance* queue_inst) {
   queue->size--;
   return value;
 }
+
+int Xen_Queue_Empty(Xen_Instance* queue_inst) {
+  return ((Xen_Queue*)queue_inst)->size == 0;
+}

@@ -11,7 +11,6 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "ir_bytecode.h"
-#include "netxenium/compiler.h"
 #include "operators.h"
 #include "parser.h"
 #include "source_file.h"
@@ -1929,14 +1928,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -1954,14 +1948,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -1979,14 +1968,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2004,14 +1988,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2029,14 +2008,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2054,14 +2028,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2079,14 +2048,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2104,14 +2068,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2129,14 +2088,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2154,14 +2108,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }
@@ -2179,14 +2128,9 @@ int compile_assignment(Compiler* c, Xen_Instance* node) {
         Xen_SyntaxError("Invalid left-hand side in assignment.");
         return 0;
       }
-      lhs = Xen_AST_Node_Get_Child(lhs, 0);
-      if (Xen_AST_Node_Name_Cmp(lhs, "Literal") != 0) {
-        c->sta = Xen_AST_Node_STA(lhs);
-        Xen_SyntaxError("Invalid left-hand side in assignment.");
+      if (!compile_expr_primary(c, lhs)) {
         return 0;
       }
-      Xen_size_t idx = co_push_name(Xen_AST_Node_Value(lhs));
-      emit(LOAD, idx, Xen_AST_Node_STA(lhs));
       if (!compile_expr(c, rhs)) {
         return 0;
       }

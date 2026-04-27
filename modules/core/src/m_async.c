@@ -28,7 +28,8 @@ fn_run(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   if (Xen_IMPL(coro_inst) != xen_globals->implements->coroutine) {
     return NULL;
   }
-  return Xen_Async_Run(coro_inst);
+  Xen_Async_Run(coro_inst);
+  return nil;
 }
 
 static Xen_Instance*
