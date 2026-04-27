@@ -1,6 +1,6 @@
 #include "netxenium/netXenium.h"
 #include "netxenium/xen_function.h"
-#include <bits/wait.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
