@@ -3,7 +3,6 @@
 #include "attrs.h"
 #include "callable.h"
 #include "instance.h"
-#include "netxenium/xen_function.h"
 #include "xen_function.h"
 #include "xen_life.h"
 #include "xen_module_types.h"
