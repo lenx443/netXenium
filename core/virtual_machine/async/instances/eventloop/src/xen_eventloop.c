@@ -7,9 +7,19 @@
 #include "xen_nil.h"
 #include "xen_queue.h"
 
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
+
 Xen_Instance* Xen_EventLoop_New(void) {
   Xen_EventLoop* eloop = (Xen_EventLoop*)__instance_new(xen_globals->implements->eventloop, nil, nil, 0);
   Xen_GC_Write_Field(&eloop->tasks, (Xen_GCHeader*)Xen_Queue_New());
+  eloop->event_fd = epoll_create1(0);
+  eloop->timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+
+  struct epoll_event ev;
+  ev.events = EPOLLIN;
+  ev.data.fd = eloop->timer_fd;
+  epoll_ctl(eloop->event_fd, EPOLL_CTL_ADD, eloop->timer_fd, &ev);
   return (Xen_Instance*)eloop;
 }
 

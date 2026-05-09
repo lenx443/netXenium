@@ -4,9 +4,30 @@
 #include "vm_backtrace.h"
 #include "vm_run.h"
 #include "xen_eventloop.h"
+#include "xen_eventloop_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_life.h"
+#include "xen_timer_heap.h"
+#include "xen_typedefs.h"
+#include "xen_timer.h"
+
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
+#include <unistd.h>
+
+#ifndef EPOLL_MAX_EVENTS
+#define EPOLL_MAX_EVENTS 16
+#endif
+
+static void program_timerfd(int tfd, Xen_uint64_t next_expiration) {
+    struct itimerspec ts = {0};
+    Xen_uint64_t now = Xen_Timer_Now_MS();
+    Xen_uint64_t delta = (next_expiration > now) ? (next_expiration - now) : 0;
+    ts.it_value.tv_sec  = delta / 1000;
+    ts.it_value.tv_nsec = (delta % 1000) * 1000000;
+    timerfd_settime(tfd, 0, &ts, NULL);
+}
 
 void Xen_Async_Run(Xen_Instance* new_coro) {
   int __last_active = (*xen_globals->vm)->evloop.active;
@@ -16,8 +37,17 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   (*xen_globals->vm)->evloop.active = 1;
   Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, eloop);
   Xen_EventLoop_Task_Push(eloop, new_coro);
+  struct epoll_event events[EPOLL_MAX_EVENTS];
   while (!Xen_EventLoop_Task_Empty(eloop)) {
     Xen_Async_Run_Tasks();
+    int n = epoll_wait(((Xen_EventLoop*)eloop)->event_fd, events, EPOLL_MAX_EVENTS, -1);
+    for (int i = 0; i < n; i++) {
+      if (events[i].data.fd == ((Xen_EventLoop*)eloop)->timer_fd) {
+        Xen_uint64_t expirations;
+        read(((Xen_EventLoop*)eloop)->timer_fd, &expirations, sizeof(expirations));
+        Xen_Async_Run_Timers();
+      }
+    }
   }
   Xen_Async_Set_Active(0);
   Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
@@ -71,6 +101,22 @@ void Xen_Async_Run_Tasks(void) {
     default:
       return;
     }
+  }
+}
+
+void Xen_Async_Run_Timers(void) {
+  Xen_Instance* eloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  Xen_Timer_Heap* timer_heap = (Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr;
+  Xen_uint64_t now = Xen_Timer_Now_MS();
+  while (!Xen_Timer_Heap_Empty(timer_heap)) {
+    Xen_Instance* timer = Xen_Timer_Heap_Peek(timer_heap);
+    if (Xen_Timer_Expire(timer) > now) break;
+    Xen_Timer_Heap_Pop(timer_heap);
+    Xen_EventLoop_Task_Push(eloop, timer);
+  }
+  if (!Xen_Timer_Heap_Empty(timer_heap)) {
+    Xen_Instance* next = Xen_Timer_Heap_Peek(timer_heap);
+    program_timerfd(((Xen_EventLoop*)eloop)->timer_fd, Xen_Timer_Expire(next));
   }
 }
 

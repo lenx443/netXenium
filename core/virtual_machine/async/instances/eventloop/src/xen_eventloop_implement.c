@@ -8,11 +8,15 @@
 #include "xen_gc.h"
 #include "xen_life.h"
 #include "xen_nil.h"
+#include "xen_timer_heap.h"
+
+#include <unistd.h>
 
 static void eventloop_trace(Xen_Instance* inst) {
   Xen_EventLoop* eloop = (Xen_EventLoop*)inst;
   if (eloop->tasks->ptr) Xen_GC_Trace_GCHeader(eloop->tasks);
   if (eloop->resumed->ptr) Xen_GC_Trace_GCHeader(eloop->resumed);
+  if (eloop->timer_heap->ptr) Xen_GC_Trace_GCHeader(eloop->timer_heap);
 }
 
 static Xen_Instance* eventloop_alloc(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
@@ -20,6 +24,10 @@ static Xen_Instance* eventloop_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   Xen_EventLoop* eloop = (Xen_EventLoop*)Xen_Instance_Alloc(xen_globals->implements->eventloop);
   eloop->tasks = Xen_GCHandle_New((Xen_GCHeader*)eloop);
   eloop->resumed = Xen_GCHandle_New((Xen_GCHeader*)eloop);
+  eloop->timer_heap = Xen_GCHandle_New_From((Xen_GCHeader*)eloop,
+                                            (Xen_GCHeader*)Xen_Timer_Heap_New());
+  eloop->event_fd = -1;
+  eloop->timer_fd = -1;
   return (Xen_Instance*)eloop;
 }
 
@@ -28,6 +36,9 @@ static Xen_Instance* eventloop_destroy(Xen_Instance* self, Xen_Instance* args, X
   Xen_EventLoop* eloop = (Xen_EventLoop*)self;
   Xen_GCHandle_Free(eloop->tasks);
   Xen_GCHandle_Free(eloop->resumed);
+  Xen_GCHandle_Free(eloop->timer_heap);
+  if (eloop->timer_fd != -1) close(eloop->timer_fd);
+  if (eloop->event_fd != -1) close(eloop->event_fd);
   return nil;
 }
 

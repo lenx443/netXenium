@@ -17,6 +17,7 @@
 #include "xen_number_implement.h"
 #include "xen_queue_implement.h"
 #include "xen_string_implement.h"
+#include "xen_timer_implement.h"
 #include "xen_tuple_implement.h"
 #include "xen_tuple_iterator_implement.h"
 #include "xen_typedefs.h"
@@ -72,6 +73,7 @@ void Xen_Instance_GetReady(void) {
   implements.module = Xen_Module_GetImplement();
   implements.coroutine = Xen_Coroutine_GetImplement();
   implements.eventloop = Xen_EventLoop_GetImplement();
+  implements.timer = Xen_Timer_GetImplement();
   xen_globals->implements = &implements;
 }
 

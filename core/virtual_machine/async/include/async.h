@@ -12,6 +12,7 @@
 
 void Xen_Async_Run(Xen_Instance*);
 void Xen_Async_Run_Tasks(void);
+void Xen_Async_Run_Timers(void);
 
 Xen_bool_t Xen_Async_Get_Active(void);
 Xen_Instance* Xen_Async_Get_EventLoop(void);

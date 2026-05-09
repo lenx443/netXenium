@@ -89,7 +89,10 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/virtual_machine/async/include/
   core/virtual_machine/async/instances/eventloop/types/header/
   core/virtual_machine/async/instances/eventloop/include/
-  core/instances/include
+  core/virtual_machine/async/instances/timer/types/header/
+  core/virtual_machine/async/instances/timer/types/include/
+  core/virtual_machine/async/instances/timer/include/
+  core/instances/include/
   core/instances/types/include/
   core/instances/igc/include/
   core/register_enginer/include/
@@ -260,6 +263,13 @@ set(SOURCES
   # Implementacion del tipo `EventLoop`
   core/virtual_machine/async/instances/eventloop/src/xen_eventloop_implement.c
   core/virtual_machine/async/instances/eventloop/src/xen_eventloop.c
+
+  # Implementacion del tipo `Timer`
+  core/virtual_machine/async/instances/timer/src/xen_timer_implement.c
+  core/virtual_machine/async/instances/timer/src/xen_timer.c
+
+  # Tipos de la implementacion `Timer`
+  core/virtual_machine/async/instances/timer/types/src/xen_timer_heap.c
 
   # Codigo de Instancias
   core/instances/src/instance_life.c
