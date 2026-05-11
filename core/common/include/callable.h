@@ -12,9 +12,19 @@ struct __Instance;
   (void)(self);                                                                \
   (void)(args);                                                                \
   (void)(kwargs);
+
+#define NATIVE_ASYNC_CLEAR_ARG_NEVER_USE                                             \
+  (void)(coro);                                                                \
+  (void)(self);                                                                \
+  (void)(args);                                                                \
+  (void)(kwargs);
+
 typedef struct __Instance* (*Xen_Native_Func)(struct __Instance*,
                                               struct __Instance*,
                                               struct __Instance*);
+
+typedef void (*Xen_Native_Func_Async)(struct __Instance*, struct __Instance*,
+                                      struct __Instance*, struct __Instance*);
 
 struct Callable {
   Xen_GCHeader gc;

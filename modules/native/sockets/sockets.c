@@ -1144,5 +1144,5 @@ static Xen_ImplementStruct* implements[] = {
 struct Xen_Module_Def* Xen_Module_sockets_Start(void*);
 struct Xen_Module_Def* Xen_Module_sockets_Start(void* globals) {
   Xen_GetReady(globals);
-  return Xen_Module_Define("sockets", Sockets_Init, functions, implements);
+  return Xen_Module_Define("sockets", Sockets_Init, functions, NULL, implements);
 }

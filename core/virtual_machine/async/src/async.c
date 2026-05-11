@@ -38,8 +38,10 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, eloop);
   Xen_EventLoop_Task_Push(eloop, new_coro);
   struct epoll_event events[EPOLL_MAX_EVENTS];
-  while (!Xen_EventLoop_Task_Empty(eloop)) {
+  while (1) {
     Xen_Async_Run_Tasks();
+    if (Xen_EventLoop_Task_Empty(eloop) && Xen_EventLoop_Timer_Empty(eloop))
+      break;
     int n = epoll_wait(((Xen_EventLoop*)eloop)->event_fd, events, EPOLL_MAX_EVENTS, -1);
     for (int i = 0; i < n; i++) {
       if (events[i].data.fd == ((Xen_EventLoop*)eloop)->timer_fd) {
@@ -89,11 +91,18 @@ void Xen_Async_Run_Tasks(void) {
       break;
     case Xen_CORO_RESUME:
       Xen_EventLoop_Set_Resumed(eloop, coro_inst);
-      vm_run((Xen_Instance*)coro->context->ptr);
+      if (coro->type == 1) vm_run((Xen_Instance*)coro->context->ptr);
+      else {
+        coro->func_async(coro_inst,
+                        (Xen_Instance*)coro->self->ptr,
+                        (Xen_Instance*)coro->args->ptr,
+                        (Xen_Instance*)coro->kwargs->ptr);
+      }
       Xen_EventLoop_Task_Push(eloop, coro_inst);
       break;
     case Xen_CORO_PAUSE:
-      if (((Xen_Coroutine*)coro->awaited->ptr)->status == Xen_CORO_TERMINATED) {
+      if (((Xen_Coroutine*)coro->awaited->ptr) &&
+          ((Xen_Coroutine*)coro->awaited->ptr)->status == Xen_CORO_TERMINATED) {
         coro->status = Xen_CORO_RESUME;
         Xen_EventLoop_Task_Push(eloop, coro_inst);
       }
@@ -112,7 +121,9 @@ void Xen_Async_Run_Timers(void) {
     Xen_Instance* timer = Xen_Timer_Heap_Peek(timer_heap);
     if (Xen_Timer_Expire(timer) > now) break;
     Xen_Timer_Heap_Pop(timer_heap);
-    Xen_EventLoop_Task_Push(eloop, timer);
+    Xen_Instance *coro = Xen_Timer_Coroutine(timer);
+    ((Xen_Coroutine*)coro)->status = Xen_CORO_RESUME;
+    Xen_EventLoop_Task_Push(eloop, coro);
   }
   if (!Xen_Timer_Heap_Empty(timer_heap)) {
     Xen_Instance* next = Xen_Timer_Heap_Peek(timer_heap);

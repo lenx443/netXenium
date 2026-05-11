@@ -56,6 +56,20 @@ bool Xen_VM_Store_Native_Function(Xen_Instance* inst_map, const char* name,
   return true;
 }
 
+bool Xen_VM_Store_Native_Function_Async(Xen_Instance* inst_map, const char* name, Xen_Native_Func_Async fun, Xen_size_t data_size) {
+  Xen_INSTANCE* fun_inst = Xen_Function_From_Native_Async(fun, data_size);
+  if (!fun_inst) {
+    return false;
+  }
+  Xen_IGC_Push(fun_inst);
+  if (!Xen_Map_Push_Pair_Str(inst_map, (Xen_Map_Pair_Str){name, fun_inst})) {
+    Xen_IGC_Pop();
+    return false;
+  }
+  Xen_IGC_Pop();
+  return true;
+}
+
 Xen_Instance* Xen_VM_Call_Native_Function(Xen_Native_Func func,
                                           Xen_INSTANCE* self,
                                           Xen_Instance* args,

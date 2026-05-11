@@ -38,10 +38,17 @@ struct Xen_Module_Def;
 
 #ifdef XEN_ABI
 struct Xen_Module_Function;
+struct Xen_Module_Function_Async;
 #else
 struct Xen_Module_Function {
   char* fun_name;
   Xen_Native_Func fun_func;
+};
+
+struct Xen_Module_Function_Async {
+  char* fun_name;
+  Xen_Native_Func_Async fun_func;
+  Xen_size_t fun_data_size;
 };
 #endif
 
@@ -53,6 +60,7 @@ Xen_size_t Xen_SIZE(void* inst);
 
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t, Xen_Native_Func,
                                          struct Xen_Module_Function*,
+                                         struct Xen_Module_Function_Async*,
                                          Xen_ImplementStruct**);
 void Xen_Debug_Print(Xen_c_string_t, ...);
 

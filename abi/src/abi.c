@@ -11,17 +11,20 @@
 
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t, Xen_Native_Func,
                                          struct Xen_Module_Function*,
+                                         struct Xen_Module_Function_Async*,
                                          Xen_ImplementStruct**);
 void Xen_Debug_Print(Xen_c_string_t, ...);
 
 struct Xen_Module_Def* Xen_Module_Define(Xen_c_string_t name,
                                          Xen_Native_Func init,
                                          struct Xen_Module_Function* functions,
+                                         struct Xen_Module_Function_Async* functions_async,
                                          Xen_ImplementStruct** implements) {
   struct Xen_Module_Def* module = Xen_Alloc(sizeof(struct Xen_Module_Def));
   module->mod_name = name;
   module->mod_init = init;
   module->mod_functions = functions;
+  module->mod_functions_async = functions_async;
   module->mod_implements = implements;
   return module;
 }

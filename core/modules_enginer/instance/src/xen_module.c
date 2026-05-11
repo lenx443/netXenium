@@ -72,6 +72,21 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
       }
     }
   }
+  if (mod_def.mod_functions_async) {
+    for (int i = 0; mod_def.mod_functions_async[i].fun_name != NULL; i++) {
+      Xen_Instance* fun =
+          Xen_Function_From_Native_Async(mod_def.mod_functions_async[i].fun_func,
+                                         mod_def.mod_functions_async[i].fun_data_size);
+      if (!fun) {
+        return NULL;
+      }
+      if (!Xen_Map_Push_Pair_Str(
+              (Xen_Instance*)module->__map->ptr,
+              (Xen_Map_Pair_Str){mod_def.mod_functions_async[i].fun_name, fun})) {
+        return NULL;
+      }
+    }
+  }
   if (mod_def.mod_implements) {
     for (Xen_size_t i = 0; mod_def.mod_implements[i] != NULL; i++) {
       Xen_Implement* impl =

@@ -187,6 +187,19 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func fn_fun,
   return (Xen_INSTANCE*)fun;
 }
 
+Xen_INSTANCE* Xen_Function_From_Native_Async(Xen_Native_Func_Async fn_fun, Xen_size_t data_size) {
+  Xen_Function* fun = (Xen_Function*)__instance_new(
+      xen_globals->implements->function, nil, nil, 0);
+  if (!fun) {
+    return NULL;
+  }
+  fun->fun_type = 2;
+  fun->fun_native_async = fn_fun;
+  fun->fun_native_async_size = data_size;
+  fun->fun_async = 1;
+  return (Xen_INSTANCE*)fun;
+}
+
 Xen_INSTANCE*
 Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure, Xen_Instance* args_names_list,
                            Xen_Instance* args_default_values_list, Xen_bool_t async) {
@@ -359,9 +372,13 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
       return NULL;
     }
   } else if (fun->fun_type == 2) {
-    ret = fun->fun_native(nil, args, kwargs);
-    if (!ret) {
-      return NULL;
+    if (fun->fun_async) {
+      ret = Xen_Coroutine_New_Native(fun->fun_native_async, nil, args, kwargs, fun->fun_native_async_size);
+    } else {
+      ret = fun->fun_native(nil, args, kwargs);
+      if (!ret) {
+        return NULL;
+      }
     }
   }
   return ret;

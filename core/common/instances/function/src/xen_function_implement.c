@@ -183,11 +183,16 @@ static Xen_Instance* function_callable(struct __Instance* self,
     }
     Xen_IGC_Pop();
   } else if (inst->fun_type == 2) {
-    Xen_Instance* ret = inst->fun_native(nil, args, kwargs);
-    if (!ret) {
-      return NULL;
+    if (inst->fun_async) {
+      Xen_Instance* coro = Xen_Coroutine_New_Native(inst->fun_native_async, nil, args, kwargs, inst->fun_native_async_size);
+      vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
+    } else {
+      Xen_Instance* ret = inst->fun_native(nil, args, kwargs);
+      if (!ret) {
+        return NULL;
+      }
+      vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, ret);
     }
-    vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, ret);
   }
   return nil;
 }

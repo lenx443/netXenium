@@ -33,5 +33,5 @@ static Xen_ImplementStruct* implements[] = {
 struct Xen_Module_Def* Xen_Module_net_Start(void*);
 struct Xen_Module_Def* Xen_Module_net_Start(void* globals) {
   Xen_GetReady(globals);
-  return Xen_Module_Define("net", Net_Init, functions, implements);
+  return Xen_Module_Define("net", Net_Init, functions, NULL, implements);
 }

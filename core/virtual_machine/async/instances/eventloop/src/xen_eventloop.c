@@ -6,6 +6,7 @@
 #include "xen_life.h"
 #include "xen_nil.h"
 #include "xen_queue.h"
+#include "xen_timer_heap.h"
 
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
@@ -33,6 +34,21 @@ Xen_Instance* Xen_EventLoop_Task_Pop(Xen_Instance *eloop) {
 
 int Xen_EventLoop_Task_Empty(Xen_Instance *eloop) {
   return Xen_Queue_Empty((Xen_Instance*)((Xen_EventLoop*)eloop)->tasks->ptr);
+}
+
+void Xen_EventLoop_Timer_Push(Xen_Instance* eloop, Xen_Instance* timer) {
+  Xen_Timer_Heap_Push((Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr, timer);
+}
+
+Xen_Instance* Xen_EventLoop_Timer_Pop(Xen_Instance* eloop) {
+  return Xen_Timer_Heap_Pop((Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr);
+}
+
+Xen_Instance* Xen_EventLoop_Timer_Peek(Xen_Instance* eloop) {
+  return Xen_Timer_Heap_Peek((Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr);
+}
+int Xen_EventLoop_Timer_Empty(Xen_Instance* eloop) {
+  return Xen_Timer_Heap_Empty((Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr);
 }
 
 void Xen_EventLoop_Set_Resumed(Xen_Instance *eloop, Xen_Instance *task) {

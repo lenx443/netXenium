@@ -7,6 +7,7 @@
 #include "implement.h"
 #include "instance.h"
 #include "vm.h"
+#include "xen_alloc.h"
 #include "xen_boolean.h"
 #include "xen_gc.h"
 #include "xen_life.h"
@@ -17,6 +18,9 @@
 static void coroutine_trace(Xen_Instance* inst) {
   Xen_Coroutine* coro = (Xen_Coroutine*)inst;
   if (coro->context->ptr) Xen_GC_Trace_GCHeader(coro->context);
+  if (coro->self->ptr) Xen_GC_Trace_GCHeader(coro->self);
+  if (coro->args->ptr) Xen_GC_Trace_GCHeader(coro->args);
+  if (coro->kwargs->ptr) Xen_GC_Trace_GCHeader(coro->kwargs);
   if (coro->awaited->ptr) Xen_GC_Trace_GCHeader(coro->awaited);
   if (coro->awaiter->ptr) Xen_GC_Trace_GCHeader(coro->awaiter);
   if (coro->result->ptr) Xen_GC_Trace_GCHeader(coro->result);
@@ -27,6 +31,9 @@ static Xen_Instance* coroutine_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Instance_Alloc(xen_globals->implements->coroutine);
   coro->context = Xen_GCHandle_New((Xen_GCHeader*)coro);
+  coro->self = Xen_GCHandle_New((Xen_GCHeader*)coro);
+  coro->args = Xen_GCHandle_New((Xen_GCHeader*)coro);
+  coro->kwargs = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->awaited = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->awaiter = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->result = Xen_GCHandle_New((Xen_GCHeader*)coro);
@@ -39,11 +46,15 @@ static Xen_Instance* coroutine_destroy(Xen_Instance* self, Xen_Instance* args, X
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)self;
   Xen_GCHandle_Free(coro->context);
+  Xen_GCHandle_Free(coro->self);
+  Xen_GCHandle_Free(coro->args);
+  Xen_GCHandle_Free(coro->kwargs);
   Xen_GCHandle_Free(coro->awaited);
   Xen_GCHandle_Free(coro->awaiter);
   Xen_GCHandle_Free(coro->result);
   Xen_GCHandle_Free(coro->except.except);
   vm_backtrace_free(coro->except.bt);
+  if (coro->data) Xen_Dealloc(coro->data);
   return nil;
 }
 

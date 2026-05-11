@@ -4,11 +4,20 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "xen_except_instance.h"
+#include "xen_function_instance.h"
 #include "xen_typedefs.h"
 
 typedef struct Xen_Coroutine_Instance {
   Xen_INSTANCE_HEAD
+  int type;
   Xen_GCHandle* context;
+  struct {
+    Xen_Native_Func_Async func_async;
+    Xen_GCHandle* self;
+    Xen_GCHandle* args;
+    Xen_GCHandle* kwargs;
+    void* data;
+  };
   Xen_GCHandle* awaited;
   Xen_GCHandle* awaiter;
   Xen_GCHandle* result;

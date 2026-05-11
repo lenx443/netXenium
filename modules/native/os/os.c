@@ -146,5 +146,5 @@ struct Xen_Module_Function functions[] = {
 struct Xen_Module_Def* Xen_Module_os_Start(void*);
 struct Xen_Module_Def* Xen_Module_os_Start(void* globals) {
   Xen_GetReady(globals);
-  return Xen_Module_Define("os", NULL, functions, NULL);
+  return Xen_Module_Define("os", NULL, functions, NULL, NULL);
 }

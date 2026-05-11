@@ -170,12 +170,17 @@ static Xen_Instance* method_callable(struct __Instance* self,
       vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
   } else if (function->fun_type == 2) {
+    if (function->fun_async) {
+      Xen_Instance* coro = Xen_Coroutine_New_Native(function->fun_native_async, (Xen_Instance *)method->self->ptr, args, kwargs, function->fun_native_async_size);
+      vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
+    } else {
     Xen_Instance* ret =
         function->fun_native((Xen_Instance*)method->self->ptr, args, kwargs);
     if (!ret) {
       return NULL;
     }
     vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, ret);
+    }
   }
   return nil;
 }

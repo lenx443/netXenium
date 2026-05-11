@@ -293,5 +293,5 @@ static Xen_Instance* Init(Xen_Instance* self, Xen_Instance* args,
 struct Xen_Module_Def* Xen_Module_io_Start(void*);
 struct Xen_Module_Def* Xen_Module_io_Start(void* globals) {
   Xen_GetReady(globals);
-  return Xen_Module_Define("io", Init, Xen_NULL, implements);
+  return Xen_Module_Define("io", Init, Xen_NULL, Xen_NULL, implements);
 }

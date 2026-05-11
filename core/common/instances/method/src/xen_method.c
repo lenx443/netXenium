@@ -147,9 +147,13 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
       return NULL;
     }
   } else if (fun->fun_type == 2) {
-    ret = fun->fun_native((Xen_Instance*)method->self->ptr, args, kwargs);
-    if (!ret) {
-      return NULL;
+    if (fun->fun_async) {
+      ret = Xen_Coroutine_New_Native(fun->fun_native_async, (Xen_Instance *)method->self->ptr, args, kwargs, fun->fun_native_async_size);
+    } else {
+      ret = fun->fun_native((Xen_Instance*)method->self->ptr, args, kwargs);
+      if (!ret) {
+        return NULL;
+      }
     }
   }
   return ret;
