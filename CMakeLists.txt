@@ -92,6 +92,7 @@ set(NETXENIUM_DEFAULT_INCLUDES
   core/virtual_machine/async/instances/timer/types/header/
   core/virtual_machine/async/instances/timer/types/include/
   core/virtual_machine/async/instances/timer/include/
+  core/virtual_machine/async/types/include
   core/instances/include/
   core/instances/types/include/
   core/instances/igc/include/
@@ -270,6 +271,9 @@ set(SOURCES
 
   # Tipos de la implementacion `Timer`
   core/virtual_machine/async/instances/timer/types/src/xen_timer_heap.c
+
+  # Tipos de el motor de asincronia
+  core/virtual_machine/async/types/src/xen_io_status.c
 
   # Codigo de Instancias
   core/instances/src/instance_life.c

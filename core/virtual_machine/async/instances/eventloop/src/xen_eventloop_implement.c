@@ -28,6 +28,7 @@ static Xen_Instance* eventloop_alloc(Xen_Instance* self, Xen_Instance* args, Xen
                                             (Xen_GCHeader*)Xen_Timer_Heap_New());
   eloop->event_fd = -1;
   eloop->timer_fd = -1;
+  eloop->io_refs = 0;
   return (Xen_Instance*)eloop;
 }
 

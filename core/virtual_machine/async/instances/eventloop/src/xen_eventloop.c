@@ -58,3 +58,15 @@ void Xen_EventLoop_Set_Resumed(Xen_Instance *eloop, Xen_Instance *task) {
 Xen_Instance*Xen_EventLoop_Get_Resumed(Xen_Instance* eloop) {
   return (Xen_Instance*)((Xen_EventLoop*)eloop)->resumed->ptr;
 }
+
+Xen_size_t Xen_EventLoop_IO_Ref(Xen_Instance* eloop) {
+  return ((Xen_EventLoop*)eloop)->io_refs;
+}
+
+void Xen_EventLoop_IO_Inc(Xen_Instance* eloop) {
+  ((Xen_EventLoop*)eloop)->io_refs++;
+}
+
+void Xen_EventLoop_IO_Dec(Xen_Instance* eloop) {
+  ((Xen_EventLoop*)eloop)->io_refs--;
+}

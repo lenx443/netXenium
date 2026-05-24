@@ -1,4 +1,5 @@
 #include "async.h"
+#include "coroutine.h"
 #include "coroutine_instance.h"
 #include "gc_header.h"
 #include "vm_backtrace.h"
@@ -7,11 +8,13 @@
 #include "xen_eventloop_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
+#include "xen_io_status.h"
 #include "xen_life.h"
 #include "xen_timer_heap.h"
 #include "xen_typedefs.h"
 #include "xen_timer.h"
 
+#include <linux/eventpoll.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -40,7 +43,10 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   struct epoll_event events[EPOLL_MAX_EVENTS];
   while (1) {
     Xen_Async_Run_Tasks();
-    if (Xen_EventLoop_Task_Empty(eloop) && Xen_EventLoop_Timer_Empty(eloop))
+    if ((Xen_EventLoop_Task_Empty(eloop) &&
+         Xen_EventLoop_Timer_Empty(eloop) &&
+         Xen_EventLoop_IO_Ref(eloop) <= 0) ||
+        xen_globals->program->closed)
       break;
     int n = epoll_wait(((Xen_EventLoop*)eloop)->event_fd, events, EPOLL_MAX_EVENTS, -1);
     for (int i = 0; i < n; i++) {
@@ -48,6 +54,22 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
         Xen_uint64_t expirations;
         read(((Xen_EventLoop*)eloop)->timer_fd, &expirations, sizeof(expirations));
         Xen_Async_Run_Timers();
+      } else {
+        Xen_IO_Status* io = events[i].data.ptr;
+        Xen_uint64_t ev = events[i].events;
+        if ((ev & EPOLLIN) && io->in->ptr) Xen_IO_Status_In_Wake(io);
+        if ((ev & EPOLLOUT) && io->out->ptr)Xen_IO_Status_Out_Wake(io);
+        if (ev & (EPOLLHUP | EPOLLERR)) Xen_IO_Status_Wake(io);
+        struct epoll_event event;
+        event.data.fd = events[i].data.fd;
+        event.data.ptr = events[i].data.ptr;
+        if (io->in->ptr) event.events |= EPOLLIN;
+        if (io->out->ptr) event.events |= EPOLLOUT;
+        event.events |= EPOLLHUP | EPOLLERR;
+        if (io->events != event.events) {
+          epoll_ctl(((Xen_EventLoop*)eloop)->event_fd, EPOLL_CTL_MOD, event.data.fd, &event);
+          io->events = event.events;
+        }
       }
     }
   }
@@ -68,7 +90,8 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
 void Xen_Async_Run_Tasks(void) {
   Xen_Instance* eloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
   Xen_Instance* coro_inst = NULL;
-  while ((coro_inst = Xen_EventLoop_Task_Pop(eloop)) != NULL) {
+  while (((coro_inst = Xen_EventLoop_Task_Pop(eloop)) != NULL) ||
+         xen_globals->program->closed) {
     Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
     switch (coro->status) {
     case Xen_CORO_CREATED:
