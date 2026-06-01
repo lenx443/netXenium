@@ -39,6 +39,9 @@ typedef struct {
 extern Xen_Implement* Socket_Implement_Pointer;
 extern Xen_ImplementStruct Socket_Implement;
 
+int Socket_Addr_IP_Get(Xen_Instance*, struct Socket_Address_IP*);
+Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP);
+
 void Socket_init(Xen_Instance*);
 
 #endif

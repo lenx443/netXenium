@@ -54,6 +54,12 @@ static inline int Xen_AttrError_Store(Xen_c_string_t attr) {
       "AttrError", "Attribute '%s' cannot be modified.", attr));
 }
 
+static inline int Xen_CallError(Xen_Instance* inst) {
+  Xen_c_string_t inst_str = Xen_Attr_Raw_Str(inst);
+  return Xen_VM_Except_Throw(Xen_Except_New_CFormat(
+      "CallError", "Call operation failed for %s.", inst_str));
+}
+
 static inline int Xen_OprError(void) {
   return Xen_VM_Except_Throw(
       Xen_Except_New("OprError", "Operator cannot be applied."));

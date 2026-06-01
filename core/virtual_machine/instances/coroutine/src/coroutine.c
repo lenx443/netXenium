@@ -47,3 +47,8 @@ void Xen_Coroutine_SStatus(Xen_Instance* coro, int status) {
 int Xen_Coroutine_GStatus(Xen_Instance* coro) {
   return ((Xen_Coroutine*)coro)->status;
 }
+
+void Xen_Coroutine_Return(Xen_Instance* coro, Xen_Instance* r) {
+  Xen_IGC_Write_Field(&((Xen_Coroutine*)coro)->result, r);
+  Xen_Coroutine_SStatus(coro, Xen_CORO_TERMINATED);
+}

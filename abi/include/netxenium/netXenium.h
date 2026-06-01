@@ -31,6 +31,8 @@
 #include "interpreter.h"
 #include "vm_scope.h"
 #include "xen_cbuffer.h"
+#include "xen_io_status.h"
+#include "coroutine.h"
 
 #define Xen_NULL ((void*)0)
 

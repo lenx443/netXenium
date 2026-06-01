@@ -12,6 +12,7 @@
 #include "bytecode.h"
 #include "callable.h"
 #include "coroutine_instance.h"
+#include "coroutine.h"
 #include "gc_header.h"
 #include "implement.h"
 #include "instance.h"

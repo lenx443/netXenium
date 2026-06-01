@@ -4,12 +4,6 @@
 #include "instance.h"
 #include "xen_typedefs.h"
 
-#define Xen_CORO_CREATED 1
-#define Xen_CORO_TERMINATED 2
-#define Xen_CORO_EXCEPTED 3
-#define Xen_CORO_RESUME 4
-#define Xen_CORO_PAUSE 5
-
 void Xen_Async_Run(Xen_Instance*);
 void Xen_Async_Run_Tasks(void);
 void Xen_Async_Run_Timers(void);

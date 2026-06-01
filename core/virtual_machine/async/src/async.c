@@ -2,6 +2,7 @@
 #include "coroutine.h"
 #include "coroutine_instance.h"
 #include "gc_header.h"
+#include "vm.h"
 #include "vm_backtrace.h"
 #include "vm_run.h"
 #include "xen_eventloop.h"
@@ -42,6 +43,8 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   Xen_EventLoop_Task_Push(eloop, new_coro);
   struct epoll_event events[EPOLL_MAX_EVENTS];
   while (1) {
+    if (Xen_VM_Except_Active())
+      break;
     Xen_Async_Run_Tasks();
     if ((Xen_EventLoop_Task_Empty(eloop) &&
          Xen_EventLoop_Timer_Empty(eloop) &&
@@ -60,14 +63,13 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
         if ((ev & EPOLLIN) && io->in->ptr) Xen_IO_Status_In_Wake(io);
         if ((ev & EPOLLOUT) && io->out->ptr)Xen_IO_Status_Out_Wake(io);
         if (ev & (EPOLLHUP | EPOLLERR)) Xen_IO_Status_Wake(io);
-        struct epoll_event event;
-        event.data.fd = events[i].data.fd;
+        struct epoll_event event = {0};
         event.data.ptr = events[i].data.ptr;
         if (io->in->ptr) event.events |= EPOLLIN;
         if (io->out->ptr) event.events |= EPOLLOUT;
         event.events |= EPOLLHUP | EPOLLERR;
         if (io->events != event.events) {
-          epoll_ctl(((Xen_EventLoop*)eloop)->event_fd, EPOLL_CTL_MOD, event.data.fd, &event);
+          epoll_ctl(((Xen_EventLoop*)eloop)->event_fd, EPOLL_CTL_MOD, io->fd, &event);
           io->events = event.events;
         }
       }

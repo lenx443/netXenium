@@ -14,8 +14,7 @@ static void SocketTimeout(void) {
   Xen_VM_Except_Throw(Xen_Except_New("Timeout", "Operation timed out"));
 }
 
-static int Socket_Addr_IP_Get(Xen_Instance* addr,
-                              struct Socket_Address_IP* out) {
+int Socket_Addr_IP_Get(Xen_Instance* addr, struct Socket_Address_IP* out) {
   if (Xen_SIZE(addr) != 2) {
     return 0;
   }
@@ -29,7 +28,7 @@ static int Socket_Addr_IP_Get(Xen_Instance* addr,
   return 1;
 }
 
-static Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP in) {
+Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP in) {
   if (!in.ip) {
     return NULL;
   }
@@ -962,17 +961,5 @@ void Socket_init(Xen_Instance* module) {
   Xen_VM_Store_Native_Function(props, "getsockname", socket_getsockname, nil);
   Xen_VM_Store_Native_Function(props, "getpeername", socket_getpeername, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"AF_INET", Xen_Number_From_Int(AF_INET)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"AF_INET6", Xen_Number_From_Int(AF_INET6)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SOCK_RAW", Xen_Number_From_Int(SOCK_RAW)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_TCP", Xen_Number_From_Int(IPPROTO_TCP)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_UDP", Xen_Number_From_Int(IPPROTO_UDP)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"IPPROTO_ICMPV6", Xen_Number_From_Int(IPPROTO_ICMPV6)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_RD", Xen_Number_From_Int(SHUT_RD)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_WR", Xen_Number_From_Int(SHUT_WR)});
-  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR)});
   Xen_Implement_SetProps(Socket_Implement_Pointer, props);
 }

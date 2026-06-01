@@ -1,3 +1,4 @@
+#include "asocket.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <arpa/inet.h>
@@ -125,6 +126,19 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Socket_init(self);
+  ASocket_Init(self);
+  Xen_Attr_Set_Str(self, "AF_INET", Xen_Number_From_Int(AF_INET));
+  Xen_Attr_Set_Str(self, "AF_INET6", Xen_Number_From_Int(AF_INET6));
+  Xen_Attr_Set_Str(self, "SOCK_STREAM", Xen_Number_From_Int(SOCK_STREAM));
+  Xen_Attr_Set_Str(self, "SOCK_DGRAM", Xen_Number_From_Int(SOCK_DGRAM));
+  Xen_Attr_Set_Str(self, "SOCK_RAW", Xen_Number_From_Int(SOCK_RAW));
+  Xen_Attr_Set_Str(self, "IPPROTO_TCP", Xen_Number_From_Int(IPPROTO_TCP));
+  Xen_Attr_Set_Str(self, "IPPROTO_UDP", Xen_Number_From_Int(IPPROTO_UDP));
+  Xen_Attr_Set_Str(self, "IPPROTO_ICMP", Xen_Number_From_Int(IPPROTO_ICMP));
+  Xen_Attr_Set_Str(self, "IPPROTO_ICMPV6", Xen_Number_From_Int(IPPROTO_ICMPV6));
+  Xen_Attr_Set_Str(self, "SHUT_RD", Xen_Number_From_Int(SHUT_RD));
+  Xen_Attr_Set_Str(self, "SHUT_WR", Xen_Number_From_Int(SHUT_WR));
+  Xen_Attr_Set_Str(self, "SHUT_RDWR", Xen_Number_From_Int(SHUT_RDWR));
   return nil;
 }
 
@@ -135,6 +149,7 @@ struct Xen_Module_Function functions[] = {
 
 static Xen_ImplementStruct* implements[] = {
     &Socket_Implement,
+    &ASocket_Implement,
     NULL,
 };
 
