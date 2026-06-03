@@ -44,4 +44,7 @@ Xen_Function_ArgBound* Xen_Function_ArgBinding_Search(Xen_Function_ArgBinding*,
                                                       Xen_c_string_t);
 Xen_bool_t Xen_Function_ArgEmpty(Xen_Instance*, Xen_Instance*);
 
+int Xen_Function_IsAsync(Xen_Instance*);
+Xen_Instance* Xen_Function_Args(Xen_Instance*);
+
 #endif

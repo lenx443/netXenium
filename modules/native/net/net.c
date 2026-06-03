@@ -5,14 +5,17 @@
 
 extern Xen_Instance* MODULE_SOCKETS;
 extern Xen_Implement* SOCKET_IMPLEMENT;
+extern Xen_Implement* ASOCKET_IMPLEMENT;
 Xen_Instance* MODULE_SOCKETS = NULL;
 Xen_Implement* SOCKET_IMPLEMENT = NULL;
+Xen_Implement* ASOCKET_IMPLEMENT = NULL;
 
 static Xen_Instance* Net_Init(Xen_Instance* self, Xen_Instance* args,
                               Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   MODULE_SOCKETS = Xen_Load("sockets");
   SOCKET_IMPLEMENT = (Xen_Implement*)Xen_Attr_Get_Str(MODULE_SOCKETS, "Socket");
+  ASOCKET_IMPLEMENT = (Xen_Implement*)Xen_Attr_Get_Str(MODULE_SOCKETS, "ASocket");
   IP_init(self);
   EndPoint_init(self);
   return nil;
@@ -21,6 +24,8 @@ static Xen_Instance* Net_Init(Xen_Instance* self, Xen_Instance* args,
 struct Xen_Module_Function functions[] = {
     {"TCPServer", Net_TCP_Server},
     {"TCPClient", Net_TCP_Client},
+    {"TCPAServer", Net_TCP_AServer},
+    {"TCPAClient", Net_TCP_AClient},
     {NULL, NULL},
 };
 

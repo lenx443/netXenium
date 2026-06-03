@@ -11,38 +11,38 @@ implement $HTTPServer => {
     $__routes = routes
   }
 
-  $start => (endpoint=":8080", debug=false) {
+  $start = async => (endpoint=":8080", debug=false) {
     local endp = net.Endpoint(endpoint)
-    local sock = net.TCPServer(endp)
-    sock.setsockopt(1, 2, (1).u32(false))
-    sock.set_nonblocking()
+    local sock = net.TCPAServer(endp)
     if debug => println("running at $:$" & endp.tuple())
-    local response
     while true => {
-      try => {
-        local client = sock.accept()
-        local request = http_packet.HTTPRequest.unpack(
-          client.recv()
-        )
-        if debug => println(request.method, " ", request.path)
-        if $__routes is ?? or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {
-          if (not $__routes is ??) and $__routes has request.method and  $__routes[request.method] has '_' => {
-            response = $__routes[request.method]['_'](request)
-          } else => {
-            response = http_packet.HTTPResponse(
-              headers={},
-              status=404,
-              content="<h1>El recurso '" + request.path + "' no esta disponible</h1>",
-              content_type="text/html; charset=UTF-8"
-            )
-          }
-        } else => {
-          response = $__routes[request.method][request.path](request)
-        }
-        client.send(response.pack())
-        client.close()
-      } catch "Timeout" :_ => continue
+      local client = await sock.accept()
+      task $self.handle_client(client, debug)
     }
     sock.close()
+  }
+
+  $handle_client = async => (client, debug) {
+    local response
+    local request = http_packet.HTTPRequest.unpack(
+      await client.recv()
+    )
+    if debug => println(request.method, " ", request.path)
+    if $__routes is ?? or (not $__routes has request.method) or (not $__routes[request.method] has request.path) => {
+      if (not $__routes is ??) and $__routes has request.method and  $__routes[request.method] has '_' => {
+        response = $__routes[request.method]['_'](request)
+      } else => {
+        response = http_packet.HTTPResponse(
+          headers={},
+          status=404,
+          content="<h1>El recurso '" + request.path + "' no esta disponible</h1>",
+          content_type="text/html; charset=UTF-8"
+        )
+      }
+    } else => {
+      response = $__routes[request.method][request.path](request)
+    }
+    await client.send(response.pack())
+    client.close()
   }
 }

@@ -8,6 +8,7 @@
 #include "vm_def.h"
 #include "vm_run.h"
 #include "xen_except_instance.h"
+#include "xen_function.h"
 #include "xen_function_instance.h"
 #include "xen_igc.h"
 #include "xen_life.h"
@@ -196,4 +197,12 @@ Xen_Instance* Xen_Method_Attr_Str_Call(Xen_Instance* inst, const char* attr,
   }
   Xen_IGC_Pop();
   return ret;
+}
+
+int Xen_Method_IsAsync(Xen_Instance* method) {
+  return Xen_Function_IsAsync((Xen_Instance*)((Xen_Method*)method)->function->ptr);
+}
+
+Xen_Instance* Xen_Method_Args(Xen_Instance* method) {
+  return Xen_Function_Args((Xen_Instance*)((Xen_Method*)method)->function->ptr);
 }

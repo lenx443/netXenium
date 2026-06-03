@@ -383,3 +383,11 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
   }
   return ret;
 }
+
+int Xen_Function_IsAsync(Xen_Instance* fun) {
+  return ((Xen_Function*)fun)->fun_async;
+}
+
+Xen_Instance* Xen_Function_Args(Xen_Instance* fun) {
+  return (Xen_Instance*)((Xen_Function*)fun)->args_names->ptr;
+}

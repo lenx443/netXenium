@@ -14,6 +14,7 @@
 
 static void io_status_trace(Xen_GCHeader* h) {
   Xen_IO_Status* io = (Xen_IO_Status*)h;
+  Xen_GC_Trace_GCHeader(io->evloop);
   if (io->in->ptr) Xen_GC_Trace_GCHeader(io->in);
   if (io->out->ptr) Xen_GC_Trace_GCHeader(io->out);
 }
@@ -21,6 +22,7 @@ static void io_status_trace(Xen_GCHeader* h) {
 static void io_status_destroy(Xen_GCHeader* h) {
   Xen_IO_Status* io = (Xen_IO_Status*)h;
   Xen_IO_Status_Close(io);
+  Xen_GCHandle_Free(io->evloop);
   Xen_GCHandle_Free(io->in);
   Xen_GCHandle_Free(io->out);
 }

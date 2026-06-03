@@ -3,7 +3,6 @@
 
 #include "callable.h"
 #include "instance.h"
-#include "xen_function_instance.h"
 #include "xen_typedefs.h"
 
 #define XEN_FUNCTION_ARG_OPTIONAL 0
@@ -52,5 +51,7 @@ Xen_INSTANCE* Xen_Function_From_Native(Xen_Native_Func, Xen_Instance*);
 Xen_INSTANCE* Xen_Function_From_Native_Async(Xen_Native_Func_Async, Xen_size_t);
 Xen_INSTANCE* Xen_Function_From_Callable(CALLABLE_ptr, Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_bool_t);
 Xen_Instance* Xen_Function_Call(Xen_Instance*, Xen_Instance*, Xen_Instance*);
+int Xen_Function_IsAsync(Xen_Instance*);
+Xen_Instance* Xen_Function_Args(Xen_Instance*);
 
 #endif

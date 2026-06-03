@@ -9,5 +9,7 @@ Xen_Instance* Xen_Method_Attr_Call(Xen_Instance*, Xen_Instance*, Xen_Instance*,
                                    Xen_Instance*);
 Xen_Instance* Xen_Method_Attr_Str_Call(Xen_Instance*, const char*,
                                        Xen_Instance*, Xen_Instance*);
+int Xen_Method_IsAsync(Xen_Instance*);
+Xen_Instance* Xen_Method_Args(Xen_Instance*);
 
 #endif

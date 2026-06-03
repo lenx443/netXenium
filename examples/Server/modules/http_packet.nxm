@@ -53,16 +53,16 @@ implement $HTTPResponse => {
 
   $pack => {
     local buffer = "HTTP/1.1 " + string($status) + " " + reasons[$status] + "\r\n"
-    if ?? != $content and $content and $complete => {
-      buffer = buffer + "Content-Length: " + string(size($content)) + "\r\n"
-      buffer = buffer + "Content-Type: " + $content_type + "\r\n"
+    if not $content is ?? and $content and $complete => {
+      buffer += "Content-Length: " + string(size($content)) + "\r\n"
+      buffer += "Content-Type: " + $content_type + "\r\n"
     }
     local header
     for header in $headers => {
-      buffer = buffer + header + ": " + $headers[header] + "\r\n"
+      buffer += header + ": " + $headers[header] + "\r\n"
     }
     buffer = buffer + "\r\n"
-    if ?? != $content => buffer = buffer + $content
+    if not $content is ?? => buffer = buffer + $content
     return buffer.bytes()
   }
 
