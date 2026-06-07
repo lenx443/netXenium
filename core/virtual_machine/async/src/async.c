@@ -2,6 +2,7 @@
 #include "coroutine.h"
 #include "coroutine_instance.h"
 #include "gc_header.h"
+#include "instance.h"
 #include "vm.h"
 #include "vm_backtrace.h"
 #include "vm_run.h"
@@ -38,6 +39,7 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   Xen_Instance* __last_evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
   Xen_IGC_Push(__last_evloop);
   Xen_Instance* eloop = Xen_EventLoop_New();
+  Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
   (*xen_globals->vm)->evloop.active = 1;
   Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, eloop);
   Xen_EventLoop_Task_Push(eloop, new_coro);
@@ -46,10 +48,10 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
     if (Xen_VM_Except_Active())
       break;
     Xen_Async_Run_Tasks();
-    if ((Xen_EventLoop_Task_Empty(eloop) &&
-         Xen_EventLoop_Timer_Empty(eloop) &&
+    if ((Xen_EventLoop_Task_Empty(eloop)   &&
+         Xen_EventLoop_Timer_Empty(eloop)  &&
          Xen_EventLoop_IO_Ref(eloop) <= 0) ||
-        xen_globals->program->closed)
+        coro->except.active || xen_globals->program->closed)
       break;
     int n = epoll_wait(((Xen_EventLoop*)eloop)->event_fd, events, EPOLL_MAX_EVENTS, -1);
     for (int i = 0; i < n; i++) {
@@ -76,7 +78,6 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
     }
   }
   Xen_Async_Set_Active(0);
-  Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
   if (coro->except.active) {
     (*xen_globals->vm)->except.active = 1;
     Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
@@ -102,17 +103,12 @@ void Xen_Async_Run_Tasks(void) {
       break;
     case Xen_CORO_TERMINATED:
       if (coro->awaiter->ptr) {
-        Xen_EventLoop_Task_Push(eloop, (Xen_Instance *)coro->awaiter->ptr);
+        Xen_Coroutine* awaiter = (Xen_Coroutine*)coro->awaiter->ptr;
+        awaiter->awaited_ready++;
+        if ((awaiter->awaited_ready >= Xen_SIZE(awaiter->await->ptr)) || (awaiter->awaited_excepted > 0)) {
+          Xen_EventLoop_Task_Push(eloop, (Xen_Instance *)coro->awaiter->ptr);
+        }
       }
-      break;
-    case Xen_CORO_EXCEPTED:
-      coro->except.active = 1;
-      Xen_GC_Write_Field(&coro->except.except, (*xen_globals->vm)->except.except->ptr);
-      vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
-      vm_backtrace_clear((*xen_globals->vm)->except.bt);
-      (*xen_globals->vm)->except.active = 0;
-      coro->status = Xen_CORO_TERMINATED;
-      Xen_EventLoop_Task_Push(eloop, coro_inst);
       break;
     case Xen_CORO_RESUME:
       Xen_EventLoop_Set_Resumed(eloop, coro_inst);
@@ -126,8 +122,8 @@ void Xen_Async_Run_Tasks(void) {
       Xen_EventLoop_Task_Push(eloop, coro_inst);
       break;
     case Xen_CORO_PAUSE:
-      if (((Xen_Coroutine*)coro->awaited->ptr) &&
-          ((Xen_Coroutine*)coro->awaited->ptr)->status == Xen_CORO_TERMINATED) {
+      if ((Xen_SIZE(coro->await->ptr) > 0) &&
+          (coro->awaited_ready >= Xen_SIZE(coro->await->ptr) || coro->awaited_excepted > 0)) {
         coro->status = Xen_CORO_RESUME;
         Xen_EventLoop_Task_Push(eloop, coro_inst);
       }

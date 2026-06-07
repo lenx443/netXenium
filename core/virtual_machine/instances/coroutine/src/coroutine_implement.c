@@ -14,6 +14,7 @@
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
+#include "xen_vector.h"
 
 static void coroutine_trace(Xen_Instance* inst) {
   Xen_Coroutine* coro = (Xen_Coroutine*)inst;
@@ -21,7 +22,7 @@ static void coroutine_trace(Xen_Instance* inst) {
   if (coro->self->ptr) Xen_GC_Trace_GCHeader(coro->self);
   if (coro->args->ptr) Xen_GC_Trace_GCHeader(coro->args);
   if (coro->kwargs->ptr) Xen_GC_Trace_GCHeader(coro->kwargs);
-  if (coro->awaited->ptr) Xen_GC_Trace_GCHeader(coro->awaited);
+  if (coro->await->ptr) Xen_GC_Trace_GCHeader(coro->await);
   if (coro->awaiter->ptr) Xen_GC_Trace_GCHeader(coro->awaiter);
   if (coro->result->ptr) Xen_GC_Trace_GCHeader(coro->result);
   if (coro->except.active) Xen_GC_Trace_GCHeader(coro->except.except);
@@ -34,7 +35,7 @@ static Xen_Instance* coroutine_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   coro->self = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->args = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->kwargs = Xen_GCHandle_New((Xen_GCHeader*)coro);
-  coro->awaited = Xen_GCHandle_New((Xen_GCHeader*)coro);
+  coro->await = Xen_GCHandle_New_From((Xen_GCHeader*)coro, (Xen_GCHeader*)Xen_Vector_New());
   coro->awaiter = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->result = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->except.except = Xen_GCHandle_New((Xen_GCHeader*)coro);
@@ -49,7 +50,7 @@ static Xen_Instance* coroutine_destroy(Xen_Instance* self, Xen_Instance* args, X
   Xen_GCHandle_Free(coro->self);
   Xen_GCHandle_Free(coro->args);
   Xen_GCHandle_Free(coro->kwargs);
-  Xen_GCHandle_Free(coro->awaited);
+  Xen_GCHandle_Free(coro->await);
   Xen_GCHandle_Free(coro->awaiter);
   Xen_GCHandle_Free(coro->result);
   Xen_GCHandle_Free(coro->except.except);

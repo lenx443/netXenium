@@ -14,5 +14,6 @@ Xen_Instance* Xen_Vector_Top(Xen_Instance*);
 Xen_INSTANCE* Xen_Vector_Get_Index(Xen_Instance*, size_t);
 Xen_INSTANCE* Xen_Vector_Peek_Index(Xen_Instance*, size_t);
 size_t Xen_Vector_Size(Xen_Instance*);
+void Xen_Vector_Clear(Xen_Instance*);
 
 #endif

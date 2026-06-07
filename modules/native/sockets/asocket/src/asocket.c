@@ -474,19 +474,16 @@ static void asocket_accept(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
                                    Xen_Instance* kwargs) {
   if (!Xen_Function_ArgEmpty(args, kwargs)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (!(sock->caps & SOCKET_CAP_ACCEPT)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   switch (sock->domain) {
   case AF_INET: {
@@ -521,8 +518,7 @@ static void asocket_accept(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
       return;
     }
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   case AF_INET6: {
     struct sockaddr_in6 remote;
@@ -556,13 +552,11 @@ static void asocket_accept(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
       return;
     }
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   default:
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
 }
 
@@ -571,18 +565,15 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (sock->type != SOCK_STREAM) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (sock->caps & (SOCKET_CAP_LISTEN | SOCKET_CAP_ACCEPT)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   int* connecting = Xen_Coroutine_Data(coro);
   if (!(*connecting)) {
@@ -595,9 +586,7 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
     Xen_Function_ArgBinding_Free(binding);
@@ -607,8 +596,7 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
         struct Socket_Address_IP address;
         if (!Socket_Addr_IP_Get(addr, &address)) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
         memset(&sock->remote.ipv4, 0, sizeof(sock->remote.ipv4));
         sock->remote.ipv4.sin_family = sock->domain;
@@ -616,21 +604,18 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
         if (inet_pton(sock->domain, address.ip, &sock->remote.ipv4.sin_addr) !=
             1) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
       } else if (Xen_IsBytes(addr)) {
         if (Xen_SIZE(addr) != sizeof(sock->remote.ipv4)) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
         memcpy(&sock->remote.ipv4, Xen_Bytes_Get(addr),
                sizeof(sock->remote.ipv4));
       } else {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       if (connect(*(int*)Xen_IO_Status_FD((Xen_IO_Status*)sock->f->ptr),
                   (struct sockaddr*)&sock->remote.ipv4,
@@ -645,8 +630,7 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
           return;
         }
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       break;
     }
@@ -655,8 +639,7 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
         struct Socket_Address_IP address;
         if (!Socket_Addr_IP_Get(addr, &address)) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
         memset(&sock->remote.ipv6, 0, sizeof(sock->remote.ipv6));
         sock->remote.ipv6.sin6_family = sock->domain;
@@ -664,21 +647,18 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
         if (inet_pton(sock->domain, address.ip, &sock->remote.ipv6.sin6_addr) !=
             1) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
       } else if (Xen_IsBytes(addr)) {
         if (Xen_SIZE(addr) != sizeof(sock->remote.ipv6)) {
           Xen_CallError(coro);
-          Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-          return;
+          Xen_COROUTINE_EXCEPTED;
         }
         memcpy(&sock->remote.ipv6, Xen_Bytes_Get(addr),
                sizeof(sock->remote.ipv6));
       } else {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       if (connect(*(int*)Xen_IO_Status_FD((Xen_IO_Status*)sock->f->ptr),
                   (struct sockaddr*)&sock->remote.ipv6,
@@ -693,15 +673,13 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
           return;
         }
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       break;
     }
     default:
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     sock->caps |= SOCKET_CAP_READ | SOCKET_CAP_WRITE | SOCKET_CAP_CONNECT;
     Xen_COROUTINE_RETURN(nil);
@@ -711,13 +689,11 @@ static void asocket_connect(Xen_Instance* coro, Xen_Instance* self, Xen_Instance
     if (getsockopt(*(int*)Xen_IO_Status_FD((Xen_IO_Status*)sock->f->ptr),
                SOL_SOCKET, SO_ERROR, &err, &len) < 0) {
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     if (err != 0) {
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     sock->caps |= SOCKET_CAP_READ | SOCKET_CAP_WRITE | SOCKET_CAP_CONNECT;
     Xen_COROUTINE_RETURN(nil);
@@ -736,13 +712,11 @@ static void asocket_send(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (!(sock->caps & SOCKET_CAP_WRITE)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   struct __asocket_send_status* status = Xen_Coroutine_Data(coro);
   if (!status->initialize) {
@@ -755,8 +729,7 @@ static void asocket_send(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* data = Xen_Function_ArgBinding_Search(binding, "data")->value;
     Xen_Function_ArgBinding_Free(binding);
@@ -777,8 +750,7 @@ static void asocket_send(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
       return;
     }
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (s == 0) {
     Xen_COROUTINE_RETURN(Xen_Number_From_Int(0));
@@ -799,13 +771,11 @@ static void asocket_recv(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (!(sock->caps & SOCKET_CAP_READ)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   struct __asocket_recv_status* status = Xen_Coroutine_Data(coro);
   if (!status->initialize) {
@@ -818,8 +788,7 @@ static void asocket_recv(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     status->size = 4096;
     Xen_Function_ArgBound* size_arg =
@@ -846,8 +815,7 @@ static void asocket_recv(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* a
     }
     Xen_Dealloc(buffer);
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (r == 0) {
     Xen_Dealloc(buffer);
@@ -870,13 +838,11 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (!(sock->caps & SOCKET_CAP_WRITE)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   struct __asocket_sendto_status* status = Xen_Coroutine_Data(coro);
   if (!status->initialize) {
@@ -891,8 +857,7 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* data = Xen_Function_ArgBinding_Search(binding, "data")->value;
     Xen_Instance* addr = Xen_Function_ArgBinding_Search(binding, "addr")->value;
@@ -910,27 +875,23 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
       struct Socket_Address_IP address;
       if (!Socket_Addr_IP_Get(status->addr, &address)) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       remote.sin_family = sock->domain;
       remote.sin_port = htons(address.port);
       if (inet_pton(sock->domain, address.ip, &remote.sin_addr) != 1) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
     } else if (Xen_IsBytes(status->addr)) {
       if (Xen_SIZE(status->addr) != sizeof(remote)) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       memcpy(&remote, Xen_Bytes_Get(status->addr), sizeof(remote));
     } else {
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_ssize_t s = sendto(*(int*)Xen_IO_Status_FD((Xen_IO_Status*)sock->f->ptr),
                            status->buffer, status->total, 0,
@@ -945,8 +906,7 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
         return;
       }
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_COROUTINE_RETURN(Xen_Number_From_Long(status->total));
   }
@@ -957,27 +917,23 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
       struct Socket_Address_IP address;
       if (!Socket_Addr_IP_Get(status->addr, &address)) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       remote.sin6_family = sock->domain;
       remote.sin6_port = htons(address.port);
       if (inet_pton(sock->domain, address.ip, &remote.sin6_addr) != 1) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
     } else if (Xen_IsBytes(status->addr)) {
       if (Xen_SIZE(status->addr) != sizeof(remote)) {
         Xen_CallError(coro);
-        Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-        return;
+        Xen_COROUTINE_EXCEPTED;
       }
       memcpy(&remote, Xen_Bytes_Get(status->addr), sizeof(remote));
     } else {
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_ssize_t s = sendto(*(int*)Xen_IO_Status_FD((Xen_IO_Status*)sock->f->ptr),
                            status->buffer, status->total, 0,
@@ -992,15 +948,13 @@ static void asocket_sendto(Xen_Instance* coro, Xen_Instance* self, Xen_Instance*
         return;
       }
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_COROUTINE_RETURN(Xen_Number_From_Long(status->total));
   }
   default:
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
 }
 
@@ -1014,13 +968,11 @@ static void asocket_recvfrom(Xen_Instance* coro, Xen_Instance* self, Xen_Instanc
   ASocket* sock = (ASocket*)self;
   if (!sock->open) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   if (!(sock->caps & SOCKET_CAP_READ)) {
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
   struct __asocket_recvfrom_status* status = Xen_Coroutine_Data(coro);
   if (!status->initialize) {
@@ -1033,8 +985,7 @@ static void asocket_recvfrom(Xen_Instance* coro, Xen_Instance* self, Xen_Instanc
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     status->size = 4096;
     Xen_Function_ArgBound* size_arg =
@@ -1066,16 +1017,14 @@ static void asocket_recvfrom(Xen_Instance* coro, Xen_Instance* self, Xen_Instanc
       }
       Xen_Dealloc(buffer);
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* data = Xen_Bytes_New();
     char ip_str[INET_ADDRSTRLEN];
     if (!inet_ntop(sock->domain, &remote.sin_addr, ip_str, sizeof(ip_str))) {
       Xen_Dealloc(buffer);
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* addr =
         Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, remote.sin_port});
@@ -1109,16 +1058,14 @@ static void asocket_recvfrom(Xen_Instance* coro, Xen_Instance* self, Xen_Instanc
       }
       Xen_Dealloc(buffer);
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* data = Xen_Bytes_New();
     char ip_str[INET6_ADDRSTRLEN];
     if (!inet_ntop(sock->domain, &remote.sin6_addr, ip_str, sizeof(ip_str))) {
       Xen_Dealloc(buffer);
       Xen_CallError(coro);
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance* ip = Xen_String_From_CString(ip_str);
     Xen_Instance* port = Xen_Number_From_Int(ntohs(remote.sin6_port));
@@ -1135,8 +1082,7 @@ static void asocket_recvfrom(Xen_Instance* coro, Xen_Instance* self, Xen_Instanc
   }
   default:
     Xen_CallError(coro);
-    Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-    return;
+    Xen_COROUTINE_EXCEPTED;
   }
 }
 

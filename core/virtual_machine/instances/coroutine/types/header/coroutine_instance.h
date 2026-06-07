@@ -4,7 +4,6 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "xen_except_instance.h"
-#include "xen_function_instance.h"
 #include "xen_typedefs.h"
 
 typedef struct Xen_Coroutine_Instance {
@@ -18,7 +17,9 @@ typedef struct Xen_Coroutine_Instance {
     Xen_GCHandle* kwargs;
     void* data;
   };
-  Xen_GCHandle* awaited;
+  Xen_size_t awaited_ready;
+  Xen_size_t awaited_excepted;
+  Xen_GCHandle* await;
   Xen_GCHandle* awaiter;
   Xen_GCHandle* result;
   struct Xen_Except_Status except;

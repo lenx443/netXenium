@@ -60,8 +60,7 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     Xen_Function_ArgBinding* binding =
         Xen_Function_ArgsParse(args, kwargs, args_def);
     if (!binding) {
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_uint64_t delay = Xen_Number_As_UInt(Xen_Function_ArgBinding_Search(binding, "delay")->value);
     Xen_Function_ArgBinding_Free(binding);
@@ -69,8 +68,7 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
     if (!evloop) {
       Xen_AsyncError_Already();
-      Xen_Coroutine_SStatus(coro, Xen_CORO_EXCEPTED);
-      return;
+      Xen_COROUTINE_EXCEPTED;
     }
     Xen_EventLoop_Timer_Push(evloop, timer);
     if (timer == Xen_EventLoop_Timer_Peek(evloop)) {
@@ -87,10 +85,9 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
 
 static Xen_Instance*
 init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
-  NATIVE_CLEAR_ARG_NEVER_USE
+  NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Attr_Set_Str(self, "CORO_CREATED", Xen_Number_From_Int(Xen_CORO_CREATED));
   Xen_Attr_Set_Str(self, "CORO_TERMINATED", Xen_Number_From_Int(Xen_CORO_TERMINATED));
-  Xen_Attr_Set_Str(self, "CORO_EXCEPTED", Xen_Number_From_Int(Xen_CORO_EXCEPTED));
   Xen_Attr_Set_Str(self, "CORO_RESUME", Xen_Number_From_Int(Xen_CORO_RESUME));
   Xen_Attr_Set_Str(self, "CORO_PAUSE", Xen_Number_From_Int(Xen_CORO_PAUSE));
   return nil;

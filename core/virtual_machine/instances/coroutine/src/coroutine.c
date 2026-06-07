@@ -52,3 +52,17 @@ void Xen_Coroutine_Return(Xen_Instance* coro, Xen_Instance* r) {
   Xen_IGC_Write_Field(&((Xen_Coroutine*)coro)->result, r);
   Xen_Coroutine_SStatus(coro, Xen_CORO_TERMINATED);
 }
+
+void Xen_Coroutine_Excepted(Xen_Instance* coro_inst) {
+  Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
+  coro->except.active = 1;
+  Xen_GC_Write_Field(&coro->except.except, (*xen_globals->vm)->except.except->ptr);
+  vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
+  vm_backtrace_clear((*xen_globals->vm)->except.bt);
+  (*xen_globals->vm)->except.active = 0;
+  if (coro->awaiter->ptr) {
+    Xen_Coroutine* awaiter = (Xen_Coroutine*)coro->awaiter->ptr;
+    awaiter->awaited_excepted++;
+  }
+  coro->status = Xen_CORO_TERMINATED;
+}

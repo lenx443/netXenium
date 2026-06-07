@@ -14,6 +14,7 @@
 #include "vm.h"
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
+#include "xen_except.h"
 #include "xen_except_instance.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
@@ -64,6 +65,7 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
     Xen_IGC_Push(iterable);
     Xen_Instance* iter = Xen_Attr_Iter(iterable);
     if (!iter) {
+      Xen_IterError(iterable);
       return NULL;
     }
     Xen_IGC_Push(iter);
@@ -266,6 +268,13 @@ static Xen_Instance* vector_top(Xen_Instance* self, Xen_Instance* args,
   return Xen_Vector_Top(self);
 }
 
+static Xen_Instance* vector_clear(Xen_Instance* self, Xen_Instance* args,
+                                Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Vector_Clear(self);
+  return nil;
+}
+
 static struct __Implement __Vector_Implement = {
     Xen_INSTANCE_SET(&Xen_Basic, XEN_INSTANCE_FLAG_STATIC),
     .__impl_name = "Vector",
@@ -304,7 +313,8 @@ int Xen_Vector_Init(void) {
       !Xen_VM_Store_Native_Function(props, "__iter", vector_iter, nil) ||
       !Xen_VM_Store_Native_Function(props, "push", vector_push, nil) ||
       !Xen_VM_Store_Native_Function(props, "pop", vector_pop, nil) ||
-      !Xen_VM_Store_Native_Function(props, "top", vector_top, nil)) {
+      !Xen_VM_Store_Native_Function(props, "top", vector_top, nil) ||
+      !Xen_VM_Store_Native_Function(props, "clear", vector_clear, nil)) {
     return 0;
   }
   __Vector_Implement.__props =

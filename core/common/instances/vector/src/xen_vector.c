@@ -112,3 +112,7 @@ size_t Xen_Vector_Size(Xen_Instance* vector) {
   }
   return ((Xen_Vector*)vector)->__size;
 }
+
+void Xen_Vector_Clear(Xen_Instance* vector) {
+  vector->__size = 0;
+}
