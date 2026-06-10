@@ -93,12 +93,12 @@ init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   return nil;
 }
 
-Xen_Module_Function_Table functions = {
+static Xen_Module_Function_Table functions = {
   {"run", fn_run},
   {NULL, NULL},
 };
 
-Xen_Module_Function_Async_Table functions_async = {
+static Xen_Module_Function_Async_Table functions_async = {
   {"sleep", fn_sleep, sizeof(int)},
   {NULL, NULL, 0},
 };

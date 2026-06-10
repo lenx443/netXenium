@@ -15,6 +15,7 @@ typedef struct Xen_Coroutine_Instance {
     Xen_GCHandle* self;
     Xen_GCHandle* args;
     Xen_GCHandle* kwargs;
+    Xen_GCHandle* igcfork;
     void* data;
   };
   Xen_size_t awaited_ready;

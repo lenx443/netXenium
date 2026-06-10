@@ -140,6 +140,10 @@ void Xen_Async_Run_Timers(void) {
   Xen_uint64_t now = Xen_Timer_Now_MS();
   while (!Xen_Timer_Heap_Empty(timer_heap)) {
     Xen_Instance* timer = Xen_Timer_Heap_Peek(timer_heap);
+    if (Xen_Timer_GCancelled(timer)) {
+      Xen_Timer_Heap_Pop(timer_heap);
+      continue;
+    }
     if (Xen_Timer_Expire(timer) > now) break;
     Xen_Timer_Heap_Pop(timer_heap);
     Xen_Instance *coro = Xen_Timer_Coroutine(timer);

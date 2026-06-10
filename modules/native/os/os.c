@@ -134,7 +134,7 @@ static Xen_Instance* fn_list_dir(Xen_Instance* self, Xen_Instance* args, Xen_Ins
   return dirs;
 }
 
-struct Xen_Module_Function functions[] = {
+static struct Xen_Module_Function functions[] = {
   {"system", fn_system},
   {"exec_out", fn_exec_out},
   {"get_dir", fn_get_dir},

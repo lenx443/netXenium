@@ -24,9 +24,13 @@ static Xen_Instance* Net_Init(Xen_Instance* self, Xen_Instance* args,
 struct Xen_Module_Function functions[] = {
     {"TCPServer", Net_TCP_Server},
     {"TCPClient", Net_TCP_Client},
-    {"TCPAServer", Net_TCP_AServer},
-    {"TCPAClient", Net_TCP_AClient},
     {NULL, NULL},
+};
+
+struct Xen_Module_Function_Async functions_async[] = {
+    {"TCPAServer", Net_TCP_AServer, 0},
+    {"TCPAClient", Net_TCP_AClient, sizeof(struct __Net_TCP_AClient_Status)},
+    {NULL, NULL, 0},
 };
 
 static Xen_ImplementStruct* implements[] = {
@@ -38,5 +42,5 @@ static Xen_ImplementStruct* implements[] = {
 struct Xen_Module_Def* Xen_Module_net_Start(void*);
 struct Xen_Module_Def* Xen_Module_net_Start(void* globals) {
   Xen_GetReady(globals);
-  return Xen_Module_Define("net", Net_Init, functions, NULL, implements);
+  return Xen_Module_Define("net", Net_Init, functions, functions_async, implements);
 }

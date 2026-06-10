@@ -258,7 +258,7 @@ static Xen_Instance* file_close(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
-Xen_ImplementStruct File_Implement = {
+static Xen_ImplementStruct File_Implement = {
     .__impl_name = "File",
     .__inst_size = sizeof(File),
     .__create = file_create,

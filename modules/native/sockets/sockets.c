@@ -142,7 +142,7 @@ static Xen_Instance* Sockets_Init(Xen_Instance* self, Xen_Instance* args,
   return nil;
 }
 
-struct Xen_Module_Function functions[] = {
+static struct Xen_Module_Function functions[] = {
     {"getaddrinfo", sockets_getaddrinfo},
     {NULL, NULL},
 };

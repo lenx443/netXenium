@@ -5,7 +5,12 @@
 
 Xen_Instance* Net_TCP_Server(Xen_Instance*, Xen_Instance*, Xen_Instance*);
 Xen_Instance* Net_TCP_Client(Xen_Instance*, Xen_Instance*, Xen_Instance*);
-Xen_Instance* Net_TCP_AServer(Xen_Instance*, Xen_Instance*, Xen_Instance*);
-Xen_Instance* Net_TCP_AClient(Xen_Instance*, Xen_Instance*, Xen_Instance*);
+void Net_TCP_AServer(Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_Instance*);
+
+struct __Net_TCP_AClient_Status {
+  int step;
+  Xen_Instance* sock;
+};
+void Net_TCP_AClient(Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_Instance*);
 
 #endif

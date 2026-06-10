@@ -101,6 +101,7 @@ Xen_Instance* Xen_Timer_Heap_Pop(Xen_Timer_Heap* timer_heap) {
     Xen_Timer_SIndex((Xen_Instance*)timer_heap->timers[0]->ptr, 0);
     timer_heap_down(timer_heap, 0);
   }
+  Xen_GCHandle_Free(timer_heap->timers[timer_heap->size]);
   return top;
 }
 
@@ -113,7 +114,7 @@ void Xen_Timer_Heap_Remove(Xen_Timer_Heap* timer_heap, Xen_Instance* timer) {
   if (i != timer_heap->size) {
     Xen_GC_Write_Field(&timer_heap->timers[i], timer_heap->timers[timer_heap->size]->ptr);
     Xen_Timer_SIndex((Xen_Instance*)timer_heap->timers[i]->ptr, i);
-    if (i >= 0 &&
+    if (i > 0 &&
         Xen_Timer_Expire((Xen_Instance *)timer_heap->timers[i]->ptr) <
         Xen_Timer_Expire((Xen_Instance *)timer_heap->timers[(i - 1) / 2])) {
       timer_heap_up(timer_heap, i);
@@ -121,4 +122,5 @@ void Xen_Timer_Heap_Remove(Xen_Timer_Heap* timer_heap, Xen_Instance* timer) {
       timer_heap_down(timer_heap, i);
     }
   }
+  Xen_GCHandle_Free(timer_heap->timers[timer_heap->size]);
 }
