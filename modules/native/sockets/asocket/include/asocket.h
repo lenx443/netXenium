@@ -21,6 +21,7 @@ typedef struct {
     struct sockaddr_in6 ipv6;
   } remote;
   Xen_uint32_t caps;
+  Xen_uint64_t timeout;
 } ASocket;
 
 extern Xen_Implement* ASocket_Implement_Pointer;

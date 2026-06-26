@@ -10,6 +10,8 @@ struct Xen_Timer_Instance {
   Xen_uint64_t expire;
   Xen_size_t index;
   int cancelled;
+  void (*callback)(void*);
+  void *cb_data;
 };
 
 typedef struct Xen_Timer_Instance Xen_Timer;

@@ -45,8 +45,12 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   Xen_EventLoop_Task_Push(eloop, new_coro);
   struct epoll_event events[EPOLL_MAX_EVENTS];
   while (1) {
-    if (Xen_VM_Except_Active())
+    if (Xen_VM_Except_Active()) {
+      if (strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type, "Interrupt") == 0) {
+        Xen_EventLoop_CB_Interrupt_Call(eloop);
+      }
       break;
+    }
     Xen_Async_Run_Tasks();
     if ((Xen_EventLoop_Task_Empty(eloop)   &&
          Xen_EventLoop_Timer_Empty(eloop)  &&
@@ -146,6 +150,7 @@ void Xen_Async_Run_Timers(void) {
     }
     if (Xen_Timer_Expire(timer) > now) break;
     Xen_Timer_Heap_Pop(timer_heap);
+    Xen_Timer_Callback(timer);
     Xen_Instance *coro = Xen_Timer_Coroutine(timer);
     ((Xen_Coroutine*)coro)->status = Xen_CORO_RESUME;
     Xen_EventLoop_Task_Push(eloop, coro);
@@ -153,6 +158,13 @@ void Xen_Async_Run_Timers(void) {
   if (!Xen_Timer_Heap_Empty(timer_heap)) {
     Xen_Instance* next = Xen_Timer_Heap_Peek(timer_heap);
     program_timerfd(((Xen_EventLoop*)eloop)->timer_fd, Xen_Timer_Expire(next));
+  }
+}
+
+void Xen_Async_Scheduler_Timer(Xen_Instance* evloop, Xen_Instance* timer) {
+  Xen_EventLoop_Timer_Push(evloop, timer);
+  if (timer == Xen_EventLoop_Timer_Peek(evloop)) {
+    program_timerfd(((Xen_EventLoop*)evloop)->timer_fd, Xen_Timer_Expire(timer));
   }
 }
 

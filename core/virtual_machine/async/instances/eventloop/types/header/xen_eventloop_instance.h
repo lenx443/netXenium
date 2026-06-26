@@ -10,6 +10,7 @@ typedef struct Xen_EventLoop_Instance {
   Xen_GCHandle* tasks;
   Xen_GCHandle* resumed;
   Xen_GCHandle* timer_heap;
+  Xen_GCHandle* cb_interrupt;
   int timer_fd;
   int event_fd;
   Xen_size_t io_refs;

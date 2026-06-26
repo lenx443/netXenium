@@ -23,13 +23,14 @@ var methods = {
   GET -> get_routes
 }
 
+fn interrupt => {
+  println("• Stop Server")
+}
+
 $$__start = async => {
-  try => {
-    println("• Start Server")
-    local server = http_server.HTTPServer()
-    server.set_routes(methods)
-    await server.start(debug=true)
-  } catch "Interrupt" :_ => {
-    println("• Stop Server")
-  }
+  Async.interrupt_handle(interrupt)
+  println("• Start Server")
+  local server = http_server.HTTPServer()
+  server.set_routes(methods)
+  await server.start(debug=true)
 }

@@ -5,7 +5,6 @@
 #include "coroutine.h"
 #include "instance.h"
 #include "xen_eventloop.h"
-#include "xen_eventloop_instance.h"
 #include "xen_except.h"
 #include "xen_function.h"
 #include "xen_life.h"
@@ -16,15 +15,6 @@
 
 #include <sys/select.h>
 #include <sys/timerfd.h>
-
-static void program_timerfd(int tfd, Xen_uint64_t next_expiration) {
-    struct itimerspec ts = {0};
-    Xen_uint64_t now = Xen_Timer_Now_MS();
-    Xen_uint64_t delta = (next_expiration > now) ? (next_expiration - now) : 0;
-    ts.it_value.tv_sec  = delta / 1000;
-    ts.it_value.tv_nsec = (delta % 1000) * 1000000;
-    timerfd_settime(tfd, 0, &ts, NULL);
-}
 
 static Xen_Instance*
 fn_run(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
@@ -64,16 +54,13 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     }
     Xen_uint64_t delay = Xen_Number_As_UInt(Xen_Function_ArgBinding_Search(binding, "delay")->value);
     Xen_Function_ArgBinding_Free(binding);
-    Xen_Instance* timer = Xen_Timer_New(coro, Xen_Timer_Now_MS() + delay);
+    Xen_Instance* timer = Xen_Timer_New(coro, Xen_Timer_Now_MS() + delay, NULL, NULL);
     Xen_Instance* evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
     if (!evloop) {
       Xen_AsyncError_Already();
       Xen_COROUTINE_EXCEPTED;
     }
-    Xen_EventLoop_Timer_Push(evloop, timer);
-    if (timer == Xen_EventLoop_Timer_Peek(evloop)) {
-      program_timerfd(((Xen_EventLoop*)evloop)->timer_fd, Xen_Timer_Expire(timer));
-    }
+    Xen_Async_Scheduler_Timer(evloop, timer);
     Xen_Coroutine_SStatus(coro, Xen_CORO_PAUSE);
     (*step)++;
     return;
@@ -83,6 +70,29 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
   }
 }
 
+static Xen_Instance*
+fn_interrupt_handle(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE
+  if (!(*xen_globals->vm)->evloop.active) {
+    Xen_AsyncError();
+    return NULL;
+  }
+  Xen_Function_ArgSpec args_def[] = {
+      {"callback", XEN_FUNCTION_ARG_KIND_POSITIONAL, XEN_FUNCTION_ARG_IMPL_ANY, XEN_FUNCTION_ARG_REQUIRED, NULL},
+      {NULL, XEN_FUNCTION_ARG_KIND_END, 0, 0, NULL},
+  };
+
+  Xen_Function_ArgBinding* binding =
+      Xen_Function_ArgsParse(args, kwargs, args_def);
+  if (!binding) {
+    return NULL;
+  }
+  Xen_Instance* callback = Xen_Function_ArgBinding_Search(binding, "callback")->value;
+  Xen_Function_ArgBinding_Free(binding);
+  Xen_Instance* evloop = Xen_Async_Get_EventLoop();
+  Xen_EventLoop_SCB_Interrupt(evloop, callback);
+  return nil;
+}
 static Xen_Instance*
 init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
@@ -95,6 +105,7 @@ init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
 
 static Xen_Module_Function_Table functions = {
   {"run", fn_run},
+  {"interrupt_handle", fn_interrupt_handle},
   {NULL, NULL},
 };
 

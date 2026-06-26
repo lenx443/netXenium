@@ -90,6 +90,9 @@ static Xen_Instance* ip_create(Xen_Instance* self, Xen_Instance* args,
   }
   if (is_domain(node)) {
     Xen_Instance* ai = GetAddrInfo(node);
+    if (!ai) {
+      return NULL;
+    }
     for (Xen_size_t i = 0; i < Xen_SIZE(ai); i++) {
       Xen_Instance* c = Xen_Vector_Get_Index(ai, i);
       int family = Xen_Number_As_Int(Xen_Tuple_Get_Index(c, 1));

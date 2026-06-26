@@ -2,6 +2,8 @@
 #include "gc_header.h"
 #include "instance.h"
 #include "xen_eventloop_instance.h"
+#include "xen_except.h"
+#include "xen_function.h"
 #include "xen_gc.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -49,6 +51,23 @@ Xen_Instance* Xen_EventLoop_Timer_Peek(Xen_Instance* eloop) {
 }
 int Xen_EventLoop_Timer_Empty(Xen_Instance* eloop) {
   return Xen_Timer_Heap_Empty((Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr);
+}
+
+void Xen_EventLoop_CB_Interrupt_Call(Xen_Instance* eloop) {
+  if (!((Xen_EventLoop*)eloop)->cb_interrupt->ptr) return;
+  Xen_Instance* callback = (Xen_Instance*)((Xen_EventLoop*)eloop)->cb_interrupt->ptr;
+  if (Xen_IMPL(callback) != xen_globals->implements->function) {
+    Xen_CallError_Impl(callback);
+    return;
+  }
+  (*xen_globals->vm)->except.active = 0;
+  if (!Xen_Function_Call(callback, nil, nil)) {
+    return;
+  }
+}
+
+void Xen_EventLoop_SCB_Interrupt(Xen_Instance* eloop, Xen_Instance* callback) {
+  Xen_GC_Write_Field(&((Xen_EventLoop*)eloop)->cb_interrupt, (Xen_GCHeader*)callback);
 }
 
 void Xen_EventLoop_Set_Resumed(Xen_Instance *eloop, Xen_Instance *task) {

@@ -9,10 +9,12 @@
 #include <time.h>
 
 Xen_Instance*
-Xen_Timer_New(Xen_Instance* coroutine, Xen_uint64_t expire) {
+Xen_Timer_New(Xen_Instance* coroutine, Xen_uint64_t expire, void (*callback)(void*), void* cb_data) {
   Xen_Timer* timer = (Xen_Timer*)__instance_new(xen_globals->implements->timer, nil, nil, 0);
   Xen_IGC_Write_Field(&timer->coroutine, coroutine);
   timer->expire = expire;
+  if (callback) timer->callback = callback;
+  if (cb_data) timer->cb_data = cb_data;
   return (Xen_Instance*)timer;
 }
 
@@ -22,6 +24,12 @@ Xen_Instance* Xen_Timer_Coroutine(Xen_Instance* timer) {
 
 Xen_uint64_t Xen_Timer_Expire(Xen_Instance* timer) {
   return ((Xen_Timer*)timer)->expire;
+}
+
+void Xen_Timer_Callback(Xen_Instance* timer_inst) {
+  Xen_Timer* timer = (Xen_Timer*)timer_inst;
+  if (timer->callback)
+    timer->callback(timer->cb_data);
 }
 
 void Xen_Timer_SIndex(Xen_Instance* timer, Xen_size_t index) {

@@ -23,6 +23,8 @@ timer_alloc(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   timer->expire = 0;
   timer->index = 0;
   timer->cancelled = 0;
+  timer->callback = NULL;
+  timer->cb_data = NULL;
   return (Xen_Instance*)timer;
 }
 

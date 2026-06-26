@@ -39,7 +39,8 @@ Xen_Instance* Net_TCP_Server(Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin_bytes =
         Xen_Bytes_From_Array(sizeof(sin), (Xen_uint8_t*)&sin);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin_bytes);
-    Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil))
+      return NULL;
   } else if (ip->ip_type == NET_IPV6) {
     Xen_Instance* arg_family = Xen_Number_From_Int(AF_INET6);
     Xen_Instance* sock_args = Xen_Tuple_From_Array(1, &arg_family);
@@ -52,11 +53,13 @@ Xen_Instance* Net_TCP_Server(Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin6_bytes =
         Xen_Bytes_From_Array(sizeof(sin6), (Xen_uint8_t*)&sin6);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin6_bytes);
-    Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil))
+      return NULL;
   } else {
     return NULL;
   }
-  Xen_Method_Attr_Str_Call(sock, "listen", nil, nil);
+  if (Xen_Method_Attr_Str_Call(sock, "listen", nil, nil))
+    return NULL;
   Xen_IGC_Pop();
   return sock;
 }
@@ -93,7 +96,8 @@ Xen_Instance* Net_TCP_Client(Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin_bytes =
         Xen_Bytes_From_Array(sizeof(sin), (Xen_uint8_t*)&sin);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin_bytes);
-    Xen_Method_Attr_Str_Call(sock, "connect", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "connect", bind_args, nil))
+      return NULL;
   } else if (ip->ip_type == NET_IPV6) {
     Xen_Instance* arg_family = Xen_Number_From_Int(AF_INET6);
     Xen_Instance* sock_args = Xen_Tuple_From_Array(1, &arg_family);
@@ -106,7 +110,8 @@ Xen_Instance* Net_TCP_Client(Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin_bytes =
         Xen_Bytes_From_Array(sizeof(sin6), (Xen_uint8_t*)&sin6);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin_bytes);
-    Xen_Method_Attr_Str_Call(sock, "connect", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "connect", bind_args, nil))
+      return NULL;
   } else {
     return NULL;
   }
@@ -147,7 +152,10 @@ void Net_TCP_AServer(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin_bytes =
         Xen_Bytes_From_Array(sizeof(sin), (Xen_uint8_t*)&sin);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin_bytes);
-    Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil)) {
+      Xen_CallError(coro);
+      Xen_COROUTINE_EXCEPTED;
+    }
   } else if (ip->ip_type == NET_IPV6) {
     Xen_Instance* arg_family = Xen_Number_From_Int(AF_INET6);
     Xen_Instance* sock_args = Xen_Tuple_From_Array(1, &arg_family);
@@ -160,7 +168,10 @@ void Net_TCP_AServer(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* sin6_bytes =
         Xen_Bytes_From_Array(sizeof(sin6), (Xen_uint8_t*)&sin6);
     Xen_Instance* bind_args = Xen_Tuple_From_Array(1, &sin6_bytes);
-    Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil);
+    if (!Xen_Method_Attr_Str_Call(sock, "bind", bind_args, nil)) {
+      Xen_CallError(coro);
+      Xen_COROUTINE_EXCEPTED;
+    }
   } else {
     Xen_CallError(coro);
     Xen_COROUTINE_EXCEPTED;

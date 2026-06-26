@@ -12,6 +12,7 @@
 #define SOCKET_CAP_ACCEPT (1 << 4)
 #define SOCKET_CAP_CONNECT (1 << 5)
 #define SOCKET_CAP_NONBLOCK (1 << 6)
+#define SOCKET_CAP_TIMEOUT (1 << 7)
 
 struct Socket_Address_IP {
   Xen_c_string_t ip;

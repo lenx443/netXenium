@@ -17,6 +17,7 @@ static void eventloop_trace(Xen_Instance* inst) {
   if (eloop->tasks->ptr) Xen_GC_Trace_GCHeader(eloop->tasks);
   if (eloop->resumed->ptr) Xen_GC_Trace_GCHeader(eloop->resumed);
   if (eloop->timer_heap->ptr) Xen_GC_Trace_GCHeader(eloop->timer_heap);
+  if (eloop->cb_interrupt->ptr) Xen_GC_Trace_GCHeader(eloop->cb_interrupt);
 }
 
 static Xen_Instance* eventloop_alloc(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
@@ -26,6 +27,7 @@ static Xen_Instance* eventloop_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   eloop->resumed = Xen_GCHandle_New((Xen_GCHeader*)eloop);
   eloop->timer_heap = Xen_GCHandle_New_From((Xen_GCHeader*)eloop,
                                             (Xen_GCHeader*)Xen_Timer_Heap_New());
+  eloop->cb_interrupt = Xen_GCHandle_New((Xen_GCHeader*)eloop);
   eloop->event_fd = -1;
   eloop->timer_fd = -1;
   eloop->io_refs = 0;
@@ -38,6 +40,7 @@ static Xen_Instance* eventloop_destroy(Xen_Instance* self, Xen_Instance* args, X
   Xen_GCHandle_Free(eloop->tasks);
   Xen_GCHandle_Free(eloop->resumed);
   Xen_GCHandle_Free(eloop->timer_heap);
+  Xen_GCHandle_Free(eloop->cb_interrupt);
   if (eloop->timer_fd != -1) close(eloop->timer_fd);
   if (eloop->event_fd != -1) close(eloop->event_fd);
   return nil;

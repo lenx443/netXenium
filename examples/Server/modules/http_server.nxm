@@ -13,7 +13,7 @@ implement $HTTPServer => {
 
   $start = async => (endpoint=":8080", debug=false) {
     local endp = net.Endpoint(endpoint)
-    local sock = net.TCPAServer(endp)
+    local sock = await net.TCPAServer(endp)
     if debug => println("running at $:$" & endp.tuple())
     while true => {
       local client = await sock.accept()

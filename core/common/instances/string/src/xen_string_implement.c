@@ -18,6 +18,7 @@
 #include "xen_cstrings.h"
 #include "xen_except_instance.h"
 #include "xen_function.h"
+#include "xen_igc.h"
 #include "xen_map.h"
 #include "xen_nil.h"
 #include "xen_number.h"
@@ -357,12 +358,14 @@ static Xen_Instance* string_split(Xen_Instance* self, Xen_Instance* args,
       Xen_Function_ArgBinding_Search(binding, "delimiters")->value;
   Xen_Function_ArgBinding_Free(binding);
   Xen_Instance* tokens = Xen_Vector_New();
+  Xen_IGC_Push(tokens);
   Xen_size_t start = 0;
   Xen_size_t i = 0;
   for (; i < string->__size; i++) {
     for (Xen_size_t y = 0; y < Xen_SIZE(delimiters); y++) {
       Xen_Instance* delim_inst = Xen_Tuple_Get_Index(delimiters, y);
       if (!Xen_IsString(delim_inst)) {
+        Xen_IGC_Pop();
         return NULL;
       }
       Xen_String* delim = (Xen_String*)delim_inst;
@@ -385,6 +388,7 @@ static Xen_Instance* string_split(Xen_Instance* self, Xen_Instance* args,
     Xen_Instance* token = Xen_String_From_CString(string->characters + start);
     Xen_Vector_Push(tokens, token);
   }
+  Xen_IGC_Pop();
   return tokens;
 }
 

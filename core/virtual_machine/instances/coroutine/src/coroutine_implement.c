@@ -19,20 +19,21 @@
 
 static void coroutine_trace(Xen_Instance* inst) {
   Xen_Coroutine* coro = (Xen_Coroutine*)inst;
-  if (coro->context->ptr) Xen_GC_Trace_GCHeader(coro->context);
-  if (coro->self->ptr) Xen_GC_Trace_GCHeader(coro->self);
-  if (coro->args->ptr) Xen_GC_Trace_GCHeader(coro->args);
-  if (coro->kwargs->ptr) Xen_GC_Trace_GCHeader(coro->kwargs);
-  if (coro->igcfork->ptr) Xen_GC_Trace_GCHeader(coro->igcfork);
-  if (coro->await->ptr) Xen_GC_Trace_GCHeader(coro->await);
-  if (coro->awaiter->ptr) Xen_GC_Trace_GCHeader(coro->awaiter);
-  if (coro->result->ptr) Xen_GC_Trace_GCHeader(coro->result);
-  if (coro->except.active) Xen_GC_Trace_GCHeader(coro->except.except);
+  if (coro->context && coro->context->ptr)  Xen_GC_Trace_GCHeader(coro->context);
+  if (coro->self    && coro->self->ptr)     Xen_GC_Trace_GCHeader(coro->self);
+  if (coro->args    && coro->args->ptr)     Xen_GC_Trace_GCHeader(coro->args);
+  if (coro->kwargs  && coro->kwargs->ptr)   Xen_GC_Trace_GCHeader(coro->kwargs);
+  if (coro->igcfork && coro->igcfork->ptr)  Xen_GC_Trace_GCHeader(coro->igcfork);
+  if (coro->await   && coro->await->ptr)    Xen_GC_Trace_GCHeader(coro->await);
+  if (coro->awaiter && coro->awaiter->ptr)  Xen_GC_Trace_GCHeader(coro->awaiter);
+  if (coro->result  && coro->result->ptr)   Xen_GC_Trace_GCHeader(coro->result);
+  if (coro->except.active)                  Xen_GC_Trace_GCHeader(coro->except.except);
 }
 
 static Xen_Instance* coroutine_alloc(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)Xen_Instance_Alloc(xen_globals->implements->coroutine);
+  Xen_IGC_Push((Xen_Instance*)coro);
   coro->context = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->self = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->args = Xen_GCHandle_New((Xen_GCHeader*)coro);
@@ -43,6 +44,7 @@ static Xen_Instance* coroutine_alloc(Xen_Instance* self, Xen_Instance* args, Xen
   coro->result = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->except.except = Xen_GCHandle_New((Xen_GCHeader*)coro);
   coro->except.bt = vm_backtrace_new();
+  Xen_IGC_Pop();
   return (Xen_Instance*)coro;
 }
 
