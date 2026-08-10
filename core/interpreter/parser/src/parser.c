@@ -14,6 +14,7 @@
 #include "xen_cstrings.h"
 #include "xen_except.h"
 #include "xen_typedefs.h"
+#include "xen_life.h"
 
 static void parser_next(Parser* p) {
   p->token = lexer_next_token(p->lexer);
@@ -73,6 +74,7 @@ static Xen_Instance* parser_stmt(Parser*);
 static Xen_Instance* parser_string(Parser*);
 static Xen_Instance* parser_number(Parser*);
 static Xen_Instance* parser_nil(Parser*);
+static Xen_Instance* parser_command(Parser*);
 static Xen_Instance* parser_literal(Parser*);
 static Xen_Instance* parser_property(Parser*);
 static Xen_Instance* parser_parent(Parser*);
@@ -151,9 +153,9 @@ bool is_expr(Parser* p) {
 bool is_primary(Parser* p) {
   Lexer_Token_Type token = p->token.tkn_type;
   if (token == TKN_STRING          || token == TKN_NUMBER     ||
-      token == TKN_DOUBLE_QUESTION || token == TKN_IDENTIFIER ||
-      token == TKN_PROPERTY        || token == TKN_LPARENT    ||
-      token == TKN_LBRACE)
+      token == TKN_DOUBLE_QUESTION || token == TKN_COMMAND    ||
+      token == TKN_IDENTIFIER      || token == TKN_PROPERTY   ||
+      token == TKN_LPARENT         || token == TKN_LBRACE)
     return true;
   return false;
 }
@@ -324,6 +326,16 @@ Xen_Instance* parser_nil(Parser* p) {
   }
   parser_next(p);
   return expr_nil;
+}
+
+static Xen_Instance* parser_command(Parser* p) {
+  if (p->token.tkn_type != TKN_COMMAND) {
+    Xen_SyntaxError_Format("Unexpected token '%s'", p->token.tkn_text);
+    return NULL;
+  }
+  Xen_Instance* cmd = Xen_AST_Node_New("Command", p->token.tkn_text, p->token.sta);
+  parser_next(p);
+  return cmd;
 }
 
 Xen_Instance* parser_literal(Parser* p) {
@@ -566,6 +578,8 @@ Xen_Instance* parser_primary(Parser* p) {
     value = parser_number(p);
   } else if (p->token.tkn_type == TKN_DOUBLE_QUESTION) {
     value = parser_nil(p);
+  } else if (p->token.tkn_type == TKN_COMMAND) {
+    value = parser_command(p);
   } else if (p->token.tkn_type == TKN_IDENTIFIER) {
     value = parser_literal(p);
   } else if (p->token.tkn_type == TKN_PROPERTY) {
@@ -1997,7 +2011,7 @@ Xen_Instance* Xen_Parser(Xen_c_string_t file_name, Xen_c_string_t file_content,
   parser_next(&parser);
   Xen_Instance* ast_program = parser_program(&parser);
   if (Xen_VM_Except_Active()) {
-    vm_backtrace_push((*xen_globals->vm)->except.bt, parser.token.sta);
+    vm_backtrace_push(Xen_VM()->except.bt, parser.token.sta);
     return NULL;
   }
   if (!ast_program) {

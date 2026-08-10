@@ -25,6 +25,7 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 #include "xen_vector_iterator.h"
+#include "xen_life.h"
 
 #define XEN_MAP_CAPACITY 128
 
@@ -307,10 +308,6 @@ struct __Implement* Xen_Map_GetImplement(void) {
 }
 
 int Xen_Map_Init(void) {
-  if (!Xen_VM_Store_Global("map",
-                           (Xen_Instance*)xen_globals->implements->map)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

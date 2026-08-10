@@ -14,7 +14,6 @@ typedef struct {
   Xen_GCHandle* modules;
   Xen_GCHandle* modules_stack;
   Xen_GCHandle* globals_instances;
-  Xen_GCHandle* globals_scopes;
   Xen_GCHandle* globals_props;
   Xen_c_string_t path_current;
   Xen_GCHandle* paths_modules;

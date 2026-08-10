@@ -631,6 +631,25 @@ Lexer_Token lexer_next_token(Lexer* lexer) {
     if (sf->sf_content[lexer->pos] == '=') {
       advance(lexer);
       token = Token(lexer, TKN_NE, "!=", 2);
+    } else if (sf->sf_content[lexer->pos] == '[') {
+      advance(lexer);
+      Xen_size_t start = lexer->pos;
+      while (sf->sf_content[lexer->pos] != ']'  &&
+             sf->sf_content[lexer->pos] != '\n' &&
+             sf->sf_content[lexer->pos] != '\0') {
+        advance(lexer);
+      }
+      if (sf->sf_content[lexer->pos] == '\n' ||
+          sf->sf_content[lexer->pos] == '\0') {
+        token = Token(lexer, TKN_UNDEFINED, "<undef>", 7);
+      } else {
+        Xen_size_t len = lexer->pos - start;
+        char buffer[len + 1];
+        strncpy(buffer, sf->sf_content + start, len);
+        buffer[len] = 0;
+        advance(lexer);
+        token = Token(lexer, TKN_COMMAND, buffer, len + 1);
+      }
     } else {
       token = Token(lexer, TKN_UNDEFINED, "!", 1);
     }

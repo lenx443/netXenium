@@ -81,9 +81,9 @@ static Xen_Instance* coroutine_except_throw(Xen_Instance* self, Xen_Instance* ar
   NATIVE_CLEAR_ARG_NEVER_USE
   Xen_Coroutine* coro = (Xen_Coroutine*)self;
   if (coro->except.active) {
-    (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
-    vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
+    Xen_VM()->except.active = 1;
+    Xen_GC_Write_Field(&Xen_VM()->except.except, coro->except.except->ptr);
+    vm_backtrace_copy(coro->except.bt, Xen_VM()->except.bt);
     vm_backtrace_clear(coro->except.bt);
     coro->except.active = 0;
   }

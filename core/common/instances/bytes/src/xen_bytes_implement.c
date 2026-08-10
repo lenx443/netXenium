@@ -313,10 +313,6 @@ struct __Implement* Xen_Bytes_GetImplement(void) {
 }
 
 int Xen_Bytes_Init(void) {
-  if (!Xen_VM_Store_Global("bytes",
-                           (Xen_Instance*)xen_globals->implements->bytes)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   Xen_VM_Store_Native_Function(props, "__mul", bytes_opr_mul, nil);
   Xen_VM_Store_Native_Function(props, "__get_index", bytes_opr_get_index, nil);

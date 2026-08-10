@@ -42,6 +42,7 @@
 #include "xen_map.h"
 #include "xen_method.h"
 #include "xen_nil.h"
+#include "xen_number.h"
 #include "xen_register.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
@@ -228,13 +229,25 @@ static void op_decl_global_nval(VM_Run* vmr, RunContext_ptr ctx,
   if (strcmp(Xen_String_As_CString(c_name), "_") == 0) {
     return;
   }
-  if (Xen_Map_Has((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
-                  c_name)) {
+  Xen_Instance* globals = NULL;
+  RunContext_ptr current = ctx;
+  while (current && Xen_Nil_NEval((Xen_Instance*)current)) {
+    if (current->ctx_globals->ptr) {
+      globals = (Xen_Instance*)current->ctx_globals->ptr;
+      break;
+    }
+    current = (RunContext_ptr)current->ctx_closure->ptr;
+  }
+  if (!globals) {
+    Xen_DeclError_Global_NScoped(Xen_String_As_CString(c_name));
+    Xen_IGC_Pop();
+    ERROR;
+  }
+  if (Xen_Map_Has(globals, c_name)) {
     Xen_DeclError_Global(Xen_String_As_CString(c_name));
     ERROR;
   }
-  Xen_Map_Push_Pair((Xen_Instance*)(*xen_globals->vm)->globals_instances->ptr,
-                    (Xen_Map_Pair){c_name, nil});
+  Xen_Map_Push_Pair(globals, (Xen_Map_Pair){c_name, nil});
 }
 
 static void op_load(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
@@ -472,11 +485,11 @@ static void op_make_vector_from_iterable(VM_Run* vmr, RunContext_ptr ctx,
     }
   }
   if (!Xen_VM_Except_Active() ||
-      strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+      strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
              "RangeEnd") != 0) {
     ERROR;
   }
-  (*xen_globals->vm)->except.active = 0;
+  Xen_VM()->except.active = 0;
   STACK_PUSH(vector);
 }
 
@@ -670,6 +683,19 @@ static void op_call_kw(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_IGC_XPOP(roots);
 }
 
+static void op_exec(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
+  OP_CLEAR_NEVER_USED_ARGS;
+  Xen_Instance* cmd = Xen_Vector_Get_Index(
+      ((Xen_Instance*)((vm_Consts_ptr)((CALLABLE_ptr)ctx->ctx_code->ptr)
+                           ->code.consts->ptr)
+           ->c_instances->ptr),
+      oparg);
+  Xen_Instance *exit_code = Xen_Number_From_Int(
+    Xen_Program_Run_Command(Xen_String_As_CString(cmd))
+  );
+  STACK_PUSH(exit_code);
+}
+
 static void op_binaryop(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   OP_CLEAR_NEVER_USED_ARGS;
   Xen_Instance* second = STACK_POP;
@@ -829,11 +855,11 @@ static void op_task(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
         Xen_EventLoop_Task_Push(Xen_Async_Get_EventLoop(), coro);
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       ERROR;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
     STACK_PUSH(coros);
   }
   vmr->retval = nil;
@@ -948,9 +974,9 @@ static void op_iter_for(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   Xen_Instance* rsult = Xen_Attr_Next(iter);
   if (!rsult) {
     if (Xen_VM_Except_Active() &&
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") == 0) {
-      (*xen_globals->vm)->except.active = 0;
+      Xen_VM()->except.active = 0;
       Xen_IGC_Pop();
       STACK_PUSH(nil);
       JUMP(oparg);
@@ -1212,6 +1238,7 @@ static void (*Dispatcher[HALT])(VM_Run*, RunContext_ptr, Xen_ulong_t) = {
     [MAKE_FUNCTION_ASYNC_NARGS] = op_make_function_async_nargs,
     [CALL] =                      op_call,
     [CALL_KW] =                   op_call_kw,
+    [EXEC] =                      op_exec,
     [BINARYOP] =                  op_binaryop,
     [BINARYOP_IS] =               op_binaryop_is,
     [UNARY_POSITIVE] =            op_unary_positive,
@@ -1278,7 +1305,7 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
   Xen_ssize_t previous_offset = -1;
 #endif
   bc_Instruct_t previous_instruct = (bc_Instruct_t){{NOP, 0}, {0}};
-  while (!vmr.halt && !program.closed) {
+  while (!vmr.halt && !xen_globals->program->closed) {
     if (Xen_VM_Except_Active()) {
       RunContext_ptr previous_context = NULL;
       Xen_Instance* current_ctx_inst = Xen_VM_Current_Ctx();
@@ -1289,23 +1316,23 @@ Xen_Instance* vm_run(Xen_Instance *ctx_inst) {
           if (!current_handler->except_type) {
             break;
           }
-          if (strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type, current_handler->except_type) == 0) {
+          if (strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type, current_handler->except_type) == 0) {
             break;
           }
           vm_catch_stack_clear(&current_handler);
           current_handler = vm_catch_stack_pop(&current_context->ctx_catch_stack);
         }
         if (current_handler) {
-          vm_backtrace_clear((*xen_globals->vm)->except.bt);
+          vm_backtrace_clear(Xen_VM()->except.bt);
           ((struct vm_Stack*)current_context->ctx_stack->ptr)->stack_top = current_handler->stack_top_before_try;
           current_context->ctx_ip = current_handler->handler_offset;
           vm_catch_stack_clear(&current_handler);
-          vm_stack_push(((struct vm_Stack*)current_context->ctx_stack->ptr), (Xen_Instance*)(*xen_globals->vm)->except.except->ptr);
-          (*xen_globals->vm)->except.active = 0;
+          vm_stack_push(((struct vm_Stack*)current_context->ctx_stack->ptr), (Xen_Instance*)Xen_VM()->except.except->ptr);
+          Xen_VM()->except.active = 0;
           current_context->ctx_error = 0;
           break;
         }
-        vm_backtrace_push((*xen_globals->vm)->except.bt, ((CALLABLE_ptr)current_context->ctx_code->ptr)
+        vm_backtrace_push(Xen_VM()->except.bt, ((CALLABLE_ptr)current_context->ctx_code->ptr)
                 ->code.code->bc_array[((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_ip - 1].sta);
         previous_context = current_context;
         current_ctx_inst = (Xen_Instance*)current_context->ctx_caller->ptr;

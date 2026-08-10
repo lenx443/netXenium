@@ -14,6 +14,7 @@
 #include "xen_queue.h"
 #include "xen_queue_instance.h"
 #include "xen_typedefs.h"
+#include "xen_life.h"
 
 static void queue_trace(Xen_Instance* inst) {
   Xen_Queue* queue = (Xen_Queue*)inst;
@@ -81,9 +82,6 @@ struct __Implement* Xen_Queue_GetImplement(void) {
 }
 
 int Xen_Queue_Init(void) {
-  if (!Xen_VM_Store_Global("queue", (Xen_Instance*)xen_globals->implements->queue)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

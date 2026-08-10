@@ -126,12 +126,12 @@ Xen_Function_ArgBinding* Xen_Function_ArgsParse(Xen_Instance* args,
       binding->args[idx].provided = 1;
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       Xen_IGC_Pop();
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
     Xen_IGC_Pop();
   }
   for (Xen_size_t i = 0; i < spec_count; i++) {
@@ -236,12 +236,12 @@ Xen_Function_From_Callable(CALLABLE_ptr code_fun, Xen_Instance* closure, Xen_Ins
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       Xen_IGC_XPOP(roots);
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
   }
   Xen_Instance* args_default_values = Xen_Map_New();
   if (!args_default_values) {
@@ -324,11 +324,11 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+          strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         return NULL;
       }
-      (*xen_globals->vm)->except.active = 0;
+      Xen_VM()->except.active = 0;
     }
     Xen_Instance* defaults_it =
         Xen_Attr_Iter((Xen_Instance*)fun->args_default_values->ptr);
@@ -350,11 +350,11 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
     for (Xen_ssize_t i = 0; i < fun->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       if (!Xen_Map_Has(

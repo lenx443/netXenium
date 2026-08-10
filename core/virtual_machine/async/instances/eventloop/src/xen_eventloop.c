@@ -60,7 +60,7 @@ void Xen_EventLoop_CB_Interrupt_Call(Xen_Instance* eloop) {
     Xen_CallError_Impl(callback);
     return;
   }
-  (*xen_globals->vm)->except.active = 0;
+  Xen_VM()->except.active = 0;
   if (!Xen_Function_Call(callback, nil, nil)) {
     return;
   }

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "program.h"
 #include "xen_life.h"
 
 void test_number_run(void);
@@ -13,7 +14,8 @@ void test_tuple_run(void);
 
 int main(int argc, char** argv) {
   assert(argc > 1);
-  Xen_Init(argc, argv);
+  Xen_Init();
+  Xen_Program_Push(argc - 1, argv + 1);
   const char* op = argv[1];
   if (strcmp(op, "NUMBER") == 0)
     test_number_run();
@@ -29,5 +31,6 @@ int main(int argc, char** argv) {
     test_vector_run();
   if (strcmp(op, "TUPLE") == 0)
     test_tuple_run();
+  Xen_Program_Pop();
   Xen_Finish();
 }

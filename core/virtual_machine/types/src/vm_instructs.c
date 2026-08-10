@@ -29,6 +29,7 @@ static STACK_EFFECT(make_function_async_stack_effect, -1)
 static STACK_EFFECT(make_function_async_nargs_stack_effect, 1)
 static STACK_EFFECT(call_stack_effect, -oparg)
 static STACK_EFFECT(call_kw_stack_effect, -oparg - 1)
+static STACK_EFFECT(exec_stack_effect, 1)
 static STACK_EFFECT(binaryop_stack_effect, -1)
 static STACK_EFFECT(binaryop_is_stack_effect, -1)
 static STACK_EFFECT(unary_positive_stack_effect, 0)
@@ -88,6 +89,7 @@ struct vm_Instruct_Info Instruct_Info_Table[HALT] = {
     [MAKE_FUNCTION_ASYNC_NARGS] = {"MAKE_FUNCTION_ASYNC_NARGS", make_function_async_nargs_stack_effect, INSTRUCT_FLAG_CO_CALLABLE},
     [CALL] =                      {"CALL",                      call_stack_effect,                      INSTRUCT_FLAG_ARG},
     [CALL_KW] =                   {"CALL_KW",                   call_kw_stack_effect,                   INSTRUCT_FLAG_ARG},
+    [EXEC] =                      {"EXEC",                      exec_stack_effect,                      INSTRUCT_FLAG_CO_INSTANCE},
     [BINARYOP] =                  {"BINARYOP",                  binaryop_stack_effect,                  INSTRUCT_FLAG_OPERATOR},
     [BINARYOP_IS] =               {"BINARYOP_IS",               binaryop_is_stack_effect,               0},
     [UNARY_POSITIVE] =            {"UNARY_POSITIVE",            unary_positive_stack_effect,            0},

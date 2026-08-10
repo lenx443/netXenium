@@ -94,12 +94,12 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+          strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         Xen_IGC_XPOP(roots);
         return NULL;
       }
-      (*xen_globals->vm)->except.active = 0;
+      Xen_VM()->except.active = 0;
     }
     Xen_Instance* defaults_it =
         Xen_Attr_Iter((Xen_Instance*)fun->args_default_values->ptr);
@@ -124,12 +124,12 @@ Xen_Instance* Xen_Method_Call(Xen_Instance* method_inst, Xen_Instance* args,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       Xen_IGC_XPOP(roots);
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
     for (Xen_ssize_t i = 0; i < fun->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       if (!Xen_Map_Has(

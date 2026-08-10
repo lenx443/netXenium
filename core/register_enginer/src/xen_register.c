@@ -12,11 +12,10 @@
 #include "xen_nil.h"
 #include "xen_register.h"
 #include "xen_register_stream.h"
-#include "xen_vector.h"
 
 static int __expose_set_handle(const char* name, Xen_INSTANCE* inst) {
   if (!Xen_Map_Push_Pair_Str(
-          (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr,
+          (Xen_Instance*)Xen_VM()->globals_props->ptr,
           (Xen_Map_Pair_Str){name, inst})) {
     return 0;
   }
@@ -25,22 +24,11 @@ static int __expose_set_handle(const char* name, Xen_INSTANCE* inst) {
 
 static Xen_INSTANCE* __expose_get_handle(const char* name) {
   Xen_INSTANCE* expose = Xen_Map_Get_Str(
-      (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr, name);
+      (Xen_Instance*)Xen_VM()->globals_props->ptr, name);
   if (!expose) {
     return NULL;
   }
   return expose;
-}
-
-static int __args_set_handle(const char* name, Xen_INSTANCE* inst) {
-  (void)name;
-  (void)inst;
-  return 1;
-}
-
-static Xen_INSTANCE* __args_get_handle(const char* name) {
-  (void)name;
-  return Xen_Vector_New();
 }
 
 static int self_set_handle(const char* name, Xen_INSTANCE* inst) {
@@ -62,13 +50,12 @@ static int config_set_handle(const char* name, Xen_INSTANCE* inst) {
 
 static Xen_INSTANCE* config_get_handle(const char* name) {
   (void)name;
-  return (Xen_Instance*)(*xen_globals->vm)->config->ptr;
+  return (Xen_Instance*)Xen_VM()->config->ptr;
 }
 
 static struct Xen_RegisterStream streams[] = {
     {"__expose", true, __expose_set_handle, __expose_get_handle},
     {"__expose_", false, __expose_set_handle, __expose_get_handle},
-    {"__args", true, __args_set_handle, __args_get_handle},
     {"self", true, self_set_handle, self_get_handle},
     {"__config", true, config_set_handle, config_get_handle},
     {NULL, false, NULL, NULL},
@@ -106,7 +93,7 @@ int xen_register_prop_set(const char* name, struct __Instance* inst) {
     return 0;
   }
   if (!Xen_Map_Push_Pair_Str(
-          (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr,
+          (Xen_Instance*)Xen_VM()->globals_props->ptr,
           (Xen_Map_Pair_Str){name, inst})) {
     return 0;
   }
@@ -149,7 +136,7 @@ Xen_INSTANCE* xen_register_prop_get(const char* name) {
     }
     return NULL;
   }
-  Xen_INSTANCE* root_prop = Xen_Map_Get_Str( (Xen_Instance*)(*xen_globals->vm)->globals_props->ptr, name);
+  Xen_INSTANCE* root_prop = Xen_Map_Get_Str( (Xen_Instance*)Xen_VM()->globals_props->ptr, name);
   if (!root_prop) {
     return NULL;
   };

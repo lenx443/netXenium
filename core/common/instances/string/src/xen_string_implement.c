@@ -28,6 +28,7 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+#include "xen_life.h"
 
 static Xen_Instance* string_alloc(Xen_INSTANCE* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
@@ -245,11 +246,11 @@ static Xen_Instance* string_opr_band(Xen_Instance* self, Xen_Instance* args, Xen
       }
       current = Xen_Attr_Next(it);
       if (!current) {
-        if (!Xen_VM_Except_Active() || strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type, "RangeEnd") != 0) {
+        if (!Xen_VM_Except_Active() || strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type, "RangeEnd") != 0) {
           Xen_IGC_Pop();
           return NULL;
         }
-        (*xen_globals->vm)->except.active = 0;
+        Xen_VM()->except.active = 0;
         it_end = 1;
       }
       if (it_end) {
@@ -473,10 +474,6 @@ struct __Implement* Xen_String_GetImplement(void) {
 }
 
 int Xen_String_Init(void) {
-  if (!Xen_VM_Store_Global("string",
-                           (Xen_Instance*)xen_globals->implements->string)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

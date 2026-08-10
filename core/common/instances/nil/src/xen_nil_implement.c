@@ -13,6 +13,7 @@
 #include "xen_nil.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+#include "xen_life.h"
 
 static Xen_Instance* nil_string(Xen_Instance* self, Xen_Instance* args,
                                 Xen_Instance* kwargs) {

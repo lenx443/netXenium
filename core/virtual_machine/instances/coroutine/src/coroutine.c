@@ -85,11 +85,11 @@ int Xen_Coroutine_Await(Xen_Instance* cur, Xen_Instance* coro_inst) {
         Xen_EventLoop_Task_Push(Xen_Async_Get_EventLoop(), coro);
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       return 0;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
   }
   cur_coro->status = Xen_CORO_PAUSE;
   return 1;
@@ -107,9 +107,9 @@ Xen_Instance* Xen_Coroutine_Await_Resume(Xen_Instance* coro_inst) {
     for (Xen_size_t idx = 0; idx < Xen_SIZE(await); idx++) {
       Xen_Coroutine* awaited = (Xen_Coroutine*)Xen_Vector_Get_Index(await, idx);
       if (awaited->except.active) {
-        (*xen_globals->vm)->except.active = 1;
-        Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, awaited->except.except->ptr);
-        vm_backtrace_copy(awaited->except.bt, (*xen_globals->vm)->except.bt);
+        Xen_VM()->except.active = 1;
+        Xen_GC_Write_Field(&Xen_VM()->except.except, awaited->except.except->ptr);
+        vm_backtrace_copy(awaited->except.bt, Xen_VM()->except.bt);
         vm_backtrace_clear(awaited->except.bt);
         awaited->except.active = 0;
         return NULL;
@@ -118,9 +118,9 @@ Xen_Instance* Xen_Coroutine_Await_Resume(Xen_Instance* coro_inst) {
   } else if (Xen_SIZE(await) == 1) {
     Xen_Coroutine* awaited = (Xen_Coroutine*)Xen_Vector_Top(await);
     if (awaited->except.active) {
-      (*xen_globals->vm)->except.active = 1;
-      Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, awaited->except.except->ptr);
-      vm_backtrace_copy(awaited->except.bt, (*xen_globals->vm)->except.bt);
+      Xen_VM()->except.active = 1;
+      Xen_GC_Write_Field(&Xen_VM()->except.except, awaited->except.except->ptr);
+      vm_backtrace_copy(awaited->except.bt, Xen_VM()->except.bt);
       vm_backtrace_clear(awaited->except.bt);
       awaited->except.active = 0;
       return NULL;
@@ -131,9 +131,9 @@ Xen_Instance* Xen_Coroutine_Await_Resume(Xen_Instance* coro_inst) {
     for (Xen_size_t idx = 0; idx < Xen_SIZE(await); idx++) {
       Xen_Coroutine* awaited = (Xen_Coroutine*)Xen_Vector_Get_Index(await, idx);
       if (awaited->except.active) {
-        (*xen_globals->vm)->except.active = 1;
-        Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, awaited->except.except->ptr);
-        vm_backtrace_copy(awaited->except.bt, (*xen_globals->vm)->except.bt);
+        Xen_VM()->except.active = 1;
+        Xen_GC_Write_Field(&Xen_VM()->except.except, awaited->except.except->ptr);
+        vm_backtrace_copy(awaited->except.bt, Xen_VM()->except.bt);
         vm_backtrace_clear(awaited->except.bt);
         awaited->except.active = 0;
         return NULL;
@@ -154,10 +154,10 @@ void Xen_Coroutine_Return(Xen_Instance* coro, Xen_Instance* r) {
 void Xen_Coroutine_Excepted(Xen_Instance* coro_inst) {
   Xen_Coroutine* coro = (Xen_Coroutine*)coro_inst;
   coro->except.active = 1;
-  Xen_GC_Write_Field(&coro->except.except, (*xen_globals->vm)->except.except->ptr);
-  vm_backtrace_copy((*xen_globals->vm)->except.bt, coro->except.bt);
-  vm_backtrace_clear((*xen_globals->vm)->except.bt);
-  (*xen_globals->vm)->except.active = 0;
+  Xen_GC_Write_Field(&coro->except.except, Xen_VM()->except.except->ptr);
+  vm_backtrace_copy(Xen_VM()->except.bt, coro->except.bt);
+  vm_backtrace_clear(Xen_VM()->except.bt);
+  Xen_VM()->except.active = 0;
   if (coro->awaiter->ptr) {
     Xen_Coroutine* awaiter = (Xen_Coroutine*)coro->awaiter->ptr;
     awaiter->awaited_excepted++;

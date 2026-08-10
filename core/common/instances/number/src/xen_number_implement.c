@@ -780,10 +780,6 @@ struct __Implement* Xen_Number_GetImplement(void) {
 }
 
 int Xen_Number_Init(void) {
-  if (!Xen_VM_Store_Global("number",
-                           (Xen_Instance*)xen_globals->implements->number)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

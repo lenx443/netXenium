@@ -14,6 +14,7 @@
 #include "xen_tuple.h"
 #include "xen_tuple_iterator_instance.h"
 #include "xen_typedefs.h"
+#include "xen_life.h"
 
 static void tuple_iterator_trace(Xen_Instance* h) {
   Xen_Tuple_Iterator* it = (Xen_Tuple_Iterator*)h;

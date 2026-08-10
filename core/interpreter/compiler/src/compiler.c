@@ -31,6 +31,7 @@
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+#include "xen_life.h"
 
 #define COMPILE_FLAG_FUNCTION_INLINE  (1 << 0)
 #define COMPILE_FLAG_EXPR             (1 << 1)
@@ -223,6 +224,7 @@ static int compile_expr_primary(Compiler*, Xen_Instance*);
 static int compile_expr_primary_string(Compiler*, Xen_Instance*);
 static int compile_expr_primary_number(Compiler*, Xen_Instance*);
 static int compile_expr_primary_nil(Compiler*, Xen_Instance*);
+static int compile_expr_primary_command(Compiler*, Xen_Instance*);
 static int compile_expr_primary_literal(Compiler*, Xen_Instance*);
 static int compile_expr_primary_property(Compiler*, Xen_Instance*);
 static int compile_expr_primary_parent(Compiler*, Xen_Instance*);
@@ -980,6 +982,10 @@ int compile_expr_primary(Compiler* c, Xen_Instance* node) {
     if (!compile_expr_primary_nil(c, primary)) {
       return 0;
     }
+  } else if (Xen_AST_Node_Name_Cmp(primary, "Command") == 0) {
+    if (!compile_expr_primary_command(c, primary)) {
+      return 0;
+    }
   } else if (Xen_AST_Node_Name_Cmp(primary, "Literal") == 0) {
     if (!compile_expr_primary_literal(c, primary)) {
       return 0;
@@ -1050,6 +1056,13 @@ int compile_expr_primary_nil(Compiler* c, Xen_Instance* node) {
   if (!emit(PUSH, co_idx, Xen_AST_Node_STA(node))) {
     return 0;
   }
+  return 1;
+}
+
+int compile_expr_primary_command(Compiler* c, Xen_Instance* node) {
+  emit(EXEC,
+       co_push_instance(Xen_String_From_CString(Xen_AST_Node_Value(node))),
+       Xen_AST_Node_STA(node));
   return 1;
 }
 
@@ -3023,7 +3036,7 @@ int ast_compile(block_list_ptr b_list, block_node_ptr* b_current, uint8_t mode,
   if (!compile_program(&c, ast)) {
     assert(loop_stack == NULL);
     if (Xen_VM_Except_Active()) {
-      vm_backtrace_push((*xen_globals->vm)->except.bt, c.sta);
+      vm_backtrace_push(Xen_VM()->except.bt, c.sta);
       return 0;
     }
     return 0;

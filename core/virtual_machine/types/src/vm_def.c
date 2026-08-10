@@ -1,3 +1,4 @@
+#include "vm.h"
 #define _POSIX_C_SOURCE 200809L
 #include <signal.h>
 #include <stdbool.h>
@@ -18,11 +19,8 @@
 #include "xen_map.h"
 #include "xen_string.h"
 #include "xen_vector.h"
-#include "vm_scope.h"
 #include "xen_nil.h"
 #include "xen_tuple.h"
-
-static VM_ptr vm = NULL;
 
 static void InterruptHandler(int sign) {
   (void)sign;
@@ -38,9 +36,6 @@ static void vm_def_trace(Xen_GCHeader* h) {
   Xen_GC_Trace_GCHeader(_vm->modules);
   Xen_GC_Trace_GCHeader(_vm->modules_stack);
   Xen_GC_Trace_GCHeader(_vm->globals_instances);
-  if (_vm->globals_scopes->ptr) {
-    Xen_GC_Trace_GCHeader(_vm->globals_scopes);
-  };
   Xen_GC_Trace_GCHeader(_vm->globals_props);
   Xen_GC_Trace_GCHeader(_vm->paths_modules);
   Xen_GC_Trace_GCHeader(_vm->config);
@@ -58,6 +53,7 @@ static void vm_def_destroy(Xen_GCHeader* h) {
 }
 
 static int vm_load_modules_paths(void) {
+  VM* vm = Xen_VM();
   Xen_IGC_WRITE_FIELD(vm->paths_modules, Xen_Vector_New());
   Xen_Instance* default_module_path =
       Xen_String_From_CString(XEN_INSTALL_PREFIX "/lib/netxenium");
@@ -66,6 +62,7 @@ static int vm_load_modules_paths(void) {
 }
 
 static int vm_load_config(void) {
+  VM* vm = Xen_VM();
   Xen_IGC_WRITE_FIELD(vm->config, Xen_Map_New());
   if (!Xen_Map_Push_Pair_Str(
           (Xen_Instance*)vm->config->ptr,
@@ -77,52 +74,32 @@ static int vm_load_config(void) {
 }
 
 bool vm_create(void) {
-  if (vm != NULL)
-    return 1;
-  vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
+  VM* vm = (VM_ptr)Xen_GC_New(sizeof(VM), vm_def_trace, vm_def_destroy);
+  xen_globals->program->vm = vm;
   vm->current_ctx = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)nil);
   vm->args = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->modules_stack = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->globals_instances = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->globals_scopes = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  vm->globals_props = Xen_GCHandle_New((Xen_GCHeader*)vm);
+  vm->modules = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)Xen_Map_New());
+  vm->modules_stack = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)Xen_Vector_New());
+  vm->globals_instances = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)Xen_Map_New());
+  vm->globals_props = Xen_GCHandle_New_From((Xen_GCHeader*)vm, (Xen_GCHeader*)Xen_Map_New());
   vm->paths_modules = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->config = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->except.except = Xen_GCHandle_New((Xen_GCHeader*)vm);
   vm->evloop.evloop = Xen_GCHandle_New((Xen_GCHeader*)vm);
-  Xen_Instance** args_array = Xen_Alloc(program.argc * sizeof(Xen_Instance*));
+  Xen_Instance** args_array = Xen_Alloc(xen_globals->program->argc * sizeof(Xen_Instance*));
   if (!args_array) {
     return 0;
   }
-  for (int i = 0; i < program.argc; i++) {
-    Xen_INSTANCE* arg_value = Xen_String_From_CString(program.argv[i]);
+  for (int i = 0; i < xen_globals->program->argc; i++) {
+    Xen_INSTANCE* arg_value = Xen_String_From_CString(xen_globals->program->argv[i]);
     if (!arg_value) {
       Xen_Dealloc(args_array);
       return 0;
     }
     args_array[i] = arg_value;
   }
-  Xen_IGC_WRITE_FIELD(vm->args, Xen_Tuple_From_Array(program.argc, args_array));
+  Xen_IGC_WRITE_FIELD(vm->args, Xen_Tuple_From_Array(xen_globals->program->argc, args_array));
   Xen_Dealloc(args_array);
-  Xen_IGC_WRITE_FIELD(vm->modules, Xen_Map_New());
-  if (!vm->modules) {
-    return 0;
-  }
-  Xen_IGC_WRITE_FIELD(vm->modules_stack, Xen_Vector_New());
-  if (!vm->modules_stack) {
-    return 0;
-  }
-  Xen_IGC_WRITE_FIELD(vm->globals_instances, Xen_Map_New());
-  if (!vm->globals_instances) {
-    return 0;
-  }
-  Xen_GC_Write_Field(&vm->globals_scopes, (struct __GC_Header*)Xen_VM_Scopes_New());
-  Xen_VM_Scopes_Push((Xen_VM_Scopes*)vm->globals_scopes->ptr);
-  Xen_IGC_WRITE_FIELD(vm->globals_props, Xen_Map_New());
-  if (!vm->globals_props) {
-    return 0;
-  }
   char path_current[1024];
   if (!getcwd(path_current, 1024)) {
     return 0;
@@ -144,18 +121,15 @@ bool vm_create(void) {
   memset(&sa, 0, sizeof(sa));
   sa.sa_handler = InterruptHandler;
   sigaction(SIGINT, &sa, NULL);
-  xen_globals->vm = &vm;
   return 1;
 }
 
 void vm_destroy(void) {
-  if (!vm)
-    return;
+  VM* vm = Xen_VM();
   Xen_Dealloc((void*)vm->path_current);
   Xen_GCHandle_Free(vm->args);
   Xen_GCHandle_Free(vm->modules);
   Xen_GCHandle_Free(vm->modules_stack);
-  Xen_GCHandle_Free(vm->globals_instances);
   Xen_GCHandle_Free(vm->globals_props);
   Xen_GCHandle_Free(vm->paths_modules);
   Xen_GCHandle_Free(vm->config);

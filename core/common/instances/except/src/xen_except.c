@@ -6,6 +6,8 @@
 #include "xen_igc.h"
 #include "xen_nil.h"
 #include "xen_typedefs.h"
+#include "xen_life.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

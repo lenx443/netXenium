@@ -28,6 +28,7 @@
 #include "xen_vector_implement.h"
 #include "xen_vector_instance.h"
 #include "xen_vector_iterator.h"
+#include "xen_life.h"
 
 static void vector_trace(Xen_Instance* h) {
   Xen_Vector* vector = (Xen_Vector*)h;
@@ -78,11 +79,11 @@ static Xen_Instance* vector_create(Xen_Instance* self, Xen_Instance* args,
     }
     Xen_IGC_XPOP(2);
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
   }
   return nil;
 }
@@ -298,10 +299,6 @@ struct __Implement* Xen_Vector_GetImplement(void) {
 }
 
 int Xen_Vector_Init(void) {
-  if (!Xen_VM_Store_Global("vector",
-                           (Xen_Instance*)xen_globals->implements->vector)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

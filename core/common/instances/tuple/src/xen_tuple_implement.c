@@ -25,6 +25,7 @@
 #include "xen_tuple_iterator.h"
 #include "xen_typedefs.h"
 #include "xen_vector.h"
+#include "xen_life.h"
 
 static void tuple_trace(Xen_Instance* h) {
   Xen_Tuple* tuple = (Xen_Tuple*)h;
@@ -206,10 +207,6 @@ struct __Implement* Xen_Tuple_GetImplement(void) {
 }
 
 int Xen_Tuple_Init(void) {
-  if (!Xen_VM_Store_Global("tuple",
-                           (Xen_Instance*)xen_globals->implements->tuple)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

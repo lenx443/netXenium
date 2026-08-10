@@ -1,6 +1,7 @@
 #include "m_config.h"
 #include "callable.h"
 #include "instance.h"
+#include "vm.h"
 #include "xen_alloc.h"
 #include "xen_life.h"
 #include "xen_module_instance.h"
@@ -21,7 +22,7 @@ static Xen_Instance* fn_add_absolute_path(Xen_Instance* self,
   if (Xen_IMPL(path) != xen_globals->implements->string) {
     return NULL;
   }
-  Xen_Vector_Push((Xen_Instance*)(*xen_globals->vm)->paths_modules->ptr, path);
+  Xen_Vector_Push((Xen_Instance*)Xen_VM()->paths_modules->ptr, path);
   return nil;
 }
 
@@ -37,12 +38,12 @@ static Xen_Instance* fn_add_relative_path(Xen_Instance* self,
     return NULL;
   }
   Xen_c_string_t current_path = NULL;
-  if (Xen_SIZE((*xen_globals->vm)->modules_stack->ptr) > 0) {
+  if (Xen_SIZE(Xen_VM()->modules_stack->ptr) > 0) {
     Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(
-        (Xen_Instance*)(*xen_globals->vm)->modules_stack->ptr);
+        (Xen_Instance*)Xen_VM()->modules_stack->ptr);
     current_path = mod_top->mod_path;
   } else {
-    current_path = (*xen_globals->vm)->path_current;
+    current_path = Xen_VM()->path_current;
   }
   Xen_c_string_t path_str = Xen_String_As_CString(path);
   Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s", current_path, path_str);
@@ -52,7 +53,7 @@ static Xen_Instance* fn_add_relative_path(Xen_Instance* self,
   Xen_string_t full_path = Xen_Alloc(psize + 1);
   snprintf(full_path, psize + 1, "%s/%s", current_path, path_str);
   Xen_Instance* abs_path = Xen_String_From_CString(full_path);
-  Xen_Vector_Push((Xen_Instance*)(*xen_globals->vm)->paths_modules->ptr,
+  Xen_Vector_Push((Xen_Instance*)Xen_VM()->paths_modules->ptr,
                   abs_path);
   return nil;
 }

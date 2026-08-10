@@ -24,6 +24,7 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_vector.h"
+#include "xen_life.h"
 
 #include <string.h>
 
@@ -128,11 +129,11 @@ static Xen_Instance* method_callable(struct __Instance* self,
         }
       }
       if (!Xen_VM_Except_Active() ||
-          strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+          strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                  "RangeEnd") != 0) {
         return NULL;
       }
-      (*xen_globals->vm)->except.active = 0;
+      Xen_VM()->except.active = 0;
     }
     Xen_Instance* defaults_it =
         Xen_Attr_Iter((Xen_Instance*)function->args_default_values->ptr);
@@ -154,11 +155,11 @@ static Xen_Instance* method_callable(struct __Instance* self,
       }
     }
     if (!Xen_VM_Except_Active() ||
-        strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type,
+        strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
       return NULL;
     }
-    (*xen_globals->vm)->except.active = 0;
+    Xen_VM()->except.active = 0;
     for (Xen_ssize_t i = 0; i < function->args_requireds; i++) {
       Xen_Instance* name = Xen_Vector_Get_Index(args_list, i);
       if (!Xen_Map_Has((Xen_Instance*)((RunContext_ptr)new_ctx)->ctx_instances->ptr, name)) {
@@ -385,10 +386,6 @@ struct __Implement* Xen_Method_GetImplement(void) {
 }
 
 int Xen_Method_Init(void) {
-  if (!Xen_VM_Store_Global("method",
-                           (Xen_Instance*)xen_globals->implements->method)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

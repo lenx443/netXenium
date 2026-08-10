@@ -16,6 +16,7 @@
 #include "xen_number.h"
 #include "xen_string.h"
 #include "xen_tuple.h"
+#include "xen_life.h"
 
 static Xen_Instance* boolean_alloc(Xen_Instance* self, Xen_Instance* args,
                                    Xen_Instance* kwargs) {
@@ -102,12 +103,6 @@ struct __Implement* Xen_Boolean_GetImplement(void) {
 }
 
 int Xen_Boolean_Init(void) {
-  if (!Xen_VM_Store_Global("boolean",
-                           (Xen_Instance*)xen_globals->implements->boolean) ||
-      !Xen_VM_Store_Global("true", Xen_True) ||
-      !Xen_VM_Store_Global("false", Xen_False)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

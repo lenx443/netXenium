@@ -14,6 +14,7 @@ typedef enum {
   TKN_NEWLINE,
   TKN_IDENTIFIER,
   TKN_KEYWORD,
+  TKN_COMMAND,
   TKN_HAS,
   TKN_IS,
   TKN_NOT,

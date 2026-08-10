@@ -30,12 +30,12 @@ static Xen_Instance* fn_exit(Xen_Instance* self, Xen_Instance* args,
     if (Xen_IMPL(exit_code) != xen_globals->implements->number) {
       return NULL;
     }
-    program.closed = 1;
-    program.exit_code = Xen_Number_As_Int(exit_code);
+    xen_globals->program->closed = 1;
+    xen_globals->program->exit_code = Xen_Number_As_Int(exit_code);
     return nil;
   }
-  program.closed = 1;
-  program.exit_code = 0;
+  xen_globals->program->closed = 1;
+  xen_globals->program->exit_code = 0;
   return nil;
 }
 
@@ -236,6 +236,24 @@ static Xen_Instance* fn_has_attr(Xen_Instance* self, Xen_Instance* args,
   return Xen_True;
 }
 
+static Xen_Instance* init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  Xen_Attr_Set_Str(self, "boolean", (Xen_Instance*)xen_globals->implements->boolean);
+  Xen_Attr_Set_Str(self, "bytes", (Xen_Instance*)xen_globals->implements->bytes);
+  Xen_Attr_Set_Str(self, "except", (Xen_Instance*)xen_globals->implements->except);
+  Xen_Attr_Set_Str(self, "map", (Xen_Instance*)xen_globals->implements->map);
+  Xen_Attr_Set_Str(self, "method", (Xen_Instance*)xen_globals->implements->method);
+  Xen_Attr_Set_Str(self, "number", (Xen_Instance*)xen_globals->implements->number);
+  Xen_Attr_Set_Str(self, "queue", (Xen_Instance*)xen_globals->implements->queue);
+  Xen_Attr_Set_Str(self, "string", (Xen_Instance*)xen_globals->implements->string);
+  Xen_Attr_Set_Str(self, "tuple", (Xen_Instance*)xen_globals->implements->tuple);
+  Xen_Attr_Set_Str(self, "vector", (Xen_Instance*)xen_globals->implements->vector);
+
+  Xen_Attr_Set_Str(self, "true", Xen_True);
+  Xen_Attr_Set_Str(self, "false", Xen_False);
+  return nil;
+}
+
 static Xen_Module_Function_Table core_functions = {
     {"exit", fn_exit},
     {"echo", fn_echo},
@@ -254,7 +272,8 @@ static Xen_Module_Function_Table core_functions = {
 
 struct Xen_Module_Def Module_Core = {
     .mod_name = "core",
-    .mod_init = NULL,
+    .mod_init = init,
     .mod_functions = core_functions,
+    .mod_functions_async = NULL,
     .mod_implements = NULL,
 };

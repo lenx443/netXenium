@@ -16,6 +16,7 @@
 #include "xen_alloc.h"
 #include "xen_cstrings.h"
 #include "xen_except.h"
+#include "xen_life.h"
 
 static term_size current_term_size = {0};
 static struct termios original_terminal_mode;
@@ -299,7 +300,7 @@ LIST_ptr read_string_utf8(void) {
       if (c.value.code == KEY_EOF) {
         if (i != 0)
           continue;
-        program.closed = 1;
+        xen_globals->program->closed = 1;
         printf("\n");
         break;
       }

@@ -55,7 +55,7 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
     Xen_uint64_t delay = Xen_Number_As_UInt(Xen_Function_ArgBinding_Search(binding, "delay")->value);
     Xen_Function_ArgBinding_Free(binding);
     Xen_Instance* timer = Xen_Timer_New(coro, Xen_Timer_Now_MS() + delay, NULL, NULL);
-    Xen_Instance* evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+    Xen_Instance* evloop = (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
     if (!evloop) {
       Xen_AsyncError_Already();
       Xen_COROUTINE_EXCEPTED;
@@ -73,7 +73,7 @@ static void fn_sleep(Xen_Instance* coro, Xen_Instance* self, Xen_Instance* args,
 static Xen_Instance*
 fn_interrupt_handle(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
-  if (!(*xen_globals->vm)->evloop.active) {
+  if (!Xen_VM()->evloop.active) {
     Xen_AsyncError();
     return NULL;
   }

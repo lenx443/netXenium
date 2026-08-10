@@ -13,6 +13,7 @@
 #include "xen_nil.h"
 #include "xen_vector.h"
 #include "xen_vector_iterator_instance.h"
+#include "xen_life.h"
 
 static void vector_iterator_trace(Xen_Instance* h) {
   Xen_Vector_Iterator* it = (Xen_Vector_Iterator*)h;

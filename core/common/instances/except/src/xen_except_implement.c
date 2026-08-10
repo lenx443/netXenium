@@ -16,6 +16,7 @@
 #include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
+#include "xen_life.h"
 
 static Xen_Instance* except_alloc(Xen_Instance* self, Xen_Instance* args,
                                   Xen_Instance* kwargs) {
@@ -117,10 +118,6 @@ struct __Implement* Xen_Except_GetImplement(void) {
 }
 
 int Xen_Except_Init(void) {
-  if (!Xen_VM_Store_Global("except",
-                           (Xen_Instance*)xen_globals->implements->except)) {
-    return 0;
-  }
   Xen_Instance* props = Xen_Map_New();
   if (!props) {
     return 0;

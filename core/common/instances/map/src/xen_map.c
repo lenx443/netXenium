@@ -18,6 +18,7 @@
 #include "xen_string.h"
 #include "xen_string_instance.h"
 #include "xen_vector.h"
+#include "xen_life.h"
 
 Xen_Instance* Xen_Map_New(void) {
   Xen_Map* map =

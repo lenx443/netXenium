@@ -8,7 +8,6 @@
 #include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
-#include "xen_life.h"
 #include "xen_timer.h"
 #include "xen_timer_heap.h"
 
@@ -47,7 +46,7 @@ static void io_status_out_timer_callback(void* io_ptr) {
 }
 
 Xen_IO_Status* Xen_IO_Status_New(void* fd) {
-  if (!(*xen_globals->vm)->evloop.active) {
+  if (!Xen_VM()->evloop.active) {
     Xen_AsyncError();
     return NULL;
   }
@@ -56,7 +55,7 @@ Xen_IO_Status* Xen_IO_Status_New(void* fd) {
 #ifdef __linux
   io->fd = *(int*)fd;
 #endif
-  Xen_Instance* evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  Xen_Instance* evloop = (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
   io->evloop = Xen_GCHandle_New_From((Xen_GCHeader*)io, (Xen_GCHeader*)evloop);
   io->in = Xen_GCHandle_New((Xen_GCHeader*)io);
   io->out = Xen_GCHandle_New((Xen_GCHeader*)io);

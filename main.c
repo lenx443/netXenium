@@ -34,70 +34,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
-
-#include "async.h"
-#include "attrs.h"
-#include "instance.h"
 #include "program.h"
-#include "vm.h"
-#include "vm_def.h"
-#include "xen_alloc.h"
-#include "xen_cstrings.h"
 #include "xen_life.h"
-#include "xen_method.h"
-#include "xen_module.h"
-#include "xen_nil.h"
-#include "xen_tuple.h"
 
-int main(int argc, char** argv) {
-  if (!Xen_Init(argc, argv)) {
+int main(int argc, const char** argv) {
+  if (!Xen_Init()) {
     return 1;
   }
-  if (argc > 1) {
-    program.name = Xen_CString_Dup(argv[1]);
-    const char* slash = strrchr(argv[1], '/');
-    Xen_Instance* module = NULL;
-    if (slash) {
-      size_t len = slash - argv[1];
-      char* dir = Xen_Alloc(len + 1);
-      memcpy(dir, argv[1], len);
-      dir[len] = '\0';
-      module = Xen_Module_Load(argv[1], "<start>", dir, XEN_MODULE_GUEST);
-      Xen_Dealloc(dir);
-    } else {
-      module = Xen_Module_Load(argv[1], "<start>", ".", XEN_MODULE_GUEST);
-    }
-    if (Xen_VM_Except_Active()) {
-      Xen_VM_Except_Backtrace_Show();
-    }
-    if (module) {
-      Xen_Instance* start = Xen_Attr_Get_Str(module, "$__start");
-      if (!start) {
-        goto end;
-      }
-      if (Xen_IMPL(start) != xen_globals->implements->method) {
-        goto end;
-      }
-      Xen_Instance* args = nil;
-      if (Xen_SIZE(Xen_Method_Args(start)) > 0) {
-        args = Xen_Tuple_From_Array(1, (Xen_Instance**)&(*xen_globals->vm)->args->ptr);
-      }
-      if (Xen_Method_IsAsync(start)) {
-        Xen_Instance* coro = Xen_Method_Call(start, args, nil);
-        Xen_Async_Run(coro);
-      } else {
-        Xen_Method_Call(start, args, nil);
-      }
-      if (Xen_VM_Except_Active()) {
-        Xen_VM_Except_Backtrace_Show();
-      }
-    }
-  } else {
-    program.name = Xen_CString_Dup(argv[0]);
-    shell_loop();
-  }
-end:
+  int exit_code;
+  if (argc > 1) exit_code = Xen_Program_Run_File(argc - 1, argv + 1);
+  else exit_code = Xen_Program_Run_Repl();
   Xen_Finish();
-  return program.exit_code;
+  return exit_code;
 }

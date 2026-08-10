@@ -6,7 +6,6 @@
 #include "instance_life.h"
 #include "program.h"
 #include "source_file.h"
-#include "vm_def.h"
 
 struct Xen_Globals {
   Program_State* program;
@@ -17,11 +16,10 @@ struct Xen_Globals {
   Xen_Instance* true_instance;
   Xen_Instance* false_instance;
   Xen_Instance* nil_instance;
-  VM** vm;
 };
 
 void Xen_GetReady(void*);
-int Xen_Init(int, char**);
+int Xen_Init(void);
 void Xen_Finish(void);
 
 extern struct Xen_Globals* xen_globals;

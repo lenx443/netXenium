@@ -35,18 +35,18 @@ static void program_timerfd(int tfd, Xen_uint64_t next_expiration) {
 }
 
 void Xen_Async_Run(Xen_Instance* new_coro) {
-  int __last_active = (*xen_globals->vm)->evloop.active;
-  Xen_Instance* __last_evloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  int __last_active = Xen_VM()->evloop.active;
+  Xen_Instance* __last_evloop = (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
   Xen_IGC_Push(__last_evloop);
   Xen_Instance* eloop = Xen_EventLoop_New();
   Xen_Coroutine* coro = (Xen_Coroutine*)new_coro;
-  (*xen_globals->vm)->evloop.active = 1;
-  Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, eloop);
+  Xen_VM()->evloop.active = 1;
+  Xen_IGC_WRITE_FIELD(Xen_VM()->evloop.evloop, eloop);
   Xen_EventLoop_Task_Push(eloop, new_coro);
   struct epoll_event events[EPOLL_MAX_EVENTS];
   while (1) {
     if (Xen_VM_Except_Active()) {
-      if (strcmp(((Xen_Except*)(*xen_globals->vm)->except.except->ptr)->type, "Interrupt") == 0) {
+      if (strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type, "Interrupt") == 0) {
         Xen_EventLoop_CB_Interrupt_Call(eloop);
       }
       break;
@@ -83,19 +83,19 @@ void Xen_Async_Run(Xen_Instance* new_coro) {
   }
   Xen_Async_Set_Active(0);
   if (coro->except.active) {
-    (*xen_globals->vm)->except.active = 1;
-    Xen_GC_Write_Field(&(*xen_globals->vm)->except.except, coro->except.except->ptr);
-    vm_backtrace_copy(coro->except.bt, (*xen_globals->vm)->except.bt);
+    Xen_VM()->except.active = 1;
+    Xen_GC_Write_Field(&Xen_VM()->except.except, coro->except.except->ptr);
+    vm_backtrace_copy(coro->except.bt, Xen_VM()->except.bt);
     vm_backtrace_clear(coro->except.bt);
     coro->except.active = 0;
   }
   Xen_IGC_Pop();
-  Xen_IGC_WRITE_FIELD((*xen_globals->vm)->evloop.evloop, __last_evloop);
-  (*xen_globals->vm)->evloop.active = __last_active;
+  Xen_IGC_WRITE_FIELD(Xen_VM()->evloop.evloop, __last_evloop);
+  Xen_VM()->evloop.active = __last_active;
 }
 
 void Xen_Async_Run_Tasks(void) {
-  Xen_Instance* eloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  Xen_Instance* eloop = (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
   Xen_Instance* coro_inst = NULL;
   while (((coro_inst = Xen_EventLoop_Task_Pop(eloop)) != NULL) ||
          xen_globals->program->closed) {
@@ -139,7 +139,7 @@ void Xen_Async_Run_Tasks(void) {
 }
 
 void Xen_Async_Run_Timers(void) {
-  Xen_Instance* eloop = (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  Xen_Instance* eloop = (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
   Xen_Timer_Heap* timer_heap = (Xen_Timer_Heap*)((Xen_EventLoop*)eloop)->timer_heap->ptr;
   Xen_uint64_t now = Xen_Timer_Now_MS();
   while (!Xen_Timer_Heap_Empty(timer_heap)) {
@@ -169,13 +169,13 @@ void Xen_Async_Scheduler_Timer(Xen_Instance* evloop, Xen_Instance* timer) {
 }
 
 Xen_bool_t Xen_Async_Get_Active(void) {
-  return ((*xen_globals->vm)->evloop.active);
+  return (Xen_VM()->evloop.active);
 }
 
 Xen_Instance* Xen_Async_Get_EventLoop(void) {
-  return (Xen_Instance*)(*xen_globals->vm)->evloop.evloop->ptr;
+  return (Xen_Instance*)Xen_VM()->evloop.evloop->ptr;
 }
 
 void Xen_Async_Set_Active(Xen_bool_t val) {
-  (*xen_globals->vm)->evloop.active = XEN_BOOL(val);
+  Xen_VM()->evloop.active = XEN_BOOL(val);
 }
