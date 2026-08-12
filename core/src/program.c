@@ -16,6 +16,8 @@
 #include "vm.h"
 #include "vm_scope.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
+#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_life.h"
@@ -24,6 +26,7 @@
 #include "xen_module.h"
 #include "xen_module_load.h"
 #include "xen_nil.h"
+#include "xen_string.h"
 #include "xen_tuple.h"
 #include "xen_typedefs.h"
 
@@ -174,13 +177,44 @@ int Xen_Program_Run_Repl(void) {
 }
 
 int Xen_Program_Run_Command(const char* cmd) {
+  return Xen_Program_Run_Command_Scopped(cmd, NULL, NULL, NULL);
+}
+
+int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   char **buffer = NULL;
   Xen_size_t size = 0;
   Xen_size_t cap = 0;
 
+  int exit_code = 0;
   const char* v = NULL;
   for (const char *c = cmd;; c++) {
-    if (*c == ' ' || *c == '\t' || *c == '\0') {
+    if (*c == '$' && *(c + 1) == '(') {
+      if (v == NULL) {
+        const char* start = c + 2;
+        while (*c != ')') {
+          if (*c == '\0') {
+            Xen_SyntaxError("Unclosed Expression");
+            exit_code = 1;
+            goto end;
+          }
+          c++;
+        }
+        Xen_size_t len = c - start;
+        char *expr = Xen_Alloc(len + 1);
+        strncpy(expr, start, len);
+        expr[len] = '\0';
+        printf("expr = %s\n", expr);
+        Xen_Instance* result = interpreter("<cmd-expr>", expr, Xen_COMPILE_EXPR, globals, instances, scopes);
+        Xen_Instance* str = Xen_Attr_String(result);
+        char* r = Xen_CString_Dup(Xen_String_As_CString(str));
+        if (cap <= size) {
+          cap = (cap == 0) ? 4 : cap * 2;
+          buffer = Xen_Realloc(buffer, cap * sizeof(char*));
+        }
+        buffer[size++] = r;
+        Xen_Dealloc(expr);
+      }
+    } else if (*c == ' ' || *c == '\t' || *c == '\0') {
       if (v != NULL) {
         Xen_size_t len = c - v;
         char* r = Xen_Alloc(len + 1);
@@ -202,7 +236,9 @@ int Xen_Program_Run_Command(const char* cmd) {
       }
     }
   }
-  int exit_code = 0;
+  for (Xen_size_t i = 0; i < size; i++) {
+    printf("buffer[%lu] = %s\n", i, buffer[i]);
+  }
   if (size > 0) {
     char * file = buffer[0];
     Xen_c_string_t format_string = "%s.nxm";
@@ -215,6 +251,7 @@ int Xen_Program_Run_Command(const char* cmd) {
     Xen_Dealloc(file);
     exit_code = Xen_Program_Run_File(size, (const char**)buffer);
   }
+end:
   for (Xen_size_t i = 0; i < size; i++) {
     Xen_Dealloc(buffer[i]);
   }

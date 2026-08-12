@@ -2,6 +2,7 @@
 #define __PROGRAM_H__
 
 #include "history.h"
+#include "vm_scope.h"
 #include "vm_def.h"
 
 typedef struct __Program {
@@ -22,6 +23,7 @@ int Xen_Program_Pop(void);
 int Xen_Program_Run_File(int, const char **);
 int Xen_Program_Run_Repl(void);
 int Xen_Program_Run_Command(const char*);
+int Xen_Program_Run_Command_Scopped(const char*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*);
 
 extern HISTORY_ptr history;
 

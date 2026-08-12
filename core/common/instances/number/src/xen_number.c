@@ -6,6 +6,7 @@
 
 #include "instance.h"
 #include "xen_alloc.h"
+#include "xen_cstrings.h"
 #include "xen_igc.h"
 #include "xen_life.h"
 #include "xen_nil.h"
@@ -1051,7 +1052,7 @@ const char* Xen_Number_As_CString(Xen_INSTANCE* inst) {
   Xen_Dealloc(temp);
   Xen_Dealloc(buf);
   if (n->scale > 0) {
-    char* end = str + strlen(str) - 1;
+    char* end = str + Xen_CString_Len(str) - 1;
 
     while (end > str && *end == '0') {
       *end-- = '\0';
