@@ -203,7 +203,6 @@ int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_
         char *expr = Xen_Alloc(len + 1);
         strncpy(expr, start, len);
         expr[len] = '\0';
-        printf("expr = %s\n", expr);
         Xen_Instance* result = interpreter("<cmd-expr>", expr, Xen_COMPILE_EXPR, globals, instances, scopes);
         Xen_Instance* str = Xen_Attr_String(result);
         char* r = Xen_CString_Dup(Xen_String_As_CString(str));
@@ -214,7 +213,7 @@ int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_
         buffer[size++] = r;
         Xen_Dealloc(expr);
       }
-    } else if (*c == ' ' || *c == '\t' || *c == '\0') {
+    } else if (*c == ' ' || *c == '\t' || *c == '\0' || *c == '\n') {
       if (v != NULL) {
         Xen_size_t len = c - v;
         char* r = Xen_Alloc(len + 1);
@@ -236,9 +235,6 @@ int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_
       }
     }
   }
-  for (Xen_size_t i = 0; i < size; i++) {
-    printf("buffer[%lu] = %s\n", i, buffer[i]);
-  }
   if (size > 0) {
     char * file = buffer[0];
     Xen_c_string_t format_string = "%s.nxm";
@@ -257,6 +253,106 @@ end:
   }
   Xen_Dealloc(buffer);
   return exit_code;
+}
+
+int Xen_Program_Run_Command_File(int argc, const char** argv) {
+  Xen_Program_Push(argc, argv);
+  Xen_Instance* globals = Xen_Map_New();
+  Xen_Instance* instances = Xen_Map_New();
+  Xen_VM_Scopes* scopes = Xen_VM_Scopes_New();
+  Xen_IGC_Push(globals);
+  Xen_IGC_Push(instances);
+  Xen_GC_Push_Root((Xen_GCHeader*)scopes);
+  Xen_VM_Scopes_Push(scopes);
+  FILE* fp = fopen(argv[0], "r");
+  if (!fp) {
+    return 1;
+  }
+  char line[CMDSIZ];
+  while (fgets(line, CMDSIZ, fp)) {
+    Xen_Program_Run_Command_Scopped(line, globals, instances, scopes);
+    if (Xen_VM_Except_Active()) {
+      Xen_VM_Except_Backtrace_Show();
+      if (xen_globals->program->closed)
+        break;
+      continue;
+    }
+    if (xen_globals->program->closed)
+      break;
+  }
+  fclose(fp);
+  Xen_IGC_XPOP(2);
+  Xen_GC_Pop_Root();
+  return Xen_Program_Pop();
+}
+
+int Xen_Program_Run_Command_Shell(void) {
+  Xen_Program_Push(0, NULL);
+  printf(AZUL "NetXenium [CMD]" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
+              "Type " VERDE "exit" RESET " for quit\n");
+  const char* home = getenv("HOME");
+  if (home == NULL) {
+    printf("No se encontro la variable entorno HOME\n");
+    return 1;
+  };
+  char history_path[1024];
+  snprintf(history_path, 1024, "%s/.xenium_sh_history", home);
+  history = history_new(history_path);
+  Xen_Instance* globals = Xen_Map_New();
+  Xen_Instance* instances = Xen_Map_New();
+  Xen_VM_Scopes* scopes = Xen_VM_Scopes_New();
+  Xen_IGC_Push(globals);
+  Xen_IGC_Push(instances);
+  Xen_GC_Push_Root((Xen_GCHeader*)scopes);
+  Xen_VM_Scopes_Push(scopes);
+  while (1) {
+#ifndef SHELL_BASIC
+    LIST_ptr cmd = read_string_utf8();
+    if (!cmd) {
+      fputs("\n", stdout);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+        continue;
+      }
+      break;
+    }
+    if (xen_globals->program->closed) {
+      list_free(cmd);
+      break;
+    }
+    char* cmd_str = string_utf8_get(cmd);
+    list_free(cmd);
+#else
+    fputs(" -> ", stdout);
+    char* cmd_str = Xen_Alloc(CMDSIZ);
+    if (!fgets(cmd_str, CMDSIZ, stdin)) {
+      fputs("\n", stdout);
+      Xen_Dealloc(cmd_str);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+        continue;
+      }
+      fputs("\n", stdout);
+      break;
+    }
+#endif
+    Xen_Program_Run_Command_Scopped(cmd_str, globals, instances, scopes);
+    if (Xen_VM_Except_Active()) {
+      Xen_VM_Except_Backtrace_Show();
+      Xen_Dealloc(cmd_str);
+      if (xen_globals->program->closed)
+        break;
+      continue;
+    }
+    Xen_Dealloc(cmd_str);
+    if (xen_globals->program->closed)
+      break;
+  }
+  Xen_IGC_XPOP(2);
+  Xen_GC_Pop_Root();
+  history_save(*history);
+  history_free(history);
+  return Xen_Program_Pop();
 }
 
 HISTORY_ptr history = NULL;

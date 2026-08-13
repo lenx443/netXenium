@@ -24,6 +24,8 @@ int Xen_Program_Run_File(int, const char **);
 int Xen_Program_Run_Repl(void);
 int Xen_Program_Run_Command(const char*);
 int Xen_Program_Run_Command_Scopped(const char*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*);
+int Xen_Program_Run_Command_File(int, const char**);
+int Xen_Program_Run_Command_Shell(void);
 
 extern HISTORY_ptr history;
 

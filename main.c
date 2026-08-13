@@ -34,16 +34,49 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+
 #include "program.h"
 #include "xen_life.h"
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
   if (!Xen_Init()) {
     return 1;
   }
+
+  int c;
+  int command_mode = 0;
+  int parsing = 1;
+  while (parsing) {
+    int option_index = 0;
+    static struct option long_options[] = {
+      {"cmd", no_argument, 0, 'c'},
+      {0, 0, 0, 0},
+    };
+    c = getopt_long(argc, argv, "+c", long_options, &option_index);
+    if (c == -1) {
+      break;
+    }
+    switch (c) {
+      case 'c':
+        command_mode = 1;
+        break;
+      case '?':
+        parsing = 0;
+        break;
+      default:
+        break;
+    }
+  }
+
   int exit_code;
-  if (argc > 1) exit_code = Xen_Program_Run_File(argc - 1, argv + 1);
-  else exit_code = Xen_Program_Run_Repl();
+  if (optind < argc) {
+    if (command_mode) exit_code = Xen_Program_Run_Command_File(argc - optind, (const char**)argv + optind);
+    else exit_code = Xen_Program_Run_File(argc - optind, (const char**)argv + optind);
+  } else {
+    if (command_mode) exit_code = Xen_Program_Run_Command_Shell();
+    else exit_code = Xen_Program_Run_Repl();
+  }
   Xen_Finish();
   return exit_code;
 }
