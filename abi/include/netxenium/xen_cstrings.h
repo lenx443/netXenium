@@ -7,5 +7,6 @@ Xen_string_t Xen_CString_From_Pointer(void*);
 Xen_string_t Xen_CString_As_Raw(Xen_c_string_t);
 Xen_size_t Xen_CString_Len(Xen_c_string_t);
 Xen_string_t Xen_CString_Dup(Xen_c_string_t);
+Xen_string_t Xen_CString_NDup(Xen_c_string_t, Xen_size_t);
 
 #endif

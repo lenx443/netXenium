@@ -5,6 +5,7 @@
 #include "async.h"
 #include "attrs.h"
 #include "colors.h"
+#include "command_parser.h"
 #include "compiler.h"
 #include "history.h"
 #include "instance.h"
@@ -16,8 +17,6 @@
 #include "vm.h"
 #include "vm_scope.h"
 #include "xen_alloc.h"
-#include "xen_cstrings.h"
-#include "xen_except.h"
 #include "xen_gc.h"
 #include "xen_igc.h"
 #include "xen_life.h"
@@ -26,9 +25,7 @@
 #include "xen_module.h"
 #include "xen_module_load.h"
 #include "xen_nil.h"
-#include "xen_string.h"
 #include "xen_tuple.h"
-#include "xen_typedefs.h"
 
 void shell_loop(void) {
   printf(AZUL "NetXenium" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
@@ -181,77 +178,21 @@ int Xen_Program_Run_Command(const char* cmd) {
 }
 
 int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
-  char **buffer = NULL;
-  Xen_size_t size = 0;
-  Xen_size_t cap = 0;
-
   int exit_code = 0;
-  const char* v = NULL;
-  for (const char *c = cmd;; c++) {
-    if (*c == '$' && *(c + 1) == '(') {
-      if (v == NULL) {
-        const char* start = c + 2;
-        while (*c != ')') {
-          if (*c == '\0') {
-            Xen_SyntaxError("Unclosed Expression");
-            exit_code = 1;
-            goto end;
-          }
-          c++;
-        }
-        Xen_size_t len = c - start;
-        char *expr = Xen_Alloc(len + 1);
-        strncpy(expr, start, len);
-        expr[len] = '\0';
-        Xen_Instance* result = interpreter("<cmd-expr>", expr, Xen_COMPILE_EXPR, globals, instances, scopes);
-        Xen_Instance* str = Xen_Attr_String(result);
-        char* r = Xen_CString_Dup(Xen_String_As_CString(str));
-        if (cap <= size) {
-          cap = (cap == 0) ? 4 : cap * 2;
-          buffer = Xen_Realloc(buffer, cap * sizeof(char*));
-        }
-        buffer[size++] = r;
-        Xen_Dealloc(expr);
-      }
-    } else if (*c == ' ' || *c == '\t' || *c == '\0' || *c == '\n') {
-      if (v != NULL) {
-        Xen_size_t len = c - v;
-        char* r = Xen_Alloc(len + 1);
-        strncpy(r, v, len);
-        r[len] = '\0';
-        if (cap <= size) {
-          cap = (cap == 0) ? 4 : cap * 2;
-          buffer = Xen_Realloc(buffer, cap * sizeof(char*));
-        }
-        buffer[size++] = r;
-        v = NULL;
-      }
-      if (*c == '\0') {
-        break;
-      }
-    } else {
-      if (v == NULL) {
-        v = c;
-      }
-    }
+  int argc;
+  char **argv = Xen_Command_Parser(cmd, &argc , globals, instances, scopes);
+  if (!argv) {
+    exit_code = 1;
+    goto end;
   }
-  if (size > 0) {
-    char * file = buffer[0];
-    Xen_c_string_t format_string = "%s.nxm";
-    Xen_ssize_t fsize = snprintf(NULL, 0, format_string, file);
-    if (fsize == -1) {
-      return 1;
-    }
-    buffer[0] = Xen_Alloc(fsize + 1);
-    snprintf(buffer[0], fsize + 1, format_string, file);
-    Xen_Dealloc(file);
-    exit_code = Xen_Program_Run_File(size, (const char**)buffer);
+  if (argc > 0) {
+    exit_code = Xen_Program_Run_File(argc, (const char**)argv);
   }
 end:
-  for (Xen_size_t i = 0; i < size; i++) {
-    Xen_Dealloc(buffer[i]);
+  for (int i = 0; i < argc; i++) {
+    Xen_Dealloc(argv[i]);
   }
-  Xen_Dealloc(buffer);
+  Xen_Dealloc(argv);
   return exit_code;
 }
 
@@ -288,8 +229,8 @@ int Xen_Program_Run_Command_File(int argc, const char** argv) {
 
 int Xen_Program_Run_Command_Shell(void) {
   Xen_Program_Push(0, NULL);
-  printf(AZUL "NetXenium [CMD]" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
-              "Type " VERDE "exit" RESET " for quit\n");
+  printf(AZUL "NetXenium [SHELL]" RESET " (C) " AMARILLO "Lenx443 2024-2026" RESET "\n"
+              "Type " VERDE ".exit" RESET " for quit\n");
   const char* home = getenv("HOME");
   if (home == NULL) {
     printf("No se encontro la variable entorno HOME\n");

@@ -146,3 +146,21 @@ Xen_string_t Xen_CString_Dup(Xen_c_string_t str) {
   memcpy(dup, str, len);
   return dup;
 }
+
+Xen_string_t Xen_CString_NDup(Xen_c_string_t str, Xen_size_t n) {
+  if (!str) {
+    return NULL;
+  }
+  Xen_size_t len = Xen_CString_Len(str);
+  if (len > n) {
+    len = n;
+  }
+  len += 1;
+  Xen_string_t dup = (Xen_string_t)Xen_Alloc(len);
+  if (!dup) {
+    return NULL;
+  }
+  memcpy(dup, str, len);
+  dup[len - 1] = 0;
+  return dup;
+}

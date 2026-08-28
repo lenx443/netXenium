@@ -205,6 +205,7 @@ set(SOURCES
   # Codige del Parser
   core/interpreter/parser/src/lexer.c
   core/interpreter/parser/src/parser.c
+  core/interpreter/parser/src/command_parser.c
   core/interpreter/parser/src/source_file.c
 
   # Compilador a bytecode.

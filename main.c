@@ -36,7 +36,11 @@
 
 #include <getopt.h>
 
+#include "compiler.h"
+#include "interpreter.h"
 #include "program.h"
+#include "vm.h"
+#include "xen_cstrings.h"
 #include "xen_life.h"
 
 int main(int argc, char** argv) {
@@ -45,21 +49,26 @@ int main(int argc, char** argv) {
   }
 
   int c;
-  int command_mode = 0;
+  int shell_mode = 0;
+  char *simple_line = NULL;
   int parsing = 1;
   while (parsing) {
     int option_index = 0;
     static struct option long_options[] = {
-      {"cmd", no_argument, 0, 'c'},
+      {"shell", no_argument, 0, 's'},
+      {"cmd", required_argument, 0, 'c'},
       {0, 0, 0, 0},
     };
-    c = getopt_long(argc, argv, "+c", long_options, &option_index);
+    c = getopt_long(argc, argv, "+sc:", long_options, &option_index);
     if (c == -1) {
       break;
     }
     switch (c) {
+      case 's':
+        shell_mode = 1;
+        break;
       case 'c':
-        command_mode = 1;
+        simple_line = Xen_CString_Dup(optarg);
         break;
       case '?':
         parsing = 0;
@@ -70,11 +79,28 @@ int main(int argc, char** argv) {
   }
 
   int exit_code;
-  if (optind < argc) {
-    if (command_mode) exit_code = Xen_Program_Run_Command_File(argc - optind, (const char**)argv + optind);
+  if (simple_line) {
+    if (shell_mode) {
+      Xen_Program_Push(0, NULL);
+      exit_code = Xen_Program_Run_Command(simple_line);
+      if (Xen_VM_Except_Active()) {
+        Xen_VM_Except_Backtrace_Show();
+      }
+      Xen_Program_Pop();
+    } else {
+      Xen_Program_Push(0, NULL);
+      if (!interpreter("<only-line>", simple_line, Xen_COMPILE_PROGRAM, NULL, NULL, NULL)) {
+        if (Xen_VM_Except_Active()) {
+          Xen_VM_Except_Backtrace_Show();
+        }
+      }
+      exit_code = Xen_Program_Pop();
+    }
+  } else if (optind < argc) {
+    if (shell_mode) exit_code = Xen_Program_Run_Command_File(argc - optind, (const char**)argv + optind);
     else exit_code = Xen_Program_Run_File(argc - optind, (const char**)argv + optind);
   } else {
-    if (command_mode) exit_code = Xen_Program_Run_Command_Shell();
+    if (shell_mode) exit_code = Xen_Program_Run_Command_Shell();
     else exit_code = Xen_Program_Run_Repl();
   }
   Xen_Finish();
