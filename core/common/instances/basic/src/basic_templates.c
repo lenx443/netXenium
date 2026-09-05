@@ -36,6 +36,7 @@ Xen_Instance* Xen_Basic_New(Xen_c_string_t name, Xen_Instance* props,
       return NULL;
     }
   }
+  Xen_Map_Push_Pair_Str(props, (Xen_Map_Pair_Str){"__impl_name", Xen_String_From_CString(name)});
   Xen_IGC_WRITE_FIELD(impl->__props, props);
   if (base) {
     Xen_IGC_WRITE_FIELD(impl->__base, base);

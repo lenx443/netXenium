@@ -180,15 +180,16 @@ int Xen_Program_Run_Command(const char* cmd) {
 int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   int exit_code = 0;
   int argc;
-  char **argv = Xen_Command_Parser(cmd, &argc , globals, instances, scopes);
+  int type = 0;
+  char **argv = Xen_Command_Parser(cmd, &argc, &type, globals, instances, scopes);
   if (!argv) {
-    exit_code = 1;
-    goto end;
+    return 1;
   }
-  if (argc > 0) {
+  if (type == 1) {
     exit_code = Xen_Program_Run_File(argc, (const char**)argv);
+  } else if (type == 2) {
+    exit_code = Xen_Program_Run_Command_File(argc, (const char**)argv);
   }
-end:
   for (int i = 0; i < argc; i++) {
     Xen_Dealloc(argv[i]);
   }

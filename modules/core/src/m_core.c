@@ -236,6 +236,17 @@ static Xen_Instance* fn_has_attr(Xen_Instance* self, Xen_Instance* args,
   return Xen_True;
 }
 
+static Xen_Instance* fn_get_attr(Xen_Instance* self, Xen_Instance* args,
+                             Xen_Instance* kwargs) {
+  NATIVE_CLEAR_ARG_NEVER_USE;
+  if (Xen_SIZE(args) != 2) {
+    return NULL;
+  }
+  Xen_Instance* inst = Xen_Tuple_Get_Index(args, 0);
+  Xen_Instance* attr = Xen_Tuple_Get_Index(args, 1);
+  return Xen_Attr_Get(inst, attr);
+}
+
 static Xen_Instance* init(Xen_Instance* self, Xen_Instance* args, Xen_Instance* kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
   Xen_Attr_Set_Str(self, "boolean", (Xen_Instance*)xen_globals->implements->boolean);
@@ -267,6 +278,7 @@ static Xen_Module_Function_Table core_functions = {
     {"check_register", fn_check_register},
     {"get_props", fn_get_props},
     {"has_attr", fn_has_attr},
+    {"get_attr", fn_get_attr},
     {NULL, NULL},
 };
 

@@ -51,16 +51,11 @@ struct __Instance* __instance_new(struct __Implement* impl, Xen_INSTANCE* args,
       return NULL;
     }
     if (impl->__base && impl->__base->ptr) {
-      Xen_Instance* base =
-          __instance_new((Xen_Implement*)impl->__base->ptr, nil, nil, 0);
-      if (!base) {
-        Xen_IGC_Pop();
-        return NULL;
-      }
-      if (!Xen_Map_Push_Pair_Str((Xen_Instance*)mapped->__map->ptr,
-                                 (Xen_Map_Pair_Str){"$__base", base})) {
-        Xen_IGC_Pop();
-        return NULL;
+      Xen_Instance* base = __instance_new((Xen_Implement*)impl->__base->ptr, nil, nil, 0);
+      Xen_Map_Push_Pair_Str((Xen_Instance*)mapped->__map->ptr, (Xen_Map_Pair_Str){"$__base", base});
+      if (XEN_INSTANCE_GET_FLAG(base, XEN_INSTANCE_FLAG_MAPPED)) {
+        Xen_INSTANCE_MAPPED* base_mapped = (Xen_INSTANCE_MAPPED*)base;
+        Xen_Map_Push_Pair_Str((Xen_Instance*)base_mapped->__map->ptr, (Xen_Map_Pair_Str){"$__child", inst});
       }
     }
   }

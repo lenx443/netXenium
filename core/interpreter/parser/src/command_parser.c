@@ -11,6 +11,7 @@
 #include "xen_typedefs.h"
 
 #include <ctype.h>
+#include <unistd.h>
 
 struct Args {
   char** values;
@@ -34,7 +35,7 @@ static int is_valid_token(char);
 static int parse_tokens(struct Args*, struct CMDParser*);
 static int eval_tokens(struct Args*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*);
 
-char** Xen_Command_Parser(const char *cmd, int *argc, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
+char** Xen_Command_Parser(const char *cmd, int *argc, int *type, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   struct Args* args = args_new();
   struct CMDParser parser = {
     .cmd = cmd,
@@ -44,23 +45,48 @@ char** Xen_Command_Parser(const char *cmd, int *argc, Xen_Instance* globals, Xen
     return NULL;
   }
   if (!eval_tokens(args, globals, instances, scopes)) {
-    return NULL;
+    goto error;
   }
   if (args->size > 0) {
     char* file = args->values[0];
     Xen_c_string_t format_string = "%s.nxm";
     Xen_ssize_t fsize = snprintf(NULL, 0, format_string, file);
     if (fsize == -1) {
-      return NULL;
+      goto error;
     }
     args->values[0] = Xen_Alloc(fsize + 1);
     snprintf(args->values[0], fsize + 1, format_string, file);
-    Xen_Dealloc(file);
+    if (access(args->values[0], F_OK) == 0) {
+      *type = 1;
+      Xen_Dealloc(file);
+      goto end;
+    }
+    format_string = "%s.nxmsh";
+    fsize = snprintf(NULL, 0, format_string, file);
+    if (fsize == -1) {
+      goto error;
+    }
+    args->values[0] = Xen_Alloc(fsize + 1);
+    snprintf(args->values[0], fsize + 1, format_string, file);
+    if (access(args->values[0], F_OK) == 0) {
+      *type = 2;
+      Xen_Dealloc(file);
+      goto end;
+    }
+    goto error;
   }
+end:
   *argc = args->size;
   char **argv = args->values;
   Xen_Dealloc(args);
   return argv;
+error:
+  for (int i = 0; i < args->size; i++) {
+    Xen_Dealloc(args->values[i]);
+  }
+  Xen_Dealloc(args->values);
+  Xen_Dealloc(args);
+  return NULL;
 }
 
 struct Args* args_new(void) {
@@ -293,6 +319,13 @@ int eval_tokens(struct Args* args, Xen_Instance* globals, Xen_Instance* instance
       Xen_SyntaxError("Invalid declaration.");
       return 0;
     }
+    for (int i = 0; i < args->size; i++) {
+      Xen_Dealloc(args->values[i]);
+    }
+    Xen_Dealloc(args->values);
+    args->values = NULL;
+    args->size = 0;
+    args->cap = 0;
   }
   return 1;
 }

@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "socket.h"
-#include "netxenium/implement.h"
 #include "netxenium/netXenium.h"
 
 static Xen_Instance* sockets_getaddrinfo(Xen_Instance* self, Xen_Instance* args,
