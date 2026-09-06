@@ -12,24 +12,16 @@ static Xen_Instance* checksum(Xen_Instance* self, Xen_Instance* args, Xen_Instan
   const uint8_t *bytes = Xen_Bytes_Get(data);
   Xen_size_t len = Xen_SIZE(data);
   uint32_t sum = 0;
-
   while (len > 1) {
       sum += ((uint16_t)bytes[0] << 8) | bytes[1];
-
       bytes += 2;
       len -= 2;
   }
-
-  /* Si queda un byte impar, se considera seguido de un 0 */
   if (len)
       sum += (uint16_t)bytes[0] << 8;
-
-  /* Fold de los carries */
   while (sum >> 16)
       sum = (sum & 0xffff) + (sum >> 16);
-
   return Xen_Number_From_UInt((uint16_t)~sum);
-  return nil;
 }
 
 static struct Xen_Module_Function functions[] = {
