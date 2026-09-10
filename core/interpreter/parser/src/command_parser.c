@@ -33,9 +33,9 @@ static void cmd_skip_whitespace(struct CMDParser*);
 static int is_valid_token(char);
 
 static int parse_tokens(struct Args*, struct CMDParser*);
-static int eval_tokens(struct Args*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*);
+static int eval_tokens(struct Args*, Xen_Instance*, Xen_Instance*, Xen_Instance*, Xen_VM_Scopes*);
 
-char** Xen_Command_Parser(const char *cmd, int *argc, int *type, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
+char** Xen_Command_Parser(const char *cmd, int *argc, int *type, Xen_Instance* alias, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   struct Args* args = args_new();
   struct CMDParser parser = {
     .cmd = cmd,
@@ -44,7 +44,7 @@ char** Xen_Command_Parser(const char *cmd, int *argc, int *type, Xen_Instance* g
   if (!parse_tokens(args, &parser)) {
     return NULL;
   }
-  if (!eval_tokens(args, globals, instances, scopes)) {
+  if (!eval_tokens(args, alias, globals, instances, scopes)) {
     goto error;
   }
   if (args->size > 0) {
@@ -222,8 +222,14 @@ int parse_tokens(struct Args* args, struct CMDParser* parser) {
   return 1;
 }
 
-int eval_tokens(struct Args* args, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
+int eval_tokens(struct Args* args, Xen_Instance* alias, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   for (int i = 0; i < args->size; i++) {
+    if (alias && Xen_Map_Has_Str(alias, args->values[i])) {
+      char* key = args->values[i];
+      Xen_Instance* value = Xen_Attr_String(Xen_Map_Get_Str(alias, key));
+      args->values[i] = Xen_CString_Dup(Xen_String_As_CString(value));
+      Xen_Dealloc(key);
+    }
     if (*args->values[i] == '$' && *(args->values[i] + 1) == '(') {
       const char* start = args->values[i] + 2;
       Xen_size_t len = Xen_CString_Len(start) - 1;
@@ -284,6 +290,12 @@ int eval_tokens(struct Args* args, Xen_Instance* globals, Xen_Instance* instance
         Xen_SyntaxError("Invalid declaration.");
         return 0;
       }
+    } else if (strcmp(args->values[0], ".alias") == 0) {
+      if (args->size != 3) {
+        Xen_SyntaxError("Invalid declaration.");
+        return 0;
+      }
+      if (alias) Xen_Map_Push_Pair_Str(alias, (Xen_Map_Pair_Str){args->values[1], Xen_String_From_CString(args->values[2])});
     } else if (strcmp(args->values[0], ".") == 0) {
       if (args->size != 2) {
         Xen_SyntaxError("Invalid statement.");

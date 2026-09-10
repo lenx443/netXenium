@@ -701,7 +701,7 @@ static void op_exec(VM_Run* vmr, RunContext_ptr ctx, Xen_ulong_t oparg) {
   }
   Xen_Instance *exit_code = Xen_Number_From_Int(
     Xen_Program_Run_Command_Scopped(
-      Xen_String_As_CString(cmd), globals,
+      Xen_String_As_CString(cmd), NULL, globals,
       (Xen_Instance*)ctx->ctx_instances->ptr,
       (Xen_VM_Scopes*)ctx->ctx_scopes->ptr)
   );

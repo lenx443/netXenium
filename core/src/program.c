@@ -174,14 +174,14 @@ int Xen_Program_Run_Repl(void) {
 }
 
 int Xen_Program_Run_Command(const char* cmd) {
-  return Xen_Program_Run_Command_Scopped(cmd, NULL, NULL, NULL);
+  return Xen_Program_Run_Command_Scopped(cmd, NULL, NULL, NULL, NULL);
 }
 
-int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
+int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* alias, Xen_Instance* globals, Xen_Instance* instances, Xen_VM_Scopes* scopes) {
   int exit_code = 0;
   int argc;
   int type = 0;
-  char **argv = Xen_Command_Parser(cmd, &argc, &type, globals, instances, scopes);
+  char **argv = Xen_Command_Parser(cmd, &argc, &type, alias, globals, instances, scopes);
   if (!argv) {
     return 1;
   }
@@ -199,9 +199,11 @@ int Xen_Program_Run_Command_Scopped(const char* cmd, Xen_Instance* globals, Xen_
 
 int Xen_Program_Run_Command_File(int argc, const char** argv) {
   Xen_Program_Push(argc, argv);
+  Xen_Instance* alias = Xen_Map_New();
   Xen_Instance* globals = Xen_Map_New();
   Xen_Instance* instances = Xen_Map_New();
   Xen_VM_Scopes* scopes = Xen_VM_Scopes_New();
+  Xen_IGC_Push(alias);
   Xen_IGC_Push(globals);
   Xen_IGC_Push(instances);
   Xen_GC_Push_Root((Xen_GCHeader*)scopes);
@@ -212,7 +214,7 @@ int Xen_Program_Run_Command_File(int argc, const char** argv) {
   }
   char line[CMDSIZ];
   while (fgets(line, CMDSIZ, fp)) {
-    Xen_Program_Run_Command_Scopped(line, globals, instances, scopes);
+    Xen_Program_Run_Command_Scopped(line, alias, globals, instances, scopes);
     if (Xen_VM_Except_Active()) {
       Xen_VM_Except_Backtrace_Show();
       if (xen_globals->program->closed)
@@ -223,7 +225,7 @@ int Xen_Program_Run_Command_File(int argc, const char** argv) {
       break;
   }
   fclose(fp);
-  Xen_IGC_XPOP(2);
+  Xen_IGC_XPOP(3);
   Xen_GC_Pop_Root();
   return Xen_Program_Pop();
 }
@@ -240,9 +242,11 @@ int Xen_Program_Run_Command_Shell(void) {
   char history_path[1024];
   snprintf(history_path, 1024, "%s/.xenium_sh_history", home);
   history = history_new(history_path);
+  Xen_Instance* alias = Xen_Map_New();
   Xen_Instance* globals = Xen_Map_New();
   Xen_Instance* instances = Xen_Map_New();
   Xen_VM_Scopes* scopes = Xen_VM_Scopes_New();
+  Xen_IGC_Push(alias);
   Xen_IGC_Push(globals);
   Xen_IGC_Push(instances);
   Xen_GC_Push_Root((Xen_GCHeader*)scopes);
@@ -278,7 +282,7 @@ int Xen_Program_Run_Command_Shell(void) {
       break;
     }
 #endif
-    Xen_Program_Run_Command_Scopped(cmd_str, globals, instances, scopes);
+    Xen_Program_Run_Command_Scopped(cmd_str, alias, globals, instances, scopes);
     if (Xen_VM_Except_Active()) {
       Xen_VM_Except_Backtrace_Show();
       Xen_Dealloc(cmd_str);
@@ -290,7 +294,7 @@ int Xen_Program_Run_Command_Shell(void) {
     if (xen_globals->program->closed)
       break;
   }
-  Xen_IGC_XPOP(2);
+  Xen_IGC_XPOP(3);
   Xen_GC_Pop_Root();
   history_save(*history);
   history_free(history);
