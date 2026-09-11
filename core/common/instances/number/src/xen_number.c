@@ -1385,10 +1385,10 @@ Xen_uint8_t* Xen_Number_As_Bytes_Flexible(Xen_Instance* inst,
         break;
     }
   }
-
   if (big_endian) {
+    Xen_size_t offset = *out_len - raw_len;
     for (Xen_size_t i = 0; i < raw_len; i++) {
-      out[*out_len - raw_len + i] = temp[i];
+      out[offset + i] = temp[raw_len - 1 - i];
     }
   } else {
     for (Xen_size_t i = 0; i < raw_len; i++) {

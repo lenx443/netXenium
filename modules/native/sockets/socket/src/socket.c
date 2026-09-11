@@ -945,6 +945,7 @@ Xen_ImplementStruct Socket_Implement = {
 void Socket_init(Xen_Instance* module) {
   Socket_Implement_Pointer = (Xen_Implement*)Xen_Attr_Get_Str(module, "Socket");
   Xen_Instance* props = Xen_Map_New();
+  Xen_IGC_Push(props);
   Xen_VM_Store_Native_Function(props, "bind", socket_bind, nil);
   Xen_VM_Store_Native_Function(props, "listen", socket_listen, nil);
   Xen_VM_Store_Native_Function(props, "accept", socket_accept, nil);
@@ -961,5 +962,6 @@ void Socket_init(Xen_Instance* module) {
   Xen_VM_Store_Native_Function(props, "getsockname", socket_getsockname, nil);
   Xen_VM_Store_Native_Function(props, "getpeername", socket_getpeername, nil);
   Xen_VM_Store_Native_Function(props, "close", socket_close, nil);
+  Xen_IGC_Pop();
   Xen_Implement_SetProps(Socket_Implement_Pointer, props);
 }

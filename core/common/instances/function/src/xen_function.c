@@ -335,6 +335,7 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
     if (!defaults_it) {
       return NULL;
     }
+    Xen_IGC_Push(defaults_it);
     Xen_Instance* default_name = NULL;
     while ((default_name = Xen_Attr_Next(defaults_it)) != NULL) {
       if (!Xen_Map_Has(
@@ -349,6 +350,7 @@ Xen_Instance* Xen_Function_Call(Xen_Instance* fun_inst, Xen_Instance* args,
         }
       }
     }
+    Xen_IGC_Pop();
     if (!Xen_VM_Except_Active() ||
         strcmp(((Xen_Except*)Xen_VM()->except.except->ptr)->type,
                "RangeEnd") != 0) {
