@@ -85,7 +85,6 @@ static Xen_Instance* function_callable(struct __Instance* self,
         (Xen_Instance*)inst->closure->ptr, nil, args, kwargs, NULL, NULL, NULL,
         (CALLABLE_ptr)inst->fun_code->ptr);
     Xen_IGC_Push(new_ctx);
-    if (!inst->fun_async) Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)inst->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
@@ -183,6 +182,7 @@ static Xen_Instance* function_callable(struct __Instance* self,
       Xen_Instance* coro = Xen_Coroutine_New(new_ctx);
       vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
+    else Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_IGC_Pop();
   } else if (inst->fun_type == 2) {
     if (inst->fun_async) {

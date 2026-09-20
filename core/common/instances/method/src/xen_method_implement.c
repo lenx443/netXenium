@@ -88,7 +88,6 @@ static Xen_Instance* method_callable(struct __Instance* self,
         Xen_VM_Current_Ctx(),
         (Xen_Instance*)function->closure->ptr, (Xen_Instance*)method->self->ptr,
         args, kwargs, NULL, NULL, NULL, (CALLABLE_ptr)function->fun_code->ptr);
-    if (!function->fun_async) Xen_VM_Set_Current_Ctx(new_ctx);
     Xen_Instance* args_list =
         Xen_Map_Keys((Xen_Instance*)function->args_names->ptr);
     if (Xen_SIZE(args) > Xen_SIZE(args_list)) {
@@ -172,6 +171,7 @@ static Xen_Instance* method_callable(struct __Instance* self,
       Xen_Instance* coro = Xen_Coroutine_New(new_ctx);
       vm_stack_push((struct vm_Stack*)((RunContext_ptr)Xen_VM_Current_Ctx())->ctx_stack->ptr, coro);
     }
+    else Xen_VM_Set_Current_Ctx(new_ctx);
   } else if (function->fun_type == 2) {
     if (function->fun_async) {
       Xen_Instance* coro = Xen_Coroutine_New_Native(function->fun_native_async, (Xen_Instance *)method->self->ptr, args, kwargs, function->fun_native_async_size);

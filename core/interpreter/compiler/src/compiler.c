@@ -67,12 +67,15 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
     Xen_IGC_Pop();
     return NULL;
   }
+  Xen_GC_Push_Root((Xen_GCHeader*)blocks);
   block_node_ptr main_block = block_new();
   if (!main_block) {
+    Xen_GC_Pop_Root();
     Xen_IGC_Pop();
     return NULL;
   }
   if (!block_list_push_node(blocks, main_block)) {
+    Xen_GC_Pop_Root();
     Xen_IGC_Pop();
     block_free(main_block);
     return NULL;
@@ -84,7 +87,7 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
 #ifndef NDEBUG
     printf("Compiler Error\n");
 #endif
-    Xen_IGC_Pop();
+    Xen_GC_Pop_Root();
     return NULL;
   }
   Xen_IGC_Pop();
@@ -98,6 +101,8 @@ CALLABLE_ptr compiler(Xen_c_string_t file_name, const char* file_content,
   if (!code) {
     return NULL;
   }
+  Xen_GC_Pop_Root();
+  Xen_IGC_Pop();
   return code;
 }
 
@@ -1255,6 +1260,8 @@ compile_expr_primary_suffix_call_arg_assignment(Compiler* c,
                                                 Xen_Instance* node) {
   if (Xen_AST_Node_Name_Cmp(node, "Assignment") != 0 ||
       Xen_AST_Node_Children_Size(node) != 2) {
+    c->sta = Xen_AST_Node_STA(node);
+    Xen_SyntaxError("Invalid keyword argument.");
     return NULL;
   }
   Xen_Instance* rhs = Xen_AST_Node_Get_Child(node, 1);

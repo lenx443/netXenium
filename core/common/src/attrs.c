@@ -141,13 +141,20 @@ int Xen_Attr_Create(Xen_Instance* inst, Xen_Instance* args,
   if (!inst) {
     return 0;
   }
-  Xen_Instance* result =
-      Xen_Method_Attr_Str_Call(inst, "__create", args, kwargs);
-  if (!result) {
+  Xen_Instance* attr = Xen_Attr_Get_Str(inst, "__create");
+  if (attr) {
+    if (Xen_IMPL(attr) != xen_globals->implements->method) {
+      return 0;
+    }
+    Xen_Instance* result = Xen_Method_Call(attr, args, kwargs);
+    if (!result) {
+      return 0;
+    }
+  } else {
     if (Xen_IMPL(inst)->__create == NULL) {
       return 1;
     } else {
-      result = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__create, inst, args,
+      Xen_Instance* result = Xen_VM_Call_Native_Function(Xen_IMPL(inst)->__create, inst, args,
                                            kwargs);
       if (!result) {
         return 0;
