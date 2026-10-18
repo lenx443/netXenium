@@ -4,6 +4,7 @@
 #include "netxenium/netXenium.h"
 
 #include <arpa/inet.h>
+#include <linux/if_packet.h>
 
 #define SOCKET_CAP_READ (1 << 0)
 #define SOCKET_CAP_WRITE (1 << 1)
@@ -19,9 +20,13 @@ struct Socket_Address_IP {
   int port;
 };
 
+struct Socket_Address_Packet {
+  Xen_c_string_t device;
+  Xen_uint16_t protocol;
+};
+
 typedef struct {
-  Xen_INSTANCE_HEAD
-  int f;
+  Xen_INSTANCE_HEAD int f;
   Xen_bool_t open;
   int domain;
   int type;
@@ -29,6 +34,7 @@ typedef struct {
   union {
     struct sockaddr_in ipv4;
     struct sockaddr_in6 ipv6;
+    struct sockaddr_ll addr;
   } local;
   union {
     struct sockaddr_in ipv4;
@@ -37,12 +43,15 @@ typedef struct {
   Xen_uint32_t caps;
 } Socket;
 
-extern Xen_Implement* Socket_Implement_Pointer;
+extern Xen_Implement *Socket_Implement_Pointer;
 extern Xen_ImplementStruct Socket_Implement;
 
-int Socket_Addr_IP_Get(Xen_Instance*, struct Socket_Address_IP*);
-Xen_Instance* Socket_Addr_IP_Set(struct Socket_Address_IP);
+int Socket_Addr_IP_Get(Xen_Instance *, struct Socket_Address_IP *);
+Xen_Instance *Socket_Addr_IP_Set(struct Socket_Address_IP);
 
-void Socket_init(Xen_Instance*);
+int Socket_Addr_Packet_Get(Xen_Instance *, struct Socket_Address_Packet *);
+Xen_Instance *Socket_Addr_Packet_Set(struct Socket_Address_Packet);
+
+void Socket_init(Xen_Instance *);
 
 #endif

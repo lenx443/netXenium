@@ -22,8 +22,8 @@ add_compile_options(
 
 if(ASAN_ENABLE)
   message(STATUS "Enabling Address Sanitizer")
-  add_compile_options(-fsanitize=address,leak,undefined)
-  link_libraries(-fsanitize=address,leak,undefined)
+  add_compile_options(-fsanitize=address,leak)
+  link_libraries(-fsanitize=address,leak)
 endif()
 
 if(SHELL_BASIC)
@@ -341,6 +341,8 @@ add_subdirectory(modules/native/sockets)
 add_subdirectory(modules/native/net)
 add_subdirectory(modules/native/os)
 add_subdirectory(modules/native/checksum)
+add_subdirectory(modules/native/endian)
+add_subdirectory(modules/native/ifaces)
 
 enable_testing()
 

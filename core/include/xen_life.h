@@ -8,20 +8,20 @@
 #include "source_file.h"
 
 struct Xen_Globals {
-  Program_State* program;
-  struct __GC_Heap* gc_heap;
-  struct __IGC_Roots** igc_roots;
-  Xen_Source_Table** source_table;
-  struct __Implement_Pointers* implements;
-  Xen_Instance* true_instance;
-  Xen_Instance* false_instance;
-  Xen_Instance* nil_instance;
+  Program_State *program;
+  struct __GC_Heap *gc_heap;
+  struct __IGC_Roots **igc_roots;
+  Xen_Source_Table **source_table;
+  struct __Implement_Pointers *implements;
+  Xen_Instance *true_instance;
+  Xen_Instance *false_instance;
+  Xen_Instance *nil_instance;
 };
 
-void Xen_GetReady(void*);
+void Xen_GetReady(void *);
 int Xen_Init(void);
 void Xen_Finish(void);
 
-extern struct Xen_Globals* xen_globals;
+extern struct Xen_Globals *xen_globals;
 
 #endif

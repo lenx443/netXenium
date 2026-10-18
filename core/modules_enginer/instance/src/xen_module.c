@@ -24,49 +24,41 @@
 #include "xen_typedefs.h"
 #include "xen_vector.h"
 
-typedef struct Xen_Module_Def* (*native_module_function)(void*);
+typedef struct Xen_Module_Def *(*native_module_function)(void *);
 
-Xen_Instance* Xen_Module_New(void) {
-  Xen_Module* module =
-      (Xen_Module*)__instance_new(xen_globals->implements->module, nil, nil, 0);
+Xen_Instance *Xen_Module_New(void) {
+  Xen_Module *module =
+      (Xen_Module *)__instance_new(xen_globals->implements->module, nil, nil, 0);
   module->mod_initialized = 0;
   module->mod_initializing = 0;
   module->mod_name = NULL;
   module->mod_path = NULL;
   module->mod_handle = NULL;
-  return (Xen_Instance*)module;
+  return (Xen_Instance *)module;
 }
 
-Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
-                                  Xen_c_string_t mod_path, void* handle) {
-  Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(
-      (Xen_Instance*)Xen_VM()->modules->ptr, mod_def.mod_name);
-  if (Xen_Map_Has_Str((Xen_Instance*)Xen_VM()->modules->ptr,
-                      mod_def.mod_name)) {
-    if (module->mod_initialized) {
-      return (Xen_Instance*)module;
-    }
-    if (module->mod_initializing) {
-      return (Xen_Instance*)module;
-    }
+Xen_Instance *Xen_Module_From_Def(struct Xen_Module_Def mod_def, Xen_c_string_t mod_path,
+                                  void *handle) {
+  Xen_Module *module = (Xen_Module *)Xen_Map_Get_Str(
+      (Xen_Instance *)Xen_VM()->modules->ptr, mod_def.mod_name);
+  if (Xen_Map_Has_Str((Xen_Instance *)Xen_VM()->modules->ptr, mod_def.mod_name)) {
+    if (module->mod_initialized) { return (Xen_Instance *)module; }
+    if (module->mod_initializing) { return (Xen_Instance *)module; }
   }
-  module = (Xen_Module*)Xen_Module_New();
+  module = (Xen_Module *)Xen_Module_New();
   module->mod_initializing = 1;
   module->mod_name = Xen_CString_Dup(mod_def.mod_name);
   module->mod_path = Xen_CString_Dup(mod_path);
   module->mod_handle = handle;
-  Xen_Map_Push_Pair_Str(
-      (Xen_Instance*)Xen_VM()->modules->ptr,
-      (Xen_Map_Pair_Str){mod_def.mod_name, (Xen_Instance*)module});
+  Xen_Map_Push_Pair_Str((Xen_Instance *)Xen_VM()->modules->ptr,
+                        (Xen_Map_Pair_Str){mod_def.mod_name, (Xen_Instance *)module});
   if (mod_def.mod_functions) {
     for (int i = 0; mod_def.mod_functions[i].fun_name != NULL; i++) {
-      Xen_Instance* fun =
+      Xen_Instance *fun =
           Xen_Function_From_Native(mod_def.mod_functions[i].fun_func, nil);
-      if (!fun) {
-        return NULL;
-      }
+      if (!fun) { return NULL; }
       if (!Xen_Map_Push_Pair_Str(
-              (Xen_Instance*)module->__map->ptr,
+              (Xen_Instance *)module->__map->ptr,
               (Xen_Map_Pair_Str){mod_def.mod_functions[i].fun_name, fun})) {
         return NULL;
       }
@@ -74,14 +66,12 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
   }
   if (mod_def.mod_functions_async) {
     for (int i = 0; mod_def.mod_functions_async[i].fun_name != NULL; i++) {
-      Xen_Instance* fun =
+      Xen_Instance *fun =
           Xen_Function_From_Native_Async(mod_def.mod_functions_async[i].fun_func,
                                          mod_def.mod_functions_async[i].fun_data_size);
-      if (!fun) {
-        return NULL;
-      }
+      if (!fun) { return NULL; }
       if (!Xen_Map_Push_Pair_Str(
-              (Xen_Instance*)module->__map->ptr,
+              (Xen_Instance *)module->__map->ptr,
               (Xen_Map_Pair_Str){mod_def.mod_functions_async[i].fun_name, fun})) {
         return NULL;
       }
@@ -89,66 +79,53 @@ Xen_Instance* Xen_Module_From_Def(struct Xen_Module_Def mod_def,
   }
   if (mod_def.mod_implements) {
     for (Xen_size_t i = 0; mod_def.mod_implements[i] != NULL; i++) {
-      Xen_Implement* impl =
-          Xen_Implement_From_Struct(*mod_def.mod_implements[i]);
+      Xen_Implement *impl = Xen_Implement_From_Struct(*mod_def.mod_implements[i]);
       if (!Xen_Map_Push_Pair_Str(
-              (Xen_Instance*)module->__map->ptr,
+              (Xen_Instance *)module->__map->ptr,
               (Xen_Map_Pair_Str){mod_def.mod_implements[i]->__impl_name,
-                                 (Xen_Instance*)impl})) {
+                                 (Xen_Instance *)impl})) {
         return NULL;
       }
     }
   }
   if (mod_def.mod_init) {
-    if (!Xen_Vector_Push((Xen_Instance*)Xen_VM()->modules_stack->ptr,
-                         (Xen_Instance*)module)) {
+    if (!Xen_Vector_Push((Xen_Instance *)Xen_VM()->modules_stack->ptr,
+                         (Xen_Instance *)module)) {
       return NULL;
     }
-    Xen_Instance* ret = Xen_VM_Call_Native_Function(
-        mod_def.mod_init, (Xen_Instance*)module, nil, nil);
+    Xen_Instance *ret =
+        Xen_VM_Call_Native_Function(mod_def.mod_init, (Xen_Instance *)module, nil, nil);
     if (ret == NULL) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
-    Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+    Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
   }
   module->mod_initialized = 0;
-  return (Xen_Instance*)module;
+  return (Xen_Instance *)module;
 }
 
-Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
-                              Xen_c_string_t mod_path,
-                              Xen_uint8_t mod_type) {
+Xen_Instance *Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
+                              Xen_c_string_t mod_path, Xen_uint8_t mod_type) {
   if (mod_type == XEN_MODULE_GUEST) {
-    Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(
-        (Xen_Instance*)Xen_VM()->modules->ptr, mod_name);
-    if (Xen_Map_Has_Str((Xen_Instance*)Xen_VM()->modules->ptr,
-                        mod_name)) {
-      if (module->mod_initialized) {
-        return (Xen_Instance*)module;
-      }
-      if (module->mod_initializing) {
-        return (Xen_Instance*)module;
-      }
+    Xen_Module *module =
+        (Xen_Module *)Xen_Map_Get_Str((Xen_Instance *)Xen_VM()->modules->ptr, mod_name);
+    if (Xen_Map_Has_Str((Xen_Instance *)Xen_VM()->modules->ptr, mod_name)) {
+      if (module->mod_initialized) { return (Xen_Instance *)module; }
+      if (module->mod_initializing) { return (Xen_Instance *)module; }
     }
-    if (access(mod_name, F_OK) != 0) {
-      return NULL;
-    }
-    module = (Xen_Module*)Xen_Module_New();
+    if (access(mod_name, F_OK) != 0) { return NULL; }
+    module = (Xen_Module *)Xen_Module_New();
     module->mod_initializing = 1;
     module->mod_name = Xen_CString_Dup(mod_uname);
     module->mod_path = Xen_CString_Dup(mod_path);
-    Xen_Map_Push_Pair_Str((Xen_Instance*)Xen_VM()->modules->ptr,
-                          (Xen_Map_Pair_Str){mod_name, (Xen_Instance*)module});
-    FILE* fp = fopen(mod_name, "r");
-    if (!fp) {
-      return NULL;
-    }
+    Xen_Map_Push_Pair_Str((Xen_Instance *)Xen_VM()->modules->ptr,
+                          (Xen_Map_Pair_Str){mod_name, (Xen_Instance *)module});
+    FILE *fp = fopen(mod_name, "r");
+    if (!fp) { return NULL; }
     char line[CMDSIZ];
     LIST_ptr buffer = list_new();
-    if (!buffer) {
-      return NULL;
-    }
+    if (!buffer) { return NULL; }
     while (fgets(line, CMDSIZ, fp)) {
       if (!string_utf8_push_back(buffer, line)) {
         list_free(buffer);
@@ -157,63 +134,55 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       }
     }
     fclose(fp);
-    char* file_content = string_utf8_get(buffer);
+    char *file_content = string_utf8_get(buffer);
     list_free(buffer);
-    if (!file_content) {
-      return NULL;
-    }
-    if (!Xen_Vector_Push((Xen_Instance*)Xen_VM()->modules_stack->ptr,
-                         (Xen_Instance*)module)) {
+    if (!file_content) { return NULL; }
+    if (!Xen_Vector_Push((Xen_Instance *)Xen_VM()->modules_stack->ptr,
+                         (Xen_Instance *)module)) {
       return NULL;
     }
     CALLABLE_ptr code = compiler(mod_name, file_content, Xen_COMPILE_PROGRAM);
     if (Xen_VM_Except_Active()) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
     if (!code) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
 #ifndef NDEBUG
     printf("== Running ==\n");
 #endif
-    Xen_Instance* ctx_inst =
-        Xen_Ctx_New(nil, nil, (Xen_Instance*)module, nil, nil, (Xen_Instance*)module->mod_globals->ptr,
-                    (Xen_Instance*)module->mod_globals->ptr, NULL, code);
+    Xen_Instance *ctx_inst =
+        Xen_Ctx_New(nil, nil, (Xen_Instance *)module, nil, nil,
+                    (Xen_Instance *)module->mod_globals->ptr,
+                    (Xen_Instance *)module->mod_globals->ptr, NULL, code);
     if (!ctx_inst) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
-    Xen_Instance* retval = vm_run(ctx_inst);
+    Xen_Instance *retval = vm_run(ctx_inst);
     if (Xen_VM_Except_Active()) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
     if (!retval) {
-      Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
       return NULL;
     }
-    Xen_Vector_Pop((Xen_Instance*)Xen_VM()->modules_stack->ptr);
+    Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
     Xen_Dealloc(file_content);
-    return (Xen_Instance*)module;
+    return (Xen_Instance *)module;
   } else if (mod_type == XEN_MODULE_NATIVE) {
-    Xen_Module* module = (Xen_Module*)Xen_Map_Get_Str(
-        (Xen_Instance*)Xen_VM()->modules->ptr, mod_name);
-    if (Xen_Map_Has_Str((Xen_Instance*)Xen_VM()->modules->ptr,
-                        mod_name)) {
-      if (module->mod_initialized) {
-        return (Xen_Instance*)module;
-      }
-      if (module->mod_initializing) {
-        return (Xen_Instance*)module;
-      }
+    Xen_Module *module =
+        (Xen_Module *)Xen_Map_Get_Str((Xen_Instance *)Xen_VM()->modules->ptr, mod_name);
+    if (Xen_Map_Has_Str((Xen_Instance *)Xen_VM()->modules->ptr, mod_name)) {
+      if (module->mod_initialized) { return (Xen_Instance *)module; }
+      if (module->mod_initializing) { return (Xen_Instance *)module; }
     }
-    if (access(mod_name, F_OK) != 0) {
-      return NULL;
-    }
+    if (access(mod_name, F_OK) != 0) { return NULL; }
     dlerror();
-    void* handle = dlopen(mod_name, RTLD_LAZY | RTLD_GLOBAL);
+    void *handle = dlopen(mod_name, RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
 #ifndef NDEBUG
       printf("%s\n", dlerror());
@@ -224,65 +193,56 @@ Xen_Instance* Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     }
     Xen_c_string_t format_string = "Xen_Module_%s_Start";
     Xen_ssize_t fsize = snprintf(NULL, 0, format_string, mod_uname);
-    if (fsize == -1) {
-      return NULL;
-    }
+    if (fsize == -1) { return NULL; }
     Xen_string_t func_name = Xen_Alloc(fsize + 1);
     snprintf(func_name, fsize + 1, format_string, mod_uname);
-    native_module_function mod_start =
-        (native_module_function)dlsym(handle, func_name);
+    native_module_function mod_start = (native_module_function)dlsym(handle, func_name);
+    Xen_Dealloc(func_name);
     if (dlerror() != NULL) {
       dlclose(handle);
       return NULL;
     }
-    struct Xen_Module_Def* mod_def = mod_start(xen_globals);
-    module = (Xen_Module*)Xen_Module_From_Def(*mod_def, mod_path, handle);
+    struct Xen_Module_Def *mod_def = mod_start(xen_globals);
+    module = (Xen_Module *)Xen_Module_From_Def(*mod_def, mod_path, handle);
     Xen_Dealloc(mod_def);
-    return (Xen_Instance*)module;
+    return (Xen_Instance *)module;
   }
   return NULL;
 }
 
-Xen_Instance* Xen_Load(Xen_c_string_t mod_name) {
+Xen_Instance *Xen_Load(Xen_c_string_t mod_name) {
 
-  Xen_Instance* current_path = NULL;
+  Xen_Instance *current_path = NULL;
   if (Xen_SIZE(Xen_VM()->modules_stack->ptr) > 0) {
-    Xen_Module* mod_top = (Xen_Module*)Xen_Vector_Top(
-        (Xen_Instance*)Xen_VM()->modules_stack->ptr);
+    Xen_Module *mod_top =
+        (Xen_Module *)Xen_Vector_Top((Xen_Instance *)Xen_VM()->modules_stack->ptr);
     current_path = Xen_String_From_CString(mod_top->mod_path);
   } else {
     current_path = Xen_String_From_CString(Xen_VM()->path_current);
   }
-  Xen_Instance* paths_stack = Xen_Vector_New();
-  for (Xen_size_t i = Xen_SIZE(Xen_VM()->paths_modules->ptr);
-       i-- > 0;) {
-    Xen_Instance* path = Xen_Vector_Get_Index(
-        (Xen_Instance*)Xen_VM()->paths_modules->ptr, i);
+  Xen_Instance *paths_stack = Xen_Vector_New();
+  for (Xen_size_t i = Xen_SIZE(Xen_VM()->paths_modules->ptr); i-- > 0;) {
+    Xen_Instance *path =
+        Xen_Vector_Get_Index((Xen_Instance *)Xen_VM()->paths_modules->ptr, i);
     Xen_Vector_Push(paths_stack, path);
   }
   Xen_Vector_Push(paths_stack, current_path);
   while (Xen_SIZE(paths_stack) > 0) {
-    Xen_Instance* path = Xen_Vector_Pop(paths_stack);
-    if (Xen_IMPL(path) != xen_globals->implements->string) {
-      return NULL;
-    }
+    Xen_Instance *path = Xen_Vector_Pop(paths_stack);
+    if (Xen_IMPL(path) != xen_globals->implements->string) { return NULL; }
     Xen_c_string_t path_str = Xen_String_As_CString(path);
     Xen_ssize_t psize = snprintf(NULL, 0, "%s/%s.nxm", path_str, mod_name);
-    if (psize == -1) {
-      return NULL;
-    }
+    if (psize == -1) { return NULL; }
     Xen_string_t full_path = Xen_Alloc(psize + 1);
     snprintf(full_path, psize + 1, "%s/%s.nxm", path_str, mod_name);
-    Xen_Instance* mod = Xen_Module_Load(full_path, mod_name, path_str, XEN_MODULE_GUEST);
+    Xen_Instance *mod = Xen_Module_Load(full_path, mod_name, path_str, XEN_MODULE_GUEST);
     if (mod) {
       Xen_Dealloc(full_path);
       return mod;
     }
     Xen_Dealloc(full_path);
     psize = snprintf(NULL, 0, "%s/lib%s.so", path_str, mod_name);
-    if (psize == -1) {
-      return NULL;
-    }
+    if (psize == -1) { return NULL; }
     full_path = Xen_Alloc(psize + 1);
     snprintf(full_path, psize + 1, "%s/lib%s.so", path_str, mod_name);
     mod = Xen_Module_Load(full_path, mod_name, path_str, XEN_MODULE_NATIVE);

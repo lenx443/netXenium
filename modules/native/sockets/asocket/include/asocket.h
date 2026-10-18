@@ -4,10 +4,10 @@
 #include "netxenium/netXenium.h"
 
 #include <arpa/inet.h>
+#include <linux/if_packet.h>
 
 typedef struct {
-  Xen_INSTANCE_HEAD
-  Xen_GCHandle* f;
+  Xen_INSTANCE_HEAD Xen_GCHandle *f;
   Xen_bool_t open;
   int domain;
   int type;
@@ -15,6 +15,7 @@ typedef struct {
   union {
     struct sockaddr_in ipv4;
     struct sockaddr_in6 ipv6;
+    struct sockaddr_ll addr;
   } local;
   union {
     struct sockaddr_in ipv4;
@@ -24,9 +25,9 @@ typedef struct {
   Xen_uint64_t timeout;
 } ASocket;
 
-extern Xen_Implement* ASocket_Implement_Pointer;
+extern Xen_Implement *ASocket_Implement_Pointer;
 extern Xen_ImplementStruct ASocket_Implement;
 
-void ASocket_Init(Xen_Instance*);
+void ASocket_Init(Xen_Instance *);
 
 #endif
