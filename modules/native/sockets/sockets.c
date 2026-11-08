@@ -1,3 +1,6 @@
+#include "ainet.h"
+#include "ainet6.h"
+#include "apacket.h"
 #include "asocket.h"
 #include <sys/socket.h>
 #define _POSIX_C_SOURCE 200809L
@@ -104,6 +107,9 @@ static Xen_Instance *sockets_getaddrinfo(Xen_Instance *self, Xen_Instance *args,
 static Xen_Instance *Sockets_Init(Xen_Instance *self, Xen_Instance *args,
                                   Xen_Instance *kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE;
+  AInet_Init(self);
+  AInet6_Init(self);
+  APacket_Init(self);
   Socket_init(self);
   ASocket_Init(self);
   Xen_Attr_Set_Str(self, "AF_INET", Xen_Number_From_Int(AF_INET));
@@ -128,9 +134,8 @@ static struct Xen_Module_Function functions[] = {
 };
 
 static Xen_ImplementStruct *implements[] = {
-    &Socket_Implement,
-    &ASocket_Implement,
-    NULL,
+    &AInet_Implement,  &AInet6_Implement,  &APacket_Implement,
+    &Socket_Implement, &ASocket_Implement, NULL,
 };
 
 struct Xen_Module_Def *Xen_Module_sockets_Start(void *);

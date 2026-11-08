@@ -20,6 +20,7 @@ typedef struct {
   union {
     struct sockaddr_in ipv4;
     struct sockaddr_in6 ipv6;
+    struct sockaddr_ll addr;
   } remote;
   Xen_uint32_t caps;
   Xen_uint64_t timeout;

@@ -1,5 +1,8 @@
 add_library(xen_libsockets
   sockets.c
+  AInet/src/ainet.c
+  AInet6/src/ainet6.c
+  APacket/src/apacket.c
   socket/src/socket.c
   asocket/src/asocket.c
 )
@@ -12,6 +15,9 @@ target_link_options(xen_libsockets PRIVATE
 
 target_include_directories(xen_libsockets PRIVATE
   ${NETXENIUM_ABI_INCLUDE_PATH}
+  AInet/include/
+  AInet6/include/
+  APacket/include/
   socket/include/
   asocket/include/
 )

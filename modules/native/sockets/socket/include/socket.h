@@ -15,14 +15,10 @@
 #define SOCKET_CAP_NONBLOCK (1 << 6)
 #define SOCKET_CAP_TIMEOUT (1 << 7)
 
-struct Socket_Address_IP {
-  Xen_c_string_t ip;
-  int port;
-};
-
 struct Socket_Address_Packet {
   Xen_c_string_t device;
   Xen_uint16_t protocol;
+  Xen_uint8_t addr[6];
 };
 
 typedef struct {
@@ -39,18 +35,13 @@ typedef struct {
   union {
     struct sockaddr_in ipv4;
     struct sockaddr_in6 ipv6;
+    struct sockaddr_ll addr;
   } remote;
   Xen_uint32_t caps;
 } Socket;
 
 extern Xen_Implement *Socket_Implement_Pointer;
 extern Xen_ImplementStruct Socket_Implement;
-
-int Socket_Addr_IP_Get(Xen_Instance *, struct Socket_Address_IP *);
-Xen_Instance *Socket_Addr_IP_Set(struct Socket_Address_IP);
-
-int Socket_Addr_Packet_Get(Xen_Instance *, struct Socket_Address_Packet *);
-Xen_Instance *Socket_Addr_Packet_Set(struct Socket_Address_Packet);
 
 void Socket_init(Xen_Instance *);
 

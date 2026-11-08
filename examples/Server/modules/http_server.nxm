@@ -1,4 +1,3 @@
-var Socket = load("sockets").Socket
 var http_packet = load("http_packet")
 var net = load("net")
 

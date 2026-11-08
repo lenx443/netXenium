@@ -302,6 +302,7 @@ set(SOURCES
   modules/core/src/m_interpreter.c
   modules/core/src/m_config.c
   modules/core/src/m_async.c
+  modules/core/src/m_program.c
 
   # Implementaciones de los codigos
   # fuente de las listas enlazadas

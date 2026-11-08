@@ -1,3 +1,6 @@
+#include "ainet.h"
+#include "ainet6.h"
+#include "apacket.h"
 #include "asocket.h"
 #include "netxenium/coroutine.h"
 #include "netxenium/netXenium.h"
@@ -75,10 +78,6 @@ static Xen_Instance *asocket_destroy(Xen_Instance *self, Xen_Instance *args,
                                      Xen_Instance *kwargs) {
   NATIVE_CLEAR_ARG_NEVER_USE
   ASocket *sock = (ASocket *)self;
-  if (sock->open) {
-    Xen_IO_Status_Close((Xen_IO_Status *)sock->f->ptr);
-    sock->open = 0;
-  }
   Xen_GCHandle_Free(sock->f);
   return nil;
 }
@@ -99,15 +98,9 @@ static Xen_Instance *asocket_bind(Xen_Instance *self, Xen_Instance *args,
   Xen_Function_ArgBinding_Free(binding);
   switch (sock->domain) {
   case AF_INET: {
-    if (Xen_IsTuple(addr)) {
-      struct Socket_Address_IP address;
-      if (!Socket_Addr_IP_Get(addr, &address)) { return NULL; }
+    if (Xen_IMPL(addr) == AInet_Implement_Pointer) {
       memset(&sock->local.ipv4, 0, sizeof(sock->local.ipv4));
-      sock->local.ipv4.sin_family = sock->domain;
-      sock->local.ipv4.sin_port = htons(address.port);
-      if (inet_pton(sock->domain, address.ip, &sock->local.ipv4.sin_addr) != 1) {
-        return NULL;
-      }
+      AInet_Get(addr, &sock->local.ipv4);
     } else if (Xen_IsBytes(addr)) {
       if (Xen_SIZE(addr) != sizeof(sock->local.ipv4)) { return NULL; }
       memcpy(&sock->local.ipv4, Xen_Bytes_Get(addr), sizeof(sock->local.ipv4));
@@ -121,15 +114,9 @@ static Xen_Instance *asocket_bind(Xen_Instance *self, Xen_Instance *args,
     break;
   }
   case AF_INET6: {
-    if (Xen_IsTuple(addr)) {
-      struct Socket_Address_IP address;
-      if (!Socket_Addr_IP_Get(addr, &address)) { return NULL; }
+    if (Xen_IMPL(addr) == AInet6_Implement_Pointer) {
       memset(&sock->local.ipv6, 0, sizeof(sock->local.ipv6));
-      sock->local.ipv6.sin6_family = sock->domain;
-      sock->local.ipv6.sin6_port = htons(address.port);
-      if (inet_pton(sock->domain, address.ip, &sock->local.ipv6.sin6_addr) != 1) {
-        return NULL;
-      }
+      AInet6_Get(addr, &sock->local.ipv6);
     } else if (Xen_IsBytes(addr)) {
       if (Xen_SIZE(addr) != sizeof(sock->local.ipv6)) { return NULL; }
       memcpy(&sock->local.ipv6, Xen_Bytes_Get(addr), sizeof(sock->local.ipv6));
@@ -143,13 +130,9 @@ static Xen_Instance *asocket_bind(Xen_Instance *self, Xen_Instance *args,
     break;
   }
   case AF_PACKET:
-    if (Xen_IsTuple(addr)) {
-      struct Socket_Address_Packet address;
-      if (!Socket_Addr_Packet_Get(addr, &address)) { return NULL; }
+    if (Xen_IMPL(addr) == APacket_Implement_Pointer) {
       memset(&sock->local.addr, 0, sizeof(sock->local.addr));
-      sock->local.addr.sll_family = sock->domain;
-      sock->local.addr.sll_ifindex = if_nametoindex(address.device);
-      sock->local.addr.sll_protocol = htons(address.protocol);
+      APacket_Get(addr, &sock->local.addr);
     } else if (Xen_IsBytes(addr)) {
       if (Xen_SIZE(addr) != sizeof(sock->local.addr)) { return NULL; }
       memcpy(&sock->local.addr, Xen_Bytes_Get(addr), sizeof(sock->local.addr));
@@ -160,6 +143,7 @@ static Xen_Instance *asocket_bind(Xen_Instance *self, Xen_Instance *args,
              (struct sockaddr *)&sock->local.ipv6, sizeof(sock->local.ipv6)) < 0) {
       return NULL;
     }
+    break;
   default: return NULL;
   }
   sock->caps |= SOCKET_CAP_BIND;
@@ -347,12 +331,7 @@ static Xen_Instance *asocket_getsockname(Xen_Instance *self, Xen_Instance *args,
                     (struct sockaddr *)&local, &len) < 0) {
       return NULL;
     }
-    char ip_str[INET_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &local.sin_addr, ip_str, sizeof(ip_str))) {
-      return NULL;
-    }
-    Xen_Instance *addr =
-        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin_port});
+    Xen_Instance *addr = AInet_From_Struct(&local);
     return addr;
   }
   case AF_INET6: {
@@ -363,12 +342,7 @@ static Xen_Instance *asocket_getsockname(Xen_Instance *self, Xen_Instance *args,
                     (struct sockaddr *)&local, &len) < 0) {
       return NULL;
     }
-    char ip_str[INET6_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &local.sin6_addr, ip_str, sizeof(ip_str))) {
-      return NULL;
-    }
-    Xen_Instance *addr =
-        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin6_port});
+    Xen_Instance *addr = AInet6_From_Struct(&local);
     return addr;
   }
   default: return NULL;
@@ -389,12 +363,7 @@ static Xen_Instance *asocket_getpeername(Xen_Instance *self, Xen_Instance *args,
                     (struct sockaddr *)&local, &len) < 0) {
       return NULL;
     }
-    char ip_str[INET_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &local.sin_addr, ip_str, sizeof(ip_str))) {
-      return NULL;
-    }
-    Xen_Instance *addr =
-        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin_port});
+    Xen_Instance *addr = AInet_From_Struct(&local);
     return addr;
   }
   case AF_INET6: {
@@ -405,12 +374,7 @@ static Xen_Instance *asocket_getpeername(Xen_Instance *self, Xen_Instance *args,
                     (struct sockaddr *)&local, &len) < 0) {
       return NULL;
     }
-    char ip_str[INET6_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &local.sin6_addr, ip_str, sizeof(ip_str))) {
-      return NULL;
-    }
-    Xen_Instance *addr =
-        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, local.sin6_port});
+    Xen_Instance *addr = AInet6_From_Struct(&local);
     return addr;
   }
   default: return NULL;
@@ -568,19 +532,9 @@ static void asocket_connect(Xen_Instance *coro, Xen_Instance *self, Xen_Instance
     Xen_Function_ArgBinding_Free(binding);
     switch (sock->domain) {
     case AF_INET: {
-      if (Xen_IsTuple(addr)) {
-        struct Socket_Address_IP address;
-        if (!Socket_Addr_IP_Get(addr, &address)) {
-          Xen_CallError(coro);
-          Xen_COROUTINE_EXCEPTED;
-        }
+      if (Xen_IMPL(addr) == AInet_Implement_Pointer) {
         memset(&sock->remote.ipv4, 0, sizeof(sock->remote.ipv4));
-        sock->remote.ipv4.sin_family = sock->domain;
-        sock->remote.ipv4.sin_port = htons(address.port);
-        if (inet_pton(sock->domain, address.ip, &sock->remote.ipv4.sin_addr) != 1) {
-          Xen_CallError(coro);
-          Xen_COROUTINE_EXCEPTED;
-        }
+        AInet_Get(addr, &sock->remote.ipv4);
       } else if (Xen_IsBytes(addr)) {
         if (Xen_SIZE(addr) != sizeof(sock->remote.ipv4)) {
           Xen_CallError(coro);
@@ -609,19 +563,9 @@ static void asocket_connect(Xen_Instance *coro, Xen_Instance *self, Xen_Instance
       break;
     }
     case AF_INET6: {
-      if (Xen_IsTuple(addr)) {
-        struct Socket_Address_IP address;
-        if (!Socket_Addr_IP_Get(addr, &address)) {
-          Xen_CallError(coro);
-          Xen_COROUTINE_EXCEPTED;
-        }
+      if (Xen_IMPL(addr) == AInet6_Implement_Pointer) {
         memset(&sock->remote.ipv6, 0, sizeof(sock->remote.ipv6));
-        sock->remote.ipv6.sin6_family = sock->domain;
-        sock->remote.ipv6.sin6_port = htons(address.port);
-        if (inet_pton(sock->domain, address.ip, &sock->remote.ipv6.sin6_addr) != 1) {
-          Xen_CallError(coro);
-          Xen_COROUTINE_EXCEPTED;
-        }
+        AInet6_Get(addr, &sock->remote.ipv6);
       } else if (Xen_IsBytes(addr)) {
         if (Xen_SIZE(addr) != sizeof(sock->remote.ipv6)) {
           Xen_CallError(coro);
@@ -634,6 +578,37 @@ static void asocket_connect(Xen_Instance *coro, Xen_Instance *self, Xen_Instance
       }
       if (connect(*(int *)Xen_IO_Status_FD((Xen_IO_Status *)sock->f->ptr),
                   (struct sockaddr *)&sock->remote.ipv6, sizeof(sock->remote.ipv6)) < 0) {
+        if (errno == EINPROGRESS) {
+          Xen_IO_Status_SOut((Xen_IO_Status *)sock->f->ptr, coro, &status->io_status);
+          Xen_Coroutine_SStatus(coro, Xen_CORO_PAUSE);
+          if (sock->caps & SOCKET_CAP_TIMEOUT) {
+            Xen_IO_Status_SOut_Timer((Xen_IO_Status *)sock->f->ptr, sock->timeout);
+          }
+          status->connecting = 1;
+          return;
+        }
+        if (errno == EINTR) { return; }
+        Xen_CallError(coro);
+        Xen_COROUTINE_EXCEPTED;
+      }
+      break;
+    }
+    case AF_PACKET: {
+      if (Xen_IMPL(addr) == APacket_Implement_Pointer) {
+        memset(&sock->remote.addr, 0, sizeof(sock->remote.addr));
+        APacket_Get(addr, &sock->remote.addr);
+      } else if (Xen_IsBytes(addr)) {
+        if (Xen_SIZE(addr) != sizeof(sock->remote.addr)) {
+          Xen_CallError(coro);
+          Xen_COROUTINE_EXCEPTED;
+        }
+        memcpy(&sock->remote.addr, Xen_Bytes_Get(addr), sizeof(sock->remote.addr));
+      } else {
+        Xen_CallError(coro);
+        Xen_COROUTINE_EXCEPTED;
+      }
+      if (connect(*(int *)Xen_IO_Status_FD((Xen_IO_Status *)sock->f->ptr),
+                  (struct sockaddr *)&sock->remote.addr, sizeof(sock->remote.addr)) < 0) {
         if (errno == EINPROGRESS) {
           Xen_IO_Status_SOut((Xen_IO_Status *)sock->f->ptr, coro, &status->io_status);
           Xen_Coroutine_SStatus(coro, Xen_CORO_PAUSE);
@@ -858,20 +833,8 @@ static void asocket_sendto(Xen_Instance *coro, Xen_Instance *self, Xen_Instance 
   case AF_INET: {
     struct sockaddr_in remote;
     memset(&remote, 0, sizeof(remote));
-    if (Xen_IsTuple(status->addr)) {
-      struct Socket_Address_IP address;
-      if (!Socket_Addr_IP_Get(status->addr, &address)) {
-        Xen_CallError(coro);
-        Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
-        Xen_COROUTINE_EXCEPTED;
-      }
-      remote.sin_family = sock->domain;
-      remote.sin_port = htons(address.port);
-      if (inet_pton(sock->domain, address.ip, &remote.sin_addr) != 1) {
-        Xen_CallError(coro);
-        Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
-        Xen_COROUTINE_EXCEPTED;
-      }
+    if (Xen_IMPL(status->addr) == AInet_Implement_Pointer) {
+      AInet_Get(status->addr, &remote);
     } else if (Xen_IsBytes(status->addr)) {
       if (Xen_SIZE(status->addr) != sizeof(remote)) {
         Xen_CallError(coro);
@@ -907,20 +870,45 @@ static void asocket_sendto(Xen_Instance *coro, Xen_Instance *self, Xen_Instance 
   case AF_INET6: {
     struct sockaddr_in6 remote;
     memset(&remote, 0, sizeof(remote));
-    if (Xen_IsTuple(status->addr)) {
-      struct Socket_Address_IP address;
-      if (!Socket_Addr_IP_Get(status->addr, &address)) {
+    if (Xen_IMPL(status->addr) == AInet6_Implement_Pointer) {
+      AInet6_Get(status->addr, &remote);
+    } else if (Xen_IsBytes(status->addr)) {
+      if (Xen_SIZE(status->addr) != sizeof(remote)) {
         Xen_CallError(coro);
         Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
         Xen_COROUTINE_EXCEPTED;
       }
-      remote.sin6_family = sock->domain;
-      remote.sin6_port = htons(address.port);
-      if (inet_pton(sock->domain, address.ip, &remote.sin6_addr) != 1) {
-        Xen_CallError(coro);
-        Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
-        Xen_COROUTINE_EXCEPTED;
+      memcpy(&remote, Xen_Bytes_Get(status->addr), sizeof(remote));
+    } else {
+      Xen_CallError(coro);
+      Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
+      Xen_COROUTINE_EXCEPTED;
+    }
+    Xen_ssize_t s =
+        sendto(*(int *)Xen_IO_Status_FD((Xen_IO_Status *)sock->f->ptr), status->buffer,
+               status->total, 0, (struct sockaddr *)&remote, sizeof(remote));
+    if (s < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        Xen_IO_Status_SOut((Xen_IO_Status *)sock->f->ptr, coro, &status->io_status);
+        Xen_Coroutine_SStatus(coro, Xen_CORO_PAUSE);
+        if (sock->caps & SOCKET_CAP_TIMEOUT) {
+          Xen_IO_Status_SOut_Timer((Xen_IO_Status *)sock->f->ptr, sock->timeout);
+        }
+        return;
       }
+      if (errno == EINTR) { return; }
+      Xen_CallError(coro);
+      Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
+      Xen_COROUTINE_EXCEPTED;
+    }
+    Xen_IO_Status_Out_Clear((Xen_IO_Status *)sock->f->ptr);
+    Xen_COROUTINE_RETURN(Xen_Number_From_Long(status->total));
+  }
+  case AF_PACKET: {
+    struct sockaddr_ll remote;
+    memset(&remote, 0, sizeof(remote));
+    if (Xen_IMPL(status->addr) == APacket_Implement_Pointer) {
+      APacket_Get(status->addr, &remote);
     } else if (Xen_IsBytes(status->addr)) {
       if (Xen_SIZE(status->addr) != sizeof(remote)) {
         Xen_CallError(coro);
@@ -1027,15 +1015,7 @@ static void asocket_recvfrom(Xen_Instance *coro, Xen_Instance *self, Xen_Instanc
       Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance *data = Xen_Bytes_New();
-    char ip_str[INET_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &remote.sin_addr, ip_str, sizeof(ip_str))) {
-      Xen_Dealloc(buffer);
-      Xen_CallError(coro);
-      Xen_IO_Status_In_Clear((Xen_IO_Status *)sock->f->ptr);
-      Xen_COROUTINE_EXCEPTED;
-    }
-    Xen_Instance *addr =
-        Socket_Addr_IP_Set((struct Socket_Address_IP){ip_str, remote.sin_port});
+    Xen_Instance *addr = AInet_From_Struct(&remote);
     Xen_Instance *result = Xen_Tuple_From_Array(2, (Xen_Instance *[]){data, addr});
     if (r == 0) {
       Xen_Dealloc(buffer);
@@ -1075,16 +1055,47 @@ static void asocket_recvfrom(Xen_Instance *coro, Xen_Instance *self, Xen_Instanc
       Xen_COROUTINE_EXCEPTED;
     }
     Xen_Instance *data = Xen_Bytes_New();
-    char ip_str[INET6_ADDRSTRLEN];
-    if (!inet_ntop(sock->domain, &remote.sin6_addr, ip_str, sizeof(ip_str))) {
+    Xen_Instance *addr = AInet6_From_Struct(&remote);
+    Xen_Instance *result = Xen_Tuple_From_Array(2, (Xen_Instance *[]){data, addr});
+    if (r == 0) {
+      Xen_Dealloc(buffer);
+      Xen_IO_Status_In_Clear((Xen_IO_Status *)sock->f->ptr);
+      Xen_COROUTINE_RETURN(result);
+    }
+    Xen_Bytes_Append_Array(data, r, (Xen_uint8_t *)buffer);
+    Xen_Dealloc(buffer);
+    Xen_IO_Status_In_Clear((Xen_IO_Status *)sock->f->ptr);
+    Xen_COROUTINE_RETURN(result);
+  }
+  case AF_PACKET: {
+    struct sockaddr_ll remote;
+    memset(&remote, 0, sizeof(remote));
+    socklen_t remote_len = sizeof(remote);
+    Xen_string_t buffer = Xen_Alloc(status->size);
+    Xen_ssize_t r =
+        recvfrom(*(int *)Xen_IO_Status_FD((Xen_IO_Status *)sock->f->ptr), buffer,
+                 status->size, 0, (struct sockaddr *)&remote, &remote_len);
+    if (r < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        Xen_Dealloc(buffer);
+        Xen_IO_Status_SIn((Xen_IO_Status *)sock->f->ptr, coro, &status->io_status);
+        Xen_Coroutine_SStatus(coro, Xen_CORO_PAUSE);
+        if (sock->caps & SOCKET_CAP_TIMEOUT) {
+          Xen_IO_Status_SIn_Timer((Xen_IO_Status *)sock->f->ptr, sock->timeout);
+        }
+        return;
+      }
+      if (errno == EINTR) {
+        Xen_Dealloc(buffer);
+        return;
+      }
       Xen_Dealloc(buffer);
       Xen_CallError(coro);
       Xen_IO_Status_In_Clear((Xen_IO_Status *)sock->f->ptr);
       Xen_COROUTINE_EXCEPTED;
     }
-    Xen_Instance *ip = Xen_String_From_CString(ip_str);
-    Xen_Instance *port = Xen_Number_From_Int(ntohs(remote.sin6_port));
-    Xen_Instance *addr = Xen_Tuple_From_Array(2, (Xen_Instance *[]){ip, port});
+    Xen_Instance *data = Xen_Bytes_New();
+    Xen_Instance *addr = APacket_From_Struct(&remote);
     Xen_Instance *result = Xen_Tuple_From_Array(2, (Xen_Instance *[]){data, addr});
     if (r == 0) {
       Xen_Dealloc(buffer);

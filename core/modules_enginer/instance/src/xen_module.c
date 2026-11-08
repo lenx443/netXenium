@@ -144,12 +144,15 @@ Xen_Instance *Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
     CALLABLE_ptr code = compiler(mod_name, file_content, Xen_COMPILE_PROGRAM);
     if (Xen_VM_Except_Active()) {
       Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
+      Xen_Dealloc(file_content);
       return NULL;
     }
     if (!code) {
       Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
+      Xen_Dealloc(file_content);
       return NULL;
     }
+    Xen_Dealloc(file_content);
 #ifndef NDEBUG
     printf("== Running ==\n");
 #endif
@@ -158,7 +161,7 @@ Xen_Instance *Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
                     (Xen_Instance *)module->mod_globals->ptr,
                     (Xen_Instance *)module->mod_globals->ptr, NULL, code);
     if (!ctx_inst) {
-      Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
+      Xen_Dealloc(file_content);
       return NULL;
     }
     Xen_Instance *retval = vm_run(ctx_inst);
@@ -171,7 +174,6 @@ Xen_Instance *Xen_Module_Load(Xen_c_string_t mod_name, Xen_c_string_t mod_uname,
       return NULL;
     }
     Xen_Vector_Pop((Xen_Instance *)Xen_VM()->modules_stack->ptr);
-    Xen_Dealloc(file_content);
     return (Xen_Instance *)module;
   } else if (mod_type == XEN_MODULE_NATIVE) {
     Xen_Module *module =

@@ -238,7 +238,8 @@ static Xen_Instance *get_iface_info(Xen_Instance *self, Xen_Instance *args,
       if (!Xen_IsString(value)) return NULL;
       for (unsigned long y = 0; y < sizeof(if_info) / sizeof(struct info_table); y++) {
         if (strcmp(if_info[y].info, Xen_String_As_CString(value)) == 0) {
-          Xen_Vector_Push(result, if_info[y].get_func(Xen_String_As_CString(iface)));
+          Xen_Instance *r = if_info[y].get_func(Xen_String_As_CString(iface));
+          Xen_Vector_Push(result, r == NULL ? nil : r);
           break;
         } else if (y == (sizeof(if_info) / sizeof(struct info_table) - 1)) {
           return NULL;
@@ -247,7 +248,8 @@ static Xen_Instance *get_iface_info(Xen_Instance *self, Xen_Instance *args,
     }
   } else {
     for (unsigned long i = 0; i < sizeof(if_info) / sizeof(struct info_table); i++) {
-      Xen_Vector_Push(result, if_info[i].get_func(Xen_String_As_CString(iface)));
+      Xen_Instance *r = if_info[i].get_func(Xen_String_As_CString(iface));
+      Xen_Vector_Push(result, r == NULL ? nil : r);
     }
   }
   return result;
