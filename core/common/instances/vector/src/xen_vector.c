@@ -82,4 +82,9 @@ size_t Xen_Vector_Size(Xen_Instance *vector) {
   return ((Xen_Vector *)vector)->__size;
 }
 
-void Xen_Vector_Clear(Xen_Instance *vector) { vector->__size = 0; }
+void Xen_Vector_Clear(Xen_Instance *vector_inst) {
+  Xen_Vector *vector = (Xen_Vector *)vector_inst;
+  while (vector->__size > 0) {
+    Xen_GCHandle_Free(vector->values[--vector->__size]);
+  }
+}
